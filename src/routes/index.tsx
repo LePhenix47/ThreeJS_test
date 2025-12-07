@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import ThreeScene from '@/components/ThreeScene';
+import "./index.scss";
 
 export const Route = createFileRoute('/')({
   head: () => ({
@@ -27,12 +29,17 @@ export const Route = createFileRoute('/')({
 
 function IndexComponent() {
   return (
-    <div>
+    <div className="index-page">
       <ThemeToggle />
 
-      <h2>three-js-test</h2>
+      <div className="index-page__content">
+        <h2 className="index-page__title">three-js-test</h2>
+        <p className="index-page__description">Project to learn a thing or two about THREE.js</p>
+      </div>
 
-      <p>Project to learn a thing or two about THREE.js</p>
+      <div className="index-page__scene-container">
+        <ThreeScene />
+      </div>
     </div>
   );
 }
