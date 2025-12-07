@@ -1,4 +1,4 @@
-name: Deploy React Vite Template to GitHub Pages
+name: Deploy three-js-test to GitHub Pages
 on:
   push:
     branches:
