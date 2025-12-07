@@ -7,19 +7,25 @@ type ThreeSceneProps = {
 };
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!canvasRef.current) return;
 
-    const { clientWidth, clientHeight } = containerRef.current;
+    const canvas = canvasRef.current;
+    const parent = canvas.parentElement;
+    if (!parent) return;
+
+    const { clientWidth, clientHeight } = parent;
 
     // 1. Scene
     const scene = new THREE.Scene();
 
     // 2. Object (add your objects here during the lesson)
     const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const material = new THREE.MeshBasicMaterial({
+      color: "#ff0000",
+    });
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
@@ -29,30 +35,49 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
     camera.position.z = 5;
+    scene.add(camera);
 
     // 4. Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 
-    renderer.setSize(clientWidth, clientHeight);
+    renderer.setSize(clientWidth, clientHeight, false);
     renderer.setPixelRatio(window.devicePixelRatio);
-    containerRef.current.appendChild(renderer.domElement);
 
     // Render the scene (you'll add animation loop during the lesson)
     renderer.render(scene, camera);
 
+    // Handle resize
+    const abortController = new AbortController();
+
+    const handleResize = () => {
+      const parent = canvasRef.current?.parentElement;
+      if (!parent) return;
+
+      const { clientWidth: width, clientHeight: height } = parent;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height, false);
+      renderer.render(scene, camera);
+    };
+
+    window.addEventListener("resize", handleResize, {
+      signal: abortController.signal,
+    });
+
     // Cleanup
     return () => {
-      if (
-        containerRef.current &&
-        renderer.domElement.parentNode === containerRef.current
-      ) {
-        containerRef.current.removeChild(renderer.domElement);
-      }
+      abortController.abort();
+      geometry.dispose();
+      material.dispose();
       renderer.dispose();
     };
   }, []);
 
-  return <div ref={containerRef} className={`three-scene ${className}`}></div>;
+  return (
+    <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
+  );
 }
 
 export default ThreeScene;
