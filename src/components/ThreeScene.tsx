@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import "./ThreeScene.scss";
 
@@ -7,14 +7,10 @@ type ThreeSceneProps = {
 };
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
+  // Move the Three.js setup outside to a new function each time file updates
+  const setupThreeScene = (canvas: HTMLCanvasElement): (() => void) | null => {
     const parent = canvas.parentElement;
-    if (!parent) return;
+    if (!parent) return null;
 
     const { clientWidth, clientHeight } = parent;
 
@@ -58,10 +54,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const abortController = new AbortController();
 
     const handleResize = () => {
-      const parent = canvasRef.current?.parentElement;
-      if (!parent) return;
+      if (!canvas.parentElement) return;
 
-      const { clientWidth: width, clientHeight: height } = parent;
+      const { clientWidth: width, clientHeight: height } = canvas.parentElement;
 
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
@@ -74,14 +69,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       signal: abortController.signal,
     });
 
-    // Cleanup
     return () => {
       abortController.abort();
       geometry.dispose();
       material.dispose();
       renderer.dispose();
     };
-  }, []);
+  };
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    return setupThreeScene(canvasRef.current) || undefined;
+  }, [setupThreeScene]);
+
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   return (
     <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
