@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import "./ThreeScene.scss";
 
@@ -26,7 +26,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const material = new THREE.MeshBasicMaterial({
       color: "#ff0000",
     });
+
     const mesh = new THREE.Mesh(geometry, material);
+
+    mesh.position.set(0.7, -0.6, 1);
     scene.add(mesh);
 
     // 3. Camera
@@ -36,6 +39,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
     camera.position.z = 5;
     scene.add(camera);
+
+    const meshCameraDist = mesh.position.distanceTo(camera.position);
+    console.log({
+      meshCameraDist,
+    });
 
     // 4. Renderer
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
