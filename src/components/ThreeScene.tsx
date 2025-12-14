@@ -51,6 +51,28 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const clock = new THREE.Clock();
 
     // Start animation
+
+    function animate(
+      renderer: THREE.WebGLRenderer,
+      scene: THREE.Scene,
+      camera: THREE.Camera,
+      clock: THREE.Clock
+    ) {
+      const elapsedTime = clock.getElapsedTime();
+
+      // Update scene FIRST (before rendering)
+      camera.position.x = Math.cos(elapsedTime);
+      camera.position.y = Math.sin(elapsedTime);
+      camera.lookAt(mesh.position);
+
+      // Then render
+      renderer.render(scene, camera);
+
+      // Schedule next frame
+      animationIdRef.current = requestAnimationFrame(() => {
+        animate(renderer, scene, camera, clock);
+      });
+    }
     animate(renderer, scene, camera, clock);
 
     // Handle resize
@@ -80,27 +102,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       renderer.dispose();
     };
   };
-
-  function animate(
-    renderer: THREE.WebGLRenderer,
-    scene: THREE.Scene,
-    camera: THREE.Camera,
-    clock: THREE.Clock
-  ) {
-    const elapsedTime = clock.getElapsedTime();
-
-    // Update scene FIRST (before rendering)
-    camera.position.x = Math.cos(elapsedTime);
-    camera.position.y = Math.sin(elapsedTime);
-
-    // Then render
-    renderer.render(scene, camera);
-
-    // Schedule next frame
-    animationIdRef.current = requestAnimationFrame(() => {
-      animate(renderer, scene, camera, clock);
-    });
-  }
 
   function cancelAnimation() {
     cancelAnimationFrame(animationIdRef.current);
