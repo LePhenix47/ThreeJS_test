@@ -82,6 +82,27 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }, [setupThreeScene]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rAFId = useRef<number>(0);
+
+  function cancelAnimation() {
+    cancelAnimationFrame(rAFId.current);
+  }
+
+  function animate(
+    renderer: THREE.WebGLRenderer,
+    scene: THREE.Scene,
+    camera: THREE.Camera
+  ) {
+    try {
+      renderer.render(scene, camera);
+      rAFId.current = requestAnimationFrame(() => {
+        animate(renderer, scene, camera);
+      });
+    } catch (error) {
+      console.error(error);
+      cancelAnimation();
+    }
+  }
 
   return (
     <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
