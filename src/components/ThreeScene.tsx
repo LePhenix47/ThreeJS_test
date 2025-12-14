@@ -36,10 +36,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     camera.position.z = 5;
     scene.add(camera);
 
-    const meshCameraDist = mesh.position.distanceTo(camera.position);
-    console.log({
-      meshCameraDist,
-    });
+    const axisHelper = new THREE.AxesHelper(3);
+    scene.add(axisHelper);
 
     // 4. Renderer
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
