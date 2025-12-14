@@ -7,7 +7,9 @@ type ThreeSceneProps = {
 };
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
-  // Move the Three.js setup outside to a new function each time file updates
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationIdRef = useRef<number>(0);
+
   const setupThreeScene = (canvas: HTMLCanvasElement): (() => void) | null => {
     const parent = canvas.parentElement;
     if (!parent) return null;
@@ -33,7 +35,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const fov = 75;
 
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
-    camera.position.z = 5;
+    camera.position.z = 0;
     scene.add(camera);
 
     const axisHelper = new THREE.AxesHelper(3);
@@ -45,8 +47,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     renderer.setSize(clientWidth, clientHeight, false);
     renderer.setPixelRatio(window.devicePixelRatio);
 
-    // Render the scene (you'll add animation loop during the lesson)
-    renderer.render(scene, camera);
+    // Start animation
+    animate(renderer, scene, camera);
 
     // Handle resize
     const abortController = new AbortController();
@@ -60,14 +62,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       camera.updateProjectionMatrix();
 
       renderer.setSize(width, height, false);
-      renderer.render(scene, camera);
     };
 
     window.addEventListener("resize", handleResize, {
       signal: abortController.signal,
     });
 
+    // Cleanup function
     return () => {
+      cancelAnimation();
       abortController.abort();
       geometry.dispose();
       material.dispose();
@@ -75,34 +78,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   };
 
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    return setupThreeScene(canvasRef.current) || undefined;
-  }, [setupThreeScene]);
-
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rAFId = useRef<number>(0);
-
-  function cancelAnimation() {
-    cancelAnimationFrame(rAFId.current);
-  }
-
   function animate(
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
     camera: THREE.Camera
   ) {
-    try {
-      renderer.render(scene, camera);
-      rAFId.current = requestAnimationFrame(() => {
-        animate(renderer, scene, camera);
-      });
-    } catch (error) {
-      console.error(error);
-      cancelAnimation();
-    }
+    // Update scene FIRST (before rendering)
+    camera.rotation.y += 0.01;
+
+    // Then render
+    renderer.render(scene, camera);
+
+    // Schedule next frame
+    animationIdRef.current = requestAnimationFrame(() => {
+      animate(renderer, scene, camera);
+    });
   }
+
+  function cancelAnimation() {
+    cancelAnimationFrame(animationIdRef.current);
+  }
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    return setupThreeScene(canvasRef.current) || undefined;
+  }, [setupThreeScene]);
 
   return (
     <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
