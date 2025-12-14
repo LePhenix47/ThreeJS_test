@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import gsap from "gsap";
 import "./ThreeScene.scss";
 
 type ThreeSceneProps = {
@@ -29,6 +30,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     mesh.position.set(0.7, -0.6, 1);
     scene.add(mesh);
+
+    // GSAP Animation - Animate mesh rotation
+    gsap.to(mesh.rotation, {
+      duration: 2,
+      y: Math.PI * 2, // Full rotation (360°)
+      repeat: -1, // Infinite loop
+      ease: "power1.inOut",
+    });
 
     // 3. Camera
     const aspectRatio = clientWidth / clientHeight;
@@ -61,9 +70,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const elapsedTime = clock.getElapsedTime();
 
       // Update scene FIRST (before rendering)
-      camera.position.x = Math.cos(elapsedTime);
-      camera.position.y = Math.sin(elapsedTime);
-      camera.lookAt(mesh.position);
+      // camera.position.x = Math.cos(elapsedTime);
+      // camera.position.y = Math.sin(elapsedTime);
+      // camera.lookAt(mesh.position);
 
       // Then render
       renderer.render(scene, camera);
@@ -96,6 +105,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Cleanup function
     return () => {
       cancelAnimation();
+      gsap.killTweensOf(mesh.rotation); // Kill GSAP animations
       abortController.abort();
       geometry.dispose();
       material.dispose();
