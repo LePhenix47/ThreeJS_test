@@ -10,6 +10,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
+  const deltaTimeRef = useRef<number>(performance.now());
+
   const setupThreeScene = (canvas: HTMLCanvasElement): (() => void) | null => {
     const parent = canvas.parentElement;
     if (!parent) return null;
@@ -78,13 +80,23 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   };
 
+  function getDeltaTime() {
+    const currentTime: number = performance.now();
+    const delta: number = currentTime - deltaTimeRef.current;
+
+    deltaTimeRef.current = performance.now();
+
+    return delta;
+  }
+
   function animate(
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
     camera: THREE.Camera
   ) {
+    const delta: number = getDeltaTime();
     // Update scene FIRST (before rendering)
-    camera.rotation.y += 0.01;
+    camera.rotation.y += delta * 0.002;
 
     // Then render
     renderer.render(scene, camera);
