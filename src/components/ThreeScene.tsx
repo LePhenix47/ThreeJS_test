@@ -10,8 +10,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
-  const deltaTimeRef = useRef<number>(performance.now());
-
   const setupThreeScene = (canvas: HTMLCanvasElement): (() => void) | null => {
     const parent = canvas.parentElement;
     if (!parent) return null;
@@ -37,7 +35,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const fov = 75;
 
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
-    camera.position.z = 0;
+    camera.position.z = 5;
     scene.add(camera);
 
     const axisHelper = new THREE.AxesHelper(3);
@@ -49,8 +47,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     renderer.setSize(clientWidth, clientHeight, false);
     renderer.setPixelRatio(window.devicePixelRatio);
 
+    // Clock for delta time
+    const clock = new THREE.Clock();
+
     // Start animation
-    animate(renderer, scene, camera);
+    animate(renderer, scene, camera, clock);
 
     // Handle resize
     const abortController = new AbortController();
@@ -80,30 +81,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   };
 
-  function getDeltaTime() {
-    const currentTime: number = performance.now();
-    const delta: number = currentTime - deltaTimeRef.current;
-
-    deltaTimeRef.current = performance.now();
-
-    return delta;
-  }
-
   function animate(
     renderer: THREE.WebGLRenderer,
     scene: THREE.Scene,
-    camera: THREE.Camera
+    camera: THREE.Camera,
+    clock: THREE.Clock
   ) {
-    const delta: number = getDeltaTime();
+    const elapsedTime = clock.getElapsedTime();
+
     // Update scene FIRST (before rendering)
-    camera.rotation.y += delta * 0.002;
+    camera.position.x = Math.cos(elapsedTime);
+    camera.position.y = Math.sin(elapsedTime);
 
     // Then render
     renderer.render(scene, camera);
 
     // Schedule next frame
     animationIdRef.current = requestAnimationFrame(() => {
-      animate(renderer, scene, camera);
+      animate(renderer, scene, camera, clock);
     });
   }
 
