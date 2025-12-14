@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173, // Change the port to your preferred one
       host: "0.0.0.0", // Allows access to your local IP address
-      open: true, // Optional: Opens the browser automatically
+      open: false, // Optional: Opens the browser automatically
     },
     base: env.VITE_BASE_PATH || "/",
     css: {
