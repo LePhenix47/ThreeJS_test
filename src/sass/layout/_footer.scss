@@ -3,8 +3,11 @@
 
 .footer {
     grid-row: footer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-    &__paragraph {
-        padding: 20px;
-    }
+    padding: 10px;
+
+    &__paragraph {}
 }
