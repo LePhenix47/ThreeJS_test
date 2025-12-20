@@ -10,6 +10,7 @@ type ThreeSceneProps = {
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
+  const mouseRef = useRef({ x: 0, y: 0 });
 
   const setupThreeScene = (canvas: HTMLCanvasElement): (() => void) | null => {
     const parent = canvas.parentElement;
@@ -28,23 +29,23 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const mesh = new THREE.Mesh(geometry, material);
 
-    mesh.position.set(0.7, -0.6, 1);
+    mesh.position.set(0, 0, 0);
     scene.add(mesh);
 
     // GSAP Animation - Animate mesh rotation
-    gsap.to(mesh.rotation, {
-      duration: 2,
-      y: Math.PI * 2, // Full rotation (360°)
-      repeat: -1, // Infinite loop
-      ease: "power1.inOut",
-    });
+    // gsap.to(mesh.rotation, {
+    //   duration: 2,
+    //   y: Math.PI * 2, // Full rotation (360°)
+    //   repeat: -1, // Infinite loop
+    //   ease: "power1.inOut",
+    // });
 
     // 3. Camera
     const aspectRatio = clientWidth / clientHeight;
     const fov = 75;
 
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
-    camera.position.z = 5;
+    camera.position.z = 10;
     scene.add(camera);
 
     const axisHelper = new THREE.AxesHelper(3);
@@ -59,20 +60,36 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Clock for delta time
     const clock = new THREE.Clock();
 
-    // Start animation
+    // Handle resize
+    const abortController = new AbortController();
 
+    // Pointer position tracking
+    const handlePointerMove = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+
+      // Normalize pointer position to -1 to 1 range (center is 0, 0)
+      mouseRef.current.x = event.offsetX / rect.width - 0.5;
+      mouseRef.current.y = -1 * (event.offsetY / rect.height - 0.5);
+    };
+
+    canvas.addEventListener("pointermove", handlePointerMove, {
+      signal: abortController.signal,
+    });
+
+    // Start animation
     function animate(
       renderer: THREE.WebGLRenderer,
       scene: THREE.Scene,
       camera: THREE.Camera,
       clock: THREE.Clock
     ) {
-      const elapsedTime = clock.getElapsedTime();
+      // Update camera position based on mouse (trigonometry for circular motion)
+      camera.position.x = Math.sin(mouseRef.current.x * Math.PI * 2) * 3;
+      camera.position.z = Math.cos(mouseRef.current.x * Math.PI * 2) * 3;
+      camera.position.y = mouseRef.current.y * 3;
 
-      // Update scene FIRST (before rendering)
-      // camera.position.x = Math.cos(elapsedTime);
-      // camera.position.y = Math.sin(elapsedTime);
-      // camera.lookAt(mesh.position);
+      // Camera looks at the cube
+      camera.lookAt(mesh.position);
 
       // Then render
       renderer.render(scene, camera);
@@ -83,9 +100,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       });
     }
     animate(renderer, scene, camera, clock);
-
-    // Handle resize
-    const abortController = new AbortController();
 
     const handleResize = () => {
       if (!canvas.parentElement) return;
