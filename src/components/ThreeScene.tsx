@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import gsap from "gsap";
 import "./ThreeScene.scss";
 
@@ -10,7 +11,6 @@ type ThreeSceneProps = {
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
-  const mouseRef = useRef({ x: 0, y: 0 });
 
   const setupThreeScene = (canvas: HTMLCanvasElement): (() => void) | null => {
     const parent = canvas.parentElement;
@@ -60,46 +60,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Clock for delta time
     const clock = new THREE.Clock();
 
+    // OrbitControls for camera movement
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true; // Smooth camera movement
+
     // Handle resize
     const abortController = new AbortController();
-
-    // Pointer position tracking
-    const handlePointerMove = (event: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-
-      // Normalize pointer position to -1 to 1 range (center is 0, 0)
-      mouseRef.current.x = event.offsetX / rect.width - 0.5;
-      mouseRef.current.y = -1 * (event.offsetY / rect.height - 0.5);
-    };
-
-    canvas.addEventListener("pointermove", handlePointerMove, {
-      signal: abortController.signal,
-    });
 
     // Start animation
     function animate(
       renderer: THREE.WebGLRenderer,
       scene: THREE.Scene,
-      camera: THREE.Camera,
+      controls: OrbitControls,
       clock: THREE.Clock
     ) {
-      // Update camera position based on mouse (trigonometry for circular motion)
-      camera.position.x = Math.sin(mouseRef.current.x * Math.PI * 2) * 3;
-      camera.position.z = Math.cos(mouseRef.current.x * Math.PI * 2) * 3;
-      camera.position.y = mouseRef.current.y * 3;
-
-      // Camera looks at the cube
-      camera.lookAt(mesh.position);
+      // Update controls (required for damping)
+      controls.update();
 
       // Then render
       renderer.render(scene, camera);
 
       // Schedule next frame
       animationIdRef.current = requestAnimationFrame(() => {
-        animate(renderer, scene, camera, clock);
+        animate(renderer, scene, controls, clock);
       });
     }
-    animate(renderer, scene, camera, clock);
+    animate(renderer, scene, controls, clock);
 
     const handleResize = () => {
       if (!canvas.parentElement) return;
@@ -120,6 +106,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return () => {
       cancelAnimation();
       gsap.killTweensOf(mesh.rotation); // Kill GSAP animations
+      controls.dispose(); // Dispose OrbitControls
       abortController.abort();
       geometry.dispose();
       material.dispose();
