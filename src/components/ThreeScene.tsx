@@ -1,7 +1,12 @@
 import { useEffect, useRef } from "react";
+
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
 import gsap from "gsap";
+
+import GUI from "lil-gui";
+
 import "./ThreeScene.scss";
 
 type ThreeSceneProps = {
@@ -16,6 +21,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const parent = canvas.parentElement;
     if (!parent) return null;
 
+    // Create GUI inside setupThreeScene so it's recreated on HMR
+    const gui = new GUI();
+
     const { clientWidth, clientHeight } = parent;
 
     // 1. Scene
@@ -28,6 +36,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     });
 
     const mesh = new THREE.Mesh(geometry, material);
+
+    // Debug object for color (to hold hex value for GUI)
+    const debugObject = {
+      color: "#ff0000",
+    };
+
+    // Mesh position controls
+    gui.add(mesh.position, "x").min(-3).max(3).step(0.01).name("Position X");
+    gui.add(mesh.position, "y").min(-3).max(3).step(0.01).name("Elevation");
+    gui.add(mesh.position, "z").min(-3).max(3).step(0.01).name("Position Z");
+
+    // Mesh visibility
+    gui.add(mesh, "visible").name("Visibility");
+
+    // Material controls
+    gui.add(material, "wireframe").name("Wireframe");
+    gui.addColor(debugObject, "color").onChange(() => {
+      material.color.set(debugObject.color);
+    });
 
     mesh.position.set(0, 0, 0);
     scene.add(mesh);
@@ -46,6 +73,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
     camera.position.z = 10;
+
     scene.add(camera);
 
     const axisHelper = new THREE.AxesHelper(3);
@@ -109,6 +137,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       cancelAnimation();
       gsap.killTweensOf(mesh.rotation); // Kill GSAP animations
       controls.dispose(); // Dispose OrbitControls
+      gui.destroy(); // Destroy GUI and all its controllers
       abortController.abort();
       geometry.dispose();
       material.dispose();
@@ -124,7 +153,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     if (!canvasRef.current) return;
 
     return setupThreeScene(canvasRef.current) || undefined;
-  }, [setupThreeScene]);
+  }, [setupThreeScene]); // HMR works: setupThreeScene recreates GUI + scene together
 
   return (
     <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
