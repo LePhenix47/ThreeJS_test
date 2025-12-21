@@ -39,12 +39,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         color: "#ff0000",
       },
       animations: {
+        spinDuration: 1,
         spin: () => {
           gsap.to(mesh.rotation, {
-            duration: 1,
+            duration: debugObject.animations.spinDuration,
             y: mesh.rotation.y + revolutionsCount,
           });
         },
+      },
+      camera: {
+        lookAtCube: false,
+        enableOrbitControls: true,
       },
     };
 
@@ -67,6 +72,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const materialFolder = cubeFolder.addFolder("Material");
     const meshFolder = cubeFolder.addFolder("Mesh");
     const animationsFolder = cubeFolder.addFolder("Animations");
+
+    const cameraFolder = gui.addFolder("Camera");
+    const helpersFolder = gui.addFolder("Helpers");
 
     // Geometry controls
     geometryFolder
@@ -97,27 +105,45 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       });
 
     // Mesh controls
-    meshFolder
-      .add(mesh.position, "x")
-      .min(-3)
-      .max(3)
+    const positionFolder = meshFolder.addFolder("Position");
+    positionFolder.add(mesh.position, "x").min(-3).max(3).step(0.01).name("X");
+    positionFolder.add(mesh.position, "y").min(-3).max(3).step(0.01).name("Y");
+    positionFolder.add(mesh.position, "z").min(-3).max(3).step(0.01).name("Z");
+
+    const rotationFolder = meshFolder.addFolder("Rotation");
+    rotationFolder
+      .add(mesh.rotation, "x")
+      .min(0)
+      .max(Math.PI * 2)
       .step(0.01)
-      .name("Position X");
-    meshFolder
-      .add(mesh.position, "y")
-      .min(-3)
-      .max(3)
+      .name("X");
+    rotationFolder
+      .add(mesh.rotation, "y")
+      .min(0)
+      .max(Math.PI * 2)
       .step(0.01)
-      .name("Position Y");
-    meshFolder
-      .add(mesh.position, "z")
-      .min(-3)
-      .max(3)
+      .name("Y");
+    rotationFolder
+      .add(mesh.rotation, "z")
+      .min(0)
+      .max(Math.PI * 2)
       .step(0.01)
-      .name("Position Z");
+      .name("Z");
+
+    const scaleFolder = meshFolder.addFolder("Scale");
+    scaleFolder.add(mesh.scale, "x").min(0.1).max(3).step(0.01).name("X");
+    scaleFolder.add(mesh.scale, "y").min(0.1).max(3).step(0.01).name("Y");
+    scaleFolder.add(mesh.scale, "z").min(0.1).max(3).step(0.01).name("Z");
+
     meshFolder.add(mesh, "visible").name("Visibility");
 
     // Animation controls
+    animationsFolder
+      .add(debugObject.animations, "spinDuration")
+      .min(0.1)
+      .max(5)
+      .step(0.1)
+      .name("Spin Duration");
     animationsFolder.add(debugObject.animations, "spin");
 
     mesh.position.set(0, 0, 0);
@@ -142,6 +168,43 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const axisHelper = new THREE.AxesHelper(3);
     scene.add(axisHelper);
+
+    // Camera controls
+    cameraFolder
+      .add(camera.position, "x")
+      .min(-10)
+      .max(10)
+      .step(0.1)
+      .name("Position X");
+    cameraFolder
+      .add(camera.position, "y")
+      .min(-10)
+      .max(10)
+      .step(0.1)
+      .name("Position Y");
+    cameraFolder
+      .add(camera.position, "z")
+      .min(-10)
+      .max(10)
+      .step(0.1)
+      .name("Position Z");
+    cameraFolder
+      .add(debugObject.camera, "lookAtCube")
+      .name("Look at Cube")
+      .onChange((value: boolean) => {
+        if (value) {
+          camera.lookAt(mesh.position);
+        }
+      });
+    cameraFolder
+      .add(debugObject.camera, "enableOrbitControls")
+      .name("Orbit Controls")
+      .onChange((value: boolean) => {
+        controls.enabled = value;
+      });
+
+    // Helpers controls
+    helpersFolder.add(axisHelper, "visible").name("Axes Helper");
 
     // 4. Renderer
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -170,6 +233,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     ) {
       // Update controls (required for damping)
       controls.update();
+
+      // Apply lookAt if enabled
+      if (debugObject.camera.lookAtCube) {
+        camera.lookAt(mesh.position);
+      }
 
       // Then render
       renderer.render(scene, camera);
