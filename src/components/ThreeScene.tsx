@@ -51,8 +51,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // Material controls
     gui.add(material, "wireframe").name("Wireframe");
-    gui.addColor(debugObject, "color").onChange(() => {
-      material.color.set(debugObject.color);
+    gui.addColor(debugObject, "color").onChange((newColorValue: string) => {
+      material.color.set(newColorValue);
     });
 
     mesh.position.set(0, 0, 0);
