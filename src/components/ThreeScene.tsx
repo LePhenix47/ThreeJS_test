@@ -108,7 +108,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .min(-3)
       .max(3)
       .step(0.01)
-      .name("Elevation");
+      .name("Position Y");
     meshFolder
       .add(mesh.position, "z")
       .min(-3)
