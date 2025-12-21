@@ -55,7 +55,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 
     renderer.setSize(clientWidth, clientHeight, false);
-    renderer.setPixelRatio(window.devicePixelRatio);
+
+    const minPixelRatio = Math.min(window.devicePixelRatio, 2);
+    renderer.setPixelRatio(minPixelRatio);
 
     // Clock for delta time
     const clock = new THREE.Clock();
@@ -95,7 +97,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
 
-      renderer.setSize(width, height, false);
+      renderer.setSize(width, height);
     };
 
     window.addEventListener("resize", handleResize, {
