@@ -23,17 +23,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // Create GUI inside setupThreeScene so it's recreated on HMR
     const gui = new GUI();
-    // Debug object for color (to hold hex value for GUI)
+
+    // Debug object - organized by category
     const oneFullRevolution = Math.PI * 2;
     const revolutionsCount = oneFullRevolution;
 
     const debugObject = {
-      color: "#ff0000",
-      spin: () => {
-        gsap.to(mesh.rotation, {
-          duration: 1,
-          y: mesh.rotation.y + revolutionsCount,
-        });
+      material: {
+        color: "#ff0000",
+      },
+      animations: {
+        spin: () => {
+          gsap.to(mesh.rotation, {
+            duration: 1,
+            y: mesh.rotation.y + revolutionsCount,
+          });
+        },
       },
     };
 
@@ -45,7 +50,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // 2. Object (add your objects here during the lesson)
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({
-      color: debugObject.color,
+      color: debugObject.material.color,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -60,12 +65,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // Material controls
     gui.add(material, "wireframe").name("Wireframe");
-    gui.addColor(debugObject, "color").onChange((newColorValue: string) => {
-      material.color.set(newColorValue);
-    });
+    gui
+      .addColor(debugObject.material, "color")
+      .onChange((newColorValue: string) => {
+        material.color.set(newColorValue);
+      });
 
     // Function button
-    gui.add(debugObject, "spin");
+    gui.add(debugObject.animations, "spin");
 
     mesh.position.set(0, 0, 0);
     scene.add(mesh);
