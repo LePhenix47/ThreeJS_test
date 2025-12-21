@@ -24,8 +24,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Create GUI inside setupThreeScene so it's recreated on HMR
     const gui = new GUI();
     // Debug object for color (to hold hex value for GUI)
+    const oneFullRevolution = Math.PI * 2;
+    const revolutionsCount = oneFullRevolution;
+
     const debugObject = {
       color: "#ff0000",
+      spin: () => {
+        gsap.to(mesh.rotation, {
+          duration: 1,
+          y: mesh.rotation.y + revolutionsCount,
+        });
+      },
     };
 
     const { clientWidth, clientHeight } = parent;
@@ -54,6 +63,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     gui.addColor(debugObject, "color").onChange((newColorValue: string) => {
       material.color.set(newColorValue);
     });
+
+    // Function button
+    gui.add(debugObject, "spin");
 
     mesh.position.set(0, 0, 0);
     scene.add(mesh);
