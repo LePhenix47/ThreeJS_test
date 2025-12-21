@@ -23,6 +23,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // Create GUI inside setupThreeScene so it's recreated on HMR
     const gui = new GUI();
+    // Debug object for color (to hold hex value for GUI)
+    const debugObject = {
+      color: "#ff0000",
+    };
 
     const { clientWidth, clientHeight } = parent;
 
@@ -32,15 +36,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // 2. Object (add your objects here during the lesson)
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({
-      color: "#ff0000",
+      color: debugObject.color,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
-
-    // Debug object for color (to hold hex value for GUI)
-    const debugObject = {
-      color: "#ff0000",
-    };
 
     // Mesh position controls
     gui.add(mesh.position, "x").min(-3).max(3).step(0.01).name("Position X");
