@@ -22,9 +22,29 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const scene = new THREE.Scene();
 
     // 2. Object (add your objects here during the lesson)
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const geometry = new THREE.BufferGeometry();
+
+    // prettier-ignore
+
+    // const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+    // const geometry = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
+
+    const trianglesCount = 5;
+
+    const verticesInTriangle = 3;
+    const coordsInSingleVertex = 3;
+    const size = trianglesCount * verticesInTriangle * coordsInSingleVertex;
+    const vertices = new Float32Array(size);
+
+    for (let i = 0; i < size; i++) {
+      vertices[i] = (Math.random() - 0.5) * 4;
+    }
+
+    geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+
     const material = new THREE.MeshBasicMaterial({
-      color: "#ff0000",
+      // color: "#ff0000",
+      wireframe: true,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -45,6 +65,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const fov = 75;
 
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
+
     camera.position.z = 10;
     scene.add(camera);
 
