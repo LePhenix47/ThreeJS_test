@@ -82,6 +82,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
+  // Create helpers - extracted for clarity
+  function createHelpers() {
+    const axisHelper = new THREE.AxesHelper(3);
+
+    return { axisHelper };
+  }
+
   // Setup GUI - extracted for clarity
   function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
     const gui = new GUI({
@@ -184,9 +191,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { geometry, material, mesh } = createMesh(doorColorTextureLoaded);
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
+      const { axisHelper } = createHelpers();
 
-      // Add helpers
-      const axisHelper = new THREE.AxesHelper(3);
+      // Add helpers to scene
       scene.add(axisHelper);
 
       // Setup GUI
