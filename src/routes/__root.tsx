@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useAppStore } from "@/stores/useAppStore";
 import env from "@env";
-import { ThemeToggle } from "@/components/ThemeToggle/ThemeToggle";
+import ThemeToggle from "@/components/ThemeToggle/ThemeToggle";
 
 function NotFound() {
   return (
@@ -78,39 +78,38 @@ export const Route = createRootRoute({
       { httpEquiv: "X-UA-Compatible", content: "ie=edge" },
       { name: "robots", content: "index, follow" },
       // Default meta tags (will be overridden by child routes)
-      { title: "React Vite Template" },
+      { title: "THREE.js Test" },
       {
         name: "description",
-        content:
-          "A modern React + Vite + TypeScript + SASS template with TanStack Router, TanStack Query, Zustand, Zod, and GSAP",
+        content: "Project to learn a thing or two about THREE.js",
       },
       // Default Open Graph tags
       { property: "og:type", content: "website" },
-      { property: "og:title", content: "React Vite Template" },
+      { property: "og:title", content: "THREE.js Test" },
       {
         property: "og:description",
-        content:
-          "A modern React + Vite + TypeScript + SASS template with TanStack Router, TanStack Query, Zustand, Zod, and GSAP",
+        content: "Project to learn a thing or two about THREE.js",
       },
-      { property: "og:image", content: "/img/png/icon.png" },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
+      { property: "og:image", content: "/img/ico/threejs_white.ico" },
+      { property: "og:image:width", content: "512" },
+      { property: "og:image:height", content: "512" },
       {
         property: "og:url",
-        content:
-          "https://younes-portfolio-dev.vercel.app//React_Vite-template/",
+        content: "https://younes-portfolio-dev.vercel.app/",
       },
       // Default Twitter Card tags
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "React Vite Template" },
+      { name: "twitter:title", content: "THREE.js Test" },
       {
         name: "twitter:description",
-        content:
-          "A modern React + Vite + TypeScript + SASS template with TanStack Router, TanStack Query, Zustand, Zod, and GSAP",
+        content: "Project to learn a thing or two about THREE.js",
       },
-      { name: "twitter:image", content: "/img/png/icon.png" },
+      { name: "twitter:image", content: "/img/ico/threejs_white.ico" },
     ],
-    links: [{ rel: "icon", type: "image/png", href: "/img/png/icon.png" }],
+    links: [
+      { rel: "icon", type: "image/x-icon", media: "(prefers-color-scheme: light)", href: "/img/ico/threejs_black.ico" },
+      { rel: "icon", type: "image/x-icon", media: "(prefers-color-scheme: dark)", href: "/img/ico/threejs_white.ico" },
+    ],
     scripts: [
       {
         src: "https://kit.fontawesome.com/904e9ee361.js",
