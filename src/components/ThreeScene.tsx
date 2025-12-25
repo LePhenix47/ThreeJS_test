@@ -64,6 +64,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return camera;
   }
 
+  // Create renderer - extracted for clarity
+  function createRenderer(canvas: HTMLCanvasElement, width: number, height: number) {
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(width, height, false);
+    const minPixelRatio = Math.min(window.devicePixelRatio, 2);
+    renderer.setPixelRatio(minPixelRatio);
+
+    return renderer;
+  }
+
   // Setup GUI - extracted for clarity
   function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
     const gui = new GUI({
@@ -165,11 +175,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const scene = createScene();
       const { geometry, material, mesh } = createMesh(doorColorTextureLoaded);
       const camera = createCamera(clientWidth / clientHeight);
-
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-      renderer.setSize(clientWidth, clientHeight, false);
-      const minPixelRatio = Math.min(window.devicePixelRatio, 2);
-      renderer.setPixelRatio(minPixelRatio);
+      const renderer = createRenderer(canvas, clientWidth, clientHeight);
 
       // Add helpers
       const axisHelper = new THREE.AxesHelper(3);
