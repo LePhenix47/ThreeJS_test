@@ -61,10 +61,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // 1. Scene
     const scene = new THREE.Scene();
 
+    // Textures
+    const loadingManager = new THREE.LoadingManager();
+
+    loadingManager.onLoad = () => {
+      console.log("Textures loaded");
+    };
+    const textureLoader = new THREE.TextureLoader(loadingManager);
+    const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
+    doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
+
     // 2. Object (add your objects here during the lesson)
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({
-      color: debugObject.material.color,
+      map: doorColorTextureLoaded,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
