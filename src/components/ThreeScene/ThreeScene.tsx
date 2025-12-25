@@ -15,6 +15,8 @@ import gsap from "gsap";
 
 import GUI from "lil-gui";
 
+import { useLoadingStore } from "@/stores/useLoadingStore";
+
 import "./ThreeScene.scss";
 
 type ThreeSceneProps = {
@@ -27,10 +29,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Load textures - extracted for clarity
   function loadTextures() {
+    const { setLoading, setProgress } = useLoadingStore.getState().actions;
+
     const loadingManager = new THREE.LoadingManager();
+
+    loadingManager.onStart = () => {
+      setLoading(true);
+      setProgress(0);
+    };
+
+    loadingManager.onProgress = (url, loaded, total) => {
+      const progress = (loaded / total) * 100;
+      setProgress(progress);
+      console.log(`Loading: ${loaded}/${total} (${progress.toFixed(0)}%)`);
+    };
+
     loadingManager.onLoad = () => {
       console.log("Textures loaded");
+      setLoading(false);
+      setProgress(100);
     };
+
+    loadingManager.onError = (url) => {
+      console.error("Error loading:", url);
+      setLoading(false);
+    };
+
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
     const doorTexturesArray = [
@@ -56,7 +80,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Create mesh - extracted for clarity
   function createMesh(texture: THREE.Texture) {
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    // const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const geometry = new THREE.SphereGeometry(1, 32, 32);
     const material = new THREE.MeshBasicMaterial({
       map: texture,
     });

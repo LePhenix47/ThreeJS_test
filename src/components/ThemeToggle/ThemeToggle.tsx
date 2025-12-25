@@ -1,10 +1,10 @@
-import { useAppStore } from '@/stores/useAppStore';
+import { useAppStore } from "@/stores/useAppStore";
 
 export function ThemeToggle() {
   const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
 
-  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
   };
 
@@ -14,7 +14,9 @@ export function ThemeToggle() {
       <select
         id="theme-select"
         value={theme}
-        onChange={(e) => handleThemeChange(e.target.value as 'light' | 'dark' | 'system')}
+        onChange={(e) =>
+          handleThemeChange(e.target.value as "light" | "dark" | "system")
+        }
       >
         <option value="light">Light</option>
         <option value="dark">Dark</option>
@@ -23,22 +25,22 @@ export function ThemeToggle() {
 
       <div className="theme-buttons">
         <button
-          onClick={() => handleThemeChange('light')}
-          className={theme === 'light' ? 'active' : ''}
+          onClick={() => handleThemeChange("light")}
+          className={theme === "light" ? "active" : ""}
           aria-label="Light theme"
         >
           ☀️
         </button>
         <button
-          onClick={() => handleThemeChange('dark')}
-          className={theme === 'dark' ? 'active' : ''}
+          onClick={() => handleThemeChange("dark")}
+          className={theme === "dark" ? "active" : ""}
           aria-label="Dark theme"
         >
           🌙
         </button>
         <button
-          onClick={() => handleThemeChange('system')}
-          className={theme === 'system' ? 'active' : ''}
+          onClick={() => handleThemeChange("system")}
+          className={theme === "system" ? "active" : ""}
           aria-label="System theme"
         >
           💻
