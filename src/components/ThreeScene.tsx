@@ -3,6 +3,14 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
+import doorColorTexture from "@public/textures/door/color.jpg";
+import doorAlphaTexture from "@public/textures/door/alpha.jpg";
+import doorAmbientOcclusionTexture from "@public/textures/door/ambientOcclusion.jpg";
+import doorHeightTexture from "@public/textures/door/height.jpg";
+import doorNormalTexture from "@public/textures/door/normal.jpg";
+import doorMetalnessTexture from "@public/textures/door/metalness.jpg";
+import doorRoughnessTexture from "@public/textures/door/roughness.jpg";
+
 import gsap from "gsap";
 
 import GUI from "lil-gui";
