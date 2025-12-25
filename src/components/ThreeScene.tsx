@@ -25,7 +25,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
-  // Load textures - extracted for clarity
+  // * Load textures - extracted for clarity
   function loadTextures() {
     const loadingManager = new THREE.LoadingManager();
     loadingManager.onLoad = () => {
@@ -39,12 +39,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { doorColorTextureLoaded };
   }
 
-  // Create scene - extracted for clarity
+  // * Create scene - extracted for clarity
   function createScene() {
     return new THREE.Scene();
   }
 
-  // Create mesh - extracted for clarity
+  // * Create mesh - extracted for clarity
   function createMesh(texture: THREE.Texture) {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({
@@ -55,7 +55,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { geometry, material, mesh };
   }
 
-  // Create camera - extracted for clarity
+  // * Create camera - extracted for clarity
   function createCamera(aspectRatio: number) {
     const fov = 75;
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
@@ -64,7 +64,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return camera;
   }
 
-  // Create renderer - extracted for clarity
+  // * Create renderer - extracted for clarity
   function createRenderer(canvas: HTMLCanvasElement, width: number, height: number) {
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setSize(width, height, false);
@@ -74,7 +74,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return renderer;
   }
 
-  // Create OrbitControls - extracted for clarity
+  // * Create helpers - extracted for clarity
+  function createHelpers() {
+    const axisHelper = new THREE.AxesHelper(3);
+
+    return { axisHelper };
+  }
+
+  // * Create OrbitControls - extracted for clarity
   function createOrbitControls(camera: THREE.PerspectiveCamera, canvas: HTMLCanvasElement) {
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
@@ -82,14 +89,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
-  // Create helpers - extracted for clarity
-  function createHelpers() {
-    const axisHelper = new THREE.AxesHelper(3);
-
-    return { axisHelper };
-  }
-
-  // Setup GUI - extracted for clarity
+  // * Setup GUI - extracted for clarity
   function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
     const gui = new GUI({
       title: "THREE.JS GUI",
