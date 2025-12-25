@@ -39,6 +39,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { doorColorTextureLoaded };
   }
 
+  // Create scene - extracted for clarity
+  function createScene() {
+    return new THREE.Scene();
+  }
+
   // Setup GUI - extracted for clarity
   function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
     const gui = new GUI({
@@ -137,7 +142,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { doorColorTextureLoaded } = loadTextures();
 
       // Initialize Three.js components
-      const scene = new THREE.Scene();
+      const scene = createScene();
       const geometry = new THREE.BoxGeometry(1, 1, 1);
       const material = new THREE.MeshBasicMaterial({
         map: doorColorTextureLoaded,
