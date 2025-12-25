@@ -44,6 +44,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new THREE.Scene();
   }
 
+  // Create mesh - extracted for clarity
+  function createMesh(texture: THREE.Texture) {
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    return { geometry, material, mesh };
+  }
+
   // Setup GUI - extracted for clarity
   function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
     const gui = new GUI({
@@ -143,11 +154,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       // Initialize Three.js components
       const scene = createScene();
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
-      const material = new THREE.MeshBasicMaterial({
-        map: doorColorTextureLoaded,
-      });
-      const mesh = new THREE.Mesh(geometry, material);
+      const { geometry, material, mesh } = createMesh(doorColorTextureLoaded);
 
       const fov = 75;
       const camera = new THREE.PerspectiveCamera(
