@@ -31,8 +31,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     loadingManager.onLoad = () => {
       console.log("Textures loaded");
     };
-
     const textureLoader = new THREE.TextureLoader(loadingManager);
+
+    const doorTexturesArray = [
+      doorColorTexture,
+      doorAlphaTexture,
+      doorAmbientOcclusionTexture,
+      doorHeightTexture,
+      doorNormalTexture,
+      doorMetalnessTexture,
+      doorRoughnessTexture,
+    ] as const;
+
     const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
     doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
 
@@ -65,7 +75,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Create renderer - extracted for clarity
-  function createRenderer(canvas: HTMLCanvasElement, width: number, height: number) {
+  function createRenderer(
+    canvas: HTMLCanvasElement,
+    width: number,
+    height: number
+  ) {
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setSize(width, height, false);
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
@@ -82,7 +96,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Create OrbitControls - extracted for clarity
-  function createOrbitControls(camera: THREE.PerspectiveCamera, canvas: HTMLCanvasElement) {
+  function createOrbitControls(
+    camera: THREE.PerspectiveCamera,
+    canvas: HTMLCanvasElement
+  ) {
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
 
