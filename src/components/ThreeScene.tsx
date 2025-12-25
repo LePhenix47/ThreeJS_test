@@ -55,6 +55,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { geometry, material, mesh };
   }
 
+  // Create camera - extracted for clarity
+  function createCamera(aspectRatio: number) {
+    const fov = 75;
+    const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
+    camera.position.z = 10;
+
+    return camera;
+  }
+
   // Setup GUI - extracted for clarity
   function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
     const gui = new GUI({
@@ -155,13 +164,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Initialize Three.js components
       const scene = createScene();
       const { geometry, material, mesh } = createMesh(doorColorTextureLoaded);
-
-      const fov = 75;
-      const camera = new THREE.PerspectiveCamera(
-        fov,
-        clientWidth / clientHeight
-      );
-      camera.position.z = 10;
+      const camera = createCamera(clientWidth / clientHeight);
 
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
       renderer.setSize(clientWidth, clientHeight, false);
