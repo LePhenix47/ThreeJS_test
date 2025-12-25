@@ -25,6 +25,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
+  // Load textures - extracted for clarity
+  function loadTextures() {
+    const loadingManager = new THREE.LoadingManager();
+    loadingManager.onLoad = () => {
+      console.log("Textures loaded");
+    };
+
+    const textureLoader = new THREE.TextureLoader(loadingManager);
+    const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
+    doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
+
+    return { doorColorTextureLoaded };
+  }
+
   // Setup GUI - extracted for clarity
   function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
     const gui = new GUI({
@@ -119,15 +133,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { clientWidth, clientHeight } = parent;
 
-      // Load textures with loading manager
-      const loadingManager = new THREE.LoadingManager();
-      loadingManager.onLoad = () => {
-        console.log("Textures loaded");
-      };
-
-      const textureLoader = new THREE.TextureLoader(loadingManager);
-      const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
-      doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
+      // Load textures
+      const { doorColorTextureLoaded } = loadTextures();
 
       // Initialize Three.js components
       const scene = new THREE.Scene();
