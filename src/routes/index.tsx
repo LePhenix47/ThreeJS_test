@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import ThreeScene from "@/components/ThreeScene";
+
+import ThreeScene from "@/components/ThreeScene/ThreeScene";
+import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
 import "./index.scss";
 
 export const Route = createFileRoute("/")({
@@ -35,6 +36,7 @@ function IndexComponent() {
     <div className="index-page">
       <div className="index-page__scene-container">
         <ThreeScene />
+        <LoadingSpinner />
       </div>
     </div>
   );

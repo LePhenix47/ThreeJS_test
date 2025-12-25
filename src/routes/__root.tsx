@@ -10,7 +10,7 @@ import { createPortal } from "react-dom";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useAppStore } from "@/stores/useAppStore";
 import env from "@env";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeToggle } from "@/components/ThemeToggle/ThemeToggle";
 
 function NotFound() {
   return (
