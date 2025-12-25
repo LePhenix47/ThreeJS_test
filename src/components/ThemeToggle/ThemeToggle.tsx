@@ -1,6 +1,6 @@
 import { useAppStore } from "@/stores/useAppStore";
 
-export function ThemeToggle() {
+function ThemeToggle() {
   const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
 
@@ -49,3 +49,5 @@ export function ThemeToggle() {
     </div>
   );
 }
+
+export default ThemeToggle;
