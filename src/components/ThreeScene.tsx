@@ -74,6 +74,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return renderer;
   }
 
+  // Create OrbitControls - extracted for clarity
+  function createOrbitControls(camera: THREE.PerspectiveCamera, canvas: HTMLCanvasElement) {
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+
+    return controls;
+  }
+
   // Setup GUI - extracted for clarity
   function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
     const gui = new GUI({
@@ -190,8 +198,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(camera);
 
       // OrbitControls for camera movement
-      const controls = new OrbitControls(camera, canvas);
-      controls.enableDamping = true;
+      const controls = createOrbitControls(camera, canvas);
 
       // Clock for delta time
       const clock = new THREE.Clock();
