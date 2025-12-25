@@ -25,6 +25,92 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
+  // Setup GUI - extracted for clarity
+  function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
+    const gui = new GUI({
+      title: "THREE.JS GUI",
+      width: 300,
+    });
+
+    const oneFullRevolution = Math.PI * 2;
+
+    const debugObject = {
+      geometry: {
+        subdivisions: 2,
+      },
+      material: {
+        color: "#ff0000",
+      },
+      animations: {
+        spin: () => {
+          gsap.to(mesh.rotation, {
+            duration: 1,
+            y: mesh.rotation.y + oneFullRevolution,
+          });
+        },
+      },
+    };
+
+    // GUI Folders - Nested structure
+    const cubeFolder = gui.addFolder("Cube");
+    const geometryFolder = cubeFolder.addFolder("Geometry");
+    const materialFolder = cubeFolder.addFolder("Material");
+    const meshFolder = cubeFolder.addFolder("Mesh");
+    const animationsFolder = cubeFolder.addFolder("Animations");
+
+    // Geometry controls
+    geometryFolder
+      .add(debugObject.geometry, "subdivisions")
+      .min(1)
+      .max(20)
+      .step(1)
+      .onFinishChange(() => {
+        mesh.geometry.dispose();
+        mesh.geometry = new THREE.BoxGeometry(
+          1,
+          1,
+          1,
+          debugObject.geometry.subdivisions,
+          debugObject.geometry.subdivisions,
+          debugObject.geometry.subdivisions
+        );
+      });
+
+    // Material controls
+    materialFolder.add(material, "wireframe").name("Wireframe");
+    materialFolder
+      .addColor(debugObject.material, "color")
+      .onChange((newColorValue: string) => {
+        material.color.set(newColorValue);
+      });
+
+    // Mesh controls
+    meshFolder
+      .add(mesh.position, "x")
+      .min(-3)
+      .max(3)
+      .step(0.01)
+      .name("Position X");
+    meshFolder
+      .add(mesh.position, "y")
+      .min(-3)
+      .max(3)
+      .step(0.01)
+      .name("Position Y");
+    meshFolder
+      .add(mesh.position, "z")
+      .min(-3)
+      .max(3)
+      .step(0.01)
+      .name("Position Z");
+    meshFolder.add(mesh, "visible").name("Visibility");
+
+    // Animation controls
+    animationsFolder.add(debugObject.animations, "spin");
+
+    return gui;
+  }
+
   // Helper functions inside component for HMR
   const setupThreeScene = useCallback(
     (canvas: HTMLCanvasElement) => {
@@ -68,86 +154,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(axisHelper);
 
       // Setup GUI
-      const gui = new GUI({
-        title: "THREE.JS GUI",
-        width: 300,
-      });
-
-      const oneFullRevolution = Math.PI * 2;
-
-      const debugObject = {
-        geometry: {
-          subdivisions: 2,
-        },
-        material: {
-          color: "#ff0000",
-        },
-        animations: {
-          spin: () => {
-            gsap.to(mesh.rotation, {
-              duration: 1,
-              y: mesh.rotation.y + oneFullRevolution,
-            });
-          },
-        },
-      };
-
-      // GUI Folders - Nested structure
-      const cubeFolder = gui.addFolder("Cube");
-      const geometryFolder = cubeFolder.addFolder("Geometry");
-      const materialFolder = cubeFolder.addFolder("Material");
-      const meshFolder = cubeFolder.addFolder("Mesh");
-      const animationsFolder = cubeFolder.addFolder("Animations");
-
-      // Geometry controls
-      geometryFolder
-        .add(debugObject.geometry, "subdivisions")
-        .min(1)
-        .max(20)
-        .step(1)
-        .onFinishChange(() => {
-          mesh.geometry.dispose();
-          mesh.geometry = new THREE.BoxGeometry(
-            1,
-            1,
-            1,
-            debugObject.geometry.subdivisions,
-            debugObject.geometry.subdivisions,
-            debugObject.geometry.subdivisions
-          );
-        });
-
-      // Material controls
-      materialFolder.add(material, "wireframe").name("Wireframe");
-      materialFolder
-        .addColor(debugObject.material, "color")
-        .onChange((newColorValue: string) => {
-          material.color.set(newColorValue);
-        });
-
-      // Mesh controls
-      meshFolder
-        .add(mesh.position, "x")
-        .min(-3)
-        .max(3)
-        .step(0.01)
-        .name("Position X");
-      meshFolder
-        .add(mesh.position, "y")
-        .min(-3)
-        .max(3)
-        .step(0.01)
-        .name("Position Y");
-      meshFolder
-        .add(mesh.position, "z")
-        .min(-3)
-        .max(3)
-        .step(0.01)
-        .name("Position Z");
-      meshFolder.add(mesh, "visible").name("Visibility");
-
-      // Animation controls
-      animationsFolder.add(debugObject.animations, "spin");
+      const gui = setupGUI(mesh, material);
 
       // Add mesh to scene
       mesh.position.set(0, 0, 0);
