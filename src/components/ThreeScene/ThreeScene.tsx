@@ -132,6 +132,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
+  // * Type definition for debug GUI object
+  type DebugGUIObjDefinition = {
+    geometry: {
+      subdivisions: number;
+    };
+    material: Partial<THREE.MeshBasicMaterial>;
+    textures: Partial<THREE.Texture>;
+    animations: {
+      spin: () => void;
+    };
+  };
+
   // * Create debug object - single source of truth for initial values
   function createDebugObject(mesh: THREE.Mesh) {
     const oneFullRevolution = Math.PI * 2;
@@ -140,25 +152,23 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       geometry: {
         subdivisions: 2,
       },
-      material: {
-        // color: "#ff0000",
-      },
+      material: {},
       textures: {
         repeat: {
           x: 1,
           y: 1,
-          wrapS: THREE.RepeatWrapping,
-          wrapT: THREE.RepeatWrapping,
-        },
+        } as THREE.Vector2,
+        wrapS: THREE.RepeatWrapping,
+        wrapT: THREE.RepeatWrapping,
         offset: {
           x: 0,
           y: 0,
-        },
+        } as THREE.Vector2,
         rotation: 0,
         center: {
           x: 0.5,
           y: 0.5,
-        },
+        } as THREE.Vector2,
       },
       animations: {
         spin: () => {
@@ -168,7 +178,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           });
         },
       },
-    };
+    } as const satisfies DebugGUIObjDefinition;
   }
 
   // * Apply debug object values to THREE.js scene objects
@@ -180,8 +190,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Apply material properties
 
     // Apply texture properties
-    texture.wrapS = debugObject.textures.repeat.wrapS;
-    texture.wrapT = debugObject.textures.repeat.wrapT;
+    texture.wrapS = debugObject.textures.wrapS;
+    texture.wrapT = debugObject.textures.wrapT;
     texture.repeat.set(
       debugObject.textures.repeat.x,
       debugObject.textures.repeat.y
@@ -245,13 +255,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       });
 
     texturesFolder
-      .add(debugObject.textures.repeat, "wrapS", {
+      .add(debugObject.textures, "wrapS", {
         RepeatWrapping: THREE.RepeatWrapping,
         ClampToEdgeWrapping: THREE.ClampToEdgeWrapping,
         MirroredRepeatWrapping: THREE.MirroredRepeatWrapping,
       })
       .onChange(() => {
-        doorColorTextureLoaded.wrapS = debugObject.textures.repeat.wrapS;
+        doorColorTextureLoaded.wrapS = debugObject.textures.wrapS;
         doorColorTextureLoaded.needsUpdate = true;
       });
 
@@ -267,13 +277,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       });
 
     texturesFolder
-      .add(debugObject.textures.repeat, "wrapT", {
+      .add(debugObject.textures, "wrapT", {
         RepeatWrapping: THREE.RepeatWrapping,
         ClampToEdgeWrapping: THREE.ClampToEdgeWrapping,
         MirroredRepeatWrapping: THREE.MirroredRepeatWrapping,
       })
       .onChange(() => {
-        doorColorTextureLoaded.wrapT = debugObject.textures.repeat.wrapT;
+        doorColorTextureLoaded.wrapT = debugObject.textures.wrapT;
         doorColorTextureLoaded.needsUpdate = true;
       });
 
