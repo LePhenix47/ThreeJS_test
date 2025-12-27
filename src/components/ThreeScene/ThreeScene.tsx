@@ -69,7 +69,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
     doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
-    doorColorTextureLoaded.center.set(0.5, 0.5);
 
     return { doorColorTextureLoaded };
   }
@@ -133,25 +132,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
-  // * Setup GUI - extracted for clarity
-  function setupGUI(
-    mesh: THREE.Mesh,
-    material: THREE.MeshBasicMaterial,
-    doorColorTextureLoaded: THREE.Texture
-  ) {
-    const gui = new GUI({
-      title: "THREE.JS GUI",
-      width: 300,
-    });
-
+  // * Create debug object - single source of truth for initial values
+  function createDebugObject(mesh: THREE.Mesh) {
     const oneFullRevolution = Math.PI * 2;
 
-    const debugObject = {
+    return {
       geometry: {
         subdivisions: 2,
       },
       material: {
-        color: "#ff0000",
+        // color: "#ff0000",
       },
       textures: {
         repeat: {
@@ -179,6 +169,45 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         },
       },
     };
+  }
+
+  // * Apply debug object values to THREE.js scene objects
+  function applyDebugObjectToScene(
+    debugObject: ReturnType<typeof createDebugObject>,
+    material: THREE.MeshBasicMaterial,
+    texture: THREE.Texture
+  ) {
+    // Apply material properties
+
+    // Apply texture properties
+    texture.wrapS = debugObject.textures.repeat.wrapS;
+    texture.wrapT = debugObject.textures.repeat.wrapT;
+    texture.repeat.set(
+      debugObject.textures.repeat.x,
+      debugObject.textures.repeat.y
+    );
+    texture.offset.set(
+      debugObject.textures.offset.x,
+      debugObject.textures.offset.y
+    );
+    texture.rotation = (debugObject.textures.rotation * Math.PI) / 180;
+    texture.center.set(
+      debugObject.textures.center.x,
+      debugObject.textures.center.y
+    );
+  }
+
+  // * Setup GUI - extracted for clarity
+  function setupGUI(
+    mesh: THREE.Mesh,
+    material: THREE.MeshBasicMaterial,
+    doorColorTextureLoaded: THREE.Texture,
+    debugObject: ReturnType<typeof createDebugObject>
+  ) {
+    const gui = new GUI({
+      title: "THREE.JS GUI",
+      width: 300,
+    });
 
     // GUI Folders - Nested structure
     const cubeFolder = gui.addFolder("Cube");
@@ -301,12 +330,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // Material controls
     materialFolder.add(material, "wireframe").name("Wireframe");
-    materialFolder
-      .addColor(debugObject.material, "color")
-      .onChange((newColorValue: string) => {
-        material.color.set(newColorValue);
-      });
-
     // Mesh controls
     meshFolder
       .add(mesh.position, "x")
@@ -331,7 +354,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Animation controls
     animationsFolder.add(debugObject.animations, "spin");
 
-    return gui;
+    return { gui, debugObject };
   }
 
   // Helper functions inside component for HMR
@@ -357,8 +380,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Add helpers to scene
       scene.add(axisHelper);
 
-      // Setup GUI
-      const gui = setupGUI(mesh, material, doorColorTextureLoaded);
+      // Create debug object (single source of truth)
+      const debugObject = createDebugObject(mesh);
+
+      // Apply initial values from debugObject to THREE.js objects
+      applyDebugObjectToScene(debugObject, material, doorColorTextureLoaded);
+
+      // Setup GUI controls (no initialization side effects)
+      const { gui } = setupGUI(
+        mesh,
+        material,
+        doorColorTextureLoaded,
+        debugObject
+      );
 
       // Add mesh to scene
       mesh.position.set(0, 0, 0);
