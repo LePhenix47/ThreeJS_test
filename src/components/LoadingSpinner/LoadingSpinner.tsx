@@ -14,19 +14,28 @@ function LoadingSpinner() {
   useEffect(() => {
     if (!circleRef.current || !isLoading) return;
 
+    const circle = circleRef.current;
     const tl = gsap.timeline({ repeat: -1 });
 
-    // Animate drawing the circle with DrawSVG
-    tl.fromTo(
-      circleRef.current,
-      { drawSVG: "0% 30%" },
-      { drawSVG: "70% 100%", duration: 1, ease: "power2.inOut" }
-    ).to(circleRef.current, {
-      rotation: 360,
-      duration: 1.5,
-      ease: "linear",
+    gsap.set(circle, {
+      drawSVG: "0.05% 0%",
       transformOrigin: "50% 50%",
-    }, 0);
+    });
+
+    tl.to(circle, { drawSVG: true, duration: 1 })
+      .to(circle, {
+        drawSVG: "99.85% 99.85%",
+        duration: 1,
+      })
+      .to(
+        circle,
+        {
+          rotation: "720deg",
+          duration: tl.duration(),
+          ease: "linear",
+        },
+        0
+      );
 
     return () => {
       tl.kill();
