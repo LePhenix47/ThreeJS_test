@@ -80,8 +80,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Create mesh - extracted for clarity
   function createMesh(texture: THREE.Texture) {
-    // const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const geometry = new THREE.SphereGeometry(1, 32, 32);
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshBasicMaterial({
       map: texture,
     });
@@ -94,7 +93,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createCamera(aspectRatio: number) {
     const fov = 75;
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
-    camera.position.z = 10;
+    camera.position.z = 3;
+    camera.position.x = 3;
+    camera.position.y = 3;
 
     return camera;
   }
@@ -235,6 +236,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const { axisHelper } = createHelpers();
 
+      console.log(geometry.attributes.uv);
+
       // Add helpers to scene
       scene.add(axisHelper);
 
@@ -244,6 +247,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Add mesh to scene
       mesh.position.set(0, 0, 0);
       scene.add(mesh);
+
       scene.add(camera);
 
       // OrbitControls for camera movement
