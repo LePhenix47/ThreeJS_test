@@ -133,7 +133,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Setup GUI - extracted for clarity
-  function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
+  function setupGUI(
+    mesh: THREE.Mesh,
+    material: THREE.MeshBasicMaterial,
+    doorColorTextureLoaded: THREE.Texture
+  ) {
     const gui = new GUI({
       title: "THREE.JS GUI",
       width: 300,
@@ -147,6 +151,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       },
       material: {
         color: "#ff0000",
+      },
+      textures: {
+        repeat: {
+          x: 1,
+          y: 1,
+          wrapS: THREE.RepeatWrapping,
+          wrapT: THREE.RepeatWrapping,
+        },
+        offset: {
+          x: 0,
+          y: 0,
+        },
       },
       animations: {
         spin: () => {
@@ -162,6 +178,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const cubeFolder = gui.addFolder("Cube");
     const geometryFolder = cubeFolder.addFolder("Geometry");
     const materialFolder = cubeFolder.addFolder("Material");
+    const texturesFolder = cubeFolder.addFolder("Textures");
     const meshFolder = cubeFolder.addFolder("Mesh");
     const animationsFolder = cubeFolder.addFolder("Animations");
 
@@ -181,6 +198,68 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           debugObject.geometry.subdivisions,
           debugObject.geometry.subdivisions
         );
+      });
+
+    texturesFolder
+      .add(debugObject.textures.repeat, "x")
+      .min(1)
+      .max(10)
+      .step(1)
+      .onChange(() => {
+        doorColorTextureLoaded.repeat.x = debugObject.textures.repeat.x;
+      });
+
+    texturesFolder
+      .add(debugObject.textures.repeat, "wrapS", {
+        RepeatWrapping: THREE.RepeatWrapping,
+        ClampToEdgeWrapping: THREE.ClampToEdgeWrapping,
+        MirroredRepeatWrapping: THREE.MirroredRepeatWrapping,
+      })
+      .onChange(() => {
+        doorColorTextureLoaded.wrapS = debugObject.textures.repeat.wrapS;
+        doorColorTextureLoaded.needsUpdate = true;
+      });
+
+    // doorColorTextureLoaded.wrapT = THREE.RepeatWrapping;
+
+    texturesFolder
+      .add(debugObject.textures.repeat, "y")
+      .min(1)
+      .max(10)
+      .step(1)
+      .onChange(() => {
+        doorColorTextureLoaded.repeat.y = debugObject.textures.repeat.y;
+      });
+
+    texturesFolder
+      .add(debugObject.textures.repeat, "wrapT", {
+        RepeatWrapping: THREE.RepeatWrapping,
+        ClampToEdgeWrapping: THREE.ClampToEdgeWrapping,
+        MirroredRepeatWrapping: THREE.MirroredRepeatWrapping,
+      })
+      .onChange(() => {
+        doorColorTextureLoaded.wrapT = debugObject.textures.repeat.wrapT;
+        doorColorTextureLoaded.needsUpdate = true;
+      });
+
+    texturesFolder
+      .add(debugObject.textures.offset, "x")
+      .min(-1)
+      .max(1)
+      .step(0.01)
+      .name("Offset X")
+      .onChange(() => {
+        doorColorTextureLoaded.offset.x = debugObject.textures.offset.x;
+      });
+
+    texturesFolder
+      .add(debugObject.textures.offset, "y")
+      .min(-1)
+      .max(1)
+      .step(0.01)
+      .name("Offset Y")
+      .onChange(() => {
+        doorColorTextureLoaded.offset.y = debugObject.textures.offset.y;
       });
 
     // Material controls
@@ -242,7 +321,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(axisHelper);
 
       // Setup GUI
-      const gui = setupGUI(mesh, material);
+      const gui = setupGUI(mesh, material, doorColorTextureLoaded);
 
       // Add mesh to scene
       mesh.position.set(0, 0, 0);
