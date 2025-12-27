@@ -69,6 +69,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
     doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
+    doorColorTextureLoaded.center.set(0.5, 0.5);
 
     return { doorColorTextureLoaded };
   }
@@ -162,6 +163,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         offset: {
           x: 0,
           y: 0,
+        },
+        rotation: 0,
+        center: {
+          x: 0.5,
+          y: 0.5,
         },
       },
       animations: {
@@ -260,6 +266,37 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Offset Y")
       .onChange(() => {
         doorColorTextureLoaded.offset.y = debugObject.textures.offset.y;
+      });
+
+    texturesFolder
+      .add(debugObject.textures, "rotation")
+      .min(0)
+      .max(360)
+      .step(1)
+      .name("Rotation (θ in deg)")
+      .onChange(() => {
+        doorColorTextureLoaded.rotation =
+          (debugObject.textures.rotation * Math.PI) / 180;
+      });
+
+    texturesFolder
+      .add(debugObject.textures.center, "x")
+      .min(0)
+      .max(1)
+      .step(0.01)
+      .name("Rota. center X")
+      .onChange(() => {
+        doorColorTextureLoaded.center.x = debugObject.textures.center.x;
+      });
+
+    texturesFolder
+      .add(debugObject.textures.center, "y")
+      .min(0)
+      .max(1)
+      .step(0.01)
+      .name("Rota. center Y")
+      .onChange(() => {
+        doorColorTextureLoaded.center.y = debugObject.textures.center.y;
       });
 
     // Material controls
