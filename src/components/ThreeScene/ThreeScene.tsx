@@ -29,6 +29,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Load textures - extracted for clarity
   function loadTextures() {
+    // ? We're not in a React component, so we can't use `useLoadingStore`
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
     const loadingManager = new THREE.LoadingManager();
@@ -122,10 +123,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Create OrbitControls - extracted for clarity
-  function createOrbitControls(
-    camera: THREE.PerspectiveCamera,
-    canvas: HTMLCanvasElement
-  ) {
+  function createOrbitControls({
+    camera,
+    canvas,
+  }: {
+    camera: THREE.PerspectiveCamera;
+    canvas: HTMLCanvasElement;
+  }) {
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
 
@@ -145,7 +149,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   };
 
   // * Create debug object - single source of truth for initial values
-  function createDebugObject(mesh: THREE.Mesh) {
+  function createDebugObject({ mesh }: { mesh: THREE.Mesh }) {
     const oneFullRevolution = Math.PI * 2;
 
     return {
@@ -185,11 +189,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Apply debug object values to THREE.js scene objects
-  function applyDebugObjectToScene(
-    debugObject: ReturnType<typeof createDebugObject>,
-    material: THREE.MeshBasicMaterial,
-    texture: THREE.Texture
-  ) {
+  function applyDebugObjectToScene({
+    debugObject,
+    material,
+    texture,
+  }: {
+    debugObject: ReturnType<typeof createDebugObject>;
+    material: THREE.MeshBasicMaterial;
+    texture: THREE.Texture;
+  }) {
     // Apply material properties
 
     // Apply texture properties
@@ -211,12 +219,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Setup GUI - extracted for clarity
-  function setupGUI(
-    mesh: THREE.Mesh,
-    material: THREE.MeshBasicMaterial,
-    doorColorTextureLoaded: THREE.Texture,
-    debugObject: ReturnType<typeof createDebugObject>
-  ) {
+  function setupGUI({
+    mesh,
+    material,
+    doorColorTextureLoaded,
+    debugObject,
+  }: {
+    mesh: THREE.Mesh;
+    material: THREE.MeshBasicMaterial;
+    doorColorTextureLoaded: THREE.Texture;
+    debugObject: ReturnType<typeof createDebugObject>;
+  }) {
     const gui = new GUI({
       title: "THREE.JS GUI",
       width: 300,
@@ -430,18 +443,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(axisHelper);
 
       // Create debug object (single source of truth)
-      const debugObject = createDebugObject(mesh);
+      const debugObject = createDebugObject({ mesh });
 
       // Apply initial values from debugObject to THREE.js objects
-      applyDebugObjectToScene(debugObject, material, doorColorTextureLoaded);
+      applyDebugObjectToScene({
+        debugObject,
+        material,
+        texture: doorColorTextureLoaded,
+      });
 
       // Setup GUI controls (no initialization side effects)
-      const { gui } = setupGUI(
+      const { gui } = setupGUI({
         mesh,
         material,
         doorColorTextureLoaded,
-        debugObject
-      );
+        debugObject,
+      });
 
       // Add mesh to scene
       mesh.position.set(0, 0, 0);
@@ -450,7 +467,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(camera);
 
       // OrbitControls for camera movement
-      const controls = createOrbitControls(camera, canvas);
+      const controls = createOrbitControls({ camera, canvas });
 
       // Clock for delta time
       const clock = new THREE.Clock();
