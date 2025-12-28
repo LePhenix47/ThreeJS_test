@@ -75,6 +75,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       map: texture,
     });
 
+    // * Other material types (uncomment to test):
+    // const material = new THREE.MeshBasicMaterial({ map: texture });
+    // const material = new THREE.MeshNormalMaterial();
+    // const material = new THREE.MeshMatcapMaterial({ matcap: texture });
+    // const material = new THREE.MeshDepthMaterial();
+    // const material = new THREE.MeshLambertMaterial({ map: texture });
+    // const material = new THREE.MeshPhongMaterial({ map: texture });
+    // const material = new THREE.MeshToonMaterial({ map: texture });
+
     // Sphere geometry and mesh
     const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
     const sphereMesh = new THREE.Mesh(sphereGeometry, material);
