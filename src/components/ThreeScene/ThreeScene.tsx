@@ -154,6 +154,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       },
       material: {},
       textures: {
+        generateMipmaps: false,
+        minFilter: THREE.NearestFilter,
+        magFilter: THREE.NearestFilter,
         repeat: {
           x: 1,
           y: 1,
@@ -243,6 +246,42 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           debugObject.geometry.subdivisions,
           debugObject.geometry.subdivisions
         );
+      });
+
+    // Texture filtering controls
+    texturesFolder
+      .add(debugObject.textures, "generateMipmaps")
+      .name("Generate Mipmaps")
+      .onChange(() => {
+        doorColorTextureLoaded.generateMipmaps =
+          debugObject.textures.generateMipmaps;
+        doorColorTextureLoaded.needsUpdate = true;
+      });
+
+    texturesFolder
+      .add(debugObject.textures, "minFilter", {
+        NearestFilter: THREE.NearestFilter,
+        NearestMipmapNearestFilter: THREE.NearestMipmapNearestFilter,
+        NearestMipmapLinearFilter: THREE.NearestMipmapLinearFilter,
+        LinearFilter: THREE.LinearFilter,
+        LinearMipmapNearestFilter: THREE.LinearMipmapNearestFilter,
+        LinearMipmapLinearFilter: THREE.LinearMipmapLinearFilter,
+      })
+      .name("Min Filter")
+      .onChange(() => {
+        doorColorTextureLoaded.minFilter = debugObject.textures.minFilter;
+        doorColorTextureLoaded.needsUpdate = true;
+      });
+
+    texturesFolder
+      .add(debugObject.textures, "magFilter", {
+        NearestFilter: THREE.NearestFilter,
+        LinearFilter: THREE.LinearFilter,
+      })
+      .name("Mag Filter")
+      .onChange(() => {
+        doorColorTextureLoaded.magFilter = debugObject.textures.magFilter;
+        doorColorTextureLoaded.needsUpdate = true;
       });
 
     texturesFolder
