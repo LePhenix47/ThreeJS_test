@@ -29,6 +29,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Load textures - extracted for clarity
   function loadTextures() {
+    // ? We're not in a React component, so we can't use `useLoadingStore`
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
     const loadingManager = new THREE.LoadingManager();
@@ -120,16 +121,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
-  // * Setup GUI - extracted for clarity
-  function setupGUI(mesh: THREE.Mesh, material: THREE.MeshBasicMaterial) {
-    const gui = new GUI({
-      title: "THREE.JS GUI",
-      width: 300,
-    });
+  // * Type definition for debug GUI object
+  type DebugGUIObjDefinition = {
+    geometry: {
+      subdivisions: number;
+    };
+    material: {
+      color?: string;
+    };
+    animations: {
+      spin: () => void;
+    };
+  };
 
+  // * Create debug object - single source of truth for initial values
+  function createDebugObject({ mesh }: { mesh: THREE.Mesh }) {
     const oneFullRevolution = Math.PI * 2;
 
-    const debugObject = {
+    return {
       geometry: {
         subdivisions: 2,
       },
@@ -144,7 +153,23 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           });
         },
       },
-    };
+    } as const satisfies DebugGUIObjDefinition;
+  }
+
+  // * Setup GUI - extracted for clarity
+  function setupGUI({
+    mesh,
+    material,
+    debugObject,
+  }: {
+    mesh: THREE.Mesh;
+    material: THREE.MeshBasicMaterial;
+    debugObject: ReturnType<typeof createDebugObject>;
+  }) {
+    const gui = new GUI({
+      title: "THREE.JS GUI",
+      width: 300,
+    });
 
     // GUI Folders - Nested structure
     const cubeFolder = gui.addFolder("Cube");
@@ -203,7 +228,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Animation controls
     animationsFolder.add(debugObject.animations, "spin");
 
-    return gui;
+    return { gui };
   }
 
   // Helper functions inside component for HMR
@@ -227,8 +252,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Add helpers to scene
       scene.add(axisHelper);
 
-      // Setup GUI
-      const gui = setupGUI(mesh, material);
+      // Create debug object (single source of truth)
+      const debugObject = createDebugObject({ mesh });
+
+      // Setup GUI controls
+      const { gui } = setupGUI({ mesh, material, debugObject });
 
       // Add mesh to scene
       mesh.position.set(0, 0, 0);
