@@ -126,9 +126,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     geometry: {
       subdivisions: number;
     };
-    material: {
-      color?: string;
-    };
+    material: Partial<THREE.MeshBasicMaterial>;
     animations: {
       spin: () => void;
     };
@@ -142,9 +140,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       geometry: {
         subdivisions: 2,
       },
-      material: {
-        color: "#ff0000",
-      },
+      material: {},
       animations: {
         spin: () => {
           gsap.to(mesh.rotation, {
@@ -198,11 +194,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // Material controls
     materialFolder.add(material, "wireframe").name("Wireframe");
-    materialFolder
-      .addColor(debugObject.material, "color")
-      .onChange((newColorValue: string) => {
-        material.color.set(newColorValue);
-      });
+    // materialFolder
+    //   .addColor(debugObject.material, "color")
+    //   .onChange((newColorValue: string) => {
+    //     material.color.set(newColorValue);
+    //   });
 
     // Mesh controls
     meshFolder
