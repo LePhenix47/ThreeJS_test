@@ -140,6 +140,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Type definition for debug GUI object
+  // NOTE: Using Partial<THREE.MeshStandardMaterialProperties> provides:
+  // 1. Autocomplete when defining material properties in debugObject
+  // 2. Type safety when using debugObject.material in GUI setup
+  // DO NOT replace with explicit types like { metalness: number; roughness: number }
   type DebugGUIObjDefinition = {
     material: Partial<THREE.MeshStandardMaterialProperties>;
     animations: {
