@@ -63,6 +63,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
     doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
 
+    const doorHeightTextureLoaded = textureLoader.load(doorHeightTexture);
+
     /**
      * Load HDR environment map
      * HDR (High Dynamic Range) images provide realistic lighting with wider range of luminosity.
@@ -78,7 +80,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       texture.mapping = THREE.EquirectangularReflectionMapping;
     });
 
-    return { doorColorTextureLoaded, environmentMap };
+    return { doorColorTextureLoaded, doorHeightTextureLoaded, environmentMap };
   }
 
   // * Create scene - extracted for clarity
@@ -87,11 +89,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Create meshes - extracted for clarity
-  function createMeshes(texture: THREE.Texture) {
+  function createMeshes({
+    colorTexture,
+    heightTexture,
+  }: {
+    colorTexture: THREE.Texture;
+    heightTexture: THREE.Texture;
+  }) {
     // Shared material
     const material = new THREE.MeshStandardMaterial({
-      map: texture,
+      map: colorTexture,
+      displacementMap: heightTexture,
+      displacementScale: 0.1,
     });
+    material.side = THREE.DoubleSide;
 
     // * Other material types (uncomment to test):
     // const material = new THREE.MeshBasicMaterial({ map: texture });
@@ -253,13 +264,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { clientWidth, clientHeight } = parent;
 
       // Load textures
-      const { doorColorTextureLoaded, environmentMap } = loadTextures();
+      const {
+        doorColorTextureLoaded,
+        doorHeightTextureLoaded,
+        environmentMap,
+      } = loadTextures();
 
       // Initialize Three.js components
       const scene = createScene();
-      const { material, sphere, plane, torus } = createMeshes(
-        doorColorTextureLoaded
-      );
+      const { material, sphere, plane, torus } = createMeshes({
+        colorTexture: doorColorTextureLoaded,
+        heightTexture: doorHeightTextureLoaded,
+      });
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const { axisHelper } = createHelpers();
