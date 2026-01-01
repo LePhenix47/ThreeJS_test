@@ -69,6 +69,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       doorAmbientOcclusionTexture
     );
 
+    const doorNormalTextureLoaded = textureLoader.load(doorNormalTexture);
+
+    const doorMetalnessTextureLoaded = textureLoader.load(doorMetalnessTexture);
+
+    const doorRoughnessTextureLoaded = textureLoader.load(doorRoughnessTexture);
+
+    const doorAlphaTextureLoaded = textureLoader.load(doorAlphaTexture);
+
     /**
      * Load HDR environment map
      * HDR (High Dynamic Range) images provide realistic lighting with wider range of luminosity.
@@ -88,6 +96,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       doorColorTextureLoaded,
       doorHeightTextureLoaded,
       doorAmbientOcclusionTextureLoaded,
+      doorNormalTextureLoaded,
+      doorMetalnessTextureLoaded,
+      doorRoughnessTextureLoaded,
+      doorAlphaTextureLoaded,
       environmentMap,
     };
   }
@@ -102,10 +114,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     colorTexture,
     heightTexture,
     aoTexture,
+    normalTexture,
+    metalnessTexture,
+    roughnessTexture,
+    alphaTexture,
   }: {
     colorTexture: THREE.Texture;
     heightTexture: THREE.Texture;
     aoTexture: THREE.Texture;
+    normalTexture: THREE.Texture;
+    metalnessTexture: THREE.Texture;
+    roughnessTexture: THREE.Texture;
+    alphaTexture: THREE.Texture;
   }) {
     // Shared material
     const material = new THREE.MeshStandardMaterial({
@@ -113,6 +133,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       displacementMap: heightTexture,
       displacementScale: 0.1,
       aoMap: aoTexture,
+      normalMap: normalTexture,
+      metalnessMap: metalnessTexture,
+      roughnessMap: roughnessTexture,
+      alphaMap: alphaTexture,
+      transparent: true,
     });
     material.side = THREE.DoubleSide;
 
@@ -287,6 +312,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         doorColorTextureLoaded,
         doorHeightTextureLoaded,
         doorAmbientOcclusionTextureLoaded,
+        doorNormalTextureLoaded,
+        doorMetalnessTextureLoaded,
+        doorRoughnessTextureLoaded,
+        doorAlphaTextureLoaded,
         environmentMap,
       } = loadTextures();
 
@@ -296,6 +325,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         colorTexture: doorColorTextureLoaded,
         heightTexture: doorHeightTextureLoaded,
         aoTexture: doorAmbientOcclusionTextureLoaded,
+        normalTexture: doorNormalTextureLoaded,
+        metalnessTexture: doorMetalnessTextureLoaded,
+        roughnessTexture: doorRoughnessTextureLoaded,
+        alphaTexture: doorAlphaTextureLoaded,
       });
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
