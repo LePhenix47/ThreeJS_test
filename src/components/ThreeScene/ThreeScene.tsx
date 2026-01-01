@@ -1,15 +1,24 @@
+/**
+ * 3D Text Lesson
+ * - FontLoader to load THREE.js built-in fonts
+ * - TextGeometry to create 3D text meshes
+ * - MeshNormalMaterial for colorful gradient effect
+ */
+
 import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { FontLoader } from "three/addons/loaders/FontLoader.js";
+import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 
-import doorColorTexture from "@public/textures/door/color.jpg";
-import doorAlphaTexture from "@public/textures/door/alpha.jpg";
-import doorAmbientOcclusionTexture from "@public/textures/door/ambientOcclusion.jpg";
-import doorHeightTexture from "@public/textures/door/height.jpg";
-import doorNormalTexture from "@public/textures/door/normal.jpg";
-import doorMetalnessTexture from "@public/textures/door/metalness.jpg";
-import doorRoughnessTexture from "@public/textures/door/roughness.jpg";
+// import doorColorTexture from "@public/textures/door/color.jpg";
+// import doorAlphaTexture from "@public/textures/door/alpha.jpg";
+// import doorAmbientOcclusionTexture from "@public/textures/door/ambientOcclusion.jpg";
+// import doorHeightTexture from "@public/textures/door/height.jpg";
+// import doorNormalTexture from "@public/textures/door/normal.jpg";
+// import doorMetalnessTexture from "@public/textures/door/metalness.jpg";
+// import doorRoughnessTexture from "@public/textures/door/roughness.jpg";
 
 import gsap from "gsap";
 
@@ -28,8 +37,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const animationIdRef = useRef<number>(0);
 
   // * Load textures - extracted for clarity
-  function loadTextures() {
-    // ? We're not in a React component, so we can't use `useLoadingStore`
+  // * Load font - extracted for clarity
+  function loadFont(
+    onLoad: (font: import("three/examples/jsm/loaders/FontLoader.js").Font) => void
+  ) {
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
     const loadingManager = new THREE.LoadingManager();
@@ -46,7 +57,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
 
     loadingManager.onLoad = () => {
-      console.log("Textures loaded");
+      console.log("Font loaded");
       setLoading(false);
       setProgress(100);
     };
@@ -56,11 +67,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       setLoading(false);
     };
 
-    const textureLoader = new THREE.TextureLoader(loadingManager);
-    const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
-    doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
-
-    return { doorColorTextureLoaded };
+    const fontLoader = new FontLoader(loadingManager);
+    // Using THREE.js built-in font from CDN
+    fontLoader.load(
+      "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+      onLoad
+    );
   }
 
   // * Create scene - extracted for clarity
@@ -68,16 +80,29 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new THREE.Scene();
   }
 
-  // * Create mesh - extracted for clarity
-  function createMesh(texture: THREE.Texture) {
-    // const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const geometry = new THREE.SphereGeometry(1, 32, 32);
-    const material = new THREE.MeshBasicMaterial({
-      map: texture,
+  // * Create 3D text - extracted for clarity
+  function createTextMesh(
+    font: import("three/examples/jsm/loaders/FontLoader.js").Font
+  ) {
+    const textGeometry = new TextGeometry("Hello Three.js!", {
+      font,
+      size: 0.5,
+      depth: 0.2,
+      curveSegments: 12,
+      bevelEnabled: true,
+      bevelThickness: 0.03,
+      bevelSize: 0.02,
+      bevelOffset: 0,
+      bevelSegments: 5,
     });
-    const mesh = new THREE.Mesh(geometry, material);
 
-    return { geometry, material, mesh };
+    // Center the text
+    textGeometry.center();
+
+    const material = new THREE.MeshNormalMaterial();
+    const textMesh = new THREE.Mesh(textGeometry, material);
+
+    return { geometry: textGeometry, material, mesh: textMesh };
   }
 
   // * Create camera - extracted for clarity
@@ -123,10 +148,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Type definition for debug GUI object
   type DebugGUIObjDefinition = {
-    geometry: {
-      subdivisions: number;
-    };
-    material: Partial<THREE.MeshBasicMaterial>;
     animations: {
       spin: () => void;
     };
@@ -137,10 +158,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const oneFullRevolution = Math.PI * 2;
 
     return {
-      geometry: {
-        subdivisions: 2,
-      },
-      material: {},
       animations: {
         spin: () => {
           gsap.to(mesh.rotation, {
@@ -159,7 +176,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     debugObject,
   }: {
     mesh: THREE.Mesh;
-    material: THREE.MeshBasicMaterial;
+    material: THREE.Material;
     debugObject: ReturnType<typeof createDebugObject>;
   }) {
     const gui = new GUI({
@@ -167,58 +184,30 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       width: 300,
     });
 
-    // GUI Folders - Nested structure
-    const cubeFolder = gui.addFolder("Cube");
-    const geometryFolder = cubeFolder.addFolder("Geometry");
-    const materialFolder = cubeFolder.addFolder("Material");
-    const meshFolder = cubeFolder.addFolder("Mesh");
-    const animationsFolder = cubeFolder.addFolder("Animations");
-
-    // Geometry controls
-    geometryFolder
-      .add(debugObject.geometry, "subdivisions")
-      .min(1)
-      .max(20)
-      .step(1)
-      .onFinishChange(() => {
-        mesh.geometry.dispose();
-        mesh.geometry = new THREE.BoxGeometry(
-          1,
-          1,
-          1,
-          debugObject.geometry.subdivisions,
-          debugObject.geometry.subdivisions,
-          debugObject.geometry.subdivisions
-        );
-      });
-
-    // Material controls
-    materialFolder.add(material, "wireframe").name("Wireframe");
-    // materialFolder
-    //   .addColor(debugObject.material, "color")
-    //   .onChange((newColorValue: string) => {
-    //     material.color.set(newColorValue);
-    //   });
+    // GUI Folders
+    const textFolder = gui.addFolder("3D Text");
+    const meshFolder = textFolder.addFolder("Transform");
+    const animationsFolder = textFolder.addFolder("Animations");
 
     // Mesh controls
     meshFolder
-      .add(mesh.position, "x")
-      .min(-3)
-      .max(3)
+      .add(mesh.rotation, "x")
+      .min(0)
+      .max(Math.PI * 2)
       .step(0.01)
-      .name("Position X");
+      .name("Rotation X");
     meshFolder
-      .add(mesh.position, "y")
-      .min(-3)
-      .max(3)
+      .add(mesh.rotation, "y")
+      .min(0)
+      .max(Math.PI * 2)
       .step(0.01)
-      .name("Position Y");
+      .name("Rotation Y");
     meshFolder
-      .add(mesh.position, "z")
-      .min(-3)
-      .max(3)
+      .add(mesh.rotation, "z")
+      .min(0)
+      .max(Math.PI * 2)
       .step(0.01)
-      .name("Position Z");
+      .name("Rotation Z");
     meshFolder.add(mesh, "visible").name("Visibility");
 
     // Animation controls
@@ -235,29 +224,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { clientWidth, clientHeight } = parent;
 
-      // Load textures
-      const { doorColorTextureLoaded } = loadTextures();
-
       // Initialize Three.js components
       const scene = createScene();
-      const { geometry, material, mesh } = createMesh(doorColorTextureLoaded);
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const { axisHelper } = createHelpers();
 
       // Add helpers to scene
       scene.add(axisHelper);
-
-      // Create debug object (single source of truth)
-      const debugObject = createDebugObject({ mesh });
-
-      // Setup GUI controls
-      const { gui } = setupGUI({ mesh, material, debugObject });
-
-      // Add mesh to scene
-      mesh.position.set(0, 0, 0);
-      scene.add(mesh);
-      scene.add(camera);
 
       // OrbitControls for camera movement
       const controls = createOrbitControls(camera, canvas);
@@ -268,13 +242,30 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // AbortController for event listeners
       const abortController = new AbortController();
 
-      // Animation loop
-      function animate() {
-        controls.update();
-        renderer.render(scene, camera);
-        animationIdRef.current = requestAnimationFrame(animate);
-      }
-      animate();
+      // Load font and create text
+      loadFont((font) => {
+        const { geometry, material, mesh } = createTextMesh(font);
+
+        // Create debug object (single source of truth)
+        const debugObject = createDebugObject({ mesh });
+
+        // Setup GUI controls
+        const { gui } = setupGUI({ mesh, material, debugObject });
+
+        // Add mesh to scene
+        mesh.position.set(0, 0, 0);
+        scene.add(mesh);
+
+        // Animation loop
+        function animate() {
+          controls.update();
+          renderer.render(scene, camera);
+          animationIdRef.current = requestAnimationFrame(animate);
+        }
+        animate();
+      });
+
+      scene.add(camera);
 
       // Handle window resize
       function handleResize() {
@@ -294,12 +285,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Cleanup
       return () => {
         cancelAnimation();
-        gsap.killTweensOf(mesh.rotation);
         controls.dispose();
-        gui.destroy();
         abortController.abort();
-        geometry.dispose();
-        material.dispose();
         renderer.dispose();
       };
     },
