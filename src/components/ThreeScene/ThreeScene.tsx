@@ -109,6 +109,33 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new THREE.Scene();
   }
 
+  // * Create geometry factories - extracted for dynamic recreation
+  function createSphereGeometry(subdivisions: number) {
+    return new THREE.SphereGeometry(0.5, subdivisions, subdivisions);
+  }
+
+  function createPlaneGeometry(subdivisions: number) {
+    return new THREE.PlaneGeometry(1, 1, subdivisions, subdivisions);
+  }
+
+  function createTorusGeometry(subdivisions: number) {
+    return new THREE.TorusGeometry(0.3, 0.2, subdivisions / 2, subdivisions);
+  }
+
+  // * Helper to update mesh geometry - handles disposal
+  function updateMeshGeometry({
+    mesh,
+    geometryCreator,
+    subdivisions,
+  }: {
+    mesh: THREE.Mesh;
+    geometryCreator: (subdivisions: number) => THREE.BufferGeometry;
+    subdivisions: number;
+  }) {
+    mesh.geometry.dispose();
+    mesh.geometry = geometryCreator(subdivisions);
+  }
+
   // * Create meshes - extracted for clarity
   function createMeshes({
     colorTexture,
@@ -151,24 +178,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // const material = new THREE.MeshToonMaterial({ map: texture });
 
     // Sphere geometry and mesh
-    const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const sphereGeometry = createSphereGeometry(32);
     const sphereMesh = new THREE.Mesh(sphereGeometry, material);
     sphereMesh.position.set(-1.5, 0, 0);
 
     // Plane geometry and mesh
-
-    const subdivisions = 32;
-    const planeGeometry = new THREE.PlaneGeometry(
-      1,
-      1,
-      subdivisions,
-      subdivisions
-    );
+    const planeGeometry = createPlaneGeometry(32);
     const planeMesh = new THREE.Mesh(planeGeometry, material);
     planeMesh.position.set(0, 0, 0);
 
     // Torus geometry and mesh
-    const torusGeometry = new THREE.TorusGeometry(0.3, 0.2, 16, 32);
+    const torusGeometry = createTorusGeometry(32);
     const torusMesh = new THREE.Mesh(torusGeometry, material);
     torusMesh.position.set(1.5, 0, 0);
 
@@ -230,6 +250,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     material: Partial<THREE.MeshStandardMaterialProperties>;
     displacement: {
       scale: number;
+      subdivisions: number;
     };
     normal: {
       scale: number;
@@ -246,16 +267,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   };
 
   // * Create debug object - single source of truth for initial values
-  function createDebugObject({ mesh }: { mesh: THREE.Mesh }) {
+  function createDebugObject({
+    sphereMesh,
+    planeMesh,
+    torusMesh,
+  }: {
+    sphereMesh: THREE.Mesh;
+    planeMesh: THREE.Mesh;
+    torusMesh: THREE.Mesh;
+  }) {
     const oneFullRevolution = Math.PI * 2;
 
     return {
       material: {
         metalness: 0,
         roughness: 1,
+        side: THREE.DoubleSide,
       },
       displacement: {
         scale: 0.1,
+        subdivisions: 32,
       },
       normal: {
         scale: 1,
@@ -268,10 +299,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       },
       animations: {
         spin: () => {
-          gsap.to(mesh.rotation, {
-            duration: 1,
-            y: mesh.rotation.y + oneFullRevolution,
-          });
+          const meshes = [sphereMesh, planeMesh, torusMesh];
+          for (const mesh of meshes) {
+            gsap.to(mesh.rotation, {
+              duration: 1,
+              y: mesh.rotation.y + oneFullRevolution,
+            });
+          }
         },
       },
     } as const satisfies DebugGUIObjDefinition;
@@ -281,9 +315,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function setupGUI({
     material,
     debugObject,
+    meshes,
   }: {
     material: THREE.MeshStandardMaterial;
     debugObject: ReturnType<typeof createDebugObject>;
+    meshes: {
+      sphere: THREE.Mesh;
+      plane: THREE.Mesh;
+      torus: THREE.Mesh;
+    };
   }) {
     const gui = new GUI({
       title: "THREE.JS GUI",
@@ -317,6 +357,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     materialFolder.add(material, "wireframe").name("Wireframe");
 
+    materialFolder
+      .add(debugObject.material, "side", {
+        FrontSide: THREE.FrontSide,
+        BackSide: THREE.BackSide,
+        DoubleSide: THREE.DoubleSide,
+      })
+      .name("Side")
+      .onChange((value: THREE.Side) => {
+        material.side = value;
+      });
+
     // Displacement controls
     const displacementFolder = gui.addFolder("Displacement");
     displacementFolder
@@ -327,6 +378,28 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Scale")
       .onChange((value: number) => {
         material.displacementScale = value;
+      });
+
+    displacementFolder
+      .add(debugObject.displacement, "subdivisions")
+      .min(1)
+      .max(100)
+      .step(1)
+      .name("Subdivisions")
+      .onFinishChange((subdivisions: number) => {
+        const geometryUpdates = [
+          { mesh: meshes.sphere, creator: createSphereGeometry },
+          { mesh: meshes.plane, creator: createPlaneGeometry },
+          { mesh: meshes.torus, creator: createTorusGeometry },
+        ];
+
+        for (const { mesh, creator } of geometryUpdates) {
+          updateMeshGeometry({
+            mesh,
+            geometryCreator: creator,
+            subdivisions,
+          });
+        }
       });
 
     // Normal map controls
@@ -355,6 +428,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // Alpha controls
     const alphaFolder = gui.addFolder("Alpha");
+    alphaFolder.add(material, "transparent").name("Transparent");
     alphaFolder
       .add(debugObject.alpha, "opacity")
       .min(0)
@@ -425,15 +499,28 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(pointLight);
 
       // Create debug object (single source of truth)
-      const debugObject = createDebugObject({ mesh: sphere.mesh });
+      const debugObject = createDebugObject({
+        sphereMesh: sphere.mesh,
+        planeMesh: plane.mesh,
+        torusMesh: torus.mesh,
+      });
 
       // Setup GUI controls
-      const { gui } = setupGUI({ material, debugObject });
+      const { gui } = setupGUI({
+        material,
+        debugObject,
+        meshes: {
+          sphere: sphere.mesh,
+          plane: plane.mesh,
+          torus: torus.mesh,
+        },
+      });
 
       // Add meshes to scene
-      scene.add(sphere.mesh);
-      scene.add(plane.mesh);
-      scene.add(torus.mesh);
+      const meshes = [sphere.mesh, plane.mesh, torus.mesh];
+      for (const mesh of meshes) {
+        scene.add(mesh);
+      }
       scene.add(camera);
 
       // OrbitControls for camera movement
@@ -471,15 +558,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Cleanup
       return () => {
         cancelAnimation();
-        gsap.killTweensOf(sphere.mesh.rotation);
-        gsap.killTweensOf(plane.mesh.rotation);
-        gsap.killTweensOf(torus.mesh.rotation);
+
+        const meshes = [sphere, plane, torus];
+        for (const { mesh, geometry } of meshes) {
+          gsap.killTweensOf(mesh.rotation);
+          geometry.dispose();
+        }
+
         controls.dispose();
         gui.destroy();
         abortController.abort();
-        sphere.geometry.dispose();
-        plane.geometry.dispose();
-        torus.geometry.dispose();
         material.dispose();
         renderer.dispose();
       };
