@@ -65,6 +65,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const doorHeightTextureLoaded = textureLoader.load(doorHeightTexture);
 
+    const doorAmbientOcclusionTextureLoaded = textureLoader.load(
+      doorAmbientOcclusionTexture
+    );
+
     /**
      * Load HDR environment map
      * HDR (High Dynamic Range) images provide realistic lighting with wider range of luminosity.
@@ -80,7 +84,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       texture.mapping = THREE.EquirectangularReflectionMapping;
     });
 
-    return { doorColorTextureLoaded, doorHeightTextureLoaded, environmentMap };
+    return {
+      doorColorTextureLoaded,
+      doorHeightTextureLoaded,
+      doorAmbientOcclusionTextureLoaded,
+      environmentMap,
+    };
   }
 
   // * Create scene - extracted for clarity
@@ -92,15 +101,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createMeshes({
     colorTexture,
     heightTexture,
+    aoTexture,
   }: {
     colorTexture: THREE.Texture;
     heightTexture: THREE.Texture;
+    aoTexture: THREE.Texture;
   }) {
     // Shared material
     const material = new THREE.MeshStandardMaterial({
       map: colorTexture,
       displacementMap: heightTexture,
       displacementScale: 0.1,
+      aoMap: aoTexture,
     });
     material.side = THREE.DoubleSide;
 
@@ -274,6 +286,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const {
         doorColorTextureLoaded,
         doorHeightTextureLoaded,
+        doorAmbientOcclusionTextureLoaded,
         environmentMap,
       } = loadTextures();
 
@@ -282,6 +295,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { material, sphere, plane, torus } = createMeshes({
         colorTexture: doorColorTextureLoaded,
         heightTexture: doorHeightTextureLoaded,
+        aoTexture: doorAmbientOcclusionTextureLoaded,
       });
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
