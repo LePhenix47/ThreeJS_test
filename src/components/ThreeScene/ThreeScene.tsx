@@ -228,6 +228,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   // DO NOT replace with explicit types like { metalness: number; roughness: number }
   type DebugGUIObjDefinition = {
     material: Partial<THREE.MeshStandardMaterialProperties>;
+    displacement: {
+      scale: number;
+    };
+    normal: {
+      scale: number;
+    };
+    ao: {
+      intensity: number;
+    };
+    alpha: {
+      opacity: number;
+    };
     animations: {
       spin: () => void;
     };
@@ -241,6 +253,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       material: {
         metalness: 0,
         roughness: 1,
+      },
+      displacement: {
+        scale: 0.1,
+      },
+      normal: {
+        scale: 1,
+      },
+      ao: {
+        intensity: 1,
+      },
+      alpha: {
+        opacity: 1,
       },
       animations: {
         spin: () => {
@@ -292,6 +316,54 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       });
 
     materialFolder.add(material, "wireframe").name("Wireframe");
+
+    // Displacement controls
+    const displacementFolder = gui.addFolder("Displacement");
+    displacementFolder
+      .add(debugObject.displacement, "scale")
+      .min(0)
+      .max(1)
+      .step(0.01)
+      .name("Scale")
+      .onChange((value: number) => {
+        material.displacementScale = value;
+      });
+
+    // Normal map controls
+    const normalFolder = gui.addFolder("Normal Map");
+    normalFolder
+      .add(debugObject.normal, "scale")
+      .min(0)
+      .max(5)
+      .step(0.1)
+      .name("Scale")
+      .onChange((value: number) => {
+        material.normalScale.set(value, value);
+      });
+
+    // AO controls
+    const aoFolder = gui.addFolder("Ambient Occlusion");
+    aoFolder
+      .add(debugObject.ao, "intensity")
+      .min(0)
+      .max(2)
+      .step(0.1)
+      .name("Intensity")
+      .onChange((value: number) => {
+        material.aoMapIntensity = value;
+      });
+
+    // Alpha controls
+    const alphaFolder = gui.addFolder("Alpha");
+    alphaFolder
+      .add(debugObject.alpha, "opacity")
+      .min(0)
+      .max(1)
+      .step(0.01)
+      .name("Opacity")
+      .onChange((value: number) => {
+        material.opacity = value;
+      });
 
     // Animation controls
     animationsFolder.add(debugObject.animations, "spin");
