@@ -119,7 +119,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     sphereMesh.position.set(-1.5, 0, 0);
 
     // Plane geometry and mesh
-    const planeGeometry = new THREE.PlaneGeometry(1, 1);
+
+    const subdivisions = 32;
+    const planeGeometry = new THREE.PlaneGeometry(
+      1,
+      1,
+      subdivisions,
+      subdivisions
+    );
     const planeMesh = new THREE.Mesh(planeGeometry, material);
     planeMesh.position.set(0, 0, 0);
 
