@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 
 import doorColorTexture from "@public/textures/door/color.jpg";
 import doorAlphaTexture from "@public/textures/door/alpha.jpg";
@@ -10,6 +11,8 @@ import doorHeightTexture from "@public/textures/door/height.jpg";
 import doorNormalTexture from "@public/textures/door/normal.jpg";
 import doorMetalnessTexture from "@public/textures/door/metalness.jpg";
 import doorRoughnessTexture from "@public/textures/door/roughness.jpg";
+// ?url suffix: Explicitly imports the file as a URL string (built-in Vite feature, no config needed)
+import environmentMapHDR from "@public/textures/environmentMap/2k.hdr?url";
 
 import gsap from "gsap";
 
@@ -60,7 +63,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
     doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
 
-    return { doorColorTextureLoaded };
+    /**
+     * Load HDR environment map
+     * HDR (High Dynamic Range) images provide realistic lighting with wider range of luminosity.
+     * Used for environment mapping to create realistic reflections and lighting on materials.
+     */
+    const hdrLoader = new HDRLoader(loadingManager);
+    const environmentMap = hdrLoader.load(environmentMapHDR, (texture) => {
+      /**
+       * EquirectangularReflectionMapping: Maps a 360° panoramic HDR image onto a sphere.
+       * This is REQUIRED for HDR environment maps to work correctly.
+       * Without this, the HDR appears as a flat fixed background image instead of a spherical environment.
+       */
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+    });
+
+    return { doorColorTextureLoaded, environmentMap };
   }
 
   // * Create scene - extracted for clarity
@@ -235,7 +253,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { clientWidth, clientHeight } = parent;
 
       // Load textures
-      const { doorColorTextureLoaded } = loadTextures();
+      const { doorColorTextureLoaded, environmentMap } = loadTextures();
 
       // Initialize Three.js components
       const scene = createScene();
@@ -248,6 +266,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       // Add helpers to scene
       scene.add(axisHelper);
+
+      // Apply environment map to scene
+      scene.environment = environmentMap;
+      scene.background = environmentMap;
+
+      // Apply environment map to material
+      material.envMap = environmentMap;
 
       // Add lighting (required for MeshStandardMaterial)
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
