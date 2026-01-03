@@ -22,6 +22,7 @@ import type { TextGeometryParameters } from "three/examples/jsm/geometries/TextG
 // import doorNormalTexture from "@public/textures/door/normal.jpg";
 // import doorMetalnessTexture from "@public/textures/door/metalness.jpg";
 // import doorRoughnessTexture from "@public/textures/door/roughness.jpg";
+import helvetikerRegularFont from "three/examples/fonts/helvetiker_regular.typeface.json?url";
 
 import gsap from "gsap";
 
@@ -32,10 +33,6 @@ import { useLoadingStore } from "@/stores/useLoadingStore";
 import type { NonFunctionProperties } from "@/utils/types/helper.type";
 
 import "./ThreeScene.scss";
-
-const DEFAULT_THREE_FONT_URL = new URL(
-  "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json"
-);
 
 type ThreeSceneProps = {
   className?: string;
@@ -75,7 +72,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const fontLoader = new FontLoader(loadingManager);
 
-    return fontLoader.loadAsync(DEFAULT_THREE_FONT_URL.href);
+    return fontLoader.loadAsync(helvetikerRegularFont);
   }
 
   // * Create scene - extracted for clarity
