@@ -36,11 +36,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
-  // * Load textures - extracted for clarity
-  // * Load font - extracted for clarity
-  function loadFont(
-    onLoad: (font: import("three/examples/jsm/loaders/FontLoader.js").Font) => void
-  ) {
+  // * Load font - async function
+  async function loadFont(): Promise<
+    import("three/examples/jsm/loaders/FontLoader.js").Font
+  > {
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
     const loadingManager = new THREE.LoadingManager();
@@ -67,12 +66,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       setLoading(false);
     };
 
-    const fontLoader = new FontLoader(loadingManager);
-    // Using THREE.js built-in font from CDN
-    fontLoader.load(
-      "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
-      onLoad
-    );
+    return new Promise((resolve, reject) => {
+      const fontLoader = new FontLoader(loadingManager);
+      fontLoader.load(
+        "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+        (font) => resolve(font),
+        undefined,
+        (error) => reject(error)
+      );
+    });
   }
 
   // * Create scene - extracted for clarity
@@ -82,18 +84,41 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Create 3D text - extracted for clarity
   function createTextMesh(
-    font: import("three/examples/jsm/loaders/FontLoader.js").Font
+    font: import("three/examples/jsm/loaders/FontLoader.js").Font,
+    textParams: {
+      content: string;
+      size: number;
+      depth: number;
+      curveSegments: number;
+      bevelEnabled: boolean;
+      bevelThickness: number;
+      bevelSize: number;
+      bevelOffset: number;
+      bevelSegments: number;
+    }
   ) {
-    const textGeometry = new TextGeometry("Hello Three.js!", {
+    const {
+      content,
+      size,
+      depth,
+      curveSegments,
+      bevelEnabled,
+      bevelThickness,
+      bevelSize,
+      bevelOffset,
+      bevelSegments,
+    } = textParams;
+
+    const textGeometry = new TextGeometry(content, {
       font,
-      size: 0.5,
-      depth: 0.2,
-      curveSegments: 12,
-      bevelEnabled: true,
-      bevelThickness: 0.03,
-      bevelSize: 0.02,
-      bevelOffset: 0,
-      bevelSegments: 5,
+      size,
+      depth,
+      curveSegments,
+      bevelEnabled,
+      bevelThickness,
+      bevelSize,
+      bevelOffset,
+      bevelSegments,
     });
 
     // Center the text
@@ -148,6 +173,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Type definition for debug GUI object
   type DebugGUIObjDefinition = {
+    text: {
+      content: string;
+      size: number;
+      depth: number;
+      curveSegments: number;
+      bevelEnabled: boolean;
+      bevelThickness: number;
+      bevelSize: number;
+      bevelOffset: number;
+      bevelSegments: number;
+    };
+    rotation: {
+      x: number; // In degrees
+      y: number; // In degrees
+      z: number; // In degrees
+    };
     animations: {
       spin: () => void;
     };
@@ -155,14 +196,30 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Create debug object - single source of truth for initial values
   function createDebugObject({ mesh }: { mesh: THREE.Mesh }) {
-    const oneFullRevolution = Math.PI * 2;
+    const oneFullRevolution = 360;
 
     return {
+      text: {
+        content: "Hello Three.js!",
+        size: 0.5,
+        depth: 0.2,
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: 0.03,
+        bevelSize: 0.02,
+        bevelOffset: 0,
+        bevelSegments: 5,
+      },
+      rotation: {
+        x: 0,
+        y: 0,
+        z: 0,
+      },
       animations: {
         spin: () => {
           gsap.to(mesh.rotation, {
             duration: 1,
-            y: mesh.rotation.y + oneFullRevolution,
+            y: mesh.rotation.y + (oneFullRevolution * Math.PI) / 180,
           });
         },
       },
@@ -174,10 +231,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     mesh,
     material,
     debugObject,
+    font,
+    onTextUpdate,
   }: {
     mesh: THREE.Mesh;
     material: THREE.Material;
     debugObject: ReturnType<typeof createDebugObject>;
+    font: import("three/examples/jsm/loaders/FontLoader.js").Font;
+    onTextUpdate: (textParams: DebugGUIObjDefinition["text"]) => void;
   }) {
     const gui = new GUI({
       title: "THREE.JS GUI",
@@ -186,29 +247,130 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // GUI Folders
     const textFolder = gui.addFolder("3D Text");
-    const meshFolder = textFolder.addFolder("Transform");
+    const textPropsFolder = textFolder.addFolder("Text Properties");
+    const geometryFolder = textFolder.addFolder("Geometry");
+    const bevelFolder = textFolder.addFolder("Bevel");
+    const transformFolder = textFolder.addFolder("Transform");
     const animationsFolder = textFolder.addFolder("Animations");
 
-    // Mesh controls
-    meshFolder
-      .add(mesh.rotation, "x")
+    // Text properties controls
+    textPropsFolder
+      .add(debugObject.text, "content")
+      .name("Text Content")
+      .onChange(() => {
+        onTextUpdate(debugObject.text);
+      });
+
+    geometryFolder
+      .add(debugObject.text, "size")
+      .min(0.1)
+      .max(2)
+      .step(0.1)
+      .name("Size")
+      .onChange(() => {
+        onTextUpdate(debugObject.text);
+      });
+
+    geometryFolder
+      .add(debugObject.text, "depth")
       .min(0)
-      .max(Math.PI * 2)
-      .step(0.01)
-      .name("Rotation X");
-    meshFolder
-      .add(mesh.rotation, "y")
+      .max(1)
+      .step(0.05)
+      .name("Depth")
+      .onChange(() => {
+        onTextUpdate(debugObject.text);
+      });
+
+    geometryFolder
+      .add(debugObject.text, "curveSegments")
+      .min(1)
+      .max(20)
+      .step(1)
+      .name("Curve Segments")
+      .onChange(() => {
+        onTextUpdate(debugObject.text);
+      });
+
+    // Bevel controls
+    bevelFolder
+      .add(debugObject.text, "bevelEnabled")
+      .name("Enable Bevel")
+      .onChange(() => {
+        onTextUpdate(debugObject.text);
+      });
+
+    bevelFolder
+      .add(debugObject.text, "bevelThickness")
       .min(0)
-      .max(Math.PI * 2)
+      .max(0.1)
       .step(0.01)
-      .name("Rotation Y");
-    meshFolder
-      .add(mesh.rotation, "z")
+      .name("Bevel Thickness")
+      .onChange(() => {
+        onTextUpdate(debugObject.text);
+      });
+
+    bevelFolder
+      .add(debugObject.text, "bevelSize")
       .min(0)
-      .max(Math.PI * 2)
+      .max(0.1)
       .step(0.01)
-      .name("Rotation Z");
-    meshFolder.add(mesh, "visible").name("Visibility");
+      .name("Bevel Size")
+      .onChange(() => {
+        onTextUpdate(debugObject.text);
+      });
+
+    bevelFolder
+      .add(debugObject.text, "bevelOffset")
+      .min(-0.05)
+      .max(0.05)
+      .step(0.01)
+      .name("Bevel Offset")
+      .onChange(() => {
+        onTextUpdate(debugObject.text);
+      });
+
+    bevelFolder
+      .add(debugObject.text, "bevelSegments")
+      .min(1)
+      .max(10)
+      .step(1)
+      .name("Bevel Segments")
+      .onChange(() => {
+        onTextUpdate(debugObject.text);
+      });
+
+    // Transform controls (rotation in degrees)
+    transformFolder
+      .add(debugObject.rotation, "x")
+      .min(0)
+      .max(360)
+      .step(1)
+      .name("Rotation X (°)")
+      .onChange((value: number) => {
+        mesh.rotation.x = (value * Math.PI) / 180;
+      });
+
+    transformFolder
+      .add(debugObject.rotation, "y")
+      .min(0)
+      .max(360)
+      .step(1)
+      .name("Rotation Y (°)")
+      .onChange((value: number) => {
+        mesh.rotation.y = (value * Math.PI) / 180;
+      });
+
+    transformFolder
+      .add(debugObject.rotation, "z")
+      .min(0)
+      .max(360)
+      .step(1)
+      .name("Rotation Z (°)")
+      .onChange((value: number) => {
+        mesh.rotation.z = (value * Math.PI) / 180;
+      });
+
+    transformFolder.add(mesh, "visible").name("Visibility");
 
     // Animation controls
     animationsFolder.add(debugObject.animations, "spin");
@@ -218,7 +380,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // Helper functions inside component for HMR
   const setupThreeScene = useCallback(
-    (canvas: HTMLCanvasElement) => {
+    async (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
       if (!parent) return null;
 
@@ -232,40 +394,59 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       // Add helpers to scene
       scene.add(axisHelper);
+      scene.add(camera);
 
       // OrbitControls for camera movement
       const controls = createOrbitControls(camera, canvas);
-
-      // Clock for delta time
-      const clock = new THREE.Clock();
 
       // AbortController for event listeners
       const abortController = new AbortController();
 
       // Load font and create text
-      loadFont((font) => {
-        const { geometry, material, mesh } = createTextMesh(font);
-
-        // Create debug object (single source of truth)
-        const debugObject = createDebugObject({ mesh });
-
-        // Setup GUI controls
-        const { gui } = setupGUI({ mesh, material, debugObject });
-
-        // Add mesh to scene
-        mesh.position.set(0, 0, 0);
-        scene.add(mesh);
-
-        // Animation loop
-        function animate() {
-          controls.update();
-          renderer.render(scene, camera);
-          animationIdRef.current = requestAnimationFrame(animate);
-        }
-        animate();
+      const font = await loadFont();
+      const { geometry, material, mesh } = createTextMesh(font, {
+        content: "Hello Three.js!",
+        size: 0.5,
+        depth: 0.2,
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: 0.03,
+        bevelSize: 0.02,
+        bevelOffset: 0,
+        bevelSegments: 5,
       });
 
-      scene.add(camera);
+      // Create debug object (single source of truth)
+      const debugObject = createDebugObject({ mesh });
+
+      // Function to update text geometry
+      function updateTextGeometry(textParams: DebugGUIObjDefinition["text"]) {
+        const oldGeometry = mesh.geometry;
+        const { geometry: newGeometry } = createTextMesh(font, textParams);
+        mesh.geometry = newGeometry;
+        oldGeometry.dispose();
+      }
+
+      // Setup GUI controls
+      const { gui } = setupGUI({
+        mesh,
+        material,
+        debugObject,
+        font,
+        onTextUpdate: updateTextGeometry,
+      });
+
+      // Add mesh to scene
+      mesh.position.set(0, 0, 0);
+      scene.add(mesh);
+
+      // Animation loop
+      function animate() {
+        controls.update();
+        renderer.render(scene, camera);
+        animationIdRef.current = requestAnimationFrame(animate);
+      }
+      animate();
 
       // Handle window resize
       function handleResize() {
@@ -286,7 +467,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       return () => {
         cancelAnimation();
         controls.dispose();
+        gui.destroy();
         abortController.abort();
+        geometry.dispose();
+        material.dispose();
         renderer.dispose();
       };
     },
@@ -300,7 +484,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    return setupThreeScene(canvasRef.current) || undefined;
+    let cleanup: (() => void) | null = null;
+
+    setupThreeScene(canvasRef.current).then((cleanupFn) => {
+      cleanup = cleanupFn || null;
+    });
+
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+    };
   }, [setupThreeScene]);
 
   return (
