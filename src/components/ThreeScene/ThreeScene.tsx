@@ -34,6 +34,15 @@ import type { NonFunctionProperties } from "@/utils/types/helper.type";
 
 import "./ThreeScene.scss";
 
+import matcapTexture1 from "@public/textures/matcaps/1.png";
+import matcapTexture2 from "@public/textures/matcaps/2.png";
+import matcapTexture3 from "@public/textures/matcaps/3.png";
+import matcapTexture4 from "@public/textures/matcaps/4.png";
+import matcapTexture5 from "@public/textures/matcaps/5.png";
+import matcapTexture6 from "@public/textures/matcaps/6.png";
+import matcapTexture7 from "@public/textures/matcaps/7.png";
+import matcapTexture8 from "@public/textures/matcaps/8.png";
+
 type ThreeSceneProps = {
   className?: string;
 };
@@ -112,7 +121,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Center the text
     textGeometry.center();
 
-    const material = new THREE.MeshNormalMaterial();
+    // Load matcap texture
+    const textureLoader = new THREE.TextureLoader();
+    const matcap = textureLoader.load(matcapTexture1);
+
+    const material = new THREE.MeshMatcapMaterial({ matcap });
     const textMesh = new THREE.Mesh(textGeometry, material);
 
     return { geometry: textGeometry, material, mesh: textMesh };
@@ -164,7 +177,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     text: Partial<NonFunctionProperties<TextGeometryParameters>> & {
       content: string;
     };
-    material: Partial<NonFunctionProperties<THREE.MeshNormalMaterial>>;
+    material: Partial<NonFunctionProperties<THREE.MeshMatcapMaterial>>;
     rotation: {
       x: number;
       y: number;
@@ -191,9 +204,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         bevelOffset: 0,
         bevelSegments: 5,
       },
-      material: {
-        wireframe: false,
-      },
+      material: {},
       rotation: {
         x: 0,
         y: 0,
@@ -247,12 +258,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       });
 
     // Material controls (nested under Text Properties)
-    materialFolder
-      .add(debugObject.material, "wireframe")
-      .name("Wireframe")
-      .onChange((value: boolean) => {
-        material.wireframe = value;
-      });
+    // Note: MeshMatcapMaterial doesn't support wireframe
 
     geometryFolder
       .add(debugObject.text, "size")
