@@ -131,6 +131,36 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { geometry: textGeometry, material, mesh: textMesh };
   }
 
+  // * Create donuts - optimized with shared geometry and material
+  function createDonuts(material: THREE.MeshMatcapMaterial, scene: THREE.Scene) {
+    console.time("donuts");
+
+    // Create ONE shared geometry and material (optimization)
+    const donutGeometry = new THREE.TorusGeometry(0.3, 0.2, 20, 45);
+
+    // Generate multiple donut meshes with randomized transforms
+    for (let i = 0; i < 100; i++) {
+      const donutMesh = new THREE.Mesh(donutGeometry, material);
+
+      // Randomize position
+      donutMesh.position.x = (Math.random() - 0.5) * 10;
+      donutMesh.position.y = (Math.random() - 0.5) * 10;
+      donutMesh.position.z = (Math.random() - 0.5) * 10;
+
+      // Randomize rotation
+      donutMesh.rotation.x = Math.random() * Math.PI;
+      donutMesh.rotation.y = Math.random() * Math.PI;
+
+      // Randomize scale
+      const randomScale = Math.random();
+      donutMesh.scale.set(randomScale, randomScale, randomScale);
+
+      scene.add(donutMesh);
+    }
+
+    console.timeEnd("donuts");
+  }
+
   // * Create camera - extracted for clarity
   function createCamera(aspectRatio: number) {
     const fov = 75;
@@ -464,6 +494,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Add mesh to scene
       mesh.position.set(0, 0, 0);
       scene.add(mesh);
+
+      // Create donuts around the text
+      createDonuts(material, scene);
 
       // Animation loop
       function animate() {
