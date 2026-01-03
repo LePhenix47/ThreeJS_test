@@ -170,7 +170,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Type definition for debug GUI object
   type DebugGUIObjDefinition = {
-    text: Partial<TextGeometryParameters> & {
+    text: Partial<NonFunctionProperties<TextGeometryParameters>> & {
       content: string;
     };
     material: Partial<NonFunctionProperties<THREE.MeshNormalMaterial>>;
