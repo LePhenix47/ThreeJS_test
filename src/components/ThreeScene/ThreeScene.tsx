@@ -29,6 +29,8 @@ import GUI from "lil-gui";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
+import type { NonFunctionProperties } from "@/utils/types/helper.type";
+
 import "./ThreeScene.scss";
 
 const DEFAULT_THREE_FONT_URL = new URL(
@@ -171,13 +173,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     text: Partial<TextGeometryParameters> & {
       content: string;
     };
-    material: {
-      wireframe: boolean;
-    };
+    material: Partial<NonFunctionProperties<THREE.MeshNormalMaterial>>;
     rotation: {
-      x: number; // In degrees
-      y: number; // In degrees
-      z: number; // In degrees
+      x: number;
+      y: number;
+      z: number;
     };
     animations: {
       spin: () => void;
@@ -228,7 +228,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     onTextUpdate,
   }: {
     mesh: THREE.Mesh;
-    material: THREE.Material;
+    material: DebugGUIObjDefinition["material"];
     debugObject: ReturnType<typeof createDebugObject>;
     font: Font;
     onTextUpdate: (textParams: DebugGUIObjDefinition["text"]) => void;
@@ -260,7 +260,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .add(debugObject.material, "wireframe")
       .name("Wireframe")
       .onChange((value: boolean) => {
-        (material as THREE.MeshNormalMaterial).wireframe = value;
+        material.wireframe = value;
       });
 
     geometryFolder
