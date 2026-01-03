@@ -254,6 +254,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const textPropsFolder = textFolder.addFolder("Text Properties");
     const geometryFolder = textFolder.addFolder("Geometry");
     const bevelFolder = textFolder.addFolder("Bevel");
+    const materialFolder = textFolder.addFolder("Material");
     const transformFolder = textFolder.addFolder("Transform");
     const animationsFolder = textFolder.addFolder("Animations");
 
@@ -342,6 +343,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .onChange(() => {
         onTextUpdate(debugObject.text);
       });
+
+    // Material controls
+    materialFolder
+      .add(material as THREE.MeshNormalMaterial, "wireframe")
+      .name("Wireframe");
 
     // Transform controls (rotation in degrees)
     transformFolder
