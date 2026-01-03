@@ -12,6 +12,9 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 
+import type { Font } from "three/examples/jsm/loaders/FontLoader.js";
+import type { TextGeometryParameters } from "three/examples/jsm/geometries/TextGeometry.js";
+
 // import doorColorTexture from "@public/textures/door/color.jpg";
 // import doorAlphaTexture from "@public/textures/door/alpha.jpg";
 // import doorAmbientOcclusionTexture from "@public/textures/door/ambientOcclusion.jpg";
@@ -40,10 +43,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
-  type DefaultFontForThree =
-    import("three/examples/jsm/loaders/FontLoader.js").Font;
   // * Load font - async function
-  async function loadFont(): Promise<DefaultFontForThree> {
+  async function loadFont(): Promise<Font> {
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
     const loadingManager = new THREE.LoadingManager();
@@ -88,32 +89,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Create 3D text - extracted for clarity
   function createTextMesh(
-    font: import("three/examples/jsm/loaders/FontLoader.js").Font,
-    textParams: {
-      content: string;
-      size: number;
-      depth: number;
-      curveSegments: number;
-      bevelEnabled: boolean;
-      bevelThickness: number;
-      bevelSize: number;
-      bevelOffset: number;
-      bevelSegments: number;
-    }
+    textContent: string,
+    font: Font,
+    textParams: Partial<TextGeometryParameters>
   ) {
     const {
-      content,
-      size,
-      depth,
-      curveSegments,
-      bevelEnabled,
-      bevelThickness,
-      bevelSize,
-      bevelOffset,
-      bevelSegments,
+      size = 0.5,
+      depth = 0.2,
+      curveSegments = 12,
+      bevelEnabled = true,
+      bevelThickness = 0.03,
+      bevelSize = 0.02,
+      bevelOffset = 0,
+      bevelSegments = 5,
     } = textParams;
 
-    const textGeometry = new TextGeometry(content, {
+    const textGeometry = new TextGeometry(textContent, {
       font,
       size,
       depth,
@@ -177,16 +168,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Type definition for debug GUI object
   type DebugGUIObjDefinition = {
-    text: {
+    text: Partial<TextGeometryParameters> & {
       content: string;
-      size: number;
-      depth: number;
-      curveSegments: number;
-      bevelEnabled: boolean;
-      bevelThickness: number;
-      bevelSize: number;
-      bevelOffset: number;
-      bevelSegments: number;
+    };
+    material: {
+      wireframe: boolean;
     };
     rotation: {
       x: number; // In degrees
@@ -213,6 +199,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         bevelSize: 0.02,
         bevelOffset: 0,
         bevelSegments: 5,
+      },
+      material: {
+        wireframe: false,
       },
       rotation: {
         x: 0,
@@ -241,7 +230,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     mesh: THREE.Mesh;
     material: THREE.Material;
     debugObject: ReturnType<typeof createDebugObject>;
-    font: import("three/examples/jsm/loaders/FontLoader.js").Font;
+    font: Font;
     onTextUpdate: (textParams: DebugGUIObjDefinition["text"]) => void;
   }) {
     const gui = new GUI({
@@ -268,8 +257,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // Material controls (nested under Text Properties)
     materialFolder
-      .add(material as THREE.MeshNormalMaterial, "wireframe")
-      .name("Wireframe");
+      .add(debugObject.material, "wireframe")
+      .name("Wireframe")
+      .onChange((value: boolean) => {
+        (material as THREE.MeshNormalMaterial).wireframe = value;
+      });
 
     geometryFolder
       .add(debugObject.text, "size")
@@ -414,25 +406,33 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       // Load font and create text
       const font = await loadFont();
-      const { geometry, material, mesh } = createTextMesh(font, {
-        content: "Hello Three.js!",
-        size: 0.5,
-        depth: 0.2,
-        curveSegments: 12,
-        bevelEnabled: true,
-        bevelThickness: 0.03,
-        bevelSize: 0.02,
-        bevelOffset: 0,
-        bevelSegments: 5,
-      });
+      const { geometry, material, mesh } = createTextMesh(
+        "Hello Three.js!",
+        font,
+        {
+          size: 0.5,
+          depth: 0.2,
+          curveSegments: 12,
+          bevelEnabled: true,
+          bevelThickness: 0.03,
+          bevelSize: 0.02,
+          bevelOffset: 0,
+          bevelSegments: 5,
+        }
+      );
 
       // Create debug object (single source of truth)
       const debugObject = createDebugObject({ mesh });
 
       // Function to update text geometry
       function updateTextGeometry(textParams: DebugGUIObjDefinition["text"]) {
+        const { content, ...params } = textParams;
         const oldGeometry = mesh.geometry;
-        const { geometry: newGeometry } = createTextMesh(font, textParams);
+        const { geometry: newGeometry } = createTextMesh(
+          content || "Hello Three.js!",
+          font,
+          params
+        );
         mesh.geometry = newGeometry;
         oldGeometry.dispose();
       }
