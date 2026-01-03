@@ -350,6 +350,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Rotation X (°)")
       .onChange((value: number) => {
         mesh.rotation.x = (value * Math.PI) / 180;
+      })
+      .onFinishChange(() => {
+        mesh.geometry.computeBoundingBox();
+        console.log("Bounding Box:", mesh.geometry.boundingBox);
       });
 
     transformFolder
@@ -360,6 +364,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Rotation Y (°)")
       .onChange((value: number) => {
         mesh.rotation.y = (value * Math.PI) / 180;
+      })
+      .onFinishChange(() => {
+        mesh.geometry.computeBoundingBox();
+        console.log("Bounding Box:", mesh.geometry.boundingBox);
       });
 
     transformFolder
@@ -370,9 +378,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Rotation Z (°)")
       .onChange((value: number) => {
         mesh.rotation.z = (value * Math.PI) / 180;
+      })
+      .onFinishChange(() => {
+        mesh.geometry.computeBoundingBox();
+        console.log("Bounding Box:", mesh.geometry.boundingBox);
       });
 
-    transformFolder.add(mesh, "visible").name("Visibility");
+    transformFolder
+      .add(mesh, "visible")
+      .name("Visibility")
+      .onFinishChange(() => {
+        mesh.geometry.computeBoundingBox();
+        console.log("Bounding Box:", mesh.geometry.boundingBox);
+      });
 
     // Animation controls
     animationsFolder.add(debugObject.animations, "spin");
