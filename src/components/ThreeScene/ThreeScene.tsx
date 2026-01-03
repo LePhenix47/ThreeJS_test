@@ -73,15 +73,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       setLoading(false);
     };
 
-    return new Promise((resolve, reject) => {
-      const fontLoader = new FontLoader(loadingManager);
-      fontLoader.load(
-        DEFAULT_THREE_FONT_URL.href,
-        (font) => resolve(font),
-        undefined,
-        (error) => reject(error)
-      );
-    });
+    const fontLoader = new FontLoader(loadingManager);
+
+    return fontLoader.loadAsync(DEFAULT_THREE_FONT_URL.href);
   }
 
   // * Create scene - extracted for clarity
