@@ -252,9 +252,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // GUI Folders
     const textFolder = gui.addFolder("3D Text");
     const textPropsFolder = textFolder.addFolder("Text Properties");
+    const materialFolder = textPropsFolder.addFolder("Material");
     const geometryFolder = textFolder.addFolder("Geometry");
     const bevelFolder = textFolder.addFolder("Bevel");
-    const materialFolder = textFolder.addFolder("Material");
     const transformFolder = textFolder.addFolder("Transform");
     const animationsFolder = textFolder.addFolder("Animations");
 
@@ -265,6 +265,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .onChange(() => {
         onTextUpdate(debugObject.text);
       });
+
+    // Material controls (nested under Text Properties)
+    materialFolder
+      .add(material as THREE.MeshNormalMaterial, "wireframe")
+      .name("Wireframe");
 
     geometryFolder
       .add(debugObject.text, "size")
@@ -343,11 +348,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .onChange(() => {
         onTextUpdate(debugObject.text);
       });
-
-    // Material controls
-    materialFolder
-      .add(material as THREE.MeshNormalMaterial, "wireframe")
-      .name("Wireframe");
 
     // Transform controls (rotation in degrees)
     transformFolder
