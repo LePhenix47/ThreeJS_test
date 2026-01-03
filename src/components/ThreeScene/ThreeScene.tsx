@@ -28,6 +28,10 @@ import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
 
+const DEFAULT_THREE_FONT_URL = new URL(
+  "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json"
+);
+
 type ThreeSceneProps = {
   className?: string;
 };
@@ -36,10 +40,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
+  type DefaultFontForThree =
+    import("three/examples/jsm/loaders/FontLoader.js").Font;
   // * Load font - async function
-  async function loadFont(): Promise<
-    import("three/examples/jsm/loaders/FontLoader.js").Font
-  > {
+  async function loadFont(): Promise<DefaultFontForThree> {
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
     const loadingManager = new THREE.LoadingManager();
@@ -69,7 +73,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new Promise((resolve, reject) => {
       const fontLoader = new FontLoader(loadingManager);
       fontLoader.load(
-        "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+        DEFAULT_THREE_FONT_URL.href,
         (font) => resolve(font),
         undefined,
         (error) => reject(error)
