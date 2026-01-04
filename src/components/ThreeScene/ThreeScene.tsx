@@ -132,27 +132,49 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Create donuts - optimized with shared geometry and material
-  function createDonuts(material: THREE.MeshMatcapMaterial, scene: THREE.Scene) {
+  function createDonuts(
+    material: THREE.MeshMatcapMaterial,
+    scene: THREE.Scene
+  ) {
     console.time("donuts");
 
     // Create ONE shared geometry and material (optimization)
     const donutGeometry = new THREE.TorusGeometry(0.3, 0.2, 20, 45);
 
     // Generate multiple donut meshes with randomized transforms
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 500; i++) {
       const donutMesh = new THREE.Mesh(donutGeometry, material);
 
-      // Randomize position
-      donutMesh.position.x = (Math.random() - 0.5) * 10;
-      donutMesh.position.y = (Math.random() - 0.5) * 10;
-      donutMesh.position.z = (Math.random() - 0.5) * 10;
+      /*
+       * To understand the following code, watch these YT videos:
+       * XYZ + RGB: https://youtu.be/Ex_g2w4E5lQ?si=KBWh0jyNFSJ8QMsq
+       *
+       * BlackPenRedPen: https://youtu.be/_7Gt3Lla1pk?si=lUUkJEfP1vQ8Pbsr&t=276
+       */
+      // ? Horizontal position - Spherical coordinates: [0, 2π[
+      const randomTheta: number = Math.random() * Math.PI * 2;
+
+      // ? Vertical position - Spherical coordinates: [0, π]
+      const randomPhi: number = Math.random() * Math.PI;
+
+      const maxRadius: number = 10;
+      // ? Distance from the origin, a.k.a. radius in a 3D sphere, computed from a spherical volume
+      const randomRho: number = Math.cbrt(Math.random()) * maxRadius;
+
+      const x: number = Math.cos(randomTheta) * randomRho * Math.sin(randomPhi);
+      const y: number = Math.sin(randomTheta) * randomRho * Math.sin(randomPhi);
+      const z: number = Math.cos(randomPhi) * randomRho;
+
+      donutMesh.position.x = x;
+      donutMesh.position.y = y;
+      donutMesh.position.z = z;
 
       // Randomize rotation
       donutMesh.rotation.x = Math.random() * Math.PI;
       donutMesh.rotation.y = Math.random() * Math.PI;
 
       // Randomize scale
-      const randomScale = Math.random();
+      const randomScale: number = Math.random();
       donutMesh.scale.set(randomScale, randomScale, randomScale);
 
       scene.add(donutMesh);
