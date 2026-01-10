@@ -43,6 +43,14 @@ import matcapTexture6 from "@public/textures/matcaps/6.png";
 import matcapTexture7 from "@public/textures/matcaps/7.png";
 import matcapTexture8 from "@public/textures/matcaps/8.png";
 
+/**
+ * SCENE TOGGLE: Comment/uncomment ONE line to switch between scenes
+ *
+ * - true:  Matcap material + donuts scattered in sphere (spherical distribution)
+ * - false: Normal material + wireframe control (original text lesson)
+ */
+const USE_DONUTS_SCENE = true;
+
 type ThreeSceneProps = {
   className?: string;
 };
@@ -121,11 +129,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Center the text
     textGeometry.center();
 
-    // Load matcap texture
-    const textureLoader = new THREE.TextureLoader();
-    const matcap = textureLoader.load(matcapTexture1);
+    // Create material based on scene mode
+    const material = USE_DONUTS_SCENE
+      ? (() => {
+          const textureLoader = new THREE.TextureLoader();
+          const matcap = textureLoader.load(matcapTexture3);
+          return new THREE.MeshMatcapMaterial({ matcap });
+        })()
+      : new THREE.MeshNormalMaterial();
 
-    const material = new THREE.MeshMatcapMaterial({ matcap });
     const textMesh = new THREE.Mesh(textGeometry, material);
 
     return { geometry: textGeometry, material, mesh: textMesh };
@@ -133,7 +145,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Create donuts - optimized with shared geometry and material
   function createDonuts(
-    material: THREE.MeshMatcapMaterial,
+    material: THREE.MeshMatcapMaterial | THREE.MeshNormalMaterial,
     scene: THREE.Scene
   ) {
     console.time("donuts");
@@ -229,7 +241,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     text: Partial<NonFunctionProperties<TextGeometryParameters>> & {
       content: string;
     };
-    material: Partial<NonFunctionProperties<THREE.MeshMatcapMaterial>>;
+    material: Partial<
+      | NonFunctionProperties<THREE.MeshMatcapMaterial>
+      | NonFunctionProperties<THREE.MeshNormalMaterial>
+    >;
     rotation: {
       x: number;
       y: number;
@@ -256,7 +271,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         bevelOffset: 0,
         bevelSegments: 5,
       },
-      material: {},
+      material: USE_DONUTS_SCENE ? {} : { wireframe: false },
       rotation: {
         x: 0,
         y: 0,
@@ -310,7 +325,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       });
 
     // Material controls (nested under Text Properties)
-    // Note: MeshMatcapMaterial doesn't support wireframe
+    if (!USE_DONUTS_SCENE && "wireframe" in debugObject.material) {
+      geometryFolder
+        .add(debugObject.material, "wireframe")
+        .name("Wireframe")
+        .onChange((value: boolean) => {
+          if (mesh.material instanceof THREE.MeshNormalMaterial) {
+            mesh.material.wireframe = value;
+          }
+        });
+    }
 
     geometryFolder
       .add(debugObject.text, "size")
@@ -517,8 +541,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       mesh.position.set(0, 0, 0);
       scene.add(mesh);
 
-      // Create donuts around the text
-      createDonuts(material, scene);
+      // Create donuts around the text (only in donuts scene mode)
+      if (USE_DONUTS_SCENE) {
+        createDonuts(material, scene);
+      }
 
       // Animation loop
       function animate() {
