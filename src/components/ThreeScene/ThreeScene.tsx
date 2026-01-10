@@ -116,7 +116,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const pointLight = new THREE.PointLight(0xff9000, 0.5);
     pointLight.position.set(1, -0.5, 1);
 
-    return { ambientLight, directionalLight, hemisphereLight, pointLight };
+    // RectArea light - rectangular area light source (green)
+    const rectAreaLight = new THREE.RectAreaLight(0x4e00ff, 2, 1, 1);
+    rectAreaLight.position.set(-1.5, 0, 1.5);
+    rectAreaLight.lookAt(0, 0, 0);
+
+    return { ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight };
   }
 
   // * Type definition for debug GUI object
@@ -138,6 +143,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       color: string;
       intensity: number;
     };
+    rectAreaLight: {
+      color: string;
+      intensity: number;
+    };
   };
 
   // * Create debug object - single source of truth for initial values
@@ -146,11 +155,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     directionalLight,
     hemisphereLight,
     pointLight,
+    rectAreaLight,
   }: {
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
     hemisphereLight: THREE.HemisphereLight;
     pointLight: THREE.PointLight;
+    rectAreaLight: THREE.RectAreaLight;
   }) {
     return {
       ambientLight: {
@@ -170,6 +181,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         color: "#" + pointLight.color.getHexString(),
         intensity: pointLight.intensity,
       },
+      rectAreaLight: {
+        color: "#" + rectAreaLight.color.getHexString(),
+        intensity: rectAreaLight.intensity,
+      },
     } as const satisfies DebugGUIObjDefinition;
   }
 
@@ -179,12 +194,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     directionalLight,
     hemisphereLight,
     pointLight,
+    rectAreaLight,
     debugObject,
   }: {
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
     hemisphereLight: THREE.HemisphereLight;
     pointLight: THREE.PointLight;
+    rectAreaLight: THREE.RectAreaLight;
     debugObject: ReturnType<typeof createDebugObject>;
   }) {
     const gui = new GUI({
@@ -263,6 +280,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         pointLight.intensity = value;
       });
 
+    // RectArea Light controls
+    const rectAreaFolder = gui.addFolder("RectArea Light");
+    rectAreaFolder
+      .addColor(debugObject.rectAreaLight, "color")
+      .onChange((value: string) => {
+        rectAreaLight.color.set(value);
+      });
+    rectAreaFolder
+      .add(debugObject.rectAreaLight, "intensity")
+      .min(0)
+      .max(10)
+      .step(0.01)
+      .onChange((value: number) => {
+        rectAreaLight.intensity = value;
+      });
+
     return { gui };
   }
 
@@ -282,7 +315,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { axisHelper } = createHelpers();
 
       // Create lights
-      const { ambientLight, directionalLight, hemisphereLight, pointLight } = createLights();
+      const { ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight } = createLights();
 
       // Add helpers to scene
       scene.add(axisHelper);
@@ -292,13 +325,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(camera);
 
       // Add lights to scene
-      scene.add(ambientLight, directionalLight, hemisphereLight, pointLight);
+      scene.add(ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight);
 
       // Create debug object
-      const debugObject = createDebugObject({ ambientLight, directionalLight, hemisphereLight, pointLight });
+      const debugObject = createDebugObject({ ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight });
 
       // Setup GUI
-      const { gui } = setupGUI({ ambientLight, directionalLight, hemisphereLight, pointLight, debugObject });
+      const { gui } = setupGUI({ ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight, debugObject });
 
       // OrbitControls for camera movement
       const controls = createOrbitControls(camera, canvas);
