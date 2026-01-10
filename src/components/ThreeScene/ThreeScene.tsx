@@ -109,7 +109,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(2, 2, -1);
 
-    return { ambientLight, directionalLight };
+    // Hemisphere light - sky and ground colors
+    const hemisphereLight = new THREE.HemisphereLight(0xff0000, 0x0000ff, 0.3);
+
+    return { ambientLight, directionalLight, hemisphereLight };
   }
 
   // * Type definition for debug GUI object
@@ -122,15 +125,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       color: string;
       intensity: number;
     };
+    hemisphereLight: {
+      skyColor: string;
+      groundColor: string;
+      intensity: number;
+    };
   };
 
   // * Create debug object - single source of truth for initial values
   function createDebugObject({
     ambientLight,
     directionalLight,
+    hemisphereLight,
   }: {
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
+    hemisphereLight: THREE.HemisphereLight;
   }) {
     return {
       ambientLight: {
@@ -141,6 +151,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         color: "#" + directionalLight.color.getHexString(),
         intensity: directionalLight.intensity,
       },
+      hemisphereLight: {
+        skyColor: "#" + hemisphereLight.color.getHexString(),
+        groundColor: "#" + hemisphereLight.groundColor.getHexString(),
+        intensity: hemisphereLight.intensity,
+      },
     } as const satisfies DebugGUIObjDefinition;
   }
 
@@ -148,10 +163,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function setupGUI({
     ambientLight,
     directionalLight,
+    hemisphereLight,
     debugObject,
   }: {
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
+    hemisphereLight: THREE.HemisphereLight;
     debugObject: ReturnType<typeof createDebugObject>;
   }) {
     const gui = new GUI({
@@ -191,6 +208,29 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         directionalLight.intensity = value;
       });
 
+    // Hemisphere Light controls
+    const hemisphereFolder = gui.addFolder("Hemisphere Light");
+    hemisphereFolder
+      .addColor(debugObject.hemisphereLight, "skyColor")
+      .name("Sky Color")
+      .onChange((value: string) => {
+        hemisphereLight.color.set(value);
+      });
+    hemisphereFolder
+      .addColor(debugObject.hemisphereLight, "groundColor")
+      .name("Ground Color")
+      .onChange((value: string) => {
+        hemisphereLight.groundColor.set(value);
+      });
+    hemisphereFolder
+      .add(debugObject.hemisphereLight, "intensity")
+      .min(0)
+      .max(3)
+      .step(0.01)
+      .onChange((value: number) => {
+        hemisphereLight.intensity = value;
+      });
+
     return { gui };
   }
 
@@ -210,7 +250,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { axisHelper } = createHelpers();
 
       // Create lights
-      const { ambientLight, directionalLight } = createLights();
+      const { ambientLight, directionalLight, hemisphereLight } = createLights();
 
       // Add helpers to scene
       scene.add(axisHelper);
@@ -220,13 +260,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(camera);
 
       // Add lights to scene
-      scene.add(ambientLight, directionalLight);
+      scene.add(ambientLight, directionalLight, hemisphereLight);
 
       // Create debug object
-      const debugObject = createDebugObject({ ambientLight, directionalLight });
+      const debugObject = createDebugObject({ ambientLight, directionalLight, hemisphereLight });
 
       // Setup GUI
-      const { gui } = setupGUI({ ambientLight, directionalLight, debugObject });
+      const { gui } = setupGUI({ ambientLight, directionalLight, hemisphereLight, debugObject });
 
       // OrbitControls for camera movement
       const controls = createOrbitControls(camera, canvas);
