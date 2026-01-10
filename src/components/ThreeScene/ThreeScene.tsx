@@ -155,6 +155,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     spotLight: {
       color: string;
       intensity: number;
+      distance: number;
+      angle: number;
+      penumbra: number;
+      decay: number;
     };
   };
 
@@ -199,6 +203,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       spotLight: {
         color: "#" + spotLight.color.getHexString(),
         intensity: spotLight.intensity,
+        distance: spotLight.distance,
+        angle: spotLight.angle,
+        penumbra: spotLight.penumbra,
+        decay: spotLight.decay,
       },
     } as const satisfies DebugGUIObjDefinition;
   }
@@ -327,6 +335,38 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .step(0.01)
       .onChange((value: number) => {
         spotLight.intensity = value;
+      });
+    spotFolder
+      .add(debugObject.spotLight, "distance")
+      .min(0)
+      .max(20)
+      .step(0.01)
+      .onChange((value: number) => {
+        spotLight.distance = value;
+      });
+    spotFolder
+      .add(debugObject.spotLight, "angle")
+      .min(0)
+      .max(Math.PI * 0.5)
+      .step(0.01)
+      .onChange((value: number) => {
+        spotLight.angle = value;
+      });
+    spotFolder
+      .add(debugObject.spotLight, "penumbra")
+      .min(0)
+      .max(1)
+      .step(0.01)
+      .onChange((value: number) => {
+        spotLight.penumbra = value;
+      });
+    spotFolder
+      .add(debugObject.spotLight, "decay")
+      .min(0)
+      .max(2)
+      .step(0.01)
+      .onChange((value: number) => {
+        spotLight.decay = value;
       });
 
     return { gui };
