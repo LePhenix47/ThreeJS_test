@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
 
 import GUI from "lil-gui";
 
@@ -83,10 +84,28 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Create helpers - extracted for clarity
-  function createHelpers() {
+  function createHelpers(
+    directionalLight: THREE.DirectionalLight,
+    hemisphereLight: THREE.HemisphereLight,
+    pointLight: THREE.PointLight,
+    rectAreaLight: THREE.RectAreaLight,
+    spotLight: THREE.SpotLight
+  ) {
     const axisHelper = new THREE.AxesHelper(3);
+    const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 0.2);
+    const hemisphereLightHelper = new THREE.HemisphereLightHelper(hemisphereLight, 0.2);
+    const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2);
+    const rectAreaLightHelper = new RectAreaLightHelper(rectAreaLight);
+    const spotLightHelper = new THREE.SpotLightHelper(spotLight);
 
-    return { axisHelper };
+    return {
+      axisHelper,
+      directionalLightHelper,
+      hemisphereLightHelper,
+      pointLightHelper,
+      rectAreaLightHelper,
+      spotLightHelper
+    };
   }
 
   // * Create OrbitControls - extracted for clarity
@@ -418,13 +437,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { cube, donut, sphere, plane, material } = createSceneObjects();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
-      const { axisHelper } = createHelpers();
 
       // Create lights
       const { ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight, spotLight } = createLights();
 
+      // Create helpers (needs lights to be created first)
+      const { axisHelper, directionalLightHelper, hemisphereLightHelper, pointLightHelper, rectAreaLightHelper, spotLightHelper } = createHelpers(
+        directionalLight,
+        hemisphereLight,
+        pointLight,
+        rectAreaLight,
+        spotLight
+      );
+
       // Add helpers to scene
-      scene.add(axisHelper);
+      scene.add(axisHelper, directionalLightHelper, hemisphereLightHelper, pointLightHelper, rectAreaLightHelper, spotLightHelper);
 
       // Add all objects to scene
       scene.add(cube, donut, sphere, plane);
@@ -452,6 +479,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Animation loop
       function animate() {
         controls.update();
+        spotLightHelper.update();
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
       }
