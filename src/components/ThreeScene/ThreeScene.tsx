@@ -159,6 +159,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       angle: number;
       penumbra: number;
       decay: number;
+      targetX: number;
+      targetY: number;
+      targetZ: number;
     };
   };
 
@@ -207,6 +210,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         angle: spotLight.angle,
         penumbra: spotLight.penumbra,
         decay: spotLight.decay,
+        targetX: spotLight.target.position.x,
+        targetY: spotLight.target.position.y,
+        targetZ: spotLight.target.position.z,
       },
     } as const satisfies DebugGUIObjDefinition;
   }
@@ -367,6 +373,33 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .step(0.01)
       .onChange((value: number) => {
         spotLight.decay = value;
+      });
+    spotFolder
+      .add(debugObject.spotLight, "targetX")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Target X")
+      .onChange((value: number) => {
+        spotLight.target.position.x = value;
+      });
+    spotFolder
+      .add(debugObject.spotLight, "targetY")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Target Y")
+      .onChange((value: number) => {
+        spotLight.target.position.y = value;
+      });
+    spotFolder
+      .add(debugObject.spotLight, "targetZ")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Target Z")
+      .onChange((value: number) => {
+        spotLight.target.position.z = value;
       });
 
     return { gui };
