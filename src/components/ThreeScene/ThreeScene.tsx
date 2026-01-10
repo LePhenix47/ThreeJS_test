@@ -92,8 +92,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     spotLight: THREE.SpotLight
   ) {
     const axisHelper = new THREE.AxesHelper(3);
-    const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 0.2);
-    const hemisphereLightHelper = new THREE.HemisphereLightHelper(hemisphereLight, 0.2);
+    const directionalLightHelper = new THREE.DirectionalLightHelper(
+      directionalLight,
+      0.2
+    );
+    const hemisphereLightHelper = new THREE.HemisphereLightHelper(
+      hemisphereLight,
+      0.2
+    );
     const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2);
     const rectAreaLightHelper = new RectAreaLightHelper(rectAreaLight);
     const spotLightHelper = new THREE.SpotLightHelper(spotLight);
@@ -104,7 +110,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       hemisphereLightHelper,
       pointLightHelper,
       rectAreaLightHelper,
-      spotLightHelper
+      spotLightHelper,
     };
   }
 
@@ -141,11 +147,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     rectAreaLight.lookAt(0, 0, 0);
 
     // Spot light - focused cone of light (green)
-    const spotLight = new THREE.SpotLight(0x78ff00, 0.5, 10, Math.PI * 0.1, 0.25, 1);
+    const spotLight = new THREE.SpotLight(
+      0x78ff00,
+      0.5,
+      10,
+      Math.PI * 0.1,
+      0.25,
+      1
+    );
     spotLight.position.set(0, 2, 3);
     spotLight.target.position.set(0, 0, 0);
 
-    return { ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight, spotLight };
+    return {
+      ambientLight,
+      directionalLight,
+      hemisphereLight,
+      pointLight,
+      rectAreaLight,
+      spotLight,
+    };
   }
 
   // * Type definition for debug GUI object
@@ -575,10 +595,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
 
       // Create lights
-      const { ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight, spotLight } = createLights();
+      const {
+        ambientLight,
+        directionalLight,
+        hemisphereLight,
+        pointLight,
+        rectAreaLight,
+        spotLight,
+      } = createLights();
 
       // Create helpers (needs lights to be created first)
-      const { axisHelper, directionalLightHelper, hemisphereLightHelper, pointLightHelper, rectAreaLightHelper, spotLightHelper } = createHelpers(
+      const {
+        axisHelper,
+        directionalLightHelper,
+        hemisphereLightHelper,
+        pointLightHelper,
+        rectAreaLightHelper,
+        spotLightHelper,
+      } = createHelpers(
         directionalLight,
         hemisphereLight,
         pointLight,
@@ -587,18 +621,39 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       );
 
       // Add helpers to scene
-      scene.add(axisHelper, directionalLightHelper, hemisphereLightHelper, pointLightHelper, rectAreaLightHelper, spotLightHelper);
+      scene.add(
+        axisHelper,
+        directionalLightHelper,
+        hemisphereLightHelper,
+        pointLightHelper,
+        rectAreaLightHelper,
+        spotLightHelper
+      );
 
       // Add all objects to scene
       scene.add(cube, donut, sphere, plane);
       scene.add(camera);
 
       // Add lights to scene
-      scene.add(ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight, spotLight);
+      scene.add(
+        ambientLight,
+        directionalLight,
+        hemisphereLight,
+        pointLight,
+        rectAreaLight,
+        spotLight
+      );
       scene.add(spotLight.target);
 
       // Create debug object
-      const debugObject = createDebugObject({ ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight, spotLight });
+      const debugObject = createDebugObject({
+        ambientLight,
+        directionalLight,
+        hemisphereLight,
+        pointLight,
+        rectAreaLight,
+        spotLight,
+      });
 
       // Setup GUI
       const { gui } = setupGUI({
@@ -613,7 +668,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         pointLightHelper,
         rectAreaLightHelper,
         spotLightHelper,
-        debugObject
+        debugObject,
       });
 
       // OrbitControls for camera movement
@@ -627,6 +682,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       // Animation loop
       function animate() {
+        // Rotate meshes to demonstrate lighting effects
+        const rotationIncrement = 0.005;
+        cube.rotation.x += rotationIncrement;
+        cube.rotation.y += rotationIncrement;
+
+        donut.rotation.x += rotationIncrement;
+        donut.rotation.y += rotationIncrement;
+
+        sphere.rotation.x += rotationIncrement;
+        sphere.rotation.y += rotationIncrement;
+
         controls.update();
         spotLightHelper.update();
         renderer.render(scene, camera);
