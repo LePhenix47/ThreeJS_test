@@ -151,27 +151,40 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   // * Type definition for debug GUI object
   type DebugGUIObjDefinition = {
     ambientLight: {
+      visible: boolean;
       color: string;
       intensity: number;
     };
     directionalLight: {
+      visible: boolean;
       color: string;
       intensity: number;
+      positionX: number;
+      positionY: number;
+      positionZ: number;
     };
     hemisphereLight: {
+      visible: boolean;
       skyColor: string;
       groundColor: string;
       intensity: number;
     };
     pointLight: {
+      visible: boolean;
       color: string;
       intensity: number;
+      distance: number;
+      decay: number;
     };
     rectAreaLight: {
+      visible: boolean;
       color: string;
       intensity: number;
+      width: number;
+      height: number;
     };
     spotLight: {
+      visible: boolean;
       color: string;
       intensity: number;
       distance: number;
@@ -202,27 +215,40 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }) {
     return {
       ambientLight: {
+        visible: ambientLight.visible,
         color: "#" + ambientLight.color.getHexString(),
         intensity: ambientLight.intensity,
       },
       directionalLight: {
+        visible: directionalLight.visible,
         color: "#" + directionalLight.color.getHexString(),
         intensity: directionalLight.intensity,
+        positionX: directionalLight.position.x,
+        positionY: directionalLight.position.y,
+        positionZ: directionalLight.position.z,
       },
       hemisphereLight: {
+        visible: hemisphereLight.visible,
         skyColor: "#" + hemisphereLight.color.getHexString(),
         groundColor: "#" + hemisphereLight.groundColor.getHexString(),
         intensity: hemisphereLight.intensity,
       },
       pointLight: {
+        visible: pointLight.visible,
         color: "#" + pointLight.color.getHexString(),
         intensity: pointLight.intensity,
+        distance: pointLight.distance,
+        decay: pointLight.decay,
       },
       rectAreaLight: {
+        visible: rectAreaLight.visible,
         color: "#" + rectAreaLight.color.getHexString(),
         intensity: rectAreaLight.intensity,
+        width: rectAreaLight.width,
+        height: rectAreaLight.height,
       },
       spotLight: {
+        visible: spotLight.visible,
         color: "#" + spotLight.color.getHexString(),
         intensity: spotLight.intensity,
         distance: spotLight.distance,
@@ -244,6 +270,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     pointLight,
     rectAreaLight,
     spotLight,
+    directionalLightHelper,
+    hemisphereLightHelper,
+    pointLightHelper,
+    rectAreaLightHelper,
+    spotLightHelper,
     debugObject,
   }: {
     ambientLight: THREE.AmbientLight;
@@ -252,6 +283,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     pointLight: THREE.PointLight;
     rectAreaLight: THREE.RectAreaLight;
     spotLight: THREE.SpotLight;
+    directionalLightHelper: THREE.DirectionalLightHelper;
+    hemisphereLightHelper: THREE.HemisphereLightHelper;
+    pointLightHelper: THREE.PointLightHelper;
+    rectAreaLightHelper: RectAreaLightHelper;
+    spotLightHelper: THREE.SpotLightHelper;
     debugObject: ReturnType<typeof createDebugObject>;
   }) {
     const gui = new GUI({
@@ -261,6 +297,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // Ambient Light controls
     const ambientFolder = gui.addFolder("Ambient Light");
+    ambientFolder
+      .add(debugObject.ambientLight, "visible")
+      .name("Visible")
+      .onChange((value: boolean) => {
+        ambientLight.visible = value;
+      });
     ambientFolder
       .addColor(debugObject.ambientLight, "color")
       .onChange((value: string) => {
@@ -278,6 +320,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Directional Light controls
     const directionalFolder = gui.addFolder("Directional Light");
     directionalFolder
+      .add(debugObject.directionalLight, "visible")
+      .name("Visible")
+      .onChange((value: boolean) => {
+        directionalLight.visible = value;
+        directionalLightHelper.visible = value;
+      });
+    directionalFolder
       .addColor(debugObject.directionalLight, "color")
       .onChange((value: string) => {
         directionalLight.color.set(value);
@@ -290,9 +339,43 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .onChange((value: number) => {
         directionalLight.intensity = value;
       });
+    directionalFolder
+      .add(debugObject.directionalLight, "positionX")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Position X")
+      .onChange((value: number) => {
+        directionalLight.position.x = value;
+      });
+    directionalFolder
+      .add(debugObject.directionalLight, "positionY")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Position Y")
+      .onChange((value: number) => {
+        directionalLight.position.y = value;
+      });
+    directionalFolder
+      .add(debugObject.directionalLight, "positionZ")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Position Z")
+      .onChange((value: number) => {
+        directionalLight.position.z = value;
+      });
 
     // Hemisphere Light controls
     const hemisphereFolder = gui.addFolder("Hemisphere Light");
+    hemisphereFolder
+      .add(debugObject.hemisphereLight, "visible")
+      .name("Visible")
+      .onChange((value: boolean) => {
+        hemisphereLight.visible = value;
+        hemisphereLightHelper.visible = value;
+      });
     hemisphereFolder
       .addColor(debugObject.hemisphereLight, "skyColor")
       .name("Sky Color")
@@ -317,6 +400,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Point Light controls
     const pointFolder = gui.addFolder("Point Light");
     pointFolder
+      .add(debugObject.pointLight, "visible")
+      .name("Visible")
+      .onChange((value: boolean) => {
+        pointLight.visible = value;
+        pointLightHelper.visible = value;
+      });
+    pointFolder
       .addColor(debugObject.pointLight, "color")
       .onChange((value: string) => {
         pointLight.color.set(value);
@@ -329,9 +419,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .onChange((value: number) => {
         pointLight.intensity = value;
       });
+    pointFolder
+      .add(debugObject.pointLight, "distance")
+      .min(0)
+      .max(20)
+      .step(0.01)
+      .onChange((value: number) => {
+        pointLight.distance = value;
+      });
+    pointFolder
+      .add(debugObject.pointLight, "decay")
+      .min(0)
+      .max(2)
+      .step(0.01)
+      .onChange((value: number) => {
+        pointLight.decay = value;
+      });
 
     // RectArea Light controls
     const rectAreaFolder = gui.addFolder("RectArea Light");
+    rectAreaFolder
+      .add(debugObject.rectAreaLight, "visible")
+      .name("Visible")
+      .onChange((value: boolean) => {
+        rectAreaLight.visible = value;
+        rectAreaLightHelper.visible = value;
+      });
     rectAreaFolder
       .addColor(debugObject.rectAreaLight, "color")
       .onChange((value: string) => {
@@ -345,9 +458,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .onChange((value: number) => {
         rectAreaLight.intensity = value;
       });
+    rectAreaFolder
+      .add(debugObject.rectAreaLight, "width")
+      .min(0)
+      .max(5)
+      .step(0.01)
+      .onChange((value: number) => {
+        rectAreaLight.width = value;
+      });
+    rectAreaFolder
+      .add(debugObject.rectAreaLight, "height")
+      .min(0)
+      .max(5)
+      .step(0.01)
+      .onChange((value: number) => {
+        rectAreaLight.height = value;
+      });
 
     // Spot Light controls
     const spotFolder = gui.addFolder("Spot Light");
+    spotFolder
+      .add(debugObject.spotLight, "visible")
+      .name("Visible")
+      .onChange((value: boolean) => {
+        spotLight.visible = value;
+        spotLightHelper.visible = value;
+      });
     spotFolder
       .addColor(debugObject.spotLight, "color")
       .onChange((value: string) => {
@@ -465,7 +601,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const debugObject = createDebugObject({ ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight, spotLight });
 
       // Setup GUI
-      const { gui } = setupGUI({ ambientLight, directionalLight, hemisphereLight, pointLight, rectAreaLight, spotLight, debugObject });
+      const { gui } = setupGUI({
+        ambientLight,
+        directionalLight,
+        hemisphereLight,
+        pointLight,
+        rectAreaLight,
+        spotLight,
+        directionalLightHelper,
+        hemisphereLightHelper,
+        pointLightHelper,
+        rectAreaLightHelper,
+        spotLightHelper,
+        debugObject
+      });
 
       // OrbitControls for camera movement
       const controls = createOrbitControls(camera, canvas);
