@@ -109,10 +109,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       directionalLight,
       0.2
     );
+    const directionalLightCameraHelper = new THREE.CameraHelper(
+      directionalLight.shadow.camera
+    );
 
     return {
       axisHelper,
       directionalLightHelper,
+      directionalLightCameraHelper,
     };
   }
 
@@ -304,11 +308,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { ambientLight, directionalLight } = createLights();
 
       // Create helpers (needs lights to be created first)
-      const { axisHelper, directionalLightHelper } =
+      const { axisHelper, directionalLightHelper, directionalLightCameraHelper } =
         createHelpers(directionalLight);
 
       // Add helpers to scene
-      scene.add(axisHelper, directionalLightHelper);
+      scene.add(axisHelper, directionalLightHelper, directionalLightCameraHelper);
 
       // Add all objects to scene
       scene.add(cube, donut, sphere, plane);
