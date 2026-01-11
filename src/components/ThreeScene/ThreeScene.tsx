@@ -30,7 +30,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new THREE.Scene();
   }
 
-  function loadTextures() {
+  function loadShadowTexture() {
     // ? We're not in a React component, so we can't use `useLoadingStore`
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
