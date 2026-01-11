@@ -143,6 +143,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
      */
     directionalLight.castShadow = true;
 
+    const shadowMapSize = 2 ** 12; // ? 4_096
+    directionalLight.shadow.mapSize.set(shadowMapSize, shadowMapSize);
+
     return {
       ambientLight,
       directionalLight,
