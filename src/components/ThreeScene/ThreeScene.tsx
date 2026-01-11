@@ -1,8 +1,8 @@
-/*
- * Shadows Lesson
- * - Understanding shadows in THREE.js
- * - Configuring shadow casting and receiving
- * - Shadow quality and performance
+/**
+ * Baked Shadows Lesson
+ * - Using pre-rendered shadow textures for performance
+ * - Alpha maps to create shadow planes
+ * - Static shadows without real-time calculations
  */
 
 import { useCallback, useEffect, useRef } from "react";
@@ -67,49 +67,38 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Create scene objects - extracted for clarity
-  function createSceneObjects() {
-    // Shared material for all objects (MeshStandardMaterial reacts to lights)
-    const material = new THREE.MeshStandardMaterial();
-
-    // Cube at center (0, 0, 0)
-    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const cube = new THREE.Mesh(cubeGeometry, material);
-    cube.position.set(0, 0, 0);
-
-    /*
-     * SHADOWS (3/4): Enable shadow casting on objects
-     * Objects need to explicitly opt-in to cast shadows
-     */
-    cube.castShadow = true;
-
-    // Donut on the left (-1.5, 0, 0)
-    const donutGeometry = new THREE.TorusGeometry(0.4, 0.2, 16, 32);
-    const donut = new THREE.Mesh(donutGeometry, material);
-    donut.position.set(-1.5, 0, 0);
-    donut.castShadow = true;
-
-    // Sphere on the right (1.5, 0, 0)
+  function createSceneObjects(shadowTexture: THREE.Texture) {
+    // Sphere at center (0, 0, 0)
     const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const sphere = new THREE.Mesh(sphereGeometry, material);
-    sphere.position.set(1.5, 0, 0);
-    sphere.castShadow = true;
+    const sphereMaterial = new THREE.MeshStandardMaterial();
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    sphere.position.set(0, 0.5, 0);
 
-    // Plane below all objects (double-sided)
+    // Ground plane below all objects
     const planeGeometry = new THREE.PlaneGeometry(10, 10);
     const planeMaterial = new THREE.MeshStandardMaterial({
       side: THREE.DoubleSide,
     });
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-    plane.rotation.x = -Math.PI * 0.5; // Rotate to be horizontal
-    plane.position.y = -1; // Position below objects
+    plane.rotation.x = -Math.PI * 0.5;
+    plane.position.y = 0;
 
-    /*
-     * SHADOWS (4/4): Enable shadow receiving on objects
-     * Objects that should display shadows on their surface need receiveShadow enabled
+    /**
+     * BAKED SHADOW: Shadow plane with alpha map
+     * Uses a texture as an alpha map to create a static shadow effect
+     * No real-time shadow calculations needed - just a textured plane
      */
-    plane.receiveShadow = true;
+    const shadowPlaneGeometry = new THREE.PlaneGeometry(1.5, 1.5);
+    const shadowPlaneMaterial = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      alphaMap: shadowTexture,
+    });
+    const shadowPlane = new THREE.Mesh(shadowPlaneGeometry, shadowPlaneMaterial);
+    shadowPlane.rotation.x = -Math.PI * 0.5;
+    shadowPlane.position.y = 0.01; // Slightly above ground to avoid z-fighting
 
-    return { cube, donut, sphere, plane, material };
+    return { sphere, plane, shadowPlane };
   }
 
   // * Create camera - extracted for clarity
@@ -132,30 +121,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(minPixelRatio);
 
-    /*
-     * SHADOWS (1/4): Enable shadow map system on renderer
-     * This is the global switch that enables shadow rendering
-     */
-    renderer.shadowMap.enabled = true;
+    // No dynamic shadows for baked shadows lesson
+    renderer.shadowMap.enabled = false;
 
     return renderer;
   }
 
   // * Create helpers - extracted for clarity
-  function createHelpers(directionalLight: THREE.DirectionalLight) {
+  function createHelpers() {
     const axisHelper = new THREE.AxesHelper(3);
-    const directionalLightHelper = new THREE.DirectionalLightHelper(
-      directionalLight,
-      0.2
-    );
-    const directionalLightCameraHelper = new THREE.CameraHelper(
-      directionalLight.shadow.camera
-    );
 
     return {
       axisHelper,
-      directionalLightHelper,
-      directionalLightCameraHelper,
     };
   }
 
@@ -179,20 +156,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const directionalLight = new THREE.DirectionalLight(0xfdffff, 1.5);
     directionalLight.position.set(1, 1, -2);
 
-    /*
-     * SHADOWS (2/4): Enable shadow casting on lights
-     * Only certain light types can cast shadows (DirectionalLight, SpotLight, PointLight)
-     * AmbientLight and HemisphereLight cannot cast shadows
-     */
-    directionalLight.castShadow = true;
-
-    // Shadow camera configuration
-    directionalLight.shadow.camera.near = 2;
-    directionalLight.shadow.camera.far = 18;
-
-    const shadowMapSize = 2 ** 12; // ? 4_096
-    directionalLight.shadow.mapSize.set(shadowMapSize, shadowMapSize);
-
     return {
       ambientLight,
       directionalLight,
@@ -213,15 +176,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       positionX: number;
       positionY: number;
       positionZ: number;
-      shadowNear: number;
-      shadowFar: number;
-      shadowTop: number;
-      shadowBottom: number;
-      shadowLeft: number;
-      shadowRight: number;
-      shadowRadius: number;
-      shadowMapSizePower: number;
-      shadowMapType: number;
     };
   };
 
@@ -246,15 +200,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         positionX: directionalLight.position.x,
         positionY: directionalLight.position.y,
         positionZ: directionalLight.position.z,
-        shadowNear: directionalLight.shadow.camera.near,
-        shadowFar: directionalLight.shadow.camera.far,
-        shadowTop: directionalLight.shadow.camera.top,
-        shadowBottom: directionalLight.shadow.camera.bottom,
-        shadowLeft: directionalLight.shadow.camera.left,
-        shadowRight: directionalLight.shadow.camera.right,
-        shadowRadius: directionalLight.shadow.radius,
-        shadowMapSizePower: Math.log2(directionalLight.shadow.mapSize.width),
-        shadowMapType: THREE.PCFSoftShadowMap,
       },
     } as const satisfies DebugGUIObjDefinition;
   }
@@ -263,20 +208,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function setupGUI({
     ambientLight,
     directionalLight,
-    directionalLightHelper,
-    directionalLightCameraHelper,
-    renderer,
     debugObject,
   }: {
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
-    directionalLightHelper: THREE.DirectionalLightHelper;
-    directionalLightCameraHelper: THREE.CameraHelper;
-    renderer: THREE.WebGLRenderer;
     debugObject: ReturnType<typeof createDebugObject>;
   }) {
     const gui = new GUI({
-      title: "Shadows Lesson",
+      title: "Baked Shadows Lesson",
       width: 300,
     });
 
@@ -309,7 +248,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Visible")
       .onChange((value: boolean) => {
         directionalLight.visible = value;
-        directionalLightHelper.visible = value;
       });
     directionalFolder
       .addColor(debugObject.directionalLight, "color")
@@ -351,106 +289,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .onChange((value: number) => {
         directionalLight.position.z = value;
       });
-    directionalFolder
-      .add(debugObject.directionalLight, "shadowNear")
-      .min(0.1)
-      .max(10)
-      .step(0.01)
-      .name("Shadow Near")
-      .onChange((value: number) => {
-        directionalLight.shadow.camera.near = value;
-        directionalLight.shadow.camera.updateProjectionMatrix();
-        directionalLightCameraHelper.update();
-      });
-    directionalFolder
-      .add(debugObject.directionalLight, "shadowFar")
-      .min(1)
-      .max(20)
-      .step(0.01)
-      .name("Shadow Far")
-      .onChange((value: number) => {
-        directionalLight.shadow.camera.far = value;
-        directionalLight.shadow.camera.updateProjectionMatrix();
-        directionalLightCameraHelper.update();
-      });
-    directionalFolder
-      .add(debugObject.directionalLight, "shadowTop")
-      .min(-10)
-      .max(10)
-      .step(0.01)
-      .name("Shadow Top")
-      .onChange((value: number) => {
-        directionalLight.shadow.camera.top = value;
-        directionalLight.shadow.camera.updateProjectionMatrix();
-        directionalLightCameraHelper.update();
-      });
-    directionalFolder
-      .add(debugObject.directionalLight, "shadowBottom")
-      .min(-10)
-      .max(10)
-      .step(0.01)
-      .name("Shadow Bottom")
-      .onChange((value: number) => {
-        directionalLight.shadow.camera.bottom = value;
-        directionalLight.shadow.camera.updateProjectionMatrix();
-        directionalLightCameraHelper.update();
-      });
-    directionalFolder
-      .add(debugObject.directionalLight, "shadowLeft")
-      .min(-10)
-      .max(10)
-      .step(0.01)
-      .name("Shadow Left")
-      .onChange((value: number) => {
-        directionalLight.shadow.camera.left = value;
-        directionalLight.shadow.camera.updateProjectionMatrix();
-        directionalLightCameraHelper.update();
-      });
-    directionalFolder
-      .add(debugObject.directionalLight, "shadowRight")
-      .min(-10)
-      .max(10)
-      .step(0.01)
-      .name("Shadow Right")
-      .onChange((value: number) => {
-        directionalLight.shadow.camera.right = value;
-        directionalLight.shadow.camera.updateProjectionMatrix();
-        directionalLightCameraHelper.update();
-      });
-    directionalFolder
-      .add(debugObject.directionalLight, "shadowRadius")
-      .min(0)
-      .max(10)
-      .step(0.01)
-      .name("Shadow Radius")
-      .onChange((value: number) => {
-        directionalLight.shadow.radius = value;
-      });
-    directionalFolder
-      .add(debugObject.directionalLight, "shadowMapSizePower")
-      .min(0)
-      .max(14)
-      .step(1)
-      .name("Shadow Map Size")
-      .onChange((value: number) => {
-        const size = 2 ** value;
-        directionalLight.shadow.mapSize.set(size, size);
-        directionalLight.shadow.map?.dispose();
-        directionalLight.shadow.map = null;
-      });
-    directionalFolder
-      .add(debugObject.directionalLight, "shadowMapType", {
-        BasicShadowMap: THREE.BasicShadowMap,
-        PCFShadowMap: THREE.PCFShadowMap,
-        PCFSoftShadowMap: THREE.PCFSoftShadowMap,
-        VSMShadowMap: THREE.VSMShadowMap,
-      })
-      .name("Shadow Map Type")
-      .onChange((value: number) => {
-        renderer.shadowMap.type = value as THREE.ShadowMapType;
-        directionalLight.shadow.map?.dispose();
-        directionalLight.shadow.map = null;
-      });
 
     return { gui };
   }
@@ -465,29 +303,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       // Initialize Three.js components
       const scene = createScene();
-      const { cube, donut, sphere, plane, material } = createSceneObjects();
+
+      // Load shadow texture
+      const { doorColorTextureLoaded: shadowTexture } = loadShadowTexture();
+
+      const { sphere, plane, shadowPlane } = createSceneObjects(shadowTexture);
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
 
       // Create lights
       const { ambientLight, directionalLight } = createLights();
 
-      // Create helpers (needs lights to be created first)
-      const {
-        axisHelper,
-        directionalLightHelper,
-        directionalLightCameraHelper,
-      } = createHelpers(directionalLight);
+      // Create helpers
+      const { axisHelper } = createHelpers();
 
       // Add helpers to scene
-      scene.add(
-        axisHelper,
-        directionalLightHelper,
-        directionalLightCameraHelper
-      );
+      scene.add(axisHelper);
 
       // Add all objects to scene
-      scene.add(cube, donut, sphere, plane);
+      scene.add(sphere, plane, shadowPlane);
       scene.add(camera);
 
       // Add lights to scene
@@ -503,9 +337,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { gui } = setupGUI({
         ambientLight,
         directionalLight,
-        directionalLightHelper,
-        directionalLightCameraHelper,
-        renderer,
         debugObject,
       });
 
@@ -520,10 +351,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       // Animation loop
       function animate() {
-        // Rotate meshes to demonstrate lighting effects
-        cube.rotation.y += 0.01;
-        donut.rotation.y += 0.01;
-        sphere.rotation.y += 0.01;
+        const elapsedTime = clock.getElapsedTime();
+
+        // Circular motion on XZ plane for sphere and shadow
+        const radius = 1.5;
+        const x = Math.cos(elapsedTime) * radius;
+        const z = Math.sin(elapsedTime) * radius;
+
+        sphere.position.x = x;
+        sphere.position.z = z;
+
+        shadowPlane.position.x = x;
+        shadowPlane.position.z = z;
 
         controls.update();
         renderer.render(scene, camera);
@@ -552,7 +391,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         controls.dispose();
         gui.destroy();
         abortController.abort();
-        material.dispose();
         renderer.dispose();
       };
     },
