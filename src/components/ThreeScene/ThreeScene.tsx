@@ -1,4 +1,4 @@
-/**
+/*
  * Shadows Lesson
  * - Understanding shadows in THREE.js
  * - Configuring shadow casting and receiving
@@ -37,7 +37,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const cube = new THREE.Mesh(cubeGeometry, material);
     cube.position.set(0, 0, 0);
 
-    /**
+    /*
      * SHADOWS (3/4): Enable shadow casting on objects
      * Objects need to explicitly opt-in to cast shadows
      */
@@ -64,7 +64,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     plane.rotation.x = -Math.PI * 0.5; // Rotate to be horizontal
     plane.position.y = -1; // Position below objects
 
-    /**
+    /*
      * SHADOWS (4/4): Enable shadow receiving on objects
      * Objects that should display shadows on their surface need receiveShadow enabled
      */
@@ -93,7 +93,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(minPixelRatio);
 
-    /**
+    /*
      * SHADOWS (1/4): Enable shadow map system on renderer
      * This is the global switch that enables shadow rendering
      */
@@ -136,7 +136,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const directionalLight = new THREE.DirectionalLight(0x00fffc, 0.5);
     directionalLight.position.set(2, 2, -1);
 
-    /**
+    /*
      * SHADOWS (2/4): Enable shadow casting on lights
      * Only certain light types can cast shadows (DirectionalLight, SpotLight, PointLight)
      * AmbientLight and HemisphereLight cannot cast shadows
@@ -301,7 +301,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { ambientLight, directionalLight } = createLights();
 
       // Create helpers (needs lights to be created first)
-      const { axisHelper, directionalLightHelper } = createHelpers(directionalLight);
+      const { axisHelper, directionalLightHelper } =
+        createHelpers(directionalLight);
 
       // Add helpers to scene
       scene.add(axisHelper, directionalLightHelper);
