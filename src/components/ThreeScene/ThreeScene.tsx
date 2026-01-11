@@ -7,11 +7,14 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
+import GUI from "lil-gui";
+
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-import GUI from "lil-gui";
+import simpleShadow from "@public/textures/simpleShadow.jpg";
 
+import { useLoadingStore } from "@/stores/useLoadingStore";
 import "./ThreeScene.scss";
 
 type ThreeSceneProps = {
@@ -25,6 +28,42 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   // * Create scene - extracted for clarity
   function createScene() {
     return new THREE.Scene();
+  }
+
+  function loadTextures() {
+    // ? We're not in a React component, so we can't use `useLoadingStore`
+    const { setLoading, setProgress } = useLoadingStore.getState().actions;
+
+    const loadingManager = new THREE.LoadingManager();
+
+    loadingManager.onStart = () => {
+      setLoading(true);
+      setProgress(0);
+    };
+
+    loadingManager.onProgress = (url, loaded, total) => {
+      const progress = (loaded / total) * 100;
+      setProgress(progress);
+      console.log(`Loading: ${loaded}/${total} (${progress.toFixed(0)}%)`);
+    };
+
+    loadingManager.onLoad = () => {
+      console.log("Textures loaded");
+      setLoading(false);
+      setProgress(100);
+    };
+
+    loadingManager.onError = (url) => {
+      console.error("Error loading:", url);
+      setLoading(false);
+    };
+
+    const textureLoader = new THREE.TextureLoader(loadingManager);
+
+    const doorColorTextureLoaded = textureLoader.load(simpleShadow);
+    doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
+
+    return { doorColorTextureLoaded };
   }
 
   // * Create scene objects - extracted for clarity
