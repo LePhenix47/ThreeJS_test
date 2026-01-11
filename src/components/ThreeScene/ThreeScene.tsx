@@ -1,15 +1,14 @@
 /**
- * Lights Lesson
- * - Understanding different light types in THREE.js
- * - MeshStandardMaterial for realistic lighting
- * - Scene with cube, donut, sphere, and plane
+ * Shadows Lesson
+ * - Understanding shadows in THREE.js
+ * - Configuring shadow casting and receiving
+ * - Shadow quality and performance
  */
 
 import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { RectAreaLightHelper } from "three/addons/helpers/RectAreaLightHelper.js";
 
 import GUI from "lil-gui";
 
@@ -38,15 +37,23 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const cube = new THREE.Mesh(cubeGeometry, material);
     cube.position.set(0, 0, 0);
 
+    /**
+     * SHADOWS (3/4): Enable shadow casting on objects
+     * Objects need to explicitly opt-in to cast shadows
+     */
+    cube.castShadow = true;
+
     // Donut on the left (-1.5, 0, 0)
     const donutGeometry = new THREE.TorusGeometry(0.4, 0.2, 16, 32);
     const donut = new THREE.Mesh(donutGeometry, material);
     donut.position.set(-1.5, 0, 0);
+    donut.castShadow = true;
 
     // Sphere on the right (1.5, 0, 0)
     const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
     const sphere = new THREE.Mesh(sphereGeometry, material);
     sphere.position.set(1.5, 0, 0);
+    sphere.castShadow = true;
 
     // Plane below all objects (double-sided)
     const planeGeometry = new THREE.PlaneGeometry(10, 10);
@@ -56,6 +63,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.rotation.x = -Math.PI * 0.5; // Rotate to be horizontal
     plane.position.y = -1; // Position below objects
+
+    /**
+     * SHADOWS (4/4): Enable shadow receiving on objects
+     * Objects that should display shadows on their surface need receiveShadow enabled
+     */
+    plane.receiveShadow = true;
 
     return { cube, donut, sphere, plane, material };
   }
@@ -80,37 +93,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(minPixelRatio);
 
+    /**
+     * SHADOWS (1/4): Enable shadow map system on renderer
+     * This is the global switch that enables shadow rendering
+     */
+    renderer.shadowMap.enabled = true;
+
     return renderer;
   }
 
   // * Create helpers - extracted for clarity
-  function createHelpers(
-    directionalLight: THREE.DirectionalLight,
-    hemisphereLight: THREE.HemisphereLight,
-    pointLight: THREE.PointLight,
-    rectAreaLight: THREE.RectAreaLight,
-    spotLight: THREE.SpotLight
-  ) {
+  function createHelpers(directionalLight: THREE.DirectionalLight) {
     const axisHelper = new THREE.AxesHelper(3);
     const directionalLightHelper = new THREE.DirectionalLightHelper(
       directionalLight,
       0.2
     );
-    const hemisphereLightHelper = new THREE.HemisphereLightHelper(
-      hemisphereLight,
-      0.2
-    );
-    const pointLightHelper = new THREE.PointLightHelper(pointLight, 0.2);
-    const rectAreaLightHelper = new RectAreaLightHelper(rectAreaLight);
-    const spotLightHelper = new THREE.SpotLightHelper(spotLight);
 
     return {
       axisHelper,
       directionalLightHelper,
-      hemisphereLightHelper,
-      pointLightHelper,
-      rectAreaLightHelper,
-      spotLightHelper,
     };
   }
 
@@ -134,37 +136,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const directionalLight = new THREE.DirectionalLight(0x00fffc, 0.5);
     directionalLight.position.set(2, 2, -1);
 
-    // Hemisphere light - sky (red) and ground (blue) colors
-    const hemisphereLight = new THREE.HemisphereLight(0xff0000, 0x0000ff, 0.3);
-
-    // Point light - omnidirectional light source (orange)
-    const pointLight = new THREE.PointLight(0xff9000, 0.5);
-    pointLight.position.set(1, -0.5, 1);
-
-    // RectArea light - rectangular area light source (green)
-    const rectAreaLight = new THREE.RectAreaLight(0x4e00ff, 2, 1, 1);
-    rectAreaLight.position.set(-1.5, 0, 1.5);
-    rectAreaLight.lookAt(0, 0, 0);
-
-    // Spot light - focused cone of light (green)
-    const spotLight = new THREE.SpotLight(
-      0x78ff00,
-      0.5,
-      10,
-      Math.PI * 0.1,
-      0.25,
-      1
-    );
-    spotLight.position.set(0, 2, 3);
-    spotLight.target.position.set(0, 0, 0);
+    /**
+     * SHADOWS (2/4): Enable shadow casting on lights
+     * Only certain light types can cast shadows (DirectionalLight, SpotLight, PointLight)
+     * AmbientLight and HemisphereLight cannot cast shadows
+     */
+    directionalLight.castShadow = true;
 
     return {
       ambientLight,
       directionalLight,
-      hemisphereLight,
-      pointLight,
-      rectAreaLight,
-      spotLight,
     };
   }
 
@@ -183,55 +164,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       positionY: number;
       positionZ: number;
     };
-    hemisphereLight: {
-      visible: boolean;
-      skyColor: string;
-      groundColor: string;
-      intensity: number;
-    };
-    pointLight: {
-      visible: boolean;
-      color: string;
-      intensity: number;
-      distance: number;
-      decay: number;
-    };
-    rectAreaLight: {
-      visible: boolean;
-      color: string;
-      intensity: number;
-      width: number;
-      height: number;
-    };
-    spotLight: {
-      visible: boolean;
-      color: string;
-      intensity: number;
-      distance: number;
-      angle: number;
-      penumbra: number;
-      decay: number;
-      targetX: number;
-      targetY: number;
-      targetZ: number;
-    };
   };
 
   // * Create debug object - single source of truth for initial values
   function createDebugObject({
     ambientLight,
     directionalLight,
-    hemisphereLight,
-    pointLight,
-    rectAreaLight,
-    spotLight,
   }: {
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
-    hemisphereLight: THREE.HemisphereLight;
-    pointLight: THREE.PointLight;
-    rectAreaLight: THREE.RectAreaLight;
-    spotLight: THREE.SpotLight;
   }) {
     return {
       ambientLight: {
@@ -247,38 +188,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         positionY: directionalLight.position.y,
         positionZ: directionalLight.position.z,
       },
-      hemisphereLight: {
-        visible: hemisphereLight.visible,
-        skyColor: "#" + hemisphereLight.color.getHexString(),
-        groundColor: "#" + hemisphereLight.groundColor.getHexString(),
-        intensity: hemisphereLight.intensity,
-      },
-      pointLight: {
-        visible: pointLight.visible,
-        color: "#" + pointLight.color.getHexString(),
-        intensity: pointLight.intensity,
-        distance: pointLight.distance,
-        decay: pointLight.decay,
-      },
-      rectAreaLight: {
-        visible: rectAreaLight.visible,
-        color: "#" + rectAreaLight.color.getHexString(),
-        intensity: rectAreaLight.intensity,
-        width: rectAreaLight.width,
-        height: rectAreaLight.height,
-      },
-      spotLight: {
-        visible: spotLight.visible,
-        color: "#" + spotLight.color.getHexString(),
-        intensity: spotLight.intensity,
-        distance: spotLight.distance,
-        angle: spotLight.angle,
-        penumbra: spotLight.penumbra,
-        decay: spotLight.decay,
-        targetX: spotLight.target.position.x,
-        targetY: spotLight.target.position.y,
-        targetZ: spotLight.target.position.z,
-      },
     } as const satisfies DebugGUIObjDefinition;
   }
 
@@ -286,32 +195,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function setupGUI({
     ambientLight,
     directionalLight,
-    hemisphereLight,
-    pointLight,
-    rectAreaLight,
-    spotLight,
     directionalLightHelper,
-    hemisphereLightHelper,
-    pointLightHelper,
-    rectAreaLightHelper,
-    spotLightHelper,
     debugObject,
   }: {
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
-    hemisphereLight: THREE.HemisphereLight;
-    pointLight: THREE.PointLight;
-    rectAreaLight: THREE.RectAreaLight;
-    spotLight: THREE.SpotLight;
     directionalLightHelper: THREE.DirectionalLightHelper;
-    hemisphereLightHelper: THREE.HemisphereLightHelper;
-    pointLightHelper: THREE.PointLightHelper;
-    rectAreaLightHelper: RectAreaLightHelper;
-    spotLightHelper: THREE.SpotLightHelper;
     debugObject: ReturnType<typeof createDebugObject>;
   }) {
     const gui = new GUI({
-      title: "Lights Lesson",
+      title: "Shadows Lesson",
       width: 300,
     });
 
@@ -387,196 +280,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         directionalLight.position.z = value;
       });
 
-    // Hemisphere Light controls
-    const hemisphereFolder = gui.addFolder("Hemisphere Light");
-    hemisphereFolder
-      .add(debugObject.hemisphereLight, "visible")
-      .name("Visible")
-      .onChange((value: boolean) => {
-        hemisphereLight.visible = value;
-        hemisphereLightHelper.visible = value;
-      });
-    hemisphereFolder
-      .addColor(debugObject.hemisphereLight, "skyColor")
-      .name("Sky Color")
-      .onChange((value: string) => {
-        hemisphereLight.color.set(value);
-      });
-    hemisphereFolder
-      .addColor(debugObject.hemisphereLight, "groundColor")
-      .name("Ground Color")
-      .onChange((value: string) => {
-        hemisphereLight.groundColor.set(value);
-      });
-    hemisphereFolder
-      .add(debugObject.hemisphereLight, "intensity")
-      .min(0)
-      .max(3)
-      .step(0.01)
-      .onChange((value: number) => {
-        hemisphereLight.intensity = value;
-      });
-
-    // Point Light controls
-    const pointFolder = gui.addFolder("Point Light");
-    pointFolder
-      .add(debugObject.pointLight, "visible")
-      .name("Visible")
-      .onChange((value: boolean) => {
-        pointLight.visible = value;
-        pointLightHelper.visible = value;
-      });
-    pointFolder
-      .addColor(debugObject.pointLight, "color")
-      .onChange((value: string) => {
-        pointLight.color.set(value);
-      });
-    pointFolder
-      .add(debugObject.pointLight, "intensity")
-      .min(0)
-      .max(3)
-      .step(0.01)
-      .onChange((value: number) => {
-        pointLight.intensity = value;
-      });
-    pointFolder
-      .add(debugObject.pointLight, "distance")
-      .min(0)
-      .max(20)
-      .step(0.01)
-      .onChange((value: number) => {
-        pointLight.distance = value;
-      });
-    pointFolder
-      .add(debugObject.pointLight, "decay")
-      .min(0)
-      .max(2)
-      .step(0.01)
-      .onChange((value: number) => {
-        pointLight.decay = value;
-      });
-
-    // RectArea Light controls
-    const rectAreaFolder = gui.addFolder("RectArea Light");
-    rectAreaFolder
-      .add(debugObject.rectAreaLight, "visible")
-      .name("Visible")
-      .onChange((value: boolean) => {
-        rectAreaLight.visible = value;
-        rectAreaLightHelper.visible = value;
-      });
-    rectAreaFolder
-      .addColor(debugObject.rectAreaLight, "color")
-      .onChange((value: string) => {
-        rectAreaLight.color.set(value);
-      });
-    rectAreaFolder
-      .add(debugObject.rectAreaLight, "intensity")
-      .min(0)
-      .max(10)
-      .step(0.01)
-      .onChange((value: number) => {
-        rectAreaLight.intensity = value;
-      });
-    rectAreaFolder
-      .add(debugObject.rectAreaLight, "width")
-      .min(0)
-      .max(5)
-      .step(0.01)
-      .onChange((value: number) => {
-        rectAreaLight.width = value;
-      });
-    rectAreaFolder
-      .add(debugObject.rectAreaLight, "height")
-      .min(0)
-      .max(5)
-      .step(0.01)
-      .onChange((value: number) => {
-        rectAreaLight.height = value;
-      });
-
-    // Spot Light controls
-    const spotFolder = gui.addFolder("Spot Light");
-    spotFolder
-      .add(debugObject.spotLight, "visible")
-      .name("Visible")
-      .onChange((value: boolean) => {
-        spotLight.visible = value;
-        spotLightHelper.visible = value;
-      });
-    spotFolder
-      .addColor(debugObject.spotLight, "color")
-      .onChange((value: string) => {
-        spotLight.color.set(value);
-      });
-    spotFolder
-      .add(debugObject.spotLight, "intensity")
-      .min(0)
-      .max(3)
-      .step(0.01)
-      .onChange((value: number) => {
-        spotLight.intensity = value;
-      });
-    spotFolder
-      .add(debugObject.spotLight, "distance")
-      .min(0)
-      .max(20)
-      .step(0.01)
-      .onChange((value: number) => {
-        spotLight.distance = value;
-      });
-    spotFolder
-      .add(debugObject.spotLight, "angle")
-      .min(0)
-      .max(Math.PI * 0.5)
-      .step(0.01)
-      .onChange((value: number) => {
-        spotLight.angle = value;
-      });
-    spotFolder
-      .add(debugObject.spotLight, "penumbra")
-      .min(0)
-      .max(1)
-      .step(0.01)
-      .onChange((value: number) => {
-        spotLight.penumbra = value;
-      });
-    spotFolder
-      .add(debugObject.spotLight, "decay")
-      .min(0)
-      .max(2)
-      .step(0.01)
-      .onChange((value: number) => {
-        spotLight.decay = value;
-      });
-    spotFolder
-      .add(debugObject.spotLight, "targetX")
-      .min(-5)
-      .max(5)
-      .step(0.01)
-      .name("Target X")
-      .onChange((value: number) => {
-        spotLight.target.position.x = value;
-      });
-    spotFolder
-      .add(debugObject.spotLight, "targetY")
-      .min(-5)
-      .max(5)
-      .step(0.01)
-      .name("Target Y")
-      .onChange((value: number) => {
-        spotLight.target.position.y = value;
-      });
-    spotFolder
-      .add(debugObject.spotLight, "targetZ")
-      .min(-5)
-      .max(5)
-      .step(0.01)
-      .name("Target Z")
-      .onChange((value: number) => {
-        spotLight.target.position.z = value;
-      });
-
     return { gui };
   }
 
@@ -595,79 +298,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
 
       // Create lights
-      const {
-        ambientLight,
-        directionalLight,
-        hemisphereLight,
-        pointLight,
-        rectAreaLight,
-        spotLight,
-      } = createLights();
+      const { ambientLight, directionalLight } = createLights();
 
       // Create helpers (needs lights to be created first)
-      const {
-        axisHelper,
-        directionalLightHelper,
-        hemisphereLightHelper,
-        pointLightHelper,
-        rectAreaLightHelper,
-        spotLightHelper,
-      } = createHelpers(
-        directionalLight,
-        hemisphereLight,
-        pointLight,
-        rectAreaLight,
-        spotLight
-      );
+      const { axisHelper, directionalLightHelper } = createHelpers(directionalLight);
 
       // Add helpers to scene
-      scene.add(
-        axisHelper,
-        directionalLightHelper,
-        hemisphereLightHelper,
-        pointLightHelper,
-        rectAreaLightHelper,
-        spotLightHelper
-      );
+      scene.add(axisHelper, directionalLightHelper);
 
       // Add all objects to scene
       scene.add(cube, donut, sphere, plane);
       scene.add(camera);
 
       // Add lights to scene
-      scene.add(
-        ambientLight,
-        directionalLight,
-        hemisphereLight,
-        pointLight,
-        rectAreaLight,
-        spotLight
-      );
-      scene.add(spotLight.target);
+      scene.add(ambientLight, directionalLight);
 
       // Create debug object
       const debugObject = createDebugObject({
         ambientLight,
         directionalLight,
-        hemisphereLight,
-        pointLight,
-        rectAreaLight,
-        spotLight,
       });
 
       // Setup GUI
       const { gui } = setupGUI({
         ambientLight,
         directionalLight,
-        hemisphereLight,
-        pointLight,
-        rectAreaLight,
-        spotLight,
         directionalLightHelper,
-        hemisphereLightHelper,
-        pointLightHelper,
-        rectAreaLightHelper,
-        spotLightHelper,
         debugObject,
       });
 
@@ -683,18 +339,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Animation loop
       function animate() {
         // Rotate meshes to demonstrate lighting effects
-        const rotationIncrement = 0.005;
-        cube.rotation.x += rotationIncrement;
-        cube.rotation.y += rotationIncrement;
-
-        donut.rotation.x += rotationIncrement;
-        donut.rotation.y += rotationIncrement;
-
-        sphere.rotation.x += rotationIncrement;
-        sphere.rotation.y += rotationIncrement;
+        cube.rotation.y += 0.01;
+        donut.rotation.y += 0.01;
+        sphere.rotation.y += 0.01;
 
         controls.update();
-        spotLightHelper.update();
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
       }
