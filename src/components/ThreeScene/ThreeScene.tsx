@@ -180,7 +180,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       shadowBottom: number;
       shadowLeft: number;
       shadowRight: number;
+      shadowRadius: number;
       shadowMapSizePower: number;
+      shadowMapType: number;
     };
   };
 
@@ -211,7 +213,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         shadowBottom: directionalLight.shadow.camera.bottom,
         shadowLeft: directionalLight.shadow.camera.left,
         shadowRight: directionalLight.shadow.camera.right,
+        shadowRadius: directionalLight.shadow.radius,
         shadowMapSizePower: Math.log2(directionalLight.shadow.mapSize.width),
+        shadowMapType: THREE.PCFSoftShadowMap,
       },
     } as const satisfies DebugGUIObjDefinition;
   }
@@ -222,12 +226,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     directionalLight,
     directionalLightHelper,
     directionalLightCameraHelper,
+    renderer,
     debugObject,
   }: {
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
     directionalLightHelper: THREE.DirectionalLightHelper;
     directionalLightCameraHelper: THREE.CameraHelper;
+    renderer: THREE.WebGLRenderer;
     debugObject: ReturnType<typeof createDebugObject>;
   }) {
     const gui = new GUI({
@@ -373,14 +379,36 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         directionalLightCameraHelper.update();
       });
     directionalFolder
+      .add(debugObject.directionalLight, "shadowRadius")
+      .min(0)
+      .max(10)
+      .step(0.01)
+      .name("Shadow Radius")
+      .onChange((value: number) => {
+        directionalLight.shadow.radius = value;
+      });
+    directionalFolder
       .add(debugObject.directionalLight, "shadowMapSizePower")
       .min(0)
-      .max(16)
+      .max(14)
       .step(1)
       .name("Shadow Map Size")
       .onChange((value: number) => {
         const size = 2 ** value;
         directionalLight.shadow.mapSize.set(size, size);
+        directionalLight.shadow.map?.dispose();
+        directionalLight.shadow.map = null;
+      });
+    directionalFolder
+      .add(debugObject.directionalLight, "shadowMapType", {
+        BasicShadowMap: THREE.BasicShadowMap,
+        PCFShadowMap: THREE.PCFShadowMap,
+        PCFSoftShadowMap: THREE.PCFSoftShadowMap,
+        VSMShadowMap: THREE.VSMShadowMap,
+      })
+      .name("Shadow Map Type")
+      .onChange((value: number) => {
+        renderer.shadowMap.type = value as THREE.ShadowMapType;
         directionalLight.shadow.map?.dispose();
         directionalLight.shadow.map = null;
       });
@@ -438,6 +466,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         directionalLight,
         directionalLightHelper,
         directionalLightCameraHelper,
+        renderer,
         debugObject,
       });
 
