@@ -94,7 +94,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       transparent: true,
       alphaMap: shadowTexture,
     });
-    const shadowPlane = new THREE.Mesh(shadowPlaneGeometry, shadowPlaneMaterial);
+    const shadowPlane = new THREE.Mesh(
+      shadowPlaneGeometry,
+      shadowPlaneMaterial
+    );
     shadowPlane.rotation.x = -Math.PI * 0.5;
     shadowPlane.position.y = 0.01; // Slightly above ground to avoid z-fighting
 
@@ -361,8 +364,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         sphere.position.x = x;
         sphere.position.z = z;
 
+        // Jumping motion using abs(sin()) for bounce effect
+        sphere.position.y = Math.abs(Math.sin(elapsedTime * 3)) + 0.5;
+
         shadowPlane.position.x = x;
         shadowPlane.position.z = z;
+
+        // Update shadow opacity and scale based on sphere height
+        const shadowIntensity = 1 - sphere.position.y;
+        shadowPlane.material.opacity = shadowIntensity;
+        shadowPlane.scale.set(
+          shadowIntensity * 2,
+          shadowIntensity * 2,
+          shadowIntensity * 2
+        );
 
         controls.update();
         renderer.render(scene, camera);
