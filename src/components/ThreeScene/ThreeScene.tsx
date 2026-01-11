@@ -136,9 +136,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // Ambient light - soft overall illumination (white)
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 
-    // Directional light - like the sun (cyan)
-    const directionalLight = new THREE.DirectionalLight(0x00fffc, 0.5);
-    directionalLight.position.set(2, 2, -1);
+    // Directional light - like the sun
+    const directionalLight = new THREE.DirectionalLight(0xfdffff, 1.5);
+    directionalLight.position.set(1, 1, -2);
 
     /*
      * SHADOWS (2/4): Enable shadow casting on lights
@@ -146,6 +146,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
      * AmbientLight and HemisphereLight cannot cast shadows
      */
     directionalLight.castShadow = true;
+
+    // Shadow camera configuration
+    directionalLight.shadow.camera.near = 2;
+    directionalLight.shadow.camera.far = 18;
 
     const shadowMapSize = 2 ** 12; // ? 4_096
     directionalLight.shadow.mapSize.set(shadowMapSize, shadowMapSize);
@@ -170,6 +174,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       positionX: number;
       positionY: number;
       positionZ: number;
+      shadowNear: number;
+      shadowFar: number;
+      shadowTop: number;
+      shadowBottom: number;
+      shadowLeft: number;
+      shadowRight: number;
+      shadowMapSizePower: number;
     };
   };
 
@@ -194,6 +205,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         positionX: directionalLight.position.x,
         positionY: directionalLight.position.y,
         positionZ: directionalLight.position.z,
+        shadowNear: directionalLight.shadow.camera.near,
+        shadowFar: directionalLight.shadow.camera.far,
+        shadowTop: directionalLight.shadow.camera.top,
+        shadowBottom: directionalLight.shadow.camera.bottom,
+        shadowLeft: directionalLight.shadow.camera.left,
+        shadowRight: directionalLight.shadow.camera.right,
+        shadowMapSizePower: Math.log2(directionalLight.shadow.mapSize.width),
       },
     } as const satisfies DebugGUIObjDefinition;
   }
@@ -203,11 +221,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     ambientLight,
     directionalLight,
     directionalLightHelper,
+    directionalLightCameraHelper,
     debugObject,
   }: {
     ambientLight: THREE.AmbientLight;
     directionalLight: THREE.DirectionalLight;
     directionalLightHelper: THREE.DirectionalLightHelper;
+    directionalLightCameraHelper: THREE.CameraHelper;
     debugObject: ReturnType<typeof createDebugObject>;
   }) {
     const gui = new GUI({
@@ -286,6 +306,84 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .onChange((value: number) => {
         directionalLight.position.z = value;
       });
+    directionalFolder
+      .add(debugObject.directionalLight, "shadowNear")
+      .min(0.1)
+      .max(10)
+      .step(0.01)
+      .name("Shadow Near")
+      .onChange((value: number) => {
+        directionalLight.shadow.camera.near = value;
+        directionalLight.shadow.camera.updateProjectionMatrix();
+        directionalLightCameraHelper.update();
+      });
+    directionalFolder
+      .add(debugObject.directionalLight, "shadowFar")
+      .min(1)
+      .max(20)
+      .step(0.01)
+      .name("Shadow Far")
+      .onChange((value: number) => {
+        directionalLight.shadow.camera.far = value;
+        directionalLight.shadow.camera.updateProjectionMatrix();
+        directionalLightCameraHelper.update();
+      });
+    directionalFolder
+      .add(debugObject.directionalLight, "shadowTop")
+      .min(-10)
+      .max(10)
+      .step(0.01)
+      .name("Shadow Top")
+      .onChange((value: number) => {
+        directionalLight.shadow.camera.top = value;
+        directionalLight.shadow.camera.updateProjectionMatrix();
+        directionalLightCameraHelper.update();
+      });
+    directionalFolder
+      .add(debugObject.directionalLight, "shadowBottom")
+      .min(-10)
+      .max(10)
+      .step(0.01)
+      .name("Shadow Bottom")
+      .onChange((value: number) => {
+        directionalLight.shadow.camera.bottom = value;
+        directionalLight.shadow.camera.updateProjectionMatrix();
+        directionalLightCameraHelper.update();
+      });
+    directionalFolder
+      .add(debugObject.directionalLight, "shadowLeft")
+      .min(-10)
+      .max(10)
+      .step(0.01)
+      .name("Shadow Left")
+      .onChange((value: number) => {
+        directionalLight.shadow.camera.left = value;
+        directionalLight.shadow.camera.updateProjectionMatrix();
+        directionalLightCameraHelper.update();
+      });
+    directionalFolder
+      .add(debugObject.directionalLight, "shadowRight")
+      .min(-10)
+      .max(10)
+      .step(0.01)
+      .name("Shadow Right")
+      .onChange((value: number) => {
+        directionalLight.shadow.camera.right = value;
+        directionalLight.shadow.camera.updateProjectionMatrix();
+        directionalLightCameraHelper.update();
+      });
+    directionalFolder
+      .add(debugObject.directionalLight, "shadowMapSizePower")
+      .min(0)
+      .max(16)
+      .step(1)
+      .name("Shadow Map Size")
+      .onChange((value: number) => {
+        const size = 2 ** value;
+        directionalLight.shadow.mapSize.set(size, size);
+        directionalLight.shadow.map?.dispose();
+        directionalLight.shadow.map = null;
+      });
 
     return { gui };
   }
@@ -308,11 +406,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { ambientLight, directionalLight } = createLights();
 
       // Create helpers (needs lights to be created first)
-      const { axisHelper, directionalLightHelper, directionalLightCameraHelper } =
-        createHelpers(directionalLight);
+      const {
+        axisHelper,
+        directionalLightHelper,
+        directionalLightCameraHelper,
+      } = createHelpers(directionalLight);
 
       // Add helpers to scene
-      scene.add(axisHelper, directionalLightHelper, directionalLightCameraHelper);
+      scene.add(
+        axisHelper,
+        directionalLightHelper,
+        directionalLightCameraHelper
+      );
 
       // Add all objects to scene
       scene.add(cube, donut, sphere, plane);
@@ -332,6 +437,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         ambientLight,
         directionalLight,
         directionalLightHelper,
+        directionalLightCameraHelper,
         debugObject,
       });
 
