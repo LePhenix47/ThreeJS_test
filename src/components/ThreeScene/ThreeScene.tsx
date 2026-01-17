@@ -1,21 +1,12 @@
+/**
+ * Haunted House Lesson
+ * - Putting everything learned so far into practice
+ */
+
 import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-
-import doorColorTexture from "@public/textures/door/color.jpg";
-import doorAlphaTexture from "@public/textures/door/alpha.jpg";
-import doorAmbientOcclusionTexture from "@public/textures/door/ambientOcclusion.jpg";
-import doorHeightTexture from "@public/textures/door/height.jpg";
-import doorNormalTexture from "@public/textures/door/normal.jpg";
-import doorMetalnessTexture from "@public/textures/door/metalness.jpg";
-import doorRoughnessTexture from "@public/textures/door/roughness.jpg";
-
-import gsap from "gsap";
-
-import GUI from "lil-gui";
-
-import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
 
@@ -27,64 +18,27 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
-  // * Load textures - extracted for clarity
-  function loadTextures() {
-    // ? We're not in a React component, so we can't use `useLoadingStore`
-    const { setLoading, setProgress } = useLoadingStore.getState().actions;
-
-    const loadingManager = new THREE.LoadingManager();
-
-    loadingManager.onStart = () => {
-      setLoading(true);
-      setProgress(0);
-    };
-
-    loadingManager.onProgress = (url, loaded, total) => {
-      const progress = (loaded / total) * 100;
-      setProgress(progress);
-      console.log(`Loading: ${loaded}/${total} (${progress.toFixed(0)}%)`);
-    };
-
-    loadingManager.onLoad = () => {
-      console.log("Textures loaded");
-      setLoading(false);
-      setProgress(100);
-    };
-
-    loadingManager.onError = (url) => {
-      console.error("Error loading:", url);
-      setLoading(false);
-    };
-
-    const textureLoader = new THREE.TextureLoader(loadingManager);
-    const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
-    doorColorTextureLoaded.colorSpace = THREE.SRGBColorSpace;
-
-    return { doorColorTextureLoaded };
-  }
-
   // * Create scene - extracted for clarity
   function createScene() {
     return new THREE.Scene();
   }
 
-  // * Create mesh - extracted for clarity
-  function createMesh(texture: THREE.Texture) {
-    // const geometry = new THREE.BoxGeometry(1, 1, 1);
+  // * Create placeholder sphere - extracted for clarity
+  function createSphere() {
     const geometry = new THREE.SphereGeometry(1, 32, 32);
-    const material = new THREE.MeshBasicMaterial({
-      map: texture,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
+    const material = new THREE.MeshStandardMaterial({ roughness: 0.7 });
+    const sphere = new THREE.Mesh(geometry, material);
 
-    return { geometry, material, mesh };
+    return { geometry, material, sphere };
   }
 
   // * Create camera - extracted for clarity
   function createCamera(aspectRatio: number) {
     const fov = 75;
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
-    camera.position.z = 10;
+    camera.position.x = 4;
+    camera.position.y = 2;
+    camera.position.z = 5;
 
     return camera;
   }
@@ -110,6 +64,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { axisHelper };
   }
 
+  // * Create lights - extracted for clarity
+  function createLights() {
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    directionalLight.position.set(3, 2, -8);
+
+    return { ambientLight, directionalLight };
+  }
+
   // * Create OrbitControls - extracted for clarity
   function createOrbitControls(
     camera: THREE.PerspectiveCamera,
@@ -121,112 +84,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
-  // * Type definition for debug GUI object
-  type DebugGUIObjDefinition = {
-    geometry: {
-      subdivisions: number;
-    };
-    material: Partial<THREE.MeshBasicMaterial>;
-    animations: {
-      spin: () => void;
-    };
-  };
-
-  // * Create debug object - single source of truth for initial values
-  function createDebugObject({ mesh }: { mesh: THREE.Mesh }) {
-    const oneFullRevolution = Math.PI * 2;
-
-    return {
-      geometry: {
-        subdivisions: 2,
-      },
-      material: {},
-      animations: {
-        spin: () => {
-          gsap.to(mesh.rotation, {
-            duration: 1,
-            y: mesh.rotation.y + oneFullRevolution,
-          });
-        },
-      },
-    } as const satisfies DebugGUIObjDefinition;
-  }
-
-  // * Setup GUI - extracted for clarity
-  function setupGUI({
-    mesh,
-    material,
-    debugObject,
-  }: {
-    mesh: THREE.Mesh;
-    material: THREE.MeshBasicMaterial;
-    debugObject: ReturnType<typeof createDebugObject>;
-  }) {
-    const gui = new GUI({
-      title: "THREE.JS GUI",
-      width: 300,
-    });
-
-    // GUI Folders - Nested structure
-    const cubeFolder = gui.addFolder("Cube");
-    const geometryFolder = cubeFolder.addFolder("Geometry");
-    const materialFolder = cubeFolder.addFolder("Material");
-    const meshFolder = cubeFolder.addFolder("Mesh");
-    const animationsFolder = cubeFolder.addFolder("Animations");
-
-    // Geometry controls
-    geometryFolder
-      .add(debugObject.geometry, "subdivisions")
-      .min(1)
-      .max(20)
-      .step(1)
-      .onFinishChange(() => {
-        mesh.geometry.dispose();
-        mesh.geometry = new THREE.BoxGeometry(
-          1,
-          1,
-          1,
-          debugObject.geometry.subdivisions,
-          debugObject.geometry.subdivisions,
-          debugObject.geometry.subdivisions
-        );
-      });
-
-    // Material controls
-    materialFolder.add(material, "wireframe").name("Wireframe");
-    // materialFolder
-    //   .addColor(debugObject.material, "color")
-    //   .onChange((newColorValue: string) => {
-    //     material.color.set(newColorValue);
-    //   });
-
-    // Mesh controls
-    meshFolder
-      .add(mesh.position, "x")
-      .min(-3)
-      .max(3)
-      .step(0.01)
-      .name("Position X");
-    meshFolder
-      .add(mesh.position, "y")
-      .min(-3)
-      .max(3)
-      .step(0.01)
-      .name("Position Y");
-    meshFolder
-      .add(mesh.position, "z")
-      .min(-3)
-      .max(3)
-      .step(0.01)
-      .name("Position Z");
-    meshFolder.add(mesh, "visible").name("Visibility");
-
-    // Animation controls
-    animationsFolder.add(debugObject.animations, "spin");
-
-    return { gui };
-  }
-
   // Helper functions inside component for HMR
   const setupThreeScene = useCallback(
     (canvas: HTMLCanvasElement) => {
@@ -235,29 +92,23 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { clientWidth, clientHeight } = parent;
 
-      // Load textures
-      const { doorColorTextureLoaded } = loadTextures();
-
       // Initialize Three.js components
       const scene = createScene();
-      const { geometry, material, mesh } = createMesh(doorColorTextureLoaded);
+      const { geometry, material, sphere } = createSphere();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const { axisHelper } = createHelpers();
+      const { ambientLight, directionalLight } = createLights();
 
       // Add helpers to scene
       scene.add(axisHelper);
 
-      // Create debug object (single source of truth)
-      const debugObject = createDebugObject({ mesh });
-
-      // Setup GUI controls
-      const { gui } = setupGUI({ mesh, material, debugObject });
-
-      // Add mesh to scene
-      mesh.position.set(0, 0, 0);
-      scene.add(mesh);
+      // Add sphere to scene
+      scene.add(sphere);
       scene.add(camera);
+
+      // Add lights to scene
+      scene.add(ambientLight, directionalLight);
 
       // OrbitControls for camera movement
       const controls = createOrbitControls(camera, canvas);
@@ -294,9 +145,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Cleanup
       return () => {
         cancelAnimation();
-        gsap.killTweensOf(mesh.rotation);
         controls.dispose();
-        gui.destroy();
         abortController.abort();
         geometry.dispose();
         material.dispose();
