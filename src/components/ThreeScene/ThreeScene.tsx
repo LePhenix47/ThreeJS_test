@@ -60,12 +60,65 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
-    const floorColorTexture = textureLoader.load(floorAlphaMapTexture);
-    floorColorTexture.colorSpace = THREE.SRGBColorSpace;
+    // * Load floor texture
+    const floorAlphaMapTextureLoaded = textureLoader.load(floorAlphaMapTexture);
 
-    // const houseTextures = {};
+    // * Load house door textures
+    const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
+    const doorAlphaTextureLoaded = textureLoader.load(doorAlphaTexture);
+    const doorAmbientOcclusionTextureLoaded = textureLoader.load(
+      doorAmbientOcclusionTexture,
+    );
+    const doorHeightTextureLoaded = textureLoader.load(doorHeightTexture);
+    const doorNormalTextureLoaded = textureLoader.load(doorNormalTexture);
+    const doorMetalnessTextureLoaded = textureLoader.load(doorMetalnessTexture);
+    const doorRoughnessTextureLoaded = textureLoader.load(doorRoughnessTexture);
 
-    return { floorColorTexture };
+    // * Load house roof textures
+    // TODO
+
+    // * Load house base textures
+    // TODO
+
+    const loadedTextures = [
+      floorAlphaMapTextureLoaded,
+      doorColorTextureLoaded,
+      doorAlphaTextureLoaded,
+      doorAmbientOcclusionTextureLoaded,
+      doorHeightTextureLoaded,
+      doorNormalTextureLoaded,
+      doorMetalnessTextureLoaded,
+      doorRoughnessTextureLoaded,
+    ] as const;
+
+    for (const loadedTexture of loadedTextures) {
+      loadedTexture.colorSpace = THREE.SRGBColorSpace;
+      loadedTexture.wrapS = THREE.RepeatWrapping;
+      loadedTexture.wrapT = THREE.RepeatWrapping;
+    }
+    const houseTextures = {
+      base: {},
+      roof: {},
+      door: {
+        color: doorColorTextureLoaded,
+        alpha: doorAlphaTextureLoaded,
+        ambientOcclusion: doorAmbientOcclusionTextureLoaded,
+        height: doorHeightTextureLoaded,
+        normal: doorNormalTextureLoaded,
+        metalness: doorMetalnessTextureLoaded,
+        roughness: doorRoughnessTextureLoaded,
+      },
+      bushes: {},
+    } as const;
+
+    const floorTextures = {
+      alpha: floorAlphaMapTextureLoaded,
+    } as const;
+
+    return {
+      floorTextures,
+      houseTextures,
+    };
   }
 
   // * Create scene - extracted for clarity
@@ -74,15 +127,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function createFloor({
-    floorColorTexture,
+    floorAlphaMapTexture,
   }: {
-    floorColorTexture: THREE.Texture;
+    floorAlphaMapTexture: THREE.Texture;
   }) {
     const planeGeometry = new THREE.PlaneGeometry(20, 20);
     const planeMaterial = new THREE.MeshStandardMaterial({
+      color: "green",
       roughness: 0.75,
       transparent: true,
-      alphaMap: floorColorTexture,
+      alphaMap: floorAlphaMapTexture,
     });
 
     const floor = new THREE.Mesh(planeGeometry, planeMaterial);
@@ -92,67 +146,87 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return floor;
   }
 
-  function createHouse() {
+  function createHouse(
+    houseTextures: ReturnType<typeof loadTextures>["houseTextures"],
+  ) {
     const houseMeasurements = {
       base: {
         width: 4,
         height: 2.5,
+        depth: 4,
       },
       roof: {
         width: 3.5,
         height: 1.5,
       },
+      door: {
+        size: 2.2,
+      },
     } as const;
 
     const houseGroup = new THREE.Group();
 
-    const cubeGeometry = new THREE.BoxGeometry(
+    // * Walls
+    const wallsGeometry = new THREE.BoxGeometry(
       houseMeasurements.base.width,
       houseMeasurements.base.height,
-      4,
+      houseMeasurements.base.depth,
     );
-    const cubeMaterial = new THREE.MeshStandardMaterial({
-      // color: "orange",
-      roughness: 0.75,
+    const wallsMaterial = new THREE.MeshStandardMaterial({
+      color: "#f1d8b8",
     });
 
-    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-    cube.position.y = houseMeasurements.base.height / 2;
+    const wallsMesh = new THREE.Mesh(wallsGeometry, wallsMaterial);
+    wallsMesh.position.y = houseMeasurements.base.height / 2;
 
-    const squarePyramidGeometry = new THREE.ConeGeometry(
+    // * Roof
+    const roofGeometry = new THREE.ConeGeometry(
       houseMeasurements.roof.width,
       houseMeasurements.roof.height,
       4,
     );
-    const squarePyramidMaterial = new THREE.MeshStandardMaterial({
-      // color: "brown",
-      roughness: 0.75,
+    const roofMaterial = new THREE.MeshStandardMaterial({
+      color: "#6b6662",
     });
 
-    const squarePyramid = new THREE.Mesh(
-      squarePyramidGeometry,
-      squarePyramidMaterial,
-    );
+    const roofMesh = new THREE.Mesh(roofGeometry, roofMaterial);
 
-    squarePyramid.position.y =
+    roofMesh.position.y =
       houseMeasurements.roof.height / 2 + houseMeasurements.base.height;
 
-    squarePyramid.rotation.y = Math.PI / 4;
+    roofMesh.rotation.y = Math.PI / 4;
 
-    houseGroup.add(cube, squarePyramid);
+    // * Door
+    const subdivisions = 30;
+    const doorGeometry = new THREE.PlaneGeometry(
+      houseMeasurements.door.size,
+      houseMeasurements.door.size,
+      subdivisions,
+      subdivisions,
+    );
+    const doorMaterial = new THREE.MeshStandardMaterial({
+      // color: "#745345",
+      map: houseTextures.door.color,
+      transparent: true,
+      alphaMap: houseTextures.door.alpha,
+      aoMap: houseTextures.door.ambientOcclusion,
+      displacementMap: houseTextures.door.height,
+      displacementScale: 0.1,
+      normalMap: houseTextures.door.normal,
+      metalnessMap: houseTextures.door.metalness,
+      roughnessMap: houseTextures.door.roughness,
+    });
+
+    // doorMaterial.wireframe = true;
+
+    const doorMesh = new THREE.Mesh(doorGeometry, doorMaterial);
+
+    doorMesh.position.y = houseMeasurements.door.size / 2;
+    doorMesh.position.z = houseMeasurements.base.depth / 2 - 0.0001;
+
+    houseGroup.add(wallsMesh, roofMesh, doorMesh);
 
     return houseGroup;
-  }
-
-  // * Create placeholder sphere - extracted for clarity
-  function createGeometries() {
-    const geometry = new THREE.SphereGeometry(1, 32, 32);
-
-    const material = new THREE.MeshStandardMaterial({ roughness: 0.7 });
-
-    const sphere = new THREE.Mesh(geometry, material);
-
-    return { geometry, material, sphere };
   }
 
   // * Create camera - extracted for clarity
@@ -215,13 +289,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { clientWidth, clientHeight } = parent;
 
-      const { floorColorTexture } = loadTextures();
-      const floor = createFloor({ floorColorTexture });
+      const { floorTextures, houseTextures } = loadTextures();
 
-      const house = createHouse();
+      const floor = createFloor({ floorAlphaMapTexture: floorTextures.alpha });
+
+      const house = createHouse(houseTextures);
       // Initialize Three.js components
       const scene = createScene();
-      const { geometry, material, sphere } = createGeometries();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const { axisHelper } = createHelpers();
@@ -276,8 +350,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         cancelAnimation();
         controls.dispose();
         abortController.abort();
-        geometry.dispose();
-        material.dispose();
+        house.clear();
         renderer.dispose();
       };
     },
