@@ -162,6 +162,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       door: {
         size: 2.2,
       },
+      bushes: {
+        size: 1,
+      },
     } as const;
 
     const houseGroup = new THREE.Group();
@@ -222,7 +225,76 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const doorMesh = new THREE.Mesh(doorGeometry, doorMaterial);
 
     doorMesh.position.y = houseMeasurements.door.size / 2;
-    doorMesh.position.z = houseMeasurements.base.depth / 2 - 0.0001;
+    doorMesh.position.z = houseMeasurements.base.depth / 2 - 0.0001; // ? Avoids z-fighting
+
+    // * Bushes
+    const bushesMeasurements = [
+      {
+        scale: 0.5,
+        position: {
+          x: 0.8,
+          y: 0.2,
+          z: 2.2,
+        },
+      },
+      {
+        scale: 0.25,
+        position: {
+          x: 1.4,
+          y: 0.1,
+          z: 2.1,
+        },
+      },
+      {
+        scale: 0.4,
+        position: {
+          x: -0.8,
+          y: 0.1,
+          z: 2.2,
+        },
+      },
+      {
+        scale: 0.15,
+        position: {
+          x: -1,
+          y: 0.05,
+          z: 2.6,
+        },
+      },
+    ];
+
+    const bushGeometry = new THREE.SphereGeometry(
+      houseMeasurements.bushes.size,
+      16,
+      16,
+    );
+    const bushMaterial = new THREE.MeshStandardMaterial({
+      color: "#89c854",
+    });
+
+    const bush1Mesh = new THREE.Mesh(bushGeometry, bushMaterial);
+    const bush2Mesh = new THREE.Mesh(bushGeometry, bushMaterial);
+    const bush3Mesh = new THREE.Mesh(bushGeometry, bushMaterial);
+    const bush4Mesh = new THREE.Mesh(bushGeometry, bushMaterial);
+
+    const bushMeshesArray = [
+      bush1Mesh,
+      bush2Mesh,
+      bush3Mesh,
+      bush4Mesh,
+    ] as const;
+
+    for (let i = 0; i < bushMeshesArray.length; i++) {
+      const currentBushMesh = bushMeshesArray[i];
+
+      const currentBushMeasurement = bushesMeasurements[i];
+      const { scale, position } = currentBushMeasurement;
+
+      currentBushMesh.scale.set(scale, scale, scale);
+      currentBushMesh.position.set(position.x, position.y, position.z);
+
+      houseGroup.add(currentBushMesh);
+    }
 
     houseGroup.add(wallsMesh, roofMesh, doorMesh);
 
