@@ -25,6 +25,65 @@ type ThreeSceneProps = {
   className?: string;
 };
 
+const houseMeasurements = {
+  base: {
+    width: 4,
+    height: 2.5,
+    depth: 4,
+  },
+  roof: {
+    width: 3.5,
+    height: 1.5,
+  },
+  door: {
+    size: 2.2,
+  },
+  bushes: {
+    size: 1,
+  },
+} as const;
+
+const bushesMeasurements = [
+  {
+    scale: 0.5,
+    position: {
+      x: 0.8,
+      y: 0.2,
+      z: 2.2,
+    },
+  },
+  {
+    scale: 0.25,
+    position: {
+      x: 1.4,
+      y: 0.1,
+      z: 2.1,
+    },
+  },
+  {
+    scale: 0.4,
+    position: {
+      x: -0.8,
+      y: 0.1,
+      z: 2.2,
+    },
+  },
+  {
+    scale: 0.15,
+    position: {
+      x: -1,
+      y: 0.05,
+      z: 2.6,
+    },
+  },
+] as const;
+
+const graveMeasurements = {
+  width: 0.6,
+  height: 0.8,
+  depth: 0.15,
+} as const;
+
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
@@ -150,24 +209,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createHouse(
     houseTextures: ReturnType<typeof loadTextures>["houseTextures"],
   ) {
-    const houseMeasurements = {
-      base: {
-        width: 4,
-        height: 2.5,
-        depth: 4,
-      },
-      roof: {
-        width: 3.5,
-        height: 1.5,
-      },
-      door: {
-        size: 2.2,
-      },
-      bushes: {
-        size: 1,
-      },
-    } as const;
-
     const houseGroup = new THREE.Group();
 
     // * Walls
@@ -233,41 +274,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     doorMesh.position.z = houseMeasurements.base.depth / 2 - 0.0001; // ? Avoids z-fighting
 
     // * Bushes
-    const bushesMeasurements = [
-      {
-        scale: 0.5,
-        position: {
-          x: 0.8,
-          y: 0.2,
-          z: 2.2,
-        },
-      },
-      {
-        scale: 0.25,
-        position: {
-          x: 1.4,
-          y: 0.1,
-          z: 2.1,
-        },
-      },
-      {
-        scale: 0.4,
-        position: {
-          x: -0.8,
-          y: 0.1,
-          z: 2.2,
-        },
-      },
-      {
-        scale: 0.15,
-        position: {
-          x: -1,
-          y: 0.05,
-          z: 2.6,
-        },
-      },
-    ];
-
     const bushGeometry = new THREE.SphereGeometry(
       houseMeasurements.bushes.size,
       16,
@@ -300,40 +306,48 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   function createGraves(houseGroup: ReturnType<typeof createHouse>) {
     // graveTextures: ReturnType<typeof loadTextures>["graveTextures"]
+    const graveGeometry = new THREE.BoxGeometry(
+      graveMeasurements.width,
+      graveMeasurements.height,
+      graveMeasurements.depth,
+    );
 
-    const graveGeometry = new THREE.BoxGeometry();
     const graveMaterials = new THREE.MeshStandardMaterial({
       color: "grey",
     });
 
     const gravesGroup = new THREE.Group();
-    /*
-     * Random angle: θr but:
-     * 1. The angle is random so Math.random() * 2 * Math.PI
-     * 2. The radius is the diameter of the house, which is:
-     *    Diameter of the house: Math.sqrt(width**2 + depth**2)
-     *  + the radius of the grave
-     *  + additional space just in case
-     *
-     *  so Math.random() * houseDiameter
-     *
-     * Regarding the position we're gonna take the house center and add the grave radius
-     */
 
     // ? Then we'll need to detect collisions in 3D with boxes
-
-    const houseWalls = houseGroup.getObjectByName("walls");
-
-    console.log(houseGroup.children, { houseWalls });
 
     const graveAmount = 50;
 
     const oneRevolution = 2 * Math.PI;
+    const houseDiameter = Math.sqrt(
+      houseMeasurements.base.width ** 2 + houseMeasurements.base.depth ** 2,
+    );
+
+    console.log({ houseDiameter });
+
     for (let i = 0; i < graveAmount; i++) {
       const currentGraveMesh = new THREE.Mesh(graveGeometry, graveMaterials);
       currentGraveMesh.name = `grave-${i}`;
 
-      const randomAngle = Math.random() * oneRevolution;
+      /*
+       * Random angle: θr but:
+       * 1. The angle is random so Math.random() * 2 * Math.PI
+       * 2. The radius is the diameter of the house, which is:
+       *    Diameter of the house: Math.sqrt(width**2 + depth**2)
+       *  + the radius of the grave
+       *  + additional space just in case
+       *
+       *  so Math.random() * houseDiameter
+       *
+       * Regarding the position we're gonna take the house center and add the grave radius
+       */
+      const randomAngleValue = Math.random() + 1;
+      const randomAngle =
+        randomAngleValue * oneRevolution * (houseDiameter / 2);
 
       gravesGroup.add(currentGraveMesh);
       // TODO: Add graves around the house (cos & sin) BUT without overlapping the house walls NOR other graves
