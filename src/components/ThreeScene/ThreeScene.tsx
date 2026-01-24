@@ -272,22 +272,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       color: "#89c854",
     });
 
-    const bush1Mesh = new THREE.Mesh(bushGeometry, bushMaterial);
-    const bush2Mesh = new THREE.Mesh(bushGeometry, bushMaterial);
-    const bush3Mesh = new THREE.Mesh(bushGeometry, bushMaterial);
-    const bush4Mesh = new THREE.Mesh(bushGeometry, bushMaterial);
-
-    const bushMeshesArray = [
-      bush1Mesh,
-      bush2Mesh,
-      bush3Mesh,
-      bush4Mesh,
-    ] as const;
-
-    for (let i = 0; i < bushMeshesArray.length; i++) {
-      const currentBushMesh = bushMeshesArray[i];
-
+    for (let i = 0; i < bushesMeasurements.length; i++) {
       const currentBushMeasurement = bushesMeasurements[i];
+
+      const currentBushMesh = new THREE.Mesh(bushGeometry, bushMaterial);
       const { scale, position } = currentBushMeasurement;
 
       currentBushMesh.scale.set(scale, scale, scale);
@@ -298,7 +286,54 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     houseGroup.add(wallsMesh, roofMesh, doorMesh);
 
+    console.log({ houseGroup });
+
     return houseGroup;
+  }
+
+  function createGraves(houseGroup: ReturnType<typeof createHouse>) {
+    // graveTextures: ReturnType<typeof loadTextures>["graveTextures"]
+
+    const graveGeometry = new THREE.BoxGeometry();
+    const graveMaterials = new THREE.MeshStandardMaterial({
+      color: "grey",
+    });
+
+    const gravesGroup = new THREE.Group();
+    /*
+     * Random angle: θr but:
+     * 1. The angle is random so Math.random() * 2 * Math.PI
+     * 2. The radius is the diameter of the house, which is:
+     *    Diameter of the house: Math.sqrt(width**2 + depth**2)
+     *  + the radius of the grave
+     *  + additional space just in case
+     *
+     *  so Math.random() * houseDiameter
+     *
+     * Regarding the position we're gonna take the house center and add the grave radius
+     */
+
+    // ? Then we'll need to detect collisions in 3D with boxes
+
+    const houseWalls = houseGroup.children.find(
+      (child) => child.name === "walls",
+    );
+
+    console.log(houseGroup.children, { houseWalls });
+
+    const graveAmount = 50;
+
+    const oneRevolution = 2 * Math.PI;
+    for (let i = 0; i < graveAmount; i++) {
+      const currentGraveMesh = new THREE.Mesh(graveGeometry, graveMaterials);
+
+      const randomAngle = Math.random() * oneRevolution;
+
+      gravesGroup.add(currentGraveMesh);
+      // TODO: Add graves around the house (cos & sin) BUT without overlapping the house walls NOR other graves
+    }
+
+    return gravesGroup;
   }
 
   // * Create camera - extracted for clarity
@@ -366,6 +401,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const floor = createFloor({ floorAlphaMapTexture: floorTextures.alpha });
 
       const house = createHouse(houseTextures);
+
+      const graves = createGraves(house);
       // Initialize Three.js components
       const scene = createScene();
       const camera = createCamera(clientWidth / clientHeight);
