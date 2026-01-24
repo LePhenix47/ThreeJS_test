@@ -140,6 +140,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     });
 
     const floor = new THREE.Mesh(planeGeometry, planeMaterial);
+    floor.name = "floor";
 
     floor.rotation.x = -Math.PI * 0.5; // ? -π/2 = -90 degrees
 
@@ -180,6 +181,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     });
 
     const wallsMesh = new THREE.Mesh(wallsGeometry, wallsMaterial);
+    wallsMesh.name = "walls";
+
     wallsMesh.position.y = houseMeasurements.base.height / 2;
 
     // * Roof
@@ -193,6 +196,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     });
 
     const roofMesh = new THREE.Mesh(roofGeometry, roofMaterial);
+    roofMesh.name = "roof";
 
     roofMesh.position.y =
       houseMeasurements.roof.height / 2 + houseMeasurements.base.height;
@@ -223,6 +227,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // doorMaterial.wireframe = true;
 
     const doorMesh = new THREE.Mesh(doorGeometry, doorMaterial);
+    doorMesh.name = "door";
 
     doorMesh.position.y = houseMeasurements.door.size / 2;
     doorMesh.position.z = houseMeasurements.base.depth / 2 - 0.0001; // ? Avoids z-fighting
@@ -276,6 +281,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const currentBushMeasurement = bushesMeasurements[i];
 
       const currentBushMesh = new THREE.Mesh(bushGeometry, bushMaterial);
+      currentBushMesh.name = `bush-${i}`;
+
       const { scale, position } = currentBushMeasurement;
 
       currentBushMesh.scale.set(scale, scale, scale);
@@ -315,9 +322,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // ? Then we'll need to detect collisions in 3D with boxes
 
-    const houseWalls = houseGroup.children.find(
-      (child) => child.name === "walls",
-    );
+    const houseWalls = houseGroup.getObjectByName("walls");
 
     console.log(houseGroup.children, { houseWalls });
 
@@ -326,6 +331,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const oneRevolution = 2 * Math.PI;
     for (let i = 0; i < graveAmount; i++) {
       const currentGraveMesh = new THREE.Mesh(graveGeometry, graveMaterials);
+      currentGraveMesh.name = `grave-${i}`;
 
       const randomAngle = Math.random() * oneRevolution;
 
