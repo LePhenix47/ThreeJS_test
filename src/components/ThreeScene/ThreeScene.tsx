@@ -321,57 +321,43 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // ? Then we'll need to detect collisions in 3D with boxes
 
-    const graveAmount = 25;
+    const graveAmount: number = 50;
 
-    const oneRevolution = 2 * Math.PI;
-    const houseDiameter = Math.sqrt(
+    const oneRevolution: number = 2 * Math.PI;
+    const houseDiameter: number = Math.sqrt(
       houseMeasurements.base.width ** 2 + houseMeasurements.base.depth ** 2,
     );
     const houseRadius = houseDiameter / 2;
 
     console.log({ houseDiameter });
 
-    const minGravesRadius = houseRadius + graveMeasurements.width / 2;
-    const maxGravesRadius = 2 * houseRadius;
+    const minGravesRadius: number = houseRadius + graveMeasurements.width / 2;
+    const maxGravesRadius: number = 2 * houseRadius;
+
+    const bottomGrave: number = graveMeasurements.height / 2;
 
     for (let i = 0; i < graveAmount; i++) {
       const currentGraveMesh = new THREE.Mesh(graveGeometry, graveMaterials);
       currentGraveMesh.name = `grave-${i}`;
 
-      /*
-       * Random angle: θr but:
-       * 1. The angle is random so Math.random() * 2 * Math.PI
-       * 2. The radius is the diameter of the house, which is:
-       *    Diameter of the house: Math.sqrt(width**2 + depth**2)
-       *  + the radius of the grave
-       *  + additional space just in case
-       *
-       *  so Math.random() * houseDiameter
-       *
-       * Regarding the position we're gonna take the house center and add the grave radius
-       */
       const randomAngle: number = randomInRange([0, oneRevolution]);
 
-      // ? Equal area distribution
+      // ? Equal area distribution, see EQUAL_AREA_DISTRIBUTION.md for details
       const randomRadius: number = Math.sqrt(
         randomInRange([minGravesRadius ** 2, maxGravesRadius ** 2]),
       );
 
       const randomX: number = randomRadius * Math.cos(randomAngle);
       const randomZ: number = randomRadius * Math.sin(randomAngle);
-      const randomY: number = randomInRange([
-        0.2,
-        graveMeasurements.height / 2,
-      ]);
+      const randomY: number = randomInRange([bottomGrave / 2, bottomGrave]);
 
       currentGraveMesh.position.set(randomX, randomY, randomZ);
 
-      // currentGraveMesh.rotation.y = randomInRange([0, oneRevolution]);
-      currentGraveMesh.rotation.x = Math.PI / 2;
-      // currentGraveMesh.rotation.x = randomInRange([
-      //   Math.PI / 3,
-      //   (2 * Math.PI) / 3,
-      // ]);
+      currentGraveMesh.rotation.x += randomInRange([-Math.PI / 6, Math.PI / 6]);
+      currentGraveMesh.rotation.z += randomInRange([
+        -Math.PI / 12,
+        Math.PI / 12,
+      ]);
 
       gravesGroup.add(currentGraveMesh);
     }
@@ -406,7 +392,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Create helpers - extracted for clarity
   function createHelpers() {
-    const axisHelper = new THREE.AxesHelper(3);
+    const axisHelper = new THREE.AxesHelper(20);
 
     return { axisHelper };
   }
