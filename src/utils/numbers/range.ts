@@ -50,20 +50,22 @@ export function randomInRange(
     throw new RangeError(`Invalid range: ${min} > ${max}`);
   }
 
-  switch (inclusionRange) {
-    case "min":
-      return randomIncludeMinExcludeMax(min, max);
-    case "max":
-      return randomExcludeMinIncludeMax(min, max);
-    case "both":
-      return randomIncludeBoth(min, max);
-    case "none":
-      return randomExcludeBoth(min, max);
+  const rangeOperatorMap = new Map(
+    Object.entries({
+      min: randomIncludeMinExcludeMax,
+      max: randomExcludeMinIncludeMax,
+      both: randomIncludeBoth,
+      none: randomExcludeBoth,
+    }),
+  );
 
-    default: {
-      throw new Error(`Invalid inclusion range: ${inclusionRange}`);
-    }
+  const randomOperator = rangeOperatorMap.get(inclusionRange);
+
+  if (!randomOperator) {
+    throw new Error(`Invalid inclusion range: ${inclusionRange}`);
   }
+
+  return randomOperator(min, max);
 }
 
 // --- Helper Functions ---
