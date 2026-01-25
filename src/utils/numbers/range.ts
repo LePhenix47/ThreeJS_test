@@ -25,3 +25,72 @@ export function getValueFromNewRange(
 
   return newMin + (value - oldMin) * slope;
 }
+
+/**
+ * Returns a random number within the specified range.
+ * The inclusion range can be "min", "max", "both", or "none".
+ * `"min"`, the minimum value is included.
+ *
+ * `"max"`, the maximum value is included.
+ *
+ * `"both"`, both the minimum and maximum values are included.
+ *
+ * `"none"`, neither the minimum nor maximum values are included.
+ *
+ * @param {[number, number]} range The range [min, max] to generate a random number within.
+ * @param {"min" | "max" | "both" | "none"} inclusionRange The inclusion range to use.
+ * @returns {number} A random number within the specified range.
+ * @throws {Error} If the inclusion range is invalid.
+ */
+export function randomInRange(
+  [min, max]: [number, number],
+  inclusionRange: "min" | "max" | "both" | "none" = "min",
+): number {
+  if (min > max) {
+    throw new RangeError(`Invalid range: ${min} > ${max}`);
+  }
+
+  switch (inclusionRange) {
+    case "min":
+      return randomIncludeMinExcludeMax(min, max);
+    case "max":
+      return randomExcludeMinIncludeMax(min, max);
+    case "both":
+      return randomIncludeBoth(min, max);
+    case "none":
+      return randomExcludeBoth(min, max);
+
+    default: {
+      throw new Error(`Invalid inclusion range: ${inclusionRange}`);
+    }
+  }
+}
+
+// --- Helper Functions ---
+function randomIncludeMinExcludeMax(min: number, max: number): number {
+  // ? [min, max[
+  return min + Math.random() * (max - min);
+}
+
+function randomExcludeMinIncludeMax(min: number, max: number): number {
+  // ? ]min, max]
+  return max - Math.random() * (max - min);
+}
+
+function randomExcludeBoth(min: number, max: number): number {
+  // ? ]min, max[
+  const tinyOffset = getTinyOffset(min);
+  const adjustedMin = min + tinyOffset;
+  const adjustedMax = max - tinyOffset;
+
+  return adjustedMin + Math.random() * (adjustedMax - adjustedMin);
+}
+
+function randomIncludeBoth(min: number, max: number): number {
+  // ? [min, max]
+  return min + Math.random() * (max - min);
+}
+
+function getTinyOffset(reference: number): number {
+  return Number.EPSILON * Math.max(1, Math.abs(reference));
+}
