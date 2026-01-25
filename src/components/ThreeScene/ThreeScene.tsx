@@ -20,6 +20,7 @@ import floorAlphaMapTexture from "@public/textures/floor/alpha.jpg";
 
 import "./ThreeScene.scss";
 import { useLoadingStore } from "@/stores/useLoadingStore";
+import { randomInRange } from "@/utils/numbers/range";
 
 type ThreeSceneProps = {
   className?: string;
@@ -313,7 +314,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     );
 
     const graveMaterials = new THREE.MeshStandardMaterial({
-      color: "grey",
+      color: "#7f7b57",
     });
 
     const gravesGroup = new THREE.Group();
@@ -326,6 +327,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const houseDiameter = Math.sqrt(
       houseMeasurements.base.width ** 2 + houseMeasurements.base.depth ** 2,
     );
+    const houseRadius = houseDiameter / 2;
 
     console.log({ houseDiameter });
 
@@ -345,12 +347,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
        *
        * Regarding the position we're gonna take the house center and add the grave radius
        */
-      const randomAngleValue = Math.random() + 1;
-      const randomAngle =
-        randomAngleValue * oneRevolution * (houseDiameter / 2);
+      const randomAngle: number = randomInRange([0, oneRevolution]);
+      const randomRadius: number = randomInRange([
+        houseRadius + graveMeasurements.width,
+        houseRadius + 5,
+      ]);
+
+      const randomX: number = Math.cos(randomAngle) * randomRadius;
+      const randomY: number = randomInRange([
+        0.2,
+        graveMeasurements.height / 2,
+      ]);
+      const randomZ: number = Math.sin(randomAngle) * randomRadius;
+
+      currentGraveMesh.position.set(randomX, randomY, randomZ);
+
+      currentGraveMesh.rotation.y = randomInRange([0, oneRevolution]);
+      // currentGraveMesh.rotation.x = randomInRange([Math.PI / 3, Math.PI / 2]);
 
       gravesGroup.add(currentGraveMesh);
-      // TODO: Add graves around the house (cos & sin) BUT without overlapping the house walls NOR other graves
     }
 
     return gravesGroup;
@@ -436,6 +451,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // Add sphere to scene
       scene.add(floor);
       scene.add(house);
+      scene.add(graves);
       // scene.add(sphere);
       scene.add(camera);
 
