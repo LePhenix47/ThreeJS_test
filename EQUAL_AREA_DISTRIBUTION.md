@@ -5,17 +5,19 @@
 When placing objects randomly in a ring (between two circles), using a simple linear random radius causes objects to cluster near the center. This is because inner rings have less area than outer rings.
 
 ```
-      ┌─────────────────────┐
-     │   ┌─────────────┐    │
-     │   │  ┌───────┐  │    │
-     │   │  │  red  │  │    │  blue (outer circle)
-     │   │  │(inner)│  │    │
-     │   │  └───────┘  │    │
-     │   │    green    │    │
-     │   │   (valid    │    │
-     │   │    area)    │    │
-     │   └─────────────┘    │
-     └─────────────────────┘
+        Outer Circle (r_max)
+       ┌──────────────────┐
+       │                  │
+       │     ┌──────┐     │
+       │     │Inner │     │
+       │     │Circle│     │
+       │     │r_min │     │
+       │     └──────┘     │
+       │                  │
+       │                  │
+       │    Annulus Area  │
+       │    (Valid Zone)  │
+       └──────────────────┘
 ```
 
 We want to place objects uniformly in the **green area** (between the red inner circle and blue outer circle).
