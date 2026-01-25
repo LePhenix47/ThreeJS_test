@@ -82,7 +82,7 @@ const bushesMeasurements = [
 const graveMeasurements = {
   width: 0.6,
   height: 0.8,
-  depth: 0.15,
+  depth: 0.2,
 } as const;
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
@@ -321,7 +321,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     // ? Then we'll need to detect collisions in 3D with boxes
 
-    const graveAmount = 50;
+    const graveAmount = 25;
 
     const oneRevolution = 2 * Math.PI;
     const houseDiameter = Math.sqrt(
@@ -330,6 +330,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const houseRadius = houseDiameter / 2;
 
     console.log({ houseDiameter });
+
+    const minGravesRadius = houseRadius + graveMeasurements.width / 2;
+    const maxGravesRadius = 2 * houseRadius;
 
     for (let i = 0; i < graveAmount; i++) {
       const currentGraveMesh = new THREE.Mesh(graveGeometry, graveMaterials);
@@ -348,22 +351,27 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
        * Regarding the position we're gonna take the house center and add the grave radius
        */
       const randomAngle: number = randomInRange([0, oneRevolution]);
-      const randomRadius: number = randomInRange([
-        houseRadius + graveMeasurements.width,
-        houseRadius + 5,
-      ]);
 
-      const randomX: number = Math.cos(randomAngle) * randomRadius;
+      // ? Equal area distribution
+      const randomRadius: number = Math.sqrt(
+        randomInRange([minGravesRadius ** 2, maxGravesRadius ** 2]),
+      );
+
+      const randomX: number = randomRadius * Math.cos(randomAngle);
+      const randomZ: number = randomRadius * Math.sin(randomAngle);
       const randomY: number = randomInRange([
         0.2,
         graveMeasurements.height / 2,
       ]);
-      const randomZ: number = Math.sin(randomAngle) * randomRadius;
 
       currentGraveMesh.position.set(randomX, randomY, randomZ);
 
-      currentGraveMesh.rotation.y = randomInRange([0, oneRevolution]);
-      // currentGraveMesh.rotation.x = randomInRange([Math.PI / 3, Math.PI / 2]);
+      // currentGraveMesh.rotation.y = randomInRange([0, oneRevolution]);
+      currentGraveMesh.rotation.x = Math.PI / 2;
+      // currentGraveMesh.rotation.x = randomInRange([
+      //   Math.PI / 3,
+      //   (2 * Math.PI) / 3,
+      // ]);
 
       gravesGroup.add(currentGraveMesh);
     }
