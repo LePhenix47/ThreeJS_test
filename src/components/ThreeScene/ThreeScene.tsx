@@ -1,6 +1,9 @@
-/**
+/*
  * Haunted House Lesson
  * - Putting everything learned so far into practice
+ *
+ * NOTE: "ARM" is a short term for "Ambient occlusion Roughness Metalness",
+ * which makes so with only one texture we have 3 effects
  */
 
 import { useCallback, useEffect, useRef } from "react";
@@ -8,6 +11,16 @@ import { useCallback, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
+// * House textures
+import roofColorTexture from "@public/textures/roof/roof_slates_02_1k/roof_slates_02_diff_1k.webp";
+import roofNormalTexture from "@public/textures/roof/roof_slates_02_1k/roof_slates_02_nor_gl_1k.webp";
+import roofARMTexture from "@public/textures/roof/roof_slates_02_1k/roof_slates_02_arm_1k.webp";
+
+import wallColorTexture from "@public/textures/wall/castle_brick_broken_06_1k/castle_brick_broken_06_diff_1k.webp";
+import wallNormalTexture from "@public/textures/wall/castle_brick_broken_06_1k/castle_brick_broken_06_nor_gl_1k.webp";
+import wallARMTexture from "@public/textures/wall/castle_brick_broken_06_1k/castle_brick_broken_06_arm_1k.webp";
+
+// * Door textures
 import doorColorTexture from "@public/textures/door/color.jpg";
 import doorAlphaTexture from "@public/textures/door/alpha.jpg";
 import doorAmbientOcclusionTexture from "@public/textures/door/ambientOcclusion.jpg";
@@ -16,11 +29,27 @@ import doorNormalTexture from "@public/textures/door/normal.jpg";
 import doorMetalnessTexture from "@public/textures/door/metalness.jpg";
 import doorRoughnessTexture from "@public/textures/door/roughness.jpg";
 
-import floorAlphaMapTexture from "@public/textures/floor/alpha.jpg";
+// * Bush textures
+import bushColorTexture from "@public/textures/bush/leaves_forest_ground_1k/leaves_forest_ground_diff_1k.webp";
+import bushNormalTexture from "@public/textures/bush/leaves_forest_ground_1k/leaves_forest_ground_nor_gl_1k.webp";
+import bushARMTexture from "@public/textures/bush/leaves_forest_ground_1k/leaves_forest_ground_arm_1k.webp";
 
-import "./ThreeScene.scss";
+// * Graves textures
+import gravesColorTexture from "@public/textures/grave/plastered_stone_wall_1k/plastered_stone_wall_diff_1k.webp";
+import gravesNormalTexture from "@public/textures/grave/plastered_stone_wall_1k/plastered_stone_wall_nor_gl_1k.webp";
+import gravesARMTexture from "@public/textures/grave/plastered_stone_wall_1k/plastered_stone_wall_arm_1k.webp";
+
+// * Floor textures
+import floorAlphaMapTexture from "@public/textures/floor/alpha.jpg";
+import floorColorTexture from "@public/textures/floor/coast_sand_rocks_02_1k/coast_sand_rocks_02_diff_1k.webp";
+import floorARMTexture from "@public/textures/floor/coast_sand_rocks_02_1k/coast_sand_rocks_02_arm_1k.webp";
+import floorNormalTexture from "@public/textures/floor/coast_sand_rocks_02_1k/coast_sand_rocks_02_nor_gl_1k.webp";
+import floorDisplayTexture from "@public/textures/floor/coast_sand_rocks_02_1k/coast_sand_rocks_02_disp_1k.webp";
+
 import { useLoadingStore } from "@/stores/useLoadingStore";
 import { randomInRange } from "@/utils/numbers/range";
+
+import "./ThreeScene.scss";
 
 type ThreeSceneProps = {
   className?: string;
@@ -120,8 +149,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
+    // TODO: Improve code quality because it's a fucking mess
     // * Load floor texture
     const floorAlphaMapTextureLoaded = textureLoader.load(floorAlphaMapTexture);
+    const floorColorTextureLoaded = textureLoader.load(floorColorTexture);
+    const floorARMTextureLoaded = textureLoader.load(floorARMTexture);
+    const floorNormalTextureLoaded = textureLoader.load(floorNormalTexture);
+    const floorDisplayTextureLoaded = textureLoader.load(floorDisplayTexture);
 
     // * Load house door textures
     const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
@@ -156,6 +190,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       loadedTexture.wrapS = THREE.RepeatWrapping;
       loadedTexture.wrapT = THREE.RepeatWrapping;
     }
+
     const houseTextures = {
       base: {},
       roof: {},
