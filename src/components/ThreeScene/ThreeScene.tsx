@@ -150,14 +150,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
     // TODO: Improve code quality because it's a fucking mess
-    // * Load floor texture
+    // * Floor texture
     const floorAlphaMapTextureLoaded = textureLoader.load(floorAlphaMapTexture);
     const floorColorTextureLoaded = textureLoader.load(floorColorTexture);
     const floorARMTextureLoaded = textureLoader.load(floorARMTexture);
     const floorNormalTextureLoaded = textureLoader.load(floorNormalTexture);
     const floorDisplayTextureLoaded = textureLoader.load(floorDisplayTexture);
 
-    // * Load house door textures
+    // * House door textures
     const doorColorTextureLoaded = textureLoader.load(doorColorTexture);
     const doorAlphaTextureLoaded = textureLoader.load(doorAlphaTexture);
     const doorAmbientOcclusionTextureLoaded = textureLoader.load(
@@ -168,14 +168,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const doorMetalnessTextureLoaded = textureLoader.load(doorMetalnessTexture);
     const doorRoughnessTextureLoaded = textureLoader.load(doorRoughnessTexture);
 
-    // * Load house roof textures
-    // TODO
+    // * House roof textures
+    const roofColorTextureLoaded = textureLoader.load(roofColorTexture);
+    const roofNormalTextureLoaded = textureLoader.load(roofNormalTexture);
+    const roofARMTextureLoaded = textureLoader.load(roofARMTexture);
 
-    // * Load house base textures
-    // TODO
+    // * House base textures
+    const wallColorTextureLoaded = textureLoader.load(wallColorTexture);
+    const wallNormalTextureLoaded = textureLoader.load(wallNormalTexture);
+    const wallARMTextureLoaded = textureLoader.load(wallARMTexture);
+
+    // * House bushes textures
+    const bushColorTextureLoaded = textureLoader.load(bushColorTexture);
+    const bushNormalTextureLoaded = textureLoader.load(bushNormalTexture);
+    const bushARMTextureLoaded = textureLoader.load(bushARMTexture);
+
+    // * Graves textures
+    const gravesColorTextureLoaded = textureLoader.load(gravesColorTexture);
+    const gravesNormalTextureLoaded = textureLoader.load(gravesNormalTexture);
+    const gravesARMTextureLoaded = textureLoader.load(gravesARMTexture);
 
     const loadedTextures = [
       floorAlphaMapTextureLoaded,
+      floorColorTextureLoaded,
+      floorARMTextureLoaded,
+      floorNormalTextureLoaded,
+      floorDisplayTextureLoaded,
       doorColorTextureLoaded,
       doorAlphaTextureLoaded,
       doorAmbientOcclusionTextureLoaded,
@@ -183,6 +201,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       doorNormalTextureLoaded,
       doorMetalnessTextureLoaded,
       doorRoughnessTextureLoaded,
+      roofColorTextureLoaded,
+      roofNormalTextureLoaded,
+      roofARMTextureLoaded,
+      wallColorTextureLoaded,
+      wallNormalTextureLoaded,
+      wallARMTextureLoaded,
+      bushColorTextureLoaded,
+      bushNormalTextureLoaded,
+      bushARMTextureLoaded,
+      gravesColorTextureLoaded,
+      gravesNormalTextureLoaded,
+      gravesARMTextureLoaded,
     ] as const;
 
     for (const loadedTexture of loadedTextures) {
@@ -192,8 +222,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     }
 
     const houseTextures = {
-      base: {},
-      roof: {},
+      base: {
+        color: wallColorTextureLoaded,
+        normal: wallNormalTextureLoaded,
+        ambientOcclusion: wallARMTextureLoaded,
+        roughness: wallARMTextureLoaded,
+        metalness: wallARMTextureLoaded,
+      },
+      roof: {
+        color: roofColorTextureLoaded,
+        normal: roofNormalTextureLoaded,
+        ambientOcclusion: roofARMTextureLoaded,
+        roughness: roofARMTextureLoaded,
+        metalness: roofARMTextureLoaded,
+      },
       door: {
         color: doorColorTextureLoaded,
         alpha: doorAlphaTextureLoaded,
@@ -203,16 +245,37 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         metalness: doorMetalnessTextureLoaded,
         roughness: doorRoughnessTextureLoaded,
       },
-      bushes: {},
+      bushes: {
+        color: bushColorTextureLoaded,
+        normal: bushNormalTextureLoaded,
+        ambientOcclusion: bushARMTextureLoaded,
+        roughness: bushARMTextureLoaded,
+        metalness: bushARMTextureLoaded,
+      },
     } as const;
 
     const floorTextures = {
       alpha: floorAlphaMapTextureLoaded,
+      color: floorColorTextureLoaded,
+      normal: floorNormalTextureLoaded,
+      display: floorDisplayTextureLoaded,
+      ambientOcclusion: floorARMTextureLoaded,
+      roughness: floorARMTextureLoaded,
+      metalness: floorARMTextureLoaded,
+    } as const;
+
+    const graveTextures = {
+      color: gravesColorTextureLoaded,
+      normal: gravesNormalTextureLoaded,
+      ambientOcclusion: gravesARMTextureLoaded,
+      roughness: gravesARMTextureLoaded,
+      metalness: gravesARMTextureLoaded,
     } as const;
 
     return {
       floorTextures,
       houseTextures,
+      graveTextures,
     };
   }
 
@@ -221,17 +284,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new THREE.Scene();
   }
 
-  function createFloor({
-    floorAlphaMapTexture,
-  }: {
-    floorAlphaMapTexture: THREE.Texture;
-  }) {
+  function createFloor(
+    floorAlphaMapTexture: ReturnType<typeof loadTextures>["floorTextures"],
+  ) {
     const planeGeometry = new THREE.PlaneGeometry(20, 20);
     const planeMaterial = new THREE.MeshStandardMaterial({
-      color: "green",
-      roughness: 0.75,
+      // color: "green",
+      // roughness: 0.75,
+      map: floorAlphaMapTexture.color,
       transparent: true,
-      alphaMap: floorAlphaMapTexture,
+      alphaMap: floorAlphaMapTexture.alpha,
+      aoMap: floorAlphaMapTexture.ambientOcclusion,
+      roughnessMap: floorAlphaMapTexture.roughness,
+      metalnessMap: floorAlphaMapTexture.metalness,
+      normalMap: floorAlphaMapTexture.normal,
     });
 
     const floor = new THREE.Mesh(planeGeometry, planeMaterial);
@@ -254,7 +320,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       houseMeasurements.base.depth,
     );
     const wallsMaterial = new THREE.MeshStandardMaterial({
-      color: "#f1d8b8",
+      // color: "#f1d8b8",
+      map: houseTextures.base.color,
+      normalMap: houseTextures.base.normal,
+      aoMap: houseTextures.base.ambientOcclusion,
+      roughnessMap: houseTextures.base.roughness,
+      metalnessMap: houseTextures.base.metalness,
     });
 
     const wallsMesh = new THREE.Mesh(wallsGeometry, wallsMaterial);
@@ -269,7 +340,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       4,
     );
     const roofMaterial = new THREE.MeshStandardMaterial({
-      color: "#6b6662",
+      // color: "#6b6662",
+      map: houseTextures.roof.color,
+      normalMap: houseTextures.roof.normal,
+      aoMap: houseTextures.roof.ambientOcclusion,
+      roughnessMap: houseTextures.roof.roughness,
+      metalnessMap: houseTextures.roof.metalness,
     });
 
     const roofMesh = new THREE.Mesh(roofGeometry, roofMaterial);
@@ -316,7 +392,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       16,
     );
     const bushMaterial = new THREE.MeshStandardMaterial({
-      color: "#89c854",
+      // color: "#89c854",
+      map: houseTextures.bushes.color,
+      normalMap: houseTextures.bushes.normal,
+      aoMap: houseTextures.bushes.ambientOcclusion,
+      roughnessMap: houseTextures.bushes.roughness,
+      metalnessMap: houseTextures.bushes.metalness,
     });
 
     for (let i = 0; i < bushesMeasurements.length; i++) {
@@ -340,7 +421,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return houseGroup;
   }
 
-  function createGraves(houseGroup: ReturnType<typeof createHouse>) {
+  function createGraves(
+    graveTextures: ReturnType<typeof loadTextures>["graveTextures"],
+  ) {
     // graveTextures: ReturnType<typeof loadTextures>["graveTextures"]
     const graveGeometry = new THREE.BoxGeometry(
       graveMeasurements.width,
@@ -349,7 +432,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     );
 
     const graveMaterials = new THREE.MeshStandardMaterial({
-      color: "#7f7b57",
+      // color: "#7f7b57",
+      map: graveTextures.color,
+      normalMap: graveTextures.normal,
+      aoMap: graveTextures.ambientOcclusion,
+      roughnessMap: graveTextures.roughness,
+      metalnessMap: graveTextures.metalness,
     });
 
     const gravesGroup = new THREE.Group();
@@ -460,13 +548,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { clientWidth, clientHeight } = parent;
 
-      const { floorTextures, houseTextures } = loadTextures();
+      const { floorTextures, houseTextures, graveTextures } = loadTextures();
 
-      const floor = createFloor({ floorAlphaMapTexture: floorTextures.alpha });
+      const floor = createFloor(floorTextures);
 
       const house = createHouse(houseTextures);
 
-      const graves = createGraves(house);
+      const graves = createGraves(graveTextures);
       // Initialize Three.js components
       const scene = createScene();
       const camera = createCamera(clientWidth / clientHeight);
