@@ -29,7 +29,7 @@ function deleteJpgFiles(path: string = currentPath): void {
     for (const file of files) {
       const iteratedPath: string = `${path}/${file.name}`;
       if (file.isDirectory()) {
-        console.info("Recursing into directory", iteratedPath);
+        console.log("Recursing into directory", iteratedPath);
         deleteJpgFiles(iteratedPath);
       }
 
@@ -39,7 +39,7 @@ function deleteJpgFiles(path: string = currentPath): void {
         continue;
       }
 
-      console.info(`Deleting ${file.name}`, iteratedPath);
+      console.info(`Deleting file: ${iteratedPath}`);
       deleteFile(iteratedPath);
     }
   } catch (error) {
