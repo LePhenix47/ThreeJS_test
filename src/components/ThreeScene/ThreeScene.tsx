@@ -21,13 +21,13 @@ import wallNormalTexture from "@public/textures/wall/castle_brick_broken_06_1k/c
 import wallARMTexture from "@public/textures/wall/castle_brick_broken_06_1k/castle_brick_broken_06_arm_1k.webp";
 
 // * Door textures
-import doorColorTexture from "@public/textures/door/color.jpg";
-import doorAlphaTexture from "@public/textures/door/alpha.jpg";
-import doorAmbientOcclusionTexture from "@public/textures/door/ambientOcclusion.jpg";
-import doorHeightTexture from "@public/textures/door/height.jpg";
-import doorNormalTexture from "@public/textures/door/normal.jpg";
-import doorMetalnessTexture from "@public/textures/door/metalness.jpg";
-import doorRoughnessTexture from "@public/textures/door/roughness.jpg";
+import doorColorTexture from "@public/textures/door/color.webp";
+import doorAlphaTexture from "@public/textures/door/alpha.webp";
+import doorAmbientOcclusionTexture from "@public/textures/door/ambientOcclusion.webp";
+import doorHeightTexture from "@public/textures/door/height.webp";
+import doorNormalTexture from "@public/textures/door/normal.webp";
+import doorMetalnessTexture from "@public/textures/door/metalness.webp";
+import doorRoughnessTexture from "@public/textures/door/roughness.webp";
 
 // * Bush textures
 import bushColorTexture from "@public/textures/bush/leaves_forest_ground_1k/leaves_forest_ground_diff_1k.webp";
@@ -40,7 +40,7 @@ import gravesNormalTexture from "@public/textures/grave/plastered_stone_wall_1k/
 import gravesARMTexture from "@public/textures/grave/plastered_stone_wall_1k/plastered_stone_wall_arm_1k.webp";
 
 // * Floor textures
-import floorAlphaMapTexture from "@public/textures/floor/alpha.jpg";
+import floorAlphaMapTexture from "@public/textures/floor/alpha.webp";
 import floorColorTexture from "@public/textures/floor/coast_sand_rocks_02_1k/coast_sand_rocks_02_diff_1k.webp";
 import floorARMTexture from "@public/textures/floor/coast_sand_rocks_02_1k/coast_sand_rocks_02_arm_1k.webp";
 import floorNormalTexture from "@public/textures/floor/coast_sand_rocks_02_1k/coast_sand_rocks_02_nor_gl_1k.webp";
