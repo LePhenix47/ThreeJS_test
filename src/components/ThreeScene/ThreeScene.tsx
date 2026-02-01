@@ -404,7 +404,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     roofMesh.rotation.y = Math.PI / 4;
 
     // * Door
-    const doorSubdivisions = 30;
+    const doorSubdivisions = 100;
     const doorGeometry = new THREE.PlaneGeometry(
       houseMeasurements.door.size,
       houseMeasurements.door.size,
@@ -417,11 +417,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       transparent: true,
       alphaMap: houseTextures.door.alpha,
       aoMap: houseTextures.door.ambientOcclusion,
-      displacementMap: houseTextures.door.height,
-      displacementScale: 0.1,
       normalMap: houseTextures.door.normal,
       metalnessMap: houseTextures.door.metalness,
       roughnessMap: houseTextures.door.roughness,
+      displacementMap: houseTextures.door.height,
+      displacementScale: 0.15,
+      displacementBias: -0.04,
     });
 
     // doorMaterial.wireframe = true;
@@ -563,19 +564,40 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   // * Create helpers - extracted for clarity
-  function createHelpers() {
-    const axisHelper = new THREE.AxesHelper(20);
+  // * Create helpers - extracted for clarity
+  function createHelpers(
+    directionalLight: THREE.DirectionalLight,
+    doorPointLight: THREE.PointLight,
+  ) {
+    const axisHelper = new THREE.AxesHelper(3);
+    const directionalLightHelper = new THREE.DirectionalLightHelper(
+      directionalLight,
+      0.2,
+    );
 
-    return { axisHelper };
+    const doorPointLightHelper = new THREE.PointLightHelper(
+      doorPointLight,
+      0.2,
+    );
+
+    return {
+      axisHelper,
+      directionalLightHelper,
+      doorPointLightHelper,
+    };
   }
 
   // * Create lights - extracted for clarity
   function createLights() {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    const color: string = "#86cdff";
+    const ambientLight = new THREE.AmbientLight(color, 0.275);
+    const directionalLight = new THREE.DirectionalLight(color, 1);
     directionalLight.position.set(3, 2, -8);
 
-    return { ambientLight, directionalLight };
+    const doorPointLight = new THREE.PointLight("#ff7d46", 5);
+    doorPointLight.position.set(0, 2.2, 2.5);
+
+    return { ambientLight, directionalLight, doorPointLight };
   }
 
   // * Create OrbitControls - extracted for clarity
@@ -610,11 +632,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const scene = createScene();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
-      const { axisHelper } = createHelpers();
-      const { ambientLight, directionalLight } = createLights();
 
+      const { ambientLight, directionalLight, doorPointLight } = createLights();
+      const { axisHelper, directionalLightHelper, doorPointLightHelper } =
+        createHelpers(directionalLight, doorPointLight);
+
+      house.add(doorPointLight);
       // Add helpers to scene
-      scene.add(axisHelper);
+      scene.add(axisHelper, directionalLightHelper, doorPointLightHelper);
 
       // Add sphere to scene
       scene.add(floor);
@@ -624,7 +649,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(camera);
 
       // Add lights to scene
-      scene.add(ambientLight, directionalLight);
+      scene.add(ambientLight, directionalLight, doorPointLight);
 
       // OrbitControls for camera movement
       const controls = createOrbitControls(camera, canvas);
