@@ -279,6 +279,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   }
 
+  function createGUI() {}
+
   // * Create scene - extracted for clarity
   function createScene() {
     return new THREE.Scene();
@@ -287,7 +289,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createFloor(
     floorAlphaMapTexture: ReturnType<typeof loadTextures>["floorTextures"],
   ) {
-    const planeGeometry = new THREE.PlaneGeometry(20, 20);
+    const subdivisions = 100;
+    const planeGeometry = new THREE.PlaneGeometry(
+      20,
+      20,
+      subdivisions,
+      subdivisions,
+    );
+
     const planeMaterial = new THREE.MeshStandardMaterial({
       // color: "green",
       // roughness: 0.75,
@@ -298,7 +307,31 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       roughnessMap: floorAlphaMapTexture.roughness,
       metalnessMap: floorAlphaMapTexture.metalness,
       normalMap: floorAlphaMapTexture.normal,
+      displacementMap: floorAlphaMapTexture.display,
+      displacementScale: 0.3,
     });
+    const textureRepeat = 8;
+    const materialProperties = Object.entries(planeMaterial)
+      .filter(([key, value]) => {
+        return key.includes("map") && Boolean(value);
+      })
+      .filter(([key, value]) => {
+        return key !== "alphaMap";
+      });
+
+    console.log({ materialProperties });
+
+    for (const [key, value] of materialProperties) {
+      value.repeat.set(textureRepeat, textureRepeat);
+    }
+
+    // ? Equivalent of:
+    // planeMaterial.map.repeat.set(textureRepeat, textureRepeat);
+    // planeMaterial.normalMap.repeat.set(textureRepeat, textureRepeat);
+    // planeMaterial.aoMap.repeat.set(textureRepeat, textureRepeat);
+    // planeMaterial.roughnessMap.repeat.set(textureRepeat, textureRepeat);
+    // planeMaterial.metalnessMap.repeat.set(textureRepeat, textureRepeat);
+    // planeMaterial.displacementMap.repeat.set(textureRepeat, textureRepeat);
 
     const floor = new THREE.Mesh(planeGeometry, planeMaterial);
     floor.name = "floor";
