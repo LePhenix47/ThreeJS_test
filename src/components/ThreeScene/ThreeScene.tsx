@@ -8,6 +8,8 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
+import GUI from "lil-gui";
+
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
@@ -279,7 +281,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   }
 
-  function createGUI() {}
+  function createGUI(floorMaterial: THREE.MeshStandardMaterial) {
+    // Create GUI inside setupThreeScene so it's recreated on HMR
+    const gui = new GUI({
+      title: "THREE.JS GUI",
+      width: 300,
+    });
+
+    gui.add(floorMaterial, "displacementScale", 0, 1, 0.01);
+    gui.add(floorMaterial, "displacementBias", -1, 1, 0.01);
+
+    return gui;
+  }
 
   // * Create scene - extracted for clarity
   function createScene() {
@@ -345,10 +358,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const houseGroup = new THREE.Group();
 
     // * Walls
+    const wallsSubdivisions = 100;
     const wallsGeometry = new THREE.BoxGeometry(
       houseMeasurements.base.width,
       houseMeasurements.base.height,
       houseMeasurements.base.depth,
+      wallsSubdivisions,
+      wallsSubdivisions,
     );
     const wallsMaterial = new THREE.MeshStandardMaterial({
       // color: "#f1d8b8",
@@ -388,12 +404,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     roofMesh.rotation.y = Math.PI / 4;
 
     // * Door
-    const subdivisions = 30;
+    const doorSubdivisions = 30;
     const doorGeometry = new THREE.PlaneGeometry(
       houseMeasurements.door.size,
       houseMeasurements.door.size,
-      subdivisions,
-      subdivisions,
+      doorSubdivisions,
+      doorSubdivisions,
     );
     const doorMaterial = new THREE.MeshStandardMaterial({
       // color: "#745345",
@@ -586,6 +602,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const house = createHouse(houseTextures);
 
       const graves = createGraves(graveTextures);
+
+      const gui = createGUI(floor.material);
       // Initialize Three.js components
       const scene = createScene();
       const camera = createCamera(clientWidth / clientHeight);
@@ -645,6 +663,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         abortController.abort();
         house.clear();
         renderer.dispose();
+        gui.destroy();
       };
     },
     [canvasRef],
