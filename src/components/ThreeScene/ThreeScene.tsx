@@ -439,7 +439,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       16,
     );
     const bushMaterial = new THREE.MeshStandardMaterial({
-      // color: "#89c854",
+      color: "#ccffcc",
       map: houseTextures.bushes.color,
       normalMap: houseTextures.bushes.normal,
       aoMap: houseTextures.bushes.ambientOcclusion,
@@ -457,6 +457,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       currentBushMesh.scale.set(scale, scale, scale);
       currentBushMesh.position.set(position.x, position.y, position.z);
+
+      currentBushMesh.rotation.x += (2 * Math.PI) / 3;
 
       houseGroup.add(currentBushMesh);
     }
