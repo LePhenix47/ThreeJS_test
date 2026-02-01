@@ -311,7 +311,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       displacementScale: 0.3,
     });
     const textureRepeat = 8;
-    const materialProperties = Object.entries(planeMaterial)
+    const repeatRequiredTextureMaps = Object.entries(planeMaterial)
       .filter(([key, value]) => {
         return key.includes("map") && Boolean(value);
       })
@@ -319,9 +319,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         return key !== "alphaMap";
       });
 
-    console.log({ materialProperties });
-
-    for (const [key, value] of materialProperties) {
+    for (const [key, value] of repeatRequiredTextureMaps) {
       value.repeat.set(textureRepeat, textureRepeat);
     }
 
