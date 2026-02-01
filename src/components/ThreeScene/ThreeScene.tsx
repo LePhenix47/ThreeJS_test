@@ -649,7 +649,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(camera);
 
       // Add lights to scene
-      scene.add(ambientLight, directionalLight, doorPointLight);
+      scene.add(ambientLight, directionalLight);
 
       // OrbitControls for camera movement
       const controls = createOrbitControls(camera, canvas);
