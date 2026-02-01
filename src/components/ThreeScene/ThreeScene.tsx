@@ -73,7 +73,7 @@ const houseMeasurements = {
   bushes: {
     size: 1,
   },
-} as const;
+};
 
 const bushesMeasurements = [
   {
@@ -108,13 +108,13 @@ const bushesMeasurements = [
       z: 2.6,
     },
   },
-] as const;
+];
 
 const graveMeasurements = {
   width: 0.6,
   height: 0.8,
   depth: 0.2,
-} as const;
+};
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
