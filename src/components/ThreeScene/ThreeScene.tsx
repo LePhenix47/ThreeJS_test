@@ -75,6 +75,10 @@ const houseMeasurements = {
   },
 };
 
+const houseDiameter: number = Math.sqrt(
+  houseMeasurements.base.width ** 2 + houseMeasurements.base.depth ** 2,
+);
+
 const bushesMeasurements = [
   {
     scale: 0.5,
@@ -115,6 +119,10 @@ const graveMeasurements = {
   height: 0.8,
   depth: 0.2,
 };
+
+const houseRadius: number = houseDiameter / 2;
+const minGravesRadius: number = houseRadius + graveMeasurements.width / 2;
+const maxGravesRadius: number = 2 * houseRadius;
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -497,15 +505,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const graveAmount: number = 50;
 
     const oneRevolution: number = 2 * Math.PI;
-    const houseDiameter: number = Math.sqrt(
-      houseMeasurements.base.width ** 2 + houseMeasurements.base.depth ** 2,
-    );
-    const houseRadius = houseDiameter / 2;
 
     console.log({ houseDiameter });
-
-    const minGravesRadius: number = houseRadius + graveMeasurements.width / 2;
-    const maxGravesRadius: number = 2 * houseRadius;
 
     const bottomGrave: number = graveMeasurements.height / 2;
 
@@ -600,6 +601,59 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { ambientLight, directionalLight, doorPointLight };
   }
 
+  function createGhosts() {
+    const ghostsGroup = new THREE.Group();
+
+    const ghostsInfo = [
+      {
+        color: "#8800ff",
+      },
+      {
+        color: "#ff0088",
+      },
+      {
+        color: "#ff0000",
+      },
+    ];
+
+    for (let i = 0; i < ghostsInfo.length; i++) {
+      const currentGhostInfo = ghostsInfo[i];
+
+      const ghostLight = new THREE.PointLight(currentGhostInfo.color, 6);
+      ghostLight.name = `ghost-light-${i}`;
+
+      ghostLight.position.y = 1;
+
+      const ghostLightHelper = new THREE.PointLightHelper(ghostLight, 0.2);
+
+      ghostsGroup.add(ghostLight, ghostLightHelper);
+    }
+
+    return ghostsGroup;
+  }
+
+  function animateGhosts(
+    ghosts: THREE.Group<THREE.Object3DEventMap>,
+    elapsedTime: number,
+  ) {
+    const [ghost1, ghost2, ghost3] = ghosts.children;
+
+    for (let i = 0; i < ghosts.children.length; i++) {
+      const currentGhost = ghosts.children[i];
+      const randomRadius = minGravesRadius + 0.5 * (i + 1);
+
+      const ghostAngle = elapsedTime + i;
+      currentGhost.position.x =
+        randomRadius * Math.cos(ghostAngle / (ghosts.children.length - i)) - 1;
+      currentGhost.position.y =
+        Math.sin(elapsedTime) *
+        Math.sin(elapsedTime * 2.34) *
+        Math.sin(elapsedTime * 3.45 + i);
+      currentGhost.position.z =
+        randomRadius * Math.sin(ghostAngle / (ghosts.children.length - i));
+    }
+  }
+
   // * Create OrbitControls - extracted for clarity
   function createOrbitControls(
     camera: THREE.PerspectiveCamera,
@@ -627,6 +681,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const graves = createGraves(graveTextures);
 
+      const ghosts = createGhosts();
+
       const gui = createGUI(floor.material);
       // Initialize Three.js components
       const scene = createScene();
@@ -645,7 +701,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(floor);
       scene.add(house);
       scene.add(graves);
-      // scene.add(sphere);
+      scene.add(ghosts);
       scene.add(camera);
 
       // Add lights to scene
@@ -664,6 +720,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       function animate() {
         controls.update();
         renderer.render(scene, camera);
+        animateGhosts(ghosts, clock.getElapsedTime());
         animationIdRef.current = requestAnimationFrame(animate);
       }
       animate();
