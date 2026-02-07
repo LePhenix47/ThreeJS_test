@@ -243,7 +243,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       gravesARMTextureLoaded,
     ] as const;
 
-    for (const loadedTexture of loadedTextures) {
+    const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
+
+    for (const loadedTexture of loadedTexturesArray) {
       loadedTexture.wrapS = THREE.RepeatWrapping;
       loadedTexture.wrapT = THREE.RepeatWrapping;
     }
@@ -402,6 +404,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const wallsMesh = new THREE.Mesh(wallsGeometry, wallsMaterial);
     wallsMesh.castShadow = true;
+
     wallsMesh.name = "walls";
 
     wallsMesh.position.y = houseMeasurements.base.height / 2;
