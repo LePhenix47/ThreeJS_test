@@ -636,6 +636,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     directionalLight.shadow.camera.near = 2;
     directionalLight.shadow.camera.far = 18;
 
+    const cameraSize = 2 ** 3;
+    directionalLight.shadow.camera.top = cameraSize;
+    directionalLight.shadow.camera.bottom = -cameraSize;
+    directionalLight.shadow.camera.left = -cameraSize;
+    directionalLight.shadow.camera.right = cameraSize;
+
+    const shadowMapSize: number = 2 ** 8;
+    directionalLight.shadow.mapSize.set(shadowMapSize, shadowMapSize);
+
     directionalLight.position.set(3, 2, -8);
 
     const doorPointLight = new THREE.PointLight("#ff7d46", 5);
