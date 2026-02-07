@@ -198,35 +198,52 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const gravesNormalTextureLoaded = textureLoader.load(gravesNormalTexture);
     const gravesARMTextureLoaded = textureLoader.load(gravesARMTexture);
 
-    const loadedTextures = [
-      floorAlphaMapTextureLoaded,
+    const colorLoadedTextures = [
       floorColorTextureLoaded,
+      doorColorTextureLoaded,
+      roofColorTextureLoaded,
+      wallColorTextureLoaded,
+      bushColorTextureLoaded,
+      gravesColorTextureLoaded,
+    ];
+
+    for (const colorLoadedTexture of colorLoadedTextures) {
+      colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
+    }
+
+    const loadedTextures = [
+      // * Floor textures
+      floorAlphaMapTextureLoaded,
       floorARMTextureLoaded,
       floorNormalTextureLoaded,
       floorDisplayTextureLoaded,
-      doorColorTextureLoaded,
+
+      // * Door textures
       doorAlphaTextureLoaded,
       doorAmbientOcclusionTextureLoaded,
       doorHeightTextureLoaded,
       doorNormalTextureLoaded,
       doorMetalnessTextureLoaded,
       doorRoughnessTextureLoaded,
-      roofColorTextureLoaded,
+
+      // * Roof textures
       roofNormalTextureLoaded,
       roofARMTextureLoaded,
-      wallColorTextureLoaded,
+
+      // * Wall textures
       wallNormalTextureLoaded,
       wallARMTextureLoaded,
-      bushColorTextureLoaded,
+
+      // * Bush textures
       bushNormalTextureLoaded,
       bushARMTextureLoaded,
-      gravesColorTextureLoaded,
+
+      // * Graves textures
       gravesNormalTextureLoaded,
       gravesARMTextureLoaded,
     ] as const;
 
     for (const loadedTexture of loadedTextures) {
-      loadedTexture.colorSpace = THREE.SRGBColorSpace;
       loadedTexture.wrapS = THREE.RepeatWrapping;
       loadedTexture.wrapT = THREE.RepeatWrapping;
     }
@@ -636,21 +653,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     ghosts: THREE.Group<THREE.Object3DEventMap>,
     elapsedTime: number,
   ) {
-    const [ghost1, ghost2, ghost3] = ghosts.children;
+    const { children } = ghosts;
 
-    for (let i = 0; i < ghosts.children.length; i++) {
-      const currentGhost = ghosts.children[i];
-      const randomRadius = minGravesRadius + 0.5 * (i + 1);
+    for (let i = 0; i < children.length; i++) {
+      const currentGhost = children[i];
+      const randomRadius: number = minGravesRadius + 0.5 * (i + 1);
 
-      const ghostAngle = elapsedTime + i;
+      const ghostAngle: number = elapsedTime + i;
+
       currentGhost.position.x =
-        randomRadius * Math.cos(ghostAngle / (ghosts.children.length - i)) - 1;
+        randomRadius * Math.cos(ghostAngle / (children.length - i)) - 1;
+
       currentGhost.position.y =
         Math.sin(elapsedTime) *
         Math.sin(elapsedTime * 2.34) *
         Math.sin(elapsedTime * 3.45 + i);
+
       currentGhost.position.z =
-        randomRadius * Math.sin(ghostAngle / (ghosts.children.length - i));
+        randomRadius * Math.sin(ghostAngle / (children.length - i));
     }
   }
 
