@@ -404,6 +404,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const wallsMesh = new THREE.Mesh(wallsGeometry, wallsMaterial);
     wallsMesh.castShadow = true;
+    wallsMesh.receiveShadow = true;
 
     wallsMesh.name = "walls";
 
@@ -534,6 +535,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     for (let i = 0; i < graveAmount; i++) {
       const currentGraveMesh = new THREE.Mesh(graveGeometry, graveMaterials);
       currentGraveMesh.castShadow = true;
+      currentGraveMesh.receiveShadow = true;
+
       currentGraveMesh.name = `grave-${i}`;
 
       const randomAngle: number = randomInRange([0, oneRevolution]);
