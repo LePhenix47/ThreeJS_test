@@ -581,6 +581,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(minPixelRatio);
 
+    renderer.shadowMap.enabled = true;
+    // ? The type of shadow map to use for the scene when using many lights
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
     return renderer;
   }
 
