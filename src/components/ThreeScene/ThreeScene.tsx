@@ -621,10 +621,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createLights() {
     const color: string = "#86cdff";
     const ambientLight = new THREE.AmbientLight(color, 0.275);
+
     const directionalLight = new THREE.DirectionalLight(color, 1);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.camera.near = 2;
+    directionalLight.shadow.camera.far = 18;
+
     directionalLight.position.set(3, 2, -8);
 
     const doorPointLight = new THREE.PointLight("#ff7d46", 5);
+
+    doorPointLight.castShadow = true;
+
     doorPointLight.position.set(0, 2.2, 2.5);
 
     return { ambientLight, directionalLight, doorPointLight };
@@ -650,6 +658,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const ghostLight = new THREE.PointLight(currentGhostInfo.color, 6);
       ghostLight.name = `ghost-light-${i}`;
+      ghostLight.castShadow = true;
 
       ghostLight.position.y = 1;
 
