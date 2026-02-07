@@ -586,6 +586,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createHelpers(
     directionalLight: THREE.DirectionalLight,
     doorPointLight: THREE.PointLight,
+    ghosts: THREE.Group<THREE.Object3DEventMap>,
   ) {
     const axisHelper = new THREE.AxesHelper(3);
     const directionalLightHelper = new THREE.DirectionalLightHelper(
@@ -598,10 +599,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       0.2,
     );
 
+    const ghostsHelperGroup = new THREE.Group();
+
+    for (const ghost of ghosts.children as THREE.PointLight[]) {
+      const ghostHelper = new THREE.PointLightHelper(ghost, 0.2);
+      ghostsHelperGroup.add(ghostHelper);
+    }
+
     return {
       axisHelper,
       directionalLightHelper,
       doorPointLightHelper,
+      ghostsHelperGroup,
     };
   }
 
@@ -641,9 +650,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       ghostLight.position.y = 1;
 
-      const ghostLightHelper = new THREE.PointLightHelper(ghostLight, 0.2);
-
-      ghostsGroup.add(ghostLight, ghostLightHelper);
+      ghostsGroup.add(ghostLight);
     }
 
     return ghostsGroup;
@@ -655,22 +662,28 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   ) {
     const { children } = ghosts;
 
+    // console.log(children.length);
     for (let i = 0; i < children.length; i++) {
       const currentGhost = children[i];
       const randomRadius: number = minGravesRadius + 0.5 * (i + 1);
 
-      const ghostAngle: number = elapsedTime + i;
+      const isEven: boolean = i % 2 === 0;
+      const direction: number = isEven ? 1 : -1;
+
+      const ghostAngle: number = direction * (elapsedTime + i);
+      const angleOffset: number = children.length - i;
 
       currentGhost.position.x =
-        randomRadius * Math.cos(ghostAngle / (children.length - i)) - 1;
+        randomRadius * Math.cos(ghostAngle / angleOffset) - 1;
 
       currentGhost.position.y =
         Math.sin(elapsedTime) *
-        Math.sin(elapsedTime * 2.34) *
-        Math.sin(elapsedTime * 3.45 + i);
+          Math.sin(elapsedTime * 2.34) *
+          Math.sin(elapsedTime * 3.45 + i) +
+        1 / 2;
 
       currentGhost.position.z =
-        randomRadius * Math.sin(ghostAngle / (children.length - i));
+        randomRadius * Math.sin(ghostAngle / angleOffset);
     }
   }
 
@@ -710,12 +723,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
 
       const { ambientLight, directionalLight, doorPointLight } = createLights();
-      const { axisHelper, directionalLightHelper, doorPointLightHelper } =
-        createHelpers(directionalLight, doorPointLight);
+      const {
+        axisHelper,
+        directionalLightHelper,
+        doorPointLightHelper,
+        ghostsHelperGroup,
+      } = createHelpers(directionalLight, doorPointLight, ghosts);
 
       house.add(doorPointLight);
       // Add helpers to scene
-      scene.add(axisHelper, directionalLightHelper, doorPointLightHelper);
+      scene.add(
+        axisHelper,
+        directionalLightHelper,
+        doorPointLightHelper,
+        ghostsHelperGroup,
+      );
 
       // Add sphere to scene
       scene.add(floor);
