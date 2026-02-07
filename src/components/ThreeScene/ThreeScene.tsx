@@ -806,7 +806,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(ambientLight, directionalLight);
 
       // Fog for scene
-      scene.fog = new THREE.Fog("#262837", 1, 13);
+      scene.fog = new THREE.FogExp2("#02343f", 0.1);
 
       // OrbitControls for camera movement
       const controls = createOrbitControls(camera, canvas);
