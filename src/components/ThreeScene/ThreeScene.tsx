@@ -669,12 +669,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       },
     ];
 
+    const ghostLightShadowMapSize: number = 2 ** 8;
     for (let i = 0; i < ghostsInfo.length; i++) {
       const currentGhostInfo = ghostsInfo[i];
 
       const ghostLight = new THREE.PointLight(currentGhostInfo.color, 6);
       ghostLight.name = `ghost-light-${i}`;
       ghostLight.castShadow = true;
+
+      ghostLight.shadow.mapSize.set(
+        ghostLightShadowMapSize,
+        ghostLightShadowMapSize,
+      );
+      ghostLight.shadow.camera.far = 10;
 
       ghostLight.position.y = 1;
 
