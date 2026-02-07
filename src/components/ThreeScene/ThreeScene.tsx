@@ -478,7 +478,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const currentBushMeasurement = bushesMeasurements[i];
 
       const currentBushMesh = new THREE.Mesh(bushGeometry, bushMaterial);
-      currentBushMesh.castShadow = true;
       currentBushMesh.name = `bush-${i}`;
 
       const { scale, position } = currentBushMeasurement;
@@ -634,8 +633,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     directionalLight.position.set(3, 2, -8);
 
     const doorPointLight = new THREE.PointLight("#ff7d46", 5);
-
-    doorPointLight.castShadow = true;
 
     doorPointLight.position.set(0, 2.2, 2.5);
 
