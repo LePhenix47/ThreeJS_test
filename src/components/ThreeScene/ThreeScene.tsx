@@ -334,7 +334,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       subdivisions,
       subdivisions,
     );
-
     const planeMaterial = new THREE.MeshStandardMaterial({
       // color: "green",
       // roughness: 0.75,
@@ -370,6 +369,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // planeMaterial.displacementMap.repeat.set(textureRepeat, textureRepeat);
 
     const floor = new THREE.Mesh(planeGeometry, planeMaterial);
+    floor.receiveShadow = true;
     floor.name = "floor";
 
     floor.rotation.x = -Math.PI * 0.5; // ? -π/2 = -90 degrees
@@ -401,6 +401,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     });
 
     const wallsMesh = new THREE.Mesh(wallsGeometry, wallsMaterial);
+    wallsMesh.castShadow = true;
     wallsMesh.name = "walls";
 
     wallsMesh.position.y = houseMeasurements.base.height / 2;
@@ -421,6 +422,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     });
 
     const roofMesh = new THREE.Mesh(roofGeometry, roofMaterial);
+    roofMesh.castShadow = true;
     roofMesh.name = "roof";
 
     roofMesh.position.y =
@@ -450,9 +452,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       displacementBias: -0.04,
     });
 
-    // doorMaterial.wireframe = true;
-
     const doorMesh = new THREE.Mesh(doorGeometry, doorMaterial);
+    doorMesh.receiveShadow = true;
     doorMesh.name = "door";
 
     doorMesh.position.y = houseMeasurements.door.size / 2;
@@ -477,6 +478,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const currentBushMeasurement = bushesMeasurements[i];
 
       const currentBushMesh = new THREE.Mesh(bushGeometry, bushMaterial);
+      currentBushMesh.castShadow = true;
       currentBushMesh.name = `bush-${i}`;
 
       const { scale, position } = currentBushMeasurement;
@@ -529,6 +531,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     for (let i = 0; i < graveAmount; i++) {
       const currentGraveMesh = new THREE.Mesh(graveGeometry, graveMaterials);
+      currentGraveMesh.castShadow = true;
       currentGraveMesh.name = `grave-${i}`;
 
       const randomAngle: number = randomInRange([0, oneRevolution]);
