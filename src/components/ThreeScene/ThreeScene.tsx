@@ -677,7 +677,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         randomRadius * Math.cos(ghostAngle / angleOffset) - 1;
 
       currentGhost.position.y =
-        Math.sin(elapsedTime) *
+        direction *
+          Math.sin(elapsedTime) *
           Math.sin(elapsedTime * 2.34) *
           Math.sin(elapsedTime * 3.45 + i) +
         1 / 2;
