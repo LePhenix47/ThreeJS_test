@@ -12,6 +12,7 @@ import GUI from "lil-gui";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { Sky } from "three/addons/objects/Sky.js";
 
 // * House textures
 import roofColorTexture from "@public/textures/roof/roof_slates_02_1k/roof_slates_02_diff_1k.webp";
@@ -306,6 +307,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       houseTextures,
       graveTextures,
     };
+  }
+
+  function createSky() {
+    const sky = new Sky();
+
+    // * The sky is a shader
+    // ? https://threejs.org/docs/#api/en/objects/Sky
+    sky.material.uniforms.turbidity.value = 10;
+    sky.material.uniforms.rayleigh.value = 3;
+    sky.material.uniforms.mieDirectionalG.value = 0.95;
+    sky.material.uniforms.mieCoefficient.value = 0.1;
+    sky.material.uniforms.sunPosition.value.set(0.3, -0.038, -0.95);
+
+    sky.scale.setScalar(100);
+
+    return sky;
   }
 
   function createGUI(floorMaterial: THREE.MeshStandardMaterial) {
@@ -744,6 +761,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { floorTextures, houseTextures, graveTextures } = loadTextures();
 
+      const sky = createSky();
+
       const floor = createFloor(floorTextures);
 
       const house = createHouse(houseTextures);
@@ -776,6 +795,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       );
 
       // Add sphere to scene
+      scene.add(sky);
       scene.add(floor);
       scene.add(house);
       scene.add(graves);
