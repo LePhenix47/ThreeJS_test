@@ -539,34 +539,60 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const gravesGroup = new THREE.Group();
 
-    // ? Then we'll need to detect collisions in 3D with boxes
-
     const graveAmount: number = 50;
 
     const oneRevolution: number = 2 * Math.PI;
 
-    console.log({ houseDiameter });
-
     const bottomGrave: number = graveMeasurements.height / 2;
 
+    // ? Bounding circle radius for overlap detection (treating graves as cylinders)
+    const graveBoundingRadius: number =
+      Math.sqrt(graveMeasurements.width ** 2 + graveMeasurements.depth ** 2) /
+      2;
+
+    const placedPositions: { x: number; z: number }[] = [];
+    const maxRetries: number = 100;
+
     for (let i = 0; i < graveAmount; i++) {
+      let randomX: number = 0;
+      let randomZ: number = 0;
+      let hasOverlap: boolean = true;
+      let retries: number = 0;
+
+      while (hasOverlap && retries < maxRetries) {
+        const randomAngle: number = randomInRange([0, oneRevolution]);
+
+        // ? Equal area distribution, see EQUAL_AREA_DISTRIBUTION.md for details
+        const randomRadius: number = Math.sqrt(
+          randomInRange([minGravesRadius ** 2, maxGravesRadius ** 2]),
+        );
+
+        randomX = randomRadius * Math.cos(randomAngle);
+        randomZ = randomRadius * Math.sin(randomAngle);
+
+        hasOverlap = placedPositions.some((placed) => {
+          const dx: number = randomX - placed.x;
+          const dz: number = randomZ - placed.z;
+          const distance: number = Math.sqrt(dx ** 2 + dz ** 2);
+
+          return distance < graveBoundingRadius * 2;
+        });
+
+        retries++;
+      }
+
+      if (retries >= maxRetries) {
+        console.warn(`Grave ${i}: Could not find a non-overlapping position after ${maxRetries} retries`);
+      }
+
+      placedPositions.push({ x: randomX, z: randomZ });
+
       const currentGraveMesh = new THREE.Mesh(graveGeometry, graveMaterials);
       currentGraveMesh.castShadow = true;
       currentGraveMesh.receiveShadow = true;
-
       currentGraveMesh.name = `grave-${i}`;
 
-      const randomAngle: number = randomInRange([0, oneRevolution]);
-
-      // ? Equal area distribution, see EQUAL_AREA_DISTRIBUTION.md for details
-      const randomRadius: number = Math.sqrt(
-        randomInRange([minGravesRadius ** 2, maxGravesRadius ** 2]),
-      );
-
-      const randomX: number = randomRadius * Math.cos(randomAngle);
-      const randomZ: number = randomRadius * Math.sin(randomAngle);
       const randomY: number = randomInRange([bottomGrave / 2, bottomGrave]);
-
       currentGraveMesh.position.set(randomX, randomY, randomZ);
 
       currentGraveMesh.rotation.x += randomInRange([-Math.PI / 6, Math.PI / 6]);
