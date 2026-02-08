@@ -172,6 +172,13 @@ type BridsonGrid = {
   offset: number;
 };
 
+type BridsonConfig = {
+  minDistance: number;
+  annulusMinRadius: number;
+  annulusMaxRadius: number;
+  maxTries?: number;
+};
+
 /**
  * Converts (col, row) grid coordinates to a flat array index.
  *
@@ -182,23 +189,6 @@ type BridsonGrid = {
  */
 function toFlatIndex(col: number, row: number, cols: number): number {
   return col + row * cols;
-}
-
-/**
- * Converts a world position to a flat grid cell index.
- *
- * @param {Position2D} position - The world position.
- * @param {BridsonGrid} grid - The grid configuration.
- * @returns {number} The flat index into the grid array.
- */
-function toGridIndex(
-  { x, z }: Position2D,
-  { offset, cellSize, cols }: BridsonGrid,
-): number {
-  const col: number = Math.floor((x + offset) / cellSize);
-  const row: number = Math.floor((z + offset) / cellSize);
-
-  return toFlatIndex(col, row, cols);
 }
 
 /**
@@ -219,95 +209,15 @@ function isInsideAnnulus(
   return distFromCenter >= minRadius && distFromCenter <= maxRadius;
 }
 
-/**
- * Checks if a candidate position is too close to any existing point
- * by scanning the 5x5 grid neighborhood. O(1) lookup.
- *
- * @param {Position2D} candidate - The candidate position to check.
- * @param {BridsonGrid} grid - The grid configuration and cell data.
- * @param {Position2D[]} placedPoints - Array of all placed points.
- * @param {number} minDistance - Minimum allowed distance between points.
- * @returns {boolean} `true` if the candidate is too close to an existing point.
- */
-function isTooCloseToNeighbors(
-  candidate: Position2D,
-  grid: BridsonGrid,
-  placedPoints: Position2D[],
-  minDistance: number,
-): boolean {
-  const { cols, rows, cells } = grid;
-
-  const candidateGridIndex: number = toGridIndex(candidate, grid);
-  const candidateCol: number = candidateGridIndex % cols;
-  const candidateRow: number = Math.floor(candidateGridIndex / cols);
-
-  const minDistSquared: number = minDistance ** 2;
-
-  // ? Check 5x5 neighborhood around the candidate's cell
-  for (let dRow = -2; dRow <= 2; dRow++) {
-    for (let dCol = -2; dCol <= 2; dCol++) {
-      const neighborCol: number = candidateCol + dCol;
-      const neighborRow: number = candidateRow + dRow;
-
-      const isOutOfBounds: boolean =
-        neighborCol < 0 ||
-        neighborCol >= cols ||
-        neighborRow < 0 ||
-        neighborRow >= rows;
-
-      if (isOutOfBounds) {
-        continue;
-      }
-
-      const cellIndex: number = toFlatIndex(neighborCol, neighborRow, cols);
-      const pointIndex: number = cells[cellIndex];
-
-      if (pointIndex === -1) {
-        continue;
-      }
-
-      const { x: nx, z: nz } = placedPoints[pointIndex];
-      const dx: number = candidate.x - nx;
-      const dz: number = candidate.z - nz;
-
-      if (dx ** 2 + dz ** 2 < minDistSquared) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-/**
- * Generates a random candidate in a ring [minDistance, 2 * minDistance] around a point.
- *
- * @param {Position2D} point - The center point to generate around.
- * @param {number} minDistance - The minimum distance (inner ring radius).
- * @returns {Position2D} A random position in the ring around the point.
- */
-function generateCandidateAround(
-  point: Position2D,
-  minDistance: number,
-): Position2D {
-  const angle: number = randomInRange([0, ONE_REVOLUTION]);
-  const radius: number = randomInRange([minDistance, 2 * minDistance]);
-
-  return {
-    x: point.x + radius * Math.cos(angle),
-    z: point.z + radius * Math.sin(angle),
-  };
-}
-
 // * ==========================================
-// * Bridson's Poisson Disk Sampling - Main
+// * Bridson's Poisson Disk Sampling - Class
 // * ==========================================
 
 /**
- * Generates all positions within an annulus using Bridson's Poisson Disk Sampling algorithm.
+ * Generates positions within an annulus using Bridson's Poisson Disk Sampling algorithm.
  * Uses a background grid for O(1) neighbor lookups, achieving O(N) total complexity.
  *
- * Unlike brute force and Mitchell's, this function returns ALL positions at once.
+ * Unlike brute force and Mitchell's, this returns ALL positions at once.
  * The number of points is determined by the algorithm (fills the space until no more fit),
  * not by the caller.
  *
@@ -315,98 +225,199 @@ function generateCandidateAround(
  * are rejected via a simple distance-from-center check. Empty grid cells are wasted memory
  * but negligible for typical use cases.
  *
- * @param {number} minDistance - Minimum distance between any two points.
- * @param {number} annulusMinRadius - The inner radius of the annulus (exclusion zone).
- * @param {number} annulusMaxRadius - The outer radius of the annulus (boundary).
- * @param {number} [maxTries=30] - Number of candidates to try around each active point (K).
- * @returns {Position2D[]} Array of all generated positions with guaranteed minimum spacing.
+ * NOTE: This class is single-use. Create a new instance for each sampling run.
  *
  * @see {@link https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf} Bridson's original paper
  * @see {@link https://www.jasondavies.com/poisson-disc/} Interactive visualization by Jason Davies
  * @see {@link https://www.youtube.com/watch?v=mj_qBX-_pzg} "Episode 4 - Poisson disc | Bridson's algorithm" by The Big InT
  */
-export function generatePositionsBridson(
-  minDistance: number,
-  annulusMinRadius: number,
-  annulusMaxRadius: number,
-  maxTries: number = 30,
-): Position2D[] {
-  // * Step 0: Grid setup
-  // Cell size = minDistance / √2 guarantees at most one point per cell
-  // (cell diagonal = cellSize * √2 = minDistance)
-  const cellSize: number = minDistance / Math.SQRT2;
-  const gridWidth: number = annulusMaxRadius * 2;
-  const gridOffset: number = annulusMaxRadius;
-  const cols: number = Math.ceil(gridWidth / cellSize);
-  const rows: number = Math.ceil(gridWidth / cellSize);
+export class BridsonPoissonDiskSampler {
+  private readonly minDistance: number;
+  private readonly annulusMinRadius: number;
+  private readonly annulusMaxRadius: number;
+  private readonly maxTries: number;
 
-  const emptyCells: number[] = new Array(cols * rows).fill(-1);
+  private readonly grid: BridsonGrid;
+  private readonly placedPoints: Position2D[];
+  private readonly activeList: number[];
 
-  const grid: BridsonGrid = {
-    cells: emptyCells,
-    cols,
-    rows,
-    cellSize,
-    offset: gridOffset,
-  };
-
-  const placedPoints: Position2D[] = [];
-  const activeList: number[] = [];
-
-  // * Step 1: Place first point randomly in the annulus
-  const firstPoint: Position2D = generateRandomAnnulusPosition(
+  constructor({
+    minDistance,
     annulusMinRadius,
     annulusMaxRadius,
-  );
+    maxTries = 30,
+  }: BridsonConfig) {
+    this.minDistance = minDistance;
+    this.annulusMinRadius = annulusMinRadius;
+    this.annulusMaxRadius = annulusMaxRadius;
+    this.maxTries = maxTries;
 
-  placedPoints.push(firstPoint);
-  activeList.push(0);
+    // Cell size = minDistance / √2 guarantees at most one point per cell
+    // (cell diagonal = cellSize * √2 = minDistance)
+    const cellSize: number = minDistance / Math.SQRT2;
+    const gridWidth: number = annulusMaxRadius * 2;
+    const cols: number = Math.ceil(gridWidth / cellSize);
+    const rows: number = Math.ceil(gridWidth / cellSize);
 
-  const firstPointCellIndex: number = toGridIndex(firstPoint, grid);
-  grid.cells[firstPointCellIndex] = 0;
+    this.grid = {
+      cells: new Array(cols * rows).fill(-1),
+      cols,
+      rows,
+      cellSize,
+      offset: annulusMaxRadius,
+    };
 
-  // * Step 2: Process active list until empty
-  while (activeList.length > 0) {
-    const randomActiveIndex: number = Math.floor(
-      Math.random() * activeList.length,
-    );
-    const activePointIndex: number = activeList[randomActiveIndex];
-    const activePoint: Position2D = placedPoints[activePointIndex];
-
-    let foundValid: boolean = false;
-
-    // ? Try K candidates around this active point
-    for (let k = 0; k < maxTries; k++) {
-      const candidate: Position2D = generateCandidateAround(
-        activePoint,
-        minDistance,
-      );
-
-      if (!isInsideAnnulus(candidate, annulusMinRadius, annulusMaxRadius)) {
-        continue;
-      }
-
-      if (isTooCloseToNeighbors(candidate, grid, placedPoints, minDistance)) {
-        continue;
-      }
-
-      // ? Valid candidate: add to grid, placed points, and active list
-      const pointIndex: number = placedPoints.length;
-      const candidateCellIndex: number = toGridIndex(candidate, grid);
-
-      placedPoints.push(candidate);
-      activeList.push(pointIndex);
-      grid.cells[candidateCellIndex] = pointIndex;
-
-      foundValid = true;
-      break;
-    }
-
-    // ? If no valid candidate was found, this point is exhausted
-    if (!foundValid) {
-      activeList.splice(randomActiveIndex, 1);
-    }
+    this.placedPoints = [];
+    this.activeList = [];
   }
 
-  return placedPoints;
+  /**
+   * Runs the Poisson Disk Sampling algorithm and returns all generated positions.
+   *
+   * @returns {Position2D[]} Array of all generated positions with guaranteed minimum spacing.
+   */
+  generate = (): Position2D[] => {
+    // * Step 1: Place first point randomly in the annulus
+    const firstPoint: Position2D = generateRandomAnnulusPosition(
+      this.annulusMinRadius,
+      this.annulusMaxRadius,
+    );
+
+    this.placedPoints.push(firstPoint);
+    this.activeList.push(0);
+    this.grid.cells[this.toGridIndex(firstPoint)] = 0;
+
+    // * Step 2: Process active list until empty
+    while (this.activeList.length > 0) {
+      const randomActiveIndex: number = Math.floor(
+        Math.random() * this.activeList.length,
+      );
+      const activePointIndex: number = this.activeList[randomActiveIndex];
+      const activePoint: Position2D = this.placedPoints[activePointIndex];
+
+      let foundValid: boolean = false;
+
+      // ? Try K candidates around this active point
+      for (let k = 0; k < this.maxTries; k++) {
+        const candidate: Position2D = this.generateCandidateAround(activePoint);
+
+        if (
+          !isInsideAnnulus(
+            candidate,
+            this.annulusMinRadius,
+            this.annulusMaxRadius,
+          )
+        ) {
+          continue;
+        }
+
+        if (this.isTooCloseToNeighbors(candidate)) {
+          continue;
+        }
+
+        // ? Valid candidate: add to grid, placed points, and active list
+        const pointIndex: number = this.placedPoints.length;
+
+        this.placedPoints.push(candidate);
+        this.activeList.push(pointIndex);
+        this.grid.cells[this.toGridIndex(candidate)] = pointIndex;
+
+        foundValid = true;
+        break;
+      }
+
+      // ? If no valid candidate was found, this point is exhausted
+      if (!foundValid) {
+        this.activeList.splice(randomActiveIndex, 1);
+      }
+    }
+
+    return this.placedPoints;
+  };
+
+  /**
+   * Converts a world position to a flat grid cell index.
+   *
+   * @param {Position2D} position - The world position.
+   * @returns {number} The flat index into the grid array.
+   */
+  private toGridIndex = ({ x, z }: Position2D): number => {
+    const { offset, cellSize, cols } = this.grid;
+
+    const col: number = Math.floor((x + offset) / cellSize);
+    const row: number = Math.floor((z + offset) / cellSize);
+
+    return toFlatIndex(col, row, cols);
+  };
+
+  /**
+   * Checks if a candidate position is too close to any existing point
+   * by scanning the 5x5 grid neighborhood. O(1) lookup.
+   *
+   * @param {Position2D} candidate - The candidate position to check.
+   * @returns {boolean} `true` if the candidate is too close to an existing point.
+   */
+  private isTooCloseToNeighbors = (candidate: Position2D): boolean => {
+    const { cols, rows, cells } = this.grid;
+
+    const candidateGridIndex: number = this.toGridIndex(candidate);
+    const candidateCol: number = candidateGridIndex % cols;
+    const candidateRow: number = Math.floor(candidateGridIndex / cols);
+
+    const minDistSquared: number = this.minDistance ** 2;
+
+    // ? Check 5x5 neighborhood around the candidate's cell
+    for (let dRow = -2; dRow <= 2; dRow++) {
+      for (let dCol = -2; dCol <= 2; dCol++) {
+        const neighborCol: number = candidateCol + dCol;
+        const neighborRow: number = candidateRow + dRow;
+
+        const isOutOfBounds: boolean =
+          neighborCol < 0 ||
+          neighborCol >= cols ||
+          neighborRow < 0 ||
+          neighborRow >= rows;
+
+        if (isOutOfBounds) {
+          continue;
+        }
+
+        const cellIndex: number = toFlatIndex(neighborCol, neighborRow, cols);
+        const pointIndex: number = cells[cellIndex];
+
+        if (pointIndex === -1) {
+          continue;
+        }
+
+        const { x: nx, z: nz } = this.placedPoints[pointIndex];
+        const dx: number = candidate.x - nx;
+        const dz: number = candidate.z - nz;
+
+        if (dx ** 2 + dz ** 2 < minDistSquared) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  /**
+   * Generates a random candidate in a ring [minDistance, 2 * minDistance] around a point.
+   *
+   * @param {Position2D} point - The center point to generate around.
+   * @returns {Position2D} A random position in the ring around the point.
+   */
+  private generateCandidateAround = (point: Position2D): Position2D => {
+    const angle: number = randomInRange([0, ONE_REVOLUTION]);
+    const radius: number = randomInRange([
+      this.minDistance,
+      2 * this.minDistance,
+    ]);
+
+    return {
+      x: point.x + radius * Math.cos(angle),
+      z: point.z + radius * Math.sin(angle),
+    };
+  };
 }
