@@ -52,7 +52,9 @@ import floorDisplayTexture from "@public/textures/floor/coast_sand_rocks_02_1k/c
 import { useLoadingStore } from "@/stores/useLoadingStore";
 import { randomInRange } from "@/utils/numbers/range";
 import {
+  generatePositionsBridson,
   findPositionBruteForce,
+  findPositionMitchellBestCandidate,
   Position2D,
 } from "@/utils/placement/annulus-placement";
 
@@ -543,8 +545,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const gravesGroup = new THREE.Group();
 
-    const graveAmount: number = 50;
-
     const bottomGrave: number = graveMeasurements.height / 2;
 
     // ? Bounding circle radius for overlap detection (treating graves as cylinders)
@@ -552,24 +552,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       Math.sqrt(graveMeasurements.width ** 2 + graveMeasurements.depth ** 2) /
       2;
 
-    const placedPositions: Position2D[] = [];
+    const minDistance: number = graveBoundingRadius * 2;
+    const gravePositions: Position2D[] = generatePositionsBridson(
+      minDistance,
+      minGravesRadius,
+      maxGravesRadius,
+    );
 
-    for (let i = 0; i < graveAmount; i++) {
-      const { x: randomX, z: randomZ } = findPositionBruteForce(
-        placedPositions,
-        graveBoundingRadius,
-        minGravesRadius,
-        maxGravesRadius,
-        i,
-      );
-      // const { x: randomX, z: randomZ } = findPositionMitchellBestCandidate(
-      //   placedPositions,
-      //   5,
-      //   minGravesRadius,
-      //   maxGravesRadius,
-      // );
-
-      placedPositions.push({ x: randomX, z: randomZ });
+    for (let i = 0; i < gravePositions.length; i++) {
+      const { x: randomX, z: randomZ } = gravePositions[i];
 
       const currentGraveMesh = new THREE.Mesh(graveGeometry, graveMaterials);
       currentGraveMesh.castShadow = true;
