@@ -100,9 +100,14 @@ export function findPositionBruteForce(
 }
 
 /**
- * Finds a position within an annulus using Mitchell's Best Candidate algorithm.
+ * Finds a position within an annulus using a simplified Mitchell's Best Candidate algorithm.
  * Generates K random candidates and picks the one with the most breathing room
  * (largest minimum distance to all already-placed positions).
+ *
+ * NOTE: This is a simplified version of the original algorithm. Key differences:
+ * - Uses linear scan instead of a quadtree for nearest-neighbor lookup.
+ * - Uses a fixed K instead of increasing it as the space fills up.
+ * - Does not guarantee minimum spacing (best-effort only).
  *
  * @param {Position2D[]} placedPositions - Array of already-placed positions.
  * @param {number} candidateCount - Number of candidates to generate (K). Higher = better spacing, more computation.
