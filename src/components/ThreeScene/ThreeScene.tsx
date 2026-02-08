@@ -51,7 +51,10 @@ import floorDisplayTexture from "@public/textures/floor/coast_sand_rocks_02_1k/c
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 import { randomInRange } from "@/utils/numbers/range";
-import { findPositionBruteForce } from "@/utils/placement/annulus-placement";
+import {
+  findPositionBruteForce,
+  Position2D,
+} from "@/utils/placement/annulus-placement";
 
 import "./ThreeScene.scss";
 
@@ -549,7 +552,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       Math.sqrt(graveMeasurements.width ** 2 + graveMeasurements.depth ** 2) /
       2;
 
-    const placedPositions: { x: number; z: number }[] = [];
+    const placedPositions: Position2D[] = [];
 
     for (let i = 0; i < graveAmount; i++) {
       const { x: randomX, z: randomZ } = findPositionBruteForce(

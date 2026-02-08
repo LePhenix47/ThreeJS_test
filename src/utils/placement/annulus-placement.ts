@@ -1,6 +1,7 @@
 import { randomInRange } from "@utils/numbers/range";
+import * as THREE from "three";
 
-type Position2D = { x: number; z: number };
+export type Position2D = Pick<THREE.Vector3, "x" | "z">;
 
 const ONE_REVOLUTION: number = 2 * Math.PI;
 
