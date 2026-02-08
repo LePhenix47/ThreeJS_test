@@ -51,6 +51,7 @@ import floorDisplayTexture from "@public/textures/floor/coast_sand_rocks_02_1k/c
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 import { randomInRange } from "@/utils/numbers/range";
+import { findPositionBruteForce } from "@/utils/placement/annulus-placement";
 
 import "./ThreeScene.scss";
 
@@ -541,8 +542,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const graveAmount: number = 50;
 
-    const oneRevolution: number = 2 * Math.PI;
-
     const bottomGrave: number = graveMeasurements.height / 2;
 
     // ? Bounding circle radius for overlap detection (treating graves as cylinders)
@@ -551,39 +550,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       2;
 
     const placedPositions: { x: number; z: number }[] = [];
-    const maxRetries: number = 100;
 
     for (let i = 0; i < graveAmount; i++) {
-      let randomX: number = 0;
-      let randomZ: number = 0;
-      let hasOverlap: boolean = true;
-      let retries: number = 0;
-
-      while (hasOverlap && retries < maxRetries) {
-        const randomAngle: number = randomInRange([0, oneRevolution]);
-
-        // ? Equal area distribution, see EQUAL_AREA_DISTRIBUTION.md for details
-        const randomRadius: number = Math.sqrt(
-          randomInRange([minGravesRadius ** 2, maxGravesRadius ** 2]),
-        );
-
-        randomX = randomRadius * Math.cos(randomAngle);
-        randomZ = randomRadius * Math.sin(randomAngle);
-
-        hasOverlap = placedPositions.some((placed) => {
-          const dx: number = randomX - placed.x;
-          const dz: number = randomZ - placed.z;
-          const distance: number = Math.sqrt(dx ** 2 + dz ** 2);
-
-          return distance < graveBoundingRadius * 2;
-        });
-
-        retries++;
-      }
-
-      if (retries >= maxRetries) {
-        console.warn(`Grave ${i}: Could not find a non-overlapping position after ${maxRetries} retries`);
-      }
+      const { x: randomX, z: randomZ } = findPositionBruteForce(
+        placedPositions,
+        graveBoundingRadius,
+        minGravesRadius,
+        maxGravesRadius,
+        i,
+      );
 
       placedPositions.push({ x: randomX, z: randomZ });
 
