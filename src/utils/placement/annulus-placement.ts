@@ -60,7 +60,7 @@ export function hasOverlapWithPlaced(
  * Generates random candidates and retries until one doesn't overlap with existing positions.
  *
  * @param {Position2D[]} placedPositions - Array of already-placed positions.
- * @param {number} boundingRadius - The bounding circle radius of a single item.
+ * @param {number} objectBoundingRadius - The bounding circle radius of a single item.
  * @param {number} minRadius - The inner radius of the annulus.
  * @param {number} maxRadius - The outer radius of the annulus.
  * @param {number} itemIndex - The index of the current item (used for warning messages).
@@ -68,22 +68,25 @@ export function hasOverlapWithPlaced(
  */
 export function findPositionBruteForce(
   placedPositions: Position2D[],
-  boundingRadius: number,
+  objectBoundingRadius: number,
   minRadius: number,
   maxRadius: number,
   itemIndex: number,
 ): Position2D {
   const maxRetries: number = 100;
-  const minDistance: number = boundingRadius * 2;
+  const minDistance: number = objectBoundingRadius * 2;
 
-  let candidate = generateRandomAnnulusPosition(minRadius, maxRadius);
+  let candidate: Position2D = {
+    x: 0,
+    z: 0,
+  };
   let retries: number = 0;
 
-  while (
-    hasOverlapWithPlaced(candidate, placedPositions, minDistance) &&
-    retries < maxRetries
-  ) {
+  let hasOverlap = true;
+  while (hasOverlap && retries < maxRetries) {
     candidate = generateRandomAnnulusPosition(minRadius, maxRadius);
+    hasOverlap = hasOverlapWithPlaced(candidate, placedPositions, minDistance);
+
     retries++;
   }
 
