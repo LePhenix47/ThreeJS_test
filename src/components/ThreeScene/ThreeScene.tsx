@@ -53,7 +53,6 @@ import { useLoadingStore } from "@/stores/useLoadingStore";
 import { randomInRange } from "@/utils/numbers/range";
 import {
   findPositionBruteForce,
-  findPositionMitchellBestCandidate,
   Position2D,
 } from "@/utils/placement/annulus-placement";
 
@@ -548,15 +547,27 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const bottomGrave: number = graveMeasurements.height / 2;
 
+    // ? Bounding circle radius for overlap detection (treating graves as cylinders)
+    const graveBoundingRadius: number =
+      Math.sqrt(graveMeasurements.width ** 2 + graveMeasurements.depth ** 2) /
+      2;
+
     const placedPositions: Position2D[] = [];
 
     for (let i = 0; i < graveAmount; i++) {
-      const { x: randomX, z: randomZ } = findPositionMitchellBestCandidate(
+      const { x: randomX, z: randomZ } = findPositionBruteForce(
         placedPositions,
-        5,
+        graveBoundingRadius,
         minGravesRadius,
         maxGravesRadius,
+        i,
       );
+      // const { x: randomX, z: randomZ } = findPositionMitchellBestCandidate(
+      //   placedPositions,
+      //   5,
+      //   minGravesRadius,
+      //   maxGravesRadius,
+      // );
 
       placedPositions.push({ x: randomX, z: randomZ });
 
