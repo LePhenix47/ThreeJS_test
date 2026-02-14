@@ -175,11 +175,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const particleGeometry = new THREE.BufferGeometry();
     const particleMaterial = new THREE.PointsMaterial({
-      size: 0.02,
+      size: 0.2,
       sizeAttenuation: true,
-      alphaMap: alphaMaps.at(nthMap(2)),
+      alphaMap: alphaMaps.at(nthMap(1)),
       transparent: true,
     });
+    particleMaterial.alphaTest = 0.001;
 
     const particlesCount: number = 5e3;
     const itemSize: number = 3;
