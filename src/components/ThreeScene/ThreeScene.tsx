@@ -106,7 +106,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function createParticles() {
-    const particlesCount = 500;
+    const particlesCount: number = 500;
 
     const particleGeometry = new THREE.BufferGeometry();
     const particleMaterial = new THREE.PointsMaterial({
@@ -114,8 +114,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       sizeAttenuation: true,
     });
 
+    const itemSize: number = 3;
+
     // ? Array of XYZ coordinates for each particle, first 3 values are X, Y, Z,
-    const positions = new Float32Array(particlesCount * 3);
+    const positions = new Float32Array(particlesCount * itemSize);
 
     for (let i = 0; i < positions.length; i++) {
       positions[i] = Math.random();
@@ -123,7 +125,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     particleGeometry.setAttribute(
       "position",
-      new THREE.BufferAttribute(positions, 3),
+      new THREE.BufferAttribute(positions, itemSize),
     );
 
     const particles = new THREE.Points(particleGeometry, particleMaterial);
