@@ -135,7 +135,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Load textures - extracted for clarity
   function loadTextures() {
-    // ? We're not in a React component, so we can't use `useLoadingStore`
+    // ? We're in a regular function so we can't use `useLoadingStore`
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
     const loadingManager = new THREE.LoadingManager();
