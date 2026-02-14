@@ -180,8 +180,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       alphaMap: alphaMaps.at(nthMap(1)),
       transparent: true,
     });
-    // particleMaterial.alphaTest = 0.001;
-    particleMaterial.depthTest = false;
+    // particleMaterial.alphaTest = 0.001; // ? Works but not perfect as it shows some dark pixels
+    // particleMaterial.depthTest = false; // ? Works but then creates an issue with the depth in our scene causing particles to show in front of any object
+    particleMaterial.depthWrite = false;
 
     const particlesCount: number = 5e3;
     const itemSize: number = 3;
