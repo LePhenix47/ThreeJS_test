@@ -9,6 +9,20 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
+import particleAlphaMap1 from "@public/textures/particles/1.png";
+import particleAlphaMap2 from "@public/textures/particles/2.png";
+import particleAlphaMap3 from "@public/textures/particles/3.png";
+import particleAlphaMap4 from "@public/textures/particles/4.png";
+import particleAlphaMap5 from "@public/textures/particles/5.png";
+import particleAlphaMap6 from "@public/textures/particles/6.png";
+import particleAlphaMap7 from "@public/textures/particles/7.png";
+import particleAlphaMap8 from "@public/textures/particles/8.png";
+import particleAlphaMap9 from "@public/textures/particles/9.png";
+import particleAlphaMap10 from "@public/textures/particles/10.png";
+import particleAlphaMap11 from "@public/textures/particles/11.png";
+import particleAlphaMap12 from "@public/textures/particles/12.png";
+import particleAlphaMap13 from "@public/textures/particles/13.png";
+
 import "./ThreeScene.scss";
 import { getValueFromNewRange } from "@/utils/numbers/range";
 import { generateRandomAnnulusPosition } from "@/utils/placement/annulus-placement";
@@ -21,6 +35,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
+  type ParticleTextures = ReturnType<typeof loadTextures>["particleTextures"];
   // ? loadTextures is a regular function, not a hook — use getState() to access the store directly
   function loadTextures() {
     // ? We're in a regular function so we can't use `useLoadingStore`
@@ -52,15 +67,41 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
+    const loadedParticleAlphaMap1 = textureLoader.load(particleAlphaMap1);
+    const loadedParticleAlphaMap2 = textureLoader.load(particleAlphaMap2);
+    const loadedParticleAlphaMap3 = textureLoader.load(particleAlphaMap3);
+    const loadedParticleAlphaMap4 = textureLoader.load(particleAlphaMap4);
+    const loadedParticleAlphaMap5 = textureLoader.load(particleAlphaMap5);
+    const loadedParticleAlphaMap6 = textureLoader.load(particleAlphaMap6);
+    const loadedParticleAlphaMap7 = textureLoader.load(particleAlphaMap7);
+    const loadedParticleAlphaMap8 = textureLoader.load(particleAlphaMap8);
+    const loadedParticleAlphaMap9 = textureLoader.load(particleAlphaMap9);
+    const loadedParticleAlphaMap10 = textureLoader.load(particleAlphaMap10);
+    const loadedParticleAlphaMap11 = textureLoader.load(particleAlphaMap11);
+    const loadedParticleAlphaMap12 = textureLoader.load(particleAlphaMap12);
+    const loadedParticleAlphaMap13 = textureLoader.load(particleAlphaMap13);
+
     const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [];
 
     for (const colorLoadedTexture of colorLoadedTextures) {
-      if (!colorLoadedTexture) continue;
-
       colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
     }
 
-    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [];
+    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [
+      loadedParticleAlphaMap1,
+      loadedParticleAlphaMap2,
+      loadedParticleAlphaMap3,
+      loadedParticleAlphaMap4,
+      loadedParticleAlphaMap5,
+      loadedParticleAlphaMap6,
+      loadedParticleAlphaMap7,
+      loadedParticleAlphaMap8,
+      loadedParticleAlphaMap9,
+      loadedParticleAlphaMap10,
+      loadedParticleAlphaMap11,
+      loadedParticleAlphaMap12,
+      loadedParticleAlphaMap13,
+    ];
 
     const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
 
@@ -68,6 +109,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       loadedTexture.wrapS = THREE.RepeatWrapping;
       loadedTexture.wrapT = THREE.RepeatWrapping;
     }
+
+    const particleTextures = {
+      alphaMaps: [
+        loadedParticleAlphaMap1,
+        loadedParticleAlphaMap2,
+        loadedParticleAlphaMap3,
+        loadedParticleAlphaMap4,
+        loadedParticleAlphaMap5,
+        loadedParticleAlphaMap6,
+        loadedParticleAlphaMap7,
+        loadedParticleAlphaMap8,
+        loadedParticleAlphaMap9,
+        loadedParticleAlphaMap10,
+        loadedParticleAlphaMap11,
+        loadedParticleAlphaMap12,
+        loadedParticleAlphaMap13,
+      ],
+    };
+
+    return { particleTextures };
   }
 
   function createScene() {
@@ -107,11 +168,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
-  function createParticles() {
+  function createParticles(particleTextures: ParticleTextures) {
+    const { alphaMaps } = particleTextures;
+
+    const nthMap = (n: number) => n--;
+
     const particleGeometry = new THREE.BufferGeometry();
     const particleMaterial = new THREE.PointsMaterial({
       size: 0.02,
       sizeAttenuation: true,
+      alphaMap: alphaMaps.at(nthMap(2)),
+      transparent: true,
     });
 
     const particlesCount: number = 5e3;
@@ -143,12 +210,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { clientWidth, clientHeight } = parent;
 
+      const { particleTextures } = loadTextures();
+
       const scene = createScene();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
-      const particles = createParticles();
+      const particles = createParticles(particleTextures);
       const axisHelper = new THREE.AxesHelper(3);
 
       scene.add(particles);
