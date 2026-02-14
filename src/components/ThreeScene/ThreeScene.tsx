@@ -50,21 +50,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
-    const colorLoadedTextures = [];
+    const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [];
 
     for (const colorLoadedTexture of colorLoadedTextures) {
       if (!colorLoadedTexture) continue;
 
-      // colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
+      colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
     }
 
-    const loadedTextures = [];
+    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [];
 
     const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
 
     for (const loadedTexture of loadedTexturesArray) {
-      // loadedTexture.wrapS = THREE.RepeatWrapping;
-      // loadedTexture.wrapT = THREE.RepeatWrapping;
+      loadedTexture.wrapS = THREE.RepeatWrapping;
+      loadedTexture.wrapT = THREE.RepeatWrapping;
     }
   }
 
