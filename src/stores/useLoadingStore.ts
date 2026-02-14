@@ -1,15 +1,17 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
-interface LoadingState {
+type LoadingActions = {
+  setLoading: (isLoading: boolean) => void;
+  setProgress: (progress: number) => void;
+  reset: () => void;
+};
+
+type LoadingState = {
   isLoading: boolean;
   loadingProgress: number;
-  actions: {
-    setLoading: (isLoading: boolean) => void;
-    setProgress: (progress: number) => void;
-    reset: () => void;
-  };
-}
+  actions: LoadingActions;
+};
 
 export const useLoadingStore = create<LoadingState>()(
   devtools(
@@ -22,8 +24,15 @@ export const useLoadingStore = create<LoadingState>()(
         reset: () => set({ isLoading: false, loadingProgress: 0 }),
       },
     }),
-    {
-      name: "loading-store",
-    }
+    { name: "LoadingStore" }
   )
 );
+
+export const useIsLoading = () =>
+  useLoadingStore((state) => state.isLoading);
+
+export const useLoadingProgress = () =>
+  useLoadingStore((state) => state.loadingProgress);
+
+export const useLoadingActions = () =>
+  useLoadingStore((state) => state.actions);

@@ -1,14 +1,14 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
-import { useLoadingStore } from "@/stores/useLoadingStore";
+import { useIsLoading } from "@/stores/useLoadingStore";
 
 import "./LoadingSpinner.scss";
 
 gsap.registerPlugin(DrawSVGPlugin);
 
 function LoadingSpinner() {
-  const isLoading = useLoadingStore((state) => state.isLoading);
+  const isLoading = useIsLoading();
   const circleRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {

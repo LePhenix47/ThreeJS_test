@@ -135,7 +135,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   // * Load textures - extracted for clarity
   function loadTextures() {
-    // ? We're not in a React component, so we can't use `useLoadingStore`
+    // ? We're in a regular function so we can't use `useLoadingStore`
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
     const loadingManager = new THREE.LoadingManager();
@@ -164,7 +164,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
-    // TODO: Improve code quality because it's a fucking mess
     // * Floor texture
     const floorAlphaMapTextureLoaded = textureLoader.load(floorAlphaMapTexture);
     const floorColorTextureLoaded = textureLoader.load(floorColorTexture);
@@ -383,14 +382,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       value.repeat.set(textureRepeat, textureRepeat);
     }
 
-    // ? Equivalent of:
-    // planeMaterial.map.repeat.set(textureRepeat, textureRepeat);
-    // planeMaterial.normalMap.repeat.set(textureRepeat, textureRepeat);
-    // planeMaterial.aoMap.repeat.set(textureRepeat, textureRepeat);
-    // planeMaterial.roughnessMap.repeat.set(textureRepeat, textureRepeat);
-    // planeMaterial.metalnessMap.repeat.set(textureRepeat, textureRepeat);
-    // planeMaterial.displacementMap.repeat.set(textureRepeat, textureRepeat);
-
     const floor = new THREE.Mesh(planeGeometry, planeMaterial);
     floor.receiveShadow = true;
     floor.name = "floor";
@@ -517,15 +508,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     houseGroup.add(wallsMesh, roofMesh, doorMesh);
 
-    console.log({ houseGroup });
-
     return houseGroup;
   }
 
   function createGraves(
     graveTextures: ReturnType<typeof loadTextures>["graveTextures"],
   ) {
-    // graveTextures: ReturnType<typeof loadTextures>["graveTextures"]
     const graveGeometry = new THREE.BoxGeometry(
       graveMeasurements.width,
       graveMeasurements.height,
@@ -620,7 +608,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return renderer;
   }
 
-  // * Create helpers - extracted for clarity
   // * Create helpers - extracted for clarity
   function createHelpers(
     directionalLight: THREE.DirectionalLight,
@@ -724,7 +711,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   ) {
     const { children } = ghosts;
 
-    // console.log(children.length);
     for (let i = 0; i < children.length; i++) {
       const currentGhost = children[i];
       const randomRadius: number = minGravesRadius + 0.5 * (i + 1);
@@ -804,7 +790,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         ghostsHelperGroup,
       );
 
-      // Add sphere to scene
+      // Add objects to scene
       scene.add(sky);
       scene.add(floor);
       scene.add(house);

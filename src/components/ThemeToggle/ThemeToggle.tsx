@@ -1,12 +1,8 @@
-import { useAppStore } from "@/stores/useAppStore";
+import { useTheme, useAppActions } from "@/stores/useAppStore";
 
 function ThemeToggle() {
-  const theme = useAppStore((state) => state.theme);
-  const setTheme = useAppStore((state) => state.setTheme);
-
-  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
-    setTheme(newTheme);
-  };
+  const theme = useTheme();
+  const { setTheme } = useAppActions();
 
   return (
     <div className="theme-toggle">
@@ -15,7 +11,7 @@ function ThemeToggle() {
         id="theme-select"
         value={theme}
         onChange={(e) =>
-          handleThemeChange(e.target.value as "light" | "dark" | "system")
+          setTheme(e.target.value as "light" | "dark" | "system")
         }
       >
         <option value="light">Light</option>
@@ -25,21 +21,21 @@ function ThemeToggle() {
 
       <div className="theme-buttons">
         <button
-          onClick={() => handleThemeChange("light")}
+          onClick={() => setTheme("light")}
           className={theme === "light" ? "active" : ""}
           aria-label="Light theme"
         >
           ☀️
         </button>
         <button
-          onClick={() => handleThemeChange("dark")}
+          onClick={() => setTheme("dark")}
           className={theme === "dark" ? "active" : ""}
           aria-label="Dark theme"
         >
           🌙
         </button>
         <button
-          onClick={() => handleThemeChange("system")}
+          onClick={() => setTheme("system")}
           className={theme === "system" ? "active" : ""}
           aria-label="System theme"
         >
