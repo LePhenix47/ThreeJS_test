@@ -10,6 +10,8 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
+import { getValueFromNewRange } from "@/utils/numbers/range";
+import { generateRandomAnnulusPosition } from "@/utils/placement/annulus-placement";
 
 type ThreeSceneProps = {
   className?: string;
@@ -106,21 +108,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function createParticles() {
-    const particlesCount: number = 500;
-
     const particleGeometry = new THREE.BufferGeometry();
     const particleMaterial = new THREE.PointsMaterial({
       size: 0.02,
       sizeAttenuation: true,
     });
 
+    const particlesCount: number = 5e3;
     const itemSize: number = 3;
 
     // ? Array of XYZ coordinates for each particle, first 3 values are X, Y, Z,
     const positions = new Float32Array(particlesCount * itemSize);
 
     for (let i = 0; i < positions.length; i++) {
-      positions[i] = Math.random();
+      positions[i] = getValueFromNewRange(Math.random(), [0, 1], [-5, 5]);
     }
 
     particleGeometry.setAttribute(
