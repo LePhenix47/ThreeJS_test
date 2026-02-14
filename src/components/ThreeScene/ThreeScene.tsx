@@ -105,6 +105,34 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
+  function createParticles() {
+    const particlesCount = 500;
+
+    const particleGeometry = new THREE.BufferGeometry();
+    const particleMaterial = new THREE.PointsMaterial({
+      size: 0.02,
+      sizeAttenuation: true,
+    });
+
+    // ? Array of XYZ coordinates for each particle, first 3 values are X, Y, Z,
+    const positions = new Float32Array(particlesCount * 3);
+
+    for (let i = 0; i < positions.length; i++) {
+      positions[i] = Math.random();
+    }
+
+    particleGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(positions, 3),
+    );
+
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    const particlesGroup = new THREE.Group();
+    particlesGroup.add(particles);
+
+    return particlesGroup;
+  }
+
   const setupThreeScene = useCallback(
     (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
@@ -117,8 +145,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
+      const particles = createParticles();
       const axisHelper = new THREE.AxesHelper(3);
 
+      scene.add(particles);
       scene.add(axisHelper);
       scene.add(camera);
 
