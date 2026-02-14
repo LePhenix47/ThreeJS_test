@@ -180,7 +180,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       alphaMap: alphaMaps.at(nthMap(1)),
       transparent: true,
     });
-    particleMaterial.alphaTest = 0.001;
+    // particleMaterial.alphaTest = 0.001;
+    particleMaterial.depthTest = false;
 
     const particlesCount: number = 5e3;
     const itemSize: number = 3;
@@ -204,6 +205,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return particlesGroup;
   }
 
+  function createCube() {
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshNormalMaterial();
+    const cube = new THREE.Mesh(geometry, material);
+    return cube;
+  }
+
   const setupThreeScene = useCallback(
     (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
@@ -219,9 +227,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
 
       const particles = createParticles(particleTextures);
+      const cube = createCube();
       const axisHelper = new THREE.AxesHelper(3);
 
       scene.add(particles);
+      scene.add(cube);
       scene.add(axisHelper);
       scene.add(camera);
 
