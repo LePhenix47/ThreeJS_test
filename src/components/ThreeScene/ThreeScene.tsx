@@ -25,6 +25,7 @@ import particleAlphaMap13 from "@public/textures/particles/13.png";
 
 import "./ThreeScene.scss";
 import { getValueFromNewRange } from "@/utils/numbers/range";
+import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placement";
 
 type ThreeSceneProps = {
   className?: string;
@@ -170,27 +171,30 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createParticles(particleTextures: ParticleTextures) {
     const { alphaMaps } = particleTextures;
 
-    const nthMap = (n: number) => n--;
+    const nthMap = (n: number) => n - 1;
 
     const particleGeometry = new THREE.BufferGeometry();
     const particleMaterial = new THREE.PointsMaterial({
       size: 0.2,
       sizeAttenuation: true,
-      alphaMap: alphaMaps.at(nthMap(1)),
+      alphaMap: alphaMaps.at(nthMap(8)),
       transparent: true,
     });
     // particleMaterial.alphaTest = 0.001; // ? Works but not perfect as it shows some dark pixels
     // particleMaterial.depthTest = false; // ? Works but then creates an issue with the depth in our scene causing particles to show in front of any object
     particleMaterial.depthWrite = false;
 
-    const particlesCount: number = 5e3;
+    const particlesCount: number = 10e3;
     const itemSize: number = 3;
 
     // ? Array of XYZ coordinates for each particle, first 3 values are X, Y, Z,
     const positions = new Float32Array(particlesCount * itemSize);
 
-    for (let i = 0; i < positions.length; i++) {
-      positions[i] = getValueFromNewRange(Math.random(), [0, 1], [-5, 5]);
+    for (let i = 0; i < positions.length; i += itemSize) {
+      const { x, y, z } = getRandomUniformSpherePlacement(1, 5);
+      positions[i] = x;
+      positions[i + 1] = y;
+      positions[i + 2] = z;
     }
 
     particleGeometry.setAttribute(
