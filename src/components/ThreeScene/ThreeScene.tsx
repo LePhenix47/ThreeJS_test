@@ -211,13 +211,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return particlesGroup;
   }
 
-  function createCube() {
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshStandardMaterial();
-    const cube = new THREE.Mesh(geometry, material);
-    return cube;
-  }
-
   function createLights() {
     const lightsGroup = new THREE.Group();
 
@@ -243,13 +236,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
 
       const particles = createParticles(particleTextures);
-      const cube = createCube();
       const axisHelper = new THREE.AxesHelper(3);
 
       const lightsGroup = createLights();
 
       scene.add(particles);
-      scene.add(cube);
       scene.add(axisHelper);
       scene.add(camera);
 
