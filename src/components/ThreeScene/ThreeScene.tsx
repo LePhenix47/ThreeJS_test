@@ -187,7 +187,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     particleMaterial.blending = THREE.AdditiveBlending;
     particleMaterial.vertexColors = true;
 
-    const particlesCount: number = 10e3;
+    const particlesCount: number = 1e3;
     const itemSize: number = 3;
 
     // ? Array of XYZ coordinates for each particle, first 3 values are X, Y, Z,
@@ -242,7 +242,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     for (let i = 0; i < positions.length; i += 3) {
       // positions[i];
-      positions[i + 1] += Math.sin(elapsedTime) * 0.01;
+      const x = positions[i];
+
+      positions[i + 1] = Math.sin(elapsedTime + x);
       // positions[i + 2];
     }
 
