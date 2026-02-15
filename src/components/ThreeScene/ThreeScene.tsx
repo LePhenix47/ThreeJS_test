@@ -175,14 +175,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const particleGeometry = new THREE.BufferGeometry();
     const particleMaterial = new THREE.PointsMaterial({
+      color: "pink",
       size: 0.2,
       sizeAttenuation: true,
-      alphaMap: alphaMaps.at(nthMap(8)),
+      alphaMap: alphaMaps.at(nthMap(2)),
       transparent: true,
     });
     // particleMaterial.alphaTest = 0.001; // ? Works but not perfect as it shows some dark pixels
     // particleMaterial.depthTest = false; // ? Works but then creates an issue with the depth in our scene causing particles to show in front of any object
     particleMaterial.depthWrite = false;
+    particleMaterial.blending = THREE.AdditiveBlending;
 
     const particlesCount: number = 10e3;
     const itemSize: number = 3;
@@ -211,9 +213,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   function createCube() {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshNormalMaterial();
+    const material = new THREE.MeshStandardMaterial();
     const cube = new THREE.Mesh(geometry, material);
     return cube;
+  }
+
+  function createLights() {
+    const lightsGroup = new THREE.Group();
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 10);
+
+    lightsGroup.add(ambientLight);
+
+    return lightsGroup;
   }
 
   const setupThreeScene = useCallback(
@@ -234,10 +246,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const cube = createCube();
       const axisHelper = new THREE.AxesHelper(3);
 
+      const lightsGroup = createLights();
+
       scene.add(particles);
       scene.add(cube);
       scene.add(axisHelper);
       scene.add(camera);
+
+      scene.add(lightsGroup);
 
       const abortController = new AbortController();
 
