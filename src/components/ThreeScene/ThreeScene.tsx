@@ -25,7 +25,6 @@ import particleAlphaMap13 from "@public/textures/particles/13.png";
 
 import "./ThreeScene.scss";
 import { getValueFromNewRange } from "@/utils/numbers/range";
-import { generateRandomAnnulusPosition } from "@/utils/placement/annulus-placement";
 
 type ThreeSceneProps = {
   className?: string;
