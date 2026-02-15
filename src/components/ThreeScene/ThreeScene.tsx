@@ -194,15 +194,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const positions = new Float32Array(particlesCount * itemSize);
     const colors = new Float32Array(particlesCount * itemSize);
 
-    for (let i = 0; i < positions.length; i += itemSize) {
-      const { x, y, z } = getRandomUniformSpherePlacement(1, 25);
-      positions[i] = x;
-      positions[i + 1] = y;
-      positions[i + 2] = z;
+    // for (let i = 0; i < positions.length; i += itemSize) {
+    //   const { x, y, z } = getRandomUniformSpherePlacement(0, 10);
+    //   positions[i] = x;
+    //   positions[i + 1] = y;
+    //   positions[i + 2] = z;
 
+    //   colors[i] = Math.random();
+    //   colors[i + 1] = Math.random();
+    //   colors[i + 2] = Math.random();
+    // }
+
+    for (let i = 0; i < positions.length; i++) {
+      positions[i] = getValueFromNewRange(Math.random(), [0, 1], [-5, 5]);
       colors[i] = Math.random();
-      colors[i + 1] = Math.random();
-      colors[i + 2] = Math.random();
     }
 
     particleGeometry.setAttribute(
@@ -216,10 +221,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     );
 
     const particles = new THREE.Points(particleGeometry, particleMaterial);
+    particles.name = "particles";
     const particlesGroup = new THREE.Group();
     particlesGroup.add(particles);
 
     return particlesGroup;
+  }
+
+  function animateParticles(
+    particlesGroup: THREE.Group<THREE.Object3DEventMap>,
+    elapsedTime: number,
+  ): void {
+    const particles = particlesGroup.getObjectByName(
+      "particles",
+    ) as THREE.Points;
+
+    if (!particles) return;
+
+    const positions = particles.geometry.attributes.position.array;
+
+    for (let i = 0; i < positions.length; i += 3) {
+      // positions[i];
+      positions[i + 1] += Math.sin(elapsedTime) * 0.01;
+      // positions[i + 2];
+    }
+
+    particles.geometry.attributes.position.needsUpdate = true;
   }
 
   function createLights() {
@@ -259,9 +286,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const abortController = new AbortController();
 
+      // Clock for delta time
+      const clock = new THREE.Clock();
+
       function animate() {
         controls.update();
         renderer.render(scene, camera);
+        animateParticles(particles, clock.getElapsedTime());
         animationIdRef.current = requestAnimationFrame(animate);
       }
       animate();
