@@ -175,7 +175,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const particleGeometry = new THREE.BufferGeometry();
     const particleMaterial = new THREE.PointsMaterial({
-      color: "pink",
+      // color: "pink",
       size: 0.2,
       sizeAttenuation: true,
       alphaMap: alphaMaps.at(nthMap(2)),
@@ -185,23 +185,34 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // particleMaterial.depthTest = false; // ? Works but then creates an issue with the depth in our scene causing particles to show in front of any object
     particleMaterial.depthWrite = false;
     particleMaterial.blending = THREE.AdditiveBlending;
+    particleMaterial.vertexColors = true;
 
     const particlesCount: number = 10e3;
     const itemSize: number = 3;
 
     // ? Array of XYZ coordinates for each particle, first 3 values are X, Y, Z,
     const positions = new Float32Array(particlesCount * itemSize);
+    const colors = new Float32Array(particlesCount * itemSize);
 
     for (let i = 0; i < positions.length; i += itemSize) {
-      const { x, y, z } = getRandomUniformSpherePlacement(1, 5);
+      const { x, y, z } = getRandomUniformSpherePlacement(1, 25);
       positions[i] = x;
       positions[i + 1] = y;
       positions[i + 2] = z;
+
+      colors[i] = Math.random();
+      colors[i + 1] = Math.random();
+      colors[i + 2] = Math.random();
     }
 
     particleGeometry.setAttribute(
       "position",
       new THREE.BufferAttribute(positions, itemSize),
+    );
+
+    particleGeometry.setAttribute(
+      "color",
+      new THREE.BufferAttribute(colors, itemSize),
     );
 
     const particles = new THREE.Points(particleGeometry, particleMaterial);
