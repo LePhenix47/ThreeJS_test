@@ -173,6 +173,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         updateGalaxy({ galaxyCreator, scene });
       });
 
+    galaxyFolder.addColor(galaxyCreator, "insideColor").onFinishChange(() => {
+      updateGalaxy({ galaxyCreator, scene });
+    });
+
+    galaxyFolder.addColor(galaxyCreator, "outsideColor").onFinishChange(() => {
+      updateGalaxy({ galaxyCreator, scene });
+    });
+
     return gui;
   }
 

@@ -23,16 +23,16 @@ class GalaxyCreator {
   spin: number;
   randomness: number;
   randomnessPower: number;
-  insideColor: string;
-  outsideColor: string;
+  insideColor: THREE.Color;
+  outsideColor: THREE.Color;
 
   constructor({
-    count = 1_000,
+    count = 10_000,
     size = 0.01,
     radius = 5,
     branches = 3,
     spin = 1,
-    randomness = 0.2,
+    randomness = 0.5,
     randomnessPower = 3,
     insideColor = "white",
     outsideColor = "#1b3984",
@@ -44,8 +44,8 @@ class GalaxyCreator {
     this.spin = spin;
     this.randomness = randomness;
     this.randomnessPower = randomnessPower;
-    this.insideColor = insideColor;
-    this.outsideColor = outsideColor;
+    this.insideColor = new THREE.Color(insideColor);
+    this.outsideColor = new THREE.Color(outsideColor);
   }
 
   /*
@@ -86,6 +86,16 @@ class GalaxyCreator {
     return this;
   };
 
+  public setInsideColor = (insideColor: string): this => {
+    this.insideColor = new THREE.Color(insideColor);
+    return this;
+  };
+
+  public setOutsideColor = (outsideColor: string): this => {
+    this.outsideColor = new THREE.Color(outsideColor);
+    return this;
+  };
+
   /*
    * Methods
    */
@@ -104,6 +114,7 @@ class GalaxyCreator {
     // * In groups of 3 for the X, Y and Z coordinates
     const itemSize: number = 3;
     const positions = new Float32Array(this.count * itemSize);
+    const colors = new Float32Array(this.count * itemSize);
 
     const oneRevolution: number = 2 * Math.PI;
     for (let i = 0; i < positions.length; i += itemSize) {
@@ -135,6 +146,8 @@ class GalaxyCreator {
       new THREE.BufferAttribute(positions, itemSize),
     );
 
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, itemSize));
+
     return geometry;
   };
 
@@ -145,6 +158,7 @@ class GalaxyCreator {
       sizeAttenuation: true,
       depthWrite: true,
       blending: THREE.AdditiveBlending,
+      // vertexColors: true,
     });
 
     return material;
