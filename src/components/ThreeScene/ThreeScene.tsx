@@ -9,7 +9,10 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
+import GUI from "lil-gui";
+
 import "./ThreeScene.scss";
+import GalaxyCreator from "@/utils/classes/galaxy-creator";
 
 type ThreeSceneProps = {
   className?: string;
@@ -68,6 +71,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     }
   }
 
+  function getGalaxyCreatorInstance() {
+    // TODO: Add logic here
+    console.log("Creating a galaxy !!!!!!!!");
+    const galaxy = new GalaxyCreator();
+
+    return galaxy;
+  }
+
+  function setupGUI() {
+    const gui = new GUI({
+      title: "Galaxy generator",
+    });
+  }
+
   function createScene() {
     return new THREE.Scene();
   }
@@ -117,8 +134,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
+      const galaxyCreator = getGalaxyCreatorInstance();
+      const galaxy = galaxyCreator.createPoints();
       const axisHelper = new THREE.AxesHelper(3);
 
+      scene.add(galaxy);
       scene.add(axisHelper);
       scene.add(camera);
 
