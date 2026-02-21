@@ -27,15 +27,15 @@ class GalaxyCreator {
   outsideColor: THREE.Color;
 
   constructor({
-    count = 10_000,
+    count = 100_000,
     size = 0.01,
     radius = 5,
     branches = 3,
     spin = 1,
-    randomness = 0.5,
-    randomnessPower = 3,
-    insideColor = "white",
-    outsideColor = "#1b3984",
+    randomness = 1,
+    randomnessPower = 2.5,
+    insideColor = "#182a36",
+    outsideColor = "#be7b73",
   }: GalaxyParams = {}) {
     this.count = count;
     this.size = size;
@@ -70,27 +70,40 @@ class GalaxyCreator {
 
     const oneRevolution: number = 2 * Math.PI;
     for (let i = 0; i < positions.length; i += itemSize) {
-      const radius: number = Math.random() * this.radius;
+      // * Positions
+      const randomRadius: number = Math.random() * this.radius;
 
       const actualIndex: number = i / itemSize;
       const branchAngle: number =
         ((actualIndex % this.branches) * oneRevolution) / this.branches;
 
-      const spinAngle: number = radius * this.spin;
+      const spinAngle: number = randomRadius * this.spin;
 
       const additionalRandomness = {
         x: this.generateRandomRandomness(),
         y: this.generateRandomRandomness(),
         z: this.generateRandomRandomness(),
       } as const;
-      // * x
+      // ? x
       positions[i] =
-        Math.cos(branchAngle + spinAngle) * radius + additionalRandomness.x;
-      // * y
+        Math.cos(branchAngle + spinAngle) * randomRadius +
+        additionalRandomness.x;
+      // ? y
       positions[i + 1] = additionalRandomness.y;
-      // * z
+      // ? z
       positions[i + 2] =
-        Math.sin(branchAngle + spinAngle) * radius + additionalRandomness.z;
+        Math.sin(branchAngle + spinAngle) * randomRadius +
+        additionalRandomness.z;
+
+      // * Colors
+      const mixedColor: THREE.Color = this.insideColor.clone();
+      mixedColor.lerp(this.outsideColor, randomRadius / this.radius);
+      // ? r
+      colors[i] = mixedColor.r;
+      // ? g
+      colors[i + 1] = mixedColor.g;
+      // ? b
+      colors[i + 2] = mixedColor.b;
     }
 
     geometry.setAttribute(
@@ -110,7 +123,7 @@ class GalaxyCreator {
       sizeAttenuation: true,
       depthWrite: true,
       blending: THREE.AdditiveBlending,
-      // vertexColors: true,
+      vertexColors: true,
     });
 
     return material;
