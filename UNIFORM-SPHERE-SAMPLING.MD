@@ -93,54 +93,39 @@ Equal Δφ steps produce bands of **unequal surface area**. Bands near the poles
 
 ![θ vs φ slicing diagram](public/img/jpg/random-phi-problem-explanation.jpg)
 
-### The Surface Area Element
+### The Fix
 
-The surface area of a thin band on a sphere is:
+The clustering happens on the z-axis — points pile up at the poles, which are the extremes of z. So z is what we need to control.
 
-```text
-dA = ρ² sin(φ) dφ dθ
-```
+From the right triangle: `z = ρ × cos(φ)`. z and φ are directly linked — fixing one fixes the other.
 
-The `sin(φ)` factor is the problem — it makes the area depend on φ.
-
-### The Key Insight
-
-Notice that `sin(φ) dφ` is the negative derivative of `cos(φ)`:
+On a unit sphere (ρ = 1) this simplifies to:
 
 ```text
-d(cos(φ)) = -sin(φ) dφ
-
-→ sin(φ) dφ = -d(cos(φ))
+z = cos(φ)   →   φ = acos(z)
 ```
 
-Substituting into the surface area element:
+z ranges from -1 (south pole) to 1 (north pole).
+
+**Archimedes' hat-box theorem:** equal z-steps = equal surface area on a sphere. This is a geometric fact — no calculus needed. So sampling z uniformly gives uniform surface coverage.
+
+Now we just need z to be uniform in `[-1, 1]`. `Math.random()` gives `u ∈ [0, 1]`, so we stretch and shift:
+
+- `u - 1` → shifts to `[-1, 0]`
+- `× 2` → stretches to `[-2, 0]`
+- `+ 1` → shifts to `[-1, 1]`
 
 ```text
-dA = ρ² × (-d(cos(φ))) × dθ
+z = (u - 1) × 2 + 1 = 2u - 1
 ```
 
-**The surface area is uniform in cos(φ), not in φ.**
-
-This means: if we sample `cos(φ)` uniformly instead of φ, each infinitesimal band will have equal surface area.
-
-### The Formula
-
-`cos(φ)` ranges from:
-
-- `cos(0) = 1` (north pole, φ = 0)
-- `cos(π) = -1` (south pole, φ = π)
-
-So we need a uniform random value in `[-1, 1]`.
-
-Mapping `u ∈ [0, 1]` to `[1, -1]`:
+Substituting back:
 
 ```text
-cos(φ) = 1 - 2u
-
-φ = acos(1 - 2u)
+φ = acos(z) = acos(2u - 1)
 ```
 
-Note: `acos` always returns values in `[0, π]`, which is exactly the range we need for φ.
+**Why equal φ-steps fail:** `cos` is nonlinear. Near the equator (φ ≈ π/2), a small Δφ changes z a lot. Near the poles (φ ≈ 0 or π), the same Δφ barely changes z. So equal Δφ ≠ equal Δz ≠ equal area — which is exactly the clustering we see.
 
 ---
 
@@ -148,12 +133,12 @@ Note: `acos` always returns values in `[0, π]`, which is exactly the range we n
 
 - **θ** — sample uniformly: `θ = 2πu` (rotational symmetry makes this correct as-is)
 - **ρ** — sample ρ³ uniformly: `ρ = ∛(ρ_min³ + u(ρ_max³ - ρ_min³))`
-- **φ** — sample cos(φ) uniformly: `φ = acos(1 - 2u)`
+- **φ** — sample z uniformly in [-1, 1]: `φ = acos(2u - 1)`
 
 ### Why θ Works but φ Doesn't
 
-It comes down to **symmetry**. The sphere is rotationally symmetric around the z-axis (θ's axis of rotation), so every θ-slice is identical. But the cross-section changes as φ sweeps from pole to equator to pole — the rings get bigger then smaller. That asymmetry is what `sin(φ)` captures, and what the `acos(1 - 2u)` fix compensates for.
+It comes down to **symmetry**. The sphere is rotationally symmetric around the z-axis, so every θ-wedge is identical — equal Δθ always means equal area. But φ and z are linked by `cos`, which is nonlinear, so equal Δφ does not mean equal Δz, and therefore not equal area. Sampling z directly (instead of φ) bypasses the problem entirely.
 
 ### The General Technique
 
-This is the **inverse CDF method**: find the variable where the distribution is already uniform (here, `cos(φ)`), then sample that variable uniformly. It's the same technique used for ρ — volume scales with ρ³, so we sample ρ³ uniformly and take the cube root.
+This is the **inverse CDF method**: find the variable where the distribution is already uniform (here, z), then sample that variable uniformly and convert back. It's the same technique used for ρ — volume scales with ρ³, so we sample ρ³ uniformly and take the cube root.
