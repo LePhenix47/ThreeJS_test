@@ -14,6 +14,8 @@ Three values need to be sampled:
 
 ## Spherical Coordinates → Cartesian
 
+![Spherical coordinates diagram](public/img/jpg/spherical-coords-explanation.jpg)
+
 From the right triangle formed by ρ, the xy-plane radius `r`, and the z coordinate:
 
 ```text
