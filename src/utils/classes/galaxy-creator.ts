@@ -89,6 +89,17 @@ class GalaxyCreator {
   /*
    * Methods
    */
+  private generateRandomRandomness = (): number => {
+    const initAdditionalRandomness: number =
+      randomInRange([-1, 1]) * this.randomness;
+    const sign: number = Math.random() < 0.5 ? -1 : 1;
+
+    const finalRandomness: number =
+      Math.pow(initAdditionalRandomness, this.randomnessPower) * sign;
+
+    return finalRandomness;
+  };
+
   private generateBufferGeometry = () => {
     const geometry = new THREE.BufferGeometry();
     // * In groups of 3 for the X, Y and Z coordinates
@@ -100,16 +111,17 @@ class GalaxyCreator {
       const radius: number = Math.random() * this.radius;
 
       const actualIndex: number = i / itemSize;
-      const spinAngle: number = radius * this.spin;
       const branchAngle: number =
         ((actualIndex % this.branches) * oneRevolution) / this.branches;
 
-      const additionalRandomness = {
-        x: randomInRange([-1, 1]) * this.randomness,
-        y: randomInRange([-1, 1]) * this.randomness,
-        z: randomInRange([-1, 1]) * this.randomness,
-      };
+      const spinAngle: number = radius * this.spin;
 
+      // TODO: Fix repetition
+      const additionalRandomness = {
+        x: this.generateRandomRandomness(),
+        y: this.generateRandomRandomness(),
+        z: this.generateRandomRandomness(),
+      };
       // * x
       positions[i] =
         Math.cos(branchAngle + spinAngle) * radius + additionalRandomness.x;
