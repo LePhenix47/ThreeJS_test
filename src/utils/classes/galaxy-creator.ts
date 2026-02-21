@@ -127,6 +127,7 @@ class GalaxyCreator {
     const material = this.generateMaterial();
 
     const points = new THREE.Points(geometry, material);
+    points.name = "galaxy";
     return points;
   };
 }
