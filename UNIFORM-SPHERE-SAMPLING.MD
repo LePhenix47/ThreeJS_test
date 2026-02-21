@@ -125,6 +125,8 @@ Substituting back:
 φ = acos(z) = acos(2u - 1)
 ```
 
+> **Note:** In the real code ρ ≠ 1, so z actually ranges from -ρ to ρ. But it doesn't matter for φ — when you convert back, `cos(φ) = z/ρ = ρ(2u-1)/ρ = 2u - 1`. ρ cancels, and the formula is the same for any radius.
+
 **Why equal φ-steps fail:** `cos` is nonlinear. Near the equator (φ ≈ π/2), a small Δφ changes z a lot. Near the poles (φ ≈ 0 or π), the same Δφ barely changes z. So equal Δφ ≠ equal Δz ≠ equal area — which is exactly the clustering we see.
 
 ---
