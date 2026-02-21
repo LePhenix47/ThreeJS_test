@@ -49,54 +49,6 @@ class GalaxyCreator {
   }
 
   /*
-   * SETTERS
-   */
-  public setCount = (count: number): this => {
-    this.count = count;
-    return this;
-  };
-
-  public setSize = (size: number): this => {
-    this.size = size;
-    return this;
-  };
-
-  public setRadius = (radius: number): this => {
-    this.radius = radius;
-    return this;
-  };
-
-  public setBranches = (branches: number): this => {
-    this.branches = branches;
-    return this;
-  };
-
-  public setSpin = (spin: number): this => {
-    this.spin = spin;
-    return this;
-  };
-
-  public setRandomness = (randomness: number): this => {
-    this.randomness = randomness;
-    return this;
-  };
-
-  public setRandomnessPower = (randomnessPower: number): this => {
-    this.randomnessPower = randomnessPower;
-    return this;
-  };
-
-  public setInsideColor = (insideColor: string): this => {
-    this.insideColor = new THREE.Color(insideColor);
-    return this;
-  };
-
-  public setOutsideColor = (outsideColor: string): this => {
-    this.outsideColor = new THREE.Color(outsideColor);
-    return this;
-  };
-
-  /*
    * Methods
    */
   private generateRandomRandomness = (): number => {
