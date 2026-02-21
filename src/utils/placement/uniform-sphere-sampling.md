@@ -6,17 +6,17 @@ Generate random points uniformly distributed across the volume of a spherical sh
 
 Three values need to be sampled:
 
-| Variable | Name | Range | Role |
-|----------|------|-------|------|
-| θ (theta) | Azimuthal angle | [0, 2π[ | Horizontal rotation around the z-axis |
-| φ (phi) | Polar angle | [0, π] | Vertical angle from the north pole (z-axis) |
-| ρ (rho) | Radius | [ρ_min, ρ_max] | Distance from the origin |
+| Variable  | Name            | Range          | Role                                        |
+| --------- | --------------- | -------------- | ------------------------------------------- |
+| θ (theta) | Azimuthal angle | [0, 2π[        | Horizontal rotation around the z-axis       |
+| φ (phi)   | Polar angle     | [0, π]         | Vertical angle from the north pole (z-axis) |
+| ρ (rho)   | Radius          | [ρ_min, ρ_max] | Distance from the origin                    |
 
 ## Spherical Coordinates → Cartesian
 
 From the right triangle formed by ρ, the xy-plane radius `r`, and the z coordinate:
 
-```
+```text
 r = ρ sin(φ)          (xy-plane radius)
 
 x = ρ sin(φ) cos(θ)
@@ -32,7 +32,9 @@ The sphere has **rotational symmetry** around the z-axis. Looking down from abov
 
 Equal Δθ → equal surface area → **uniform sampling is correct**.
 
-```
+**Pizza analogy:** Think of slicing a pizza. Each cut goes from the center outward, rotating by Δθ. Because every cut starts from the same center point and sweeps the same angle, every slice covers the same area. θ works the same way — every wedge from pole to pole is identical.
+
+```text
 θ = 2πu    where u ∈ [0, 1)
 ```
 
@@ -44,7 +46,7 @@ Naive approach: `ρ = ρ_min + u × (ρ_max - ρ_min)` — **wrong**. This clust
 
 The volume of a sphere is:
 
-```
+```text
 V = (4π/3) × ρ³
 ```
 
@@ -54,13 +56,13 @@ Volume scales with ρ³, so we need to sample ρ³ uniformly, then take the cube
 
 We want the cumulative distribution function (CDF) to be proportional to volume:
 
-```
+```text
 P(radius ≤ ρ) = (ρ³ - ρ_min³) / (ρ_max³ - ρ_min³)
 ```
 
 Setting this equal to `u` (uniform in [0, 1]) and solving for ρ:
 
-```
+```text
 u = (ρ³ - ρ_min³) / (ρ_max³ - ρ_min³)
 
 ρ³ = ρ_min³ + u × (ρ_max³ - ρ_min³)
@@ -87,11 +89,15 @@ At different φ values, the "ring" (circle of latitude) has different circumfere
 
 Equal Δφ steps produce bands of **unequal surface area**. Bands near the poles cover much less area than bands near the equator. But uniform φ sampling assigns them equal probability → too many points end up near the poles.
 
+**Tomato analogy:** With φ, imagine making horizontal cuts across the sphere — like slicing a tomato into discs. The disc at the equator (φ = π/2) is large. The disc near a pole (φ ≈ 0) is tiny. Equal Δφ steps produce bands of wildly different sizes, so uniform φ sampling floods the poles with points.
+
+![θ vs φ slicing diagram](../../../public/img/jpg/random-phi-problem-explanation.jpg)
+
 ### The Surface Area Element
 
 The surface area of a thin band on a sphere is:
 
-```
+```text
 dA = ρ² sin(φ) dφ dθ
 ```
 
@@ -101,7 +107,7 @@ The `sin(φ)` factor is the problem — it makes the area depend on φ.
 
 Notice that `sin(φ) dφ` is the negative derivative of `cos(φ)`:
 
-```
+```text
 d(cos(φ)) = -sin(φ) dφ
 
 → sin(φ) dφ = -d(cos(φ))
@@ -109,7 +115,7 @@ d(cos(φ)) = -sin(φ) dφ
 
 Substituting into the surface area element:
 
-```
+```text
 dA = ρ² × (-d(cos(φ))) × dθ
 ```
 
@@ -128,27 +134,25 @@ So we need a uniform random value in `[-1, 1]`.
 
 Mapping `u ∈ [0, 1]` to `[1, -1]`:
 
-```
+```text
 cos(φ) = 1 - 2u
 
-φ = arccos(1 - 2u)
+φ = acos(1 - 2u)
 ```
 
-Note: `arccos` always returns values in `[0, π]`, which is exactly the range we need for φ.
+Note: `acos` always returns values in `[0, π]`, which is exactly the range we need for φ.
 
 ---
 
 ## Summary
 
-| Variable | Naive (wrong) | Correct |
-|----------|--------------|---------|
-| θ | `2πu` | `2πu` (same — symmetry makes it work) |
-| ρ | `ρ_min + u(ρ_max - ρ_min)` | `∛(ρ_min³ + u(ρ_max³ - ρ_min³))` |
-| φ | `πu` | `arccos(1 - 2u)` |
+- **θ** — sample uniformly: `θ = 2πu` (rotational symmetry makes this correct as-is)
+- **ρ** — sample ρ³ uniformly: `ρ = ∛(ρ_min³ + u(ρ_max³ - ρ_min³))`
+- **φ** — sample cos(φ) uniformly: `φ = acos(1 - 2u)`
 
 ### Why θ Works but φ Doesn't
 
-It comes down to **symmetry**. The sphere is rotationally symmetric around the z-axis (θ's axis of rotation), so every θ-slice is identical. But the cross-section changes as φ sweeps from pole to equator — the rings get bigger then smaller. That asymmetry is what `sin(φ)` captures, and what the `arccos(1 - 2u)` fix compensates for.
+It comes down to **symmetry**. The sphere is rotationally symmetric around the z-axis (θ's axis of rotation), so every θ-slice is identical. But the cross-section changes as φ sweeps from pole to equator to pole — the rings get bigger then smaller. That asymmetry is what `sin(φ)` captures, and what the `acos(1 - 2u)` fix compensates for.
 
 ### The General Technique
 
