@@ -23,8 +23,8 @@ class GalaxyCreator {
   spin: number;
   randomness: number;
   randomnessPower: number;
-  insideColor: THREE.Color;
-  outsideColor: THREE.Color;
+  insideColor: string;
+  outsideColor: string;
 
   constructor({
     count = 100_000,
@@ -34,7 +34,7 @@ class GalaxyCreator {
     spin = 1,
     randomness = 1,
     randomnessPower = 2.5,
-    insideColor = "#182a36",
+    insideColor = "#a0c0d6",
     outsideColor = "#be7b73",
   }: GalaxyParams = {}) {
     this.count = count;
@@ -44,8 +44,8 @@ class GalaxyCreator {
     this.spin = spin;
     this.randomness = randomness;
     this.randomnessPower = randomnessPower;
-    this.insideColor = new THREE.Color(insideColor);
-    this.outsideColor = new THREE.Color(outsideColor);
+    this.insideColor = insideColor;
+    this.outsideColor = outsideColor;
   }
 
   /*
@@ -96,8 +96,11 @@ class GalaxyCreator {
         additionalRandomness.z;
 
       // * Colors
-      const mixedColor: THREE.Color = this.insideColor.clone();
-      mixedColor.lerp(this.outsideColor, randomRadius / this.radius);
+      const mixedColor = new THREE.Color(this.insideColor);
+      mixedColor.lerp(
+        new THREE.Color(this.outsideColor),
+        randomRadius / this.radius,
+      );
       // ? r
       colors[i] = mixedColor.r;
       // ? g
@@ -118,7 +121,7 @@ class GalaxyCreator {
 
   private generateMaterial = () => {
     const material = new THREE.PointsMaterial({
-      color: this.insideColor,
+      color: new THREE.Color(this.insideColor),
       size: this.size,
       sizeAttenuation: true,
       depthWrite: true,
