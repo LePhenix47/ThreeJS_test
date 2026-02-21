@@ -72,20 +72,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function getGalaxyCreatorInstance() {
-    // TODO: Add logic here
-    console.log("Creating a galaxy !!!!!!!!");
+    console.log("Creating a galaxy !!!!!!!! (bogos binted 👽)");
     const galaxy = new GalaxyCreator();
 
     return galaxy;
-  }
-
-  function disposeGalaxy(scene: THREE.Scene) {
-    const galaxy = scene.getObjectByName("galaxy");
-    if (galaxy instanceof THREE.Points) {
-      galaxy.geometry.dispose();
-      (galaxy.material as THREE.Material).dispose();
-      scene.remove(galaxy);
-    }
   }
 
   function updateGalaxy({
@@ -95,8 +85,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     galaxyCreator: GalaxyCreator;
     scene: THREE.Scene;
   }) {
-    disposeGalaxy(scene);
-    scene.add(galaxyCreator.createPoints());
+    // * Remove previous galaxy to free memory
+    const previousGalaxy = scene.getObjectByName("galaxy") as THREE.Points;
+    if (previousGalaxy) {
+      scene.remove(previousGalaxy);
+      galaxyCreator.dispose();
+    }
+
+    // * Create new galaxy
+    const newGalaxy = galaxyCreator.createPoints();
+    scene.add(newGalaxy);
   }
 
   function setupGUI({
@@ -219,7 +217,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         abortController.abort();
         renderer.dispose();
         gui.destroy();
-        disposeGalaxy(scene);
+        galaxyCreator.dispose();
       };
     },
     [canvasRef],

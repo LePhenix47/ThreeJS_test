@@ -14,6 +14,8 @@ export type GalaxyParams = Partial<{
 }>;
 
 class GalaxyCreator {
+  private points: THREE.Points | null = null;
+
   count: number;
   size: number;
   radius: number;
@@ -126,9 +128,18 @@ class GalaxyCreator {
     const geometry = this.generateBufferGeometry();
     const material = this.generateMaterial();
 
-    const points = new THREE.Points(geometry, material);
-    points.name = "galaxy";
-    return points;
+    this.points = new THREE.Points(geometry, material);
+    this.points.name = "galaxy";
+    return this.points;
+  };
+
+  public dispose = (): void => {
+    if (!this.points) return;
+
+    this.points.geometry.dispose();
+    (this.points.material as THREE.Material).dispose();
+
+    this.points = null;
   };
 }
 
