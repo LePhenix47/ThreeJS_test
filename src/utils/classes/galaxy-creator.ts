@@ -92,16 +92,24 @@ class GalaxyCreator {
   private generateBufferGeometry = () => {
     const geometry = new THREE.BufferGeometry();
     // * In groups of 3 for the X, Y and Z coordinates
-    const itemSize = 3;
+    const itemSize: number = 3;
     const positions = new Float32Array(this.count * itemSize);
 
+    const oneRevolution: number = 2 * Math.PI;
     for (let i = 0; i < positions.length; i += itemSize) {
+      const radius: number = Math.random() * this.radius;
+
+      const actualIndex: number = i / itemSize;
+      const spinAngle: number = radius * this.spin;
+      const branchAngle: number =
+        ((actualIndex % this.branches) * oneRevolution) / this.branches;
+
       // * x
-      positions[i] = randomInRange([-1.5, 1.5]);
+      positions[i] = Math.cos(branchAngle + spinAngle) * radius;
       // * y
-      positions[i + 1] = randomInRange([-1.5, 1.5]);
+      positions[i + 1] = 0;
       // * z
-      positions[i + 2] = randomInRange([-1.5, 1.5]);
+      positions[i + 2] = Math.sin(branchAngle + spinAngle) * radius;
     }
 
     geometry.setAttribute(

@@ -128,6 +128,33 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         updateGalaxy({ galaxyCreator, scene });
       });
 
+    galaxyFolder
+      .add(galaxyCreator, "radius")
+      .min(0.01)
+      .max(20)
+      .step(0.01)
+      .onFinishChange(() => {
+        updateGalaxy({ galaxyCreator, scene });
+      });
+
+    galaxyFolder
+      .add(galaxyCreator, "branches")
+      .min(2)
+      .max(20)
+      .step(1)
+      .onFinishChange(() => {
+        updateGalaxy({ galaxyCreator, scene });
+      });
+
+    galaxyFolder
+      .add(galaxyCreator, "spin")
+      .min(-5)
+      .max(5)
+      .step(0.001)
+      .onFinishChange(() => {
+        updateGalaxy({ galaxyCreator, scene });
+      });
+
     return gui;
   }
 
