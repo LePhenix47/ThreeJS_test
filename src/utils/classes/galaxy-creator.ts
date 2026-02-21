@@ -90,12 +90,11 @@ class GalaxyCreator {
    * Methods
    */
   private generateRandomRandomness = (): number => {
-    const initAdditionalRandomness: number =
-      randomInRange([-1, 1]) * this.randomness;
+    const randomnessBase: number = Math.random() * this.randomness;
     const sign: number = Math.random() < 0.5 ? -1 : 1;
 
     const finalRandomness: number =
-      Math.pow(initAdditionalRandomness, this.randomnessPower) * sign;
+      Math.pow(randomnessBase, this.randomnessPower) * sign;
 
     return finalRandomness;
   };
@@ -116,12 +115,11 @@ class GalaxyCreator {
 
       const spinAngle: number = radius * this.spin;
 
-      // TODO: Fix repetition
       const additionalRandomness = {
         x: this.generateRandomRandomness(),
         y: this.generateRandomRandomness(),
         z: this.generateRandomRandomness(),
-      };
+      } as const;
       // * x
       positions[i] =
         Math.cos(branchAngle + spinAngle) * radius + additionalRandomness.x;
