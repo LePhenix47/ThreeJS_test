@@ -91,7 +91,7 @@ Equal Δφ steps produce bands of **unequal surface area**. Bands near the poles
 
 **Tomato analogy:** With φ, imagine making horizontal cuts across the sphere — like slicing a tomato into discs. The disc at the equator (φ = π/2) is large. The disc near a pole (φ ≈ 0) is tiny. Equal Δφ steps produce bands of wildly different sizes, so uniform φ sampling floods the poles with points.
 
-![θ vs φ slicing diagram](../../../public/img/jpg/random-phi-problem-explanation.jpg)
+![θ vs φ slicing diagram](public/img/jpg/random-phi-problem-explanation.jpg)
 
 ### The Surface Area Element
 
