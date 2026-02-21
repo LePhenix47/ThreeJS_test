@@ -104,12 +104,20 @@ class GalaxyCreator {
       const branchAngle: number =
         ((actualIndex % this.branches) * oneRevolution) / this.branches;
 
+      const additionalRandomness = {
+        x: randomInRange([-1, 1]) * this.randomness,
+        y: randomInRange([-1, 1]) * this.randomness,
+        z: randomInRange([-1, 1]) * this.randomness,
+      };
+
       // * x
-      positions[i] = Math.cos(branchAngle + spinAngle) * radius;
+      positions[i] =
+        Math.cos(branchAngle + spinAngle) * radius + additionalRandomness.x;
       // * y
-      positions[i + 1] = 0;
+      positions[i + 1] = additionalRandomness.y;
       // * z
-      positions[i + 2] = Math.sin(branchAngle + spinAngle) * radius;
+      positions[i + 2] =
+        Math.sin(branchAngle + spinAngle) * radius + additionalRandomness.z;
     }
 
     geometry.setAttribute(

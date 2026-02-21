@@ -155,6 +155,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         updateGalaxy({ galaxyCreator, scene });
       });
 
+    galaxyFolder
+      .add(galaxyCreator, "randomness")
+      .min(0)
+      .max(2)
+      .step(0.001)
+      .onFinishChange(() => {
+        updateGalaxy({ galaxyCreator, scene });
+      });
+
     return gui;
   }
 
