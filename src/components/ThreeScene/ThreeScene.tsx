@@ -79,10 +79,47 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return galaxy;
   }
 
-  function setupGUI() {
+  function updateGalaxy({
+    galaxyCreator,
+    scene,
+  }: {
+    galaxyCreator: GalaxyCreator;
+    scene: THREE.Scene;
+  }) {
+    const previousGalaxy = scene.getObjectByName("galaxy");
+    if (previousGalaxy instanceof THREE.Points) {
+      previousGalaxy.geometry.dispose();
+      (previousGalaxy.material as THREE.PointsMaterial).dispose();
+      scene.remove(previousGalaxy);
+    }
+
+    const galaxy = galaxyCreator.createPoints();
+    scene.add(galaxy);
+  }
+
+  function setupGUI({
+    galaxyCreator,
+    scene,
+  }: {
+    galaxyCreator: GalaxyCreator;
+    scene: THREE.Scene;
+  }) {
     const gui = new GUI({
       title: "Galaxy generator",
     });
+
+    const galaxyFolder = gui.addFolder("Galaxy");
+
+    galaxyFolder
+      .add(galaxyCreator, "count")
+      .min(1)
+      .max(100_000)
+      .step(1)
+      .onFinishChange(() => {
+        updateGalaxy({ galaxyCreator, scene });
+      });
+
+    return gui;
   }
 
   function createScene() {
@@ -135,6 +172,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
 
       const galaxyCreator = getGalaxyCreatorInstance();
+      const gui = setupGUI({ galaxyCreator, scene });
       const galaxy = galaxyCreator.createPoints();
       const axisHelper = new THREE.AxesHelper(3);
 
@@ -170,6 +208,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         controls.dispose();
         abortController.abort();
         renderer.dispose();
+        gui.destroy();
+        const activeGalaxy = scene.getObjectByName("galaxy");
+        if (activeGalaxy instanceof THREE.Points) {
+          activeGalaxy.geometry.dispose();
+          (activeGalaxy.material as THREE.Material).dispose();
+        }
       };
     },
     [canvasRef],
