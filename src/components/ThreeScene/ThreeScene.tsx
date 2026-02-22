@@ -100,15 +100,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function setupGUI({
     galaxyCreator,
     scene,
+    axisHelper,
   }: {
     galaxyCreator: GalaxyCreator;
     scene: THREE.Scene;
+    axisHelper: THREE.AxesHelper;
   }) {
     const gui = new GUI({
       title: "Galaxy generator",
     });
 
     const galaxyFolder = gui.addFolder("Galaxy");
+    const helperFolder = gui.addFolder("Helpers");
 
     galaxyFolder
       .add(galaxyCreator, "count")
@@ -191,11 +194,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     galaxyFolder
       .add(galaxyCreator, "squash")
+      .name("Y axis squash")
       .min(0)
       .max(1)
       .onFinishChange(() => {
         updateGalaxy({ galaxyCreator, scene });
       });
+
+    helperFolder.add(axisHelper, "visible").name("Axis helper");
 
     return gui;
   }
@@ -250,8 +256,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
 
       const galaxyCreator = getGalaxyCreatorInstance();
-      const gui = setupGUI({ galaxyCreator, scene });
       const axisHelper = new THREE.AxesHelper(3);
+      const gui = setupGUI({ galaxyCreator, scene, axisHelper });
 
       updateGalaxy({ galaxyCreator, scene });
       scene.add(axisHelper);
