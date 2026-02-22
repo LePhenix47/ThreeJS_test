@@ -189,6 +189,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         updateGalaxy({ galaxyCreator, scene });
       });
 
+    galaxyFolder
+      .add(galaxyCreator, "squash")
+      .min(0)
+      .max(1)
+      .onFinishChange(() => {
+        updateGalaxy({ galaxyCreator, scene });
+      });
+
     return gui;
   }
 

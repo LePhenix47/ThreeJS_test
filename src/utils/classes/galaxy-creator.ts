@@ -12,6 +12,7 @@ export type GalaxyParams = Partial<{
   insideColor: string;
   outsideColor: string;
   edgeUniformityPower: number;
+  squash: number;
 }>;
 
 class GalaxyCreator {
@@ -27,6 +28,7 @@ class GalaxyCreator {
   insideColor: string;
   outsideColor: string;
   edgeUniformityPower: number;
+  squash: number;
 
   constructor({
     count = 100_000,
@@ -38,6 +40,7 @@ class GalaxyCreator {
     randomnessPower = 2.5,
     insideColor = "#a0c0d6",
     outsideColor = "#be7b73",
+    squash = 0.2,
   }: GalaxyParams = {}) {
     this.count = count;
     this.size = size;
@@ -49,6 +52,7 @@ class GalaxyCreator {
     this.insideColor = insideColor;
     this.outsideColor = outsideColor;
     this.edgeUniformityPower = 5;
+    this.squash = squash;
   }
 
   /*
@@ -68,7 +72,7 @@ class GalaxyCreator {
 
     return {
       x: magnitude * Math.sin(phi) * Math.cos(theta),
-      y: magnitude * Math.cos(phi),
+      y: magnitude * Math.cos(phi) * this.squash,
       z: magnitude * Math.sin(phi) * Math.sin(theta),
     };
   };
