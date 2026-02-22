@@ -54,14 +54,23 @@ class GalaxyCreator {
   /*
    * Methods
    */
-  private generateRandomRandomness = (): number => {
-    const randomnessBase: number = Math.random() * this.randomness;
-    const sign: number = Math.random() < 0.5 ? -1 : 1;
+  private generateSphericalRandomness = (): {
+    x: number;
+    y: number;
+    z: number;
+  } => {
+    const theta: number = Math.random() * 2 * Math.PI;
+    const phi: number = Math.acos(2 * Math.random() - 1);
+    const magnitude: number = Math.pow(
+      Math.random() * this.randomness,
+      this.randomnessPower,
+    );
 
-    const finalRandomness: number =
-      Math.pow(randomnessBase, this.randomnessPower) * sign;
-
-    return finalRandomness;
+    return {
+      x: magnitude * Math.sin(phi) * Math.cos(theta),
+      y: magnitude * Math.cos(phi),
+      z: magnitude * Math.sin(phi) * Math.sin(theta),
+    };
   };
 
   private computeBranchAngle = (index: number) => {
@@ -95,11 +104,7 @@ class GalaxyCreator {
 
       const spinAngle: number = this.computeSpinAngle(randomRadius);
 
-      const additionalRandomness = {
-        x: this.generateRandomRandomness(),
-        y: this.generateRandomRandomness(),
-        z: this.generateRandomRandomness(),
-      } as const;
+      const additionalRandomness = this.generateSphericalRandomness();
 
       // ? x
       positions[i] =
