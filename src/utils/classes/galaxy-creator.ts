@@ -64,16 +64,18 @@ class GalaxyCreator {
     z: number;
   } => {
     const theta: number = Math.random() * 2 * Math.PI;
+
     const phi: number = Math.acos(2 * Math.random() - 1);
-    const magnitude: number = Math.pow(
-      Math.random() * this.randomness,
-      this.randomnessPower,
-    );
+
+    const radiusRandomnessBase: number = Math.random() * this.randomness;
+    const rho: number = Math.pow(radiusRandomnessBase, this.randomnessPower);
+
+    const xzPlanes3dRadius = rho * Math.sin(phi);
 
     return {
-      x: magnitude * Math.sin(phi) * Math.cos(theta),
-      y: magnitude * Math.cos(phi) * this.squash,
-      z: magnitude * Math.sin(phi) * Math.sin(theta),
+      x: xzPlanes3dRadius * Math.cos(theta),
+      z: xzPlanes3dRadius * Math.sin(theta),
+      y: rho * Math.cos(phi) * this.squash,
     };
   };
 
