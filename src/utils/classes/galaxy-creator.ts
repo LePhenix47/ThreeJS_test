@@ -11,7 +11,7 @@ export type GalaxyParams = Partial<{
   randomnessPower: number;
   insideColor: string;
   outsideColor: string;
-  uniformityPower: number;
+  edgeUniformityPower: number;
 }>;
 
 class GalaxyCreator {
@@ -26,7 +26,7 @@ class GalaxyCreator {
   randomnessPower: number;
   insideColor: string;
   outsideColor: string;
-  uniformityPower: number;
+  edgeUniformityPower: number;
 
   constructor({
     count = 100_000,
@@ -48,7 +48,7 @@ class GalaxyCreator {
     this.randomnessPower = randomnessPower;
     this.insideColor = insideColor;
     this.outsideColor = outsideColor;
-    this.uniformityPower = 1;
+    this.edgeUniformityPower = 5;
   }
 
   /*
@@ -84,7 +84,11 @@ class GalaxyCreator {
 
     for (let i = 0; i < positions.length; i += itemSize) {
       // * Positions
-      const randomRadius: number = Math.random() * this.radius;
+      const edgeUniformityValue: number = Math.pow(
+        Math.random(),
+        this.edgeUniformityPower,
+      );
+      const randomRadius: number = edgeUniformityValue * this.radius;
 
       const actualIndex: number = i / itemSize;
       const branchAngle: number = this.computeBranchAngle(actualIndex);

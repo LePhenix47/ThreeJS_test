@@ -181,6 +181,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       updateGalaxy({ galaxyCreator, scene });
     });
 
+    galaxyFolder
+      .add(galaxyCreator, "edgeUniformityPower")
+      .min(1)
+      .max(10)
+      .onFinishChange(() => {
+        updateGalaxy({ galaxyCreator, scene });
+      });
+
     return gui;
   }
 
