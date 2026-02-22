@@ -11,6 +11,7 @@ export type GalaxyParams = Partial<{
   randomnessPower: number;
   insideColor: string;
   outsideColor: string;
+  uniformityPower: number;
 }>;
 
 class GalaxyCreator {
@@ -25,6 +26,7 @@ class GalaxyCreator {
   randomnessPower: number;
   insideColor: string;
   outsideColor: string;
+  uniformityPower: number;
 
   constructor({
     count = 100_000,
@@ -46,6 +48,7 @@ class GalaxyCreator {
     this.randomnessPower = randomnessPower;
     this.insideColor = insideColor;
     this.outsideColor = outsideColor;
+    this.uniformityPower = 1;
   }
 
   /*
@@ -61,6 +64,17 @@ class GalaxyCreator {
     return finalRandomness;
   };
 
+  private computeBranchAngle = (index: number) => {
+    const oneRevolution: number = 2 * Math.PI;
+    const indexOffset: number = index % this.branches;
+
+    return (indexOffset * oneRevolution) / this.branches;
+  };
+
+  private computeSpinAngle = (randomRadius: number) => {
+    return randomRadius * this.spin;
+  };
+
   private generateBufferGeometry = () => {
     const geometry = new THREE.BufferGeometry();
     // * In groups of 3 for the X, Y and Z coordinates
@@ -68,22 +82,21 @@ class GalaxyCreator {
     const positions = new Float32Array(this.count * itemSize);
     const colors = new Float32Array(this.count * itemSize);
 
-    const oneRevolution: number = 2 * Math.PI;
     for (let i = 0; i < positions.length; i += itemSize) {
       // * Positions
       const randomRadius: number = Math.random() * this.radius;
 
       const actualIndex: number = i / itemSize;
-      const branchAngle: number =
-        ((actualIndex % this.branches) * oneRevolution) / this.branches;
+      const branchAngle: number = this.computeBranchAngle(actualIndex);
 
-      const spinAngle: number = randomRadius * this.spin;
+      const spinAngle: number = this.computeSpinAngle(randomRadius);
 
       const additionalRandomness = {
         x: this.generateRandomRandomness(),
         y: this.generateRandomRandomness(),
         z: this.generateRandomRandomness(),
       } as const;
+
       // ? x
       positions[i] =
         Math.cos(branchAngle + spinAngle) * randomRadius +
