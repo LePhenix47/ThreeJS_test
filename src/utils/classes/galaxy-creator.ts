@@ -102,7 +102,8 @@ class GalaxyCreator {
         Math.cos(branchAngle + spinAngle) * randomRadius +
         additionalRandomness.x;
       // ? y
-      positions[i + 1] = additionalRandomness.y;
+      const heightFalloff: number = 1 - randomRadius / this.radius;
+      positions[i + 1] = additionalRandomness.y * heightFalloff;
       // ? z
       positions[i + 2] =
         Math.sin(branchAngle + spinAngle) * randomRadius +
