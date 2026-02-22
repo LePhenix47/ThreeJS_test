@@ -115,6 +115,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     galaxyFolder
       .add(galaxyCreator, "count")
+      .name("Star count")
       .min(1)
       .max(100_000)
       .step(1)
@@ -124,6 +125,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     galaxyFolder
       .add(galaxyCreator, "size")
+      .name("Star size")
       .min(0.001)
       .max(1)
       .step(0.001)
@@ -133,6 +135,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     galaxyFolder
       .add(galaxyCreator, "radius")
+      .name("Radius")
       .min(0.01)
       .max(20)
       .step(0.01)
@@ -142,6 +145,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     galaxyFolder
       .add(galaxyCreator, "branches")
+      .name("Arm count")
       .min(2)
       .max(20)
       .step(1)
@@ -151,6 +155,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     galaxyFolder
       .add(galaxyCreator, "spin")
+      .name("Arm twist")
       .min(-5)
       .max(5)
       .step(0.001)
@@ -160,6 +165,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     galaxyFolder
       .add(galaxyCreator, "randomness")
+      .name("Scatter radius")
       .min(0)
       .max(2)
       .step(0.001)
@@ -169,6 +175,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     galaxyFolder
       .add(galaxyCreator, "randomnessPower")
+      .name("Scatter clustering")
       .min(1)
       .max(10)
       .step(0.001)
@@ -176,16 +183,23 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         updateGalaxy({ galaxyCreator, scene });
       });
 
-    galaxyFolder.addColor(galaxyCreator, "insideColor").onFinishChange(() => {
-      updateGalaxy({ galaxyCreator, scene });
-    });
+    galaxyFolder
+      .addColor(galaxyCreator, "insideColor")
+      .name("Center color")
+      .onFinishChange(() => {
+        updateGalaxy({ galaxyCreator, scene });
+      });
 
-    galaxyFolder.addColor(galaxyCreator, "outsideColor").onFinishChange(() => {
-      updateGalaxy({ galaxyCreator, scene });
-    });
+    galaxyFolder
+      .addColor(galaxyCreator, "outsideColor")
+      .name("Edge color")
+      .onFinishChange(() => {
+        updateGalaxy({ galaxyCreator, scene });
+      });
 
     galaxyFolder
       .add(galaxyCreator, "edgeUniformityPower")
+      .name("Center density")
       .min(1)
       .max(10)
       .onFinishChange(() => {
