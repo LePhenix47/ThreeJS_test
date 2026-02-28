@@ -45,6 +45,19 @@ function AnimatedText({ children, className = "" }: AnimatedTextProps) {
     };
   }, []);
 
+  const colorMatrix = [
+    // ! Old RGBA + Weight | Red channel
+    [0, 0, 0, 0, 0.2],
+    // ? Old RGBA + Weight | Blue channel
+    [0, 0, 0, 0, 0.1],
+    // * Old RGBA + Weight | Green channel
+    [0, 0, 0, 0, 0.9],
+    // - Old RGBA + Weight | Alpha channel
+    [0, 0, 0, 1, 0.0],
+  ];
+
+  const matrixString = colorMatrix.map((row) => row.join(" ")).join("\n");
+
   return (
     <span className={`animated-text ${className}`}>
       <svg
@@ -67,11 +80,7 @@ function AnimatedText({ children, className = "" }: AnimatedTextProps) {
             result="e2"
           />
           <feComposite in="e1" in2="e2" operator="xor" result="outline" />
-          <feColorMatrix
-            in="outline"
-            result="outline2"
-            values="0 0 0 0 0.2 0 0 0 0 0.1 0 0 0 0 0.9 0 0 0 1 0"
-          />
+          <feColorMatrix in="outline" result="outline2" values={matrixString} />
           <feComposite
             in="outline2"
             in2="SourceGraphic"
