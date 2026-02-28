@@ -91,7 +91,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
     camera.position.x = 0;
     camera.position.y = 0;
-    camera.position.z = 2;
+    camera.position.z = 6;
 
     return camera;
   }
@@ -113,6 +113,39 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return renderer;
   }
 
+  function createObjects() {
+    const torusGeometry = new THREE.TorusGeometry(1, 0.6, 16, 60);
+    const torusMaterial = new THREE.MeshStandardMaterial({
+      // color: "#ff0000",
+      color: "white",
+    });
+    const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+
+    const coneGeometry = new THREE.ConeGeometry(1, 2, 32);
+    const coneMaterial = new THREE.MeshStandardMaterial({
+      // color: "#ff0000",
+      color: "white",
+    });
+    const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+
+    const torusKnotGeometry = new THREE.TorusKnotGeometry(0.8, 0.35, 100, 16);
+    const torusKnotMaterial = new THREE.MeshStandardMaterial({
+      // color: "#ff0000",
+      color: "white",
+    });
+    const torusKnot = new THREE.Mesh(torusKnotGeometry, torusKnotMaterial);
+
+    return { torus, cone, torusKnot };
+  }
+
+  function createLights() {
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+
+    return {
+      ambientLight,
+    };
+  }
+
   const setupThreeScene = useCallback(
     (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
@@ -126,8 +159,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const axisHelper = new THREE.AxesHelper(3);
 
+      const { cone, torus, torusKnot } = createObjects();
+      const { ambientLight } = createLights();
+
       scene.add(axisHelper);
       scene.add(camera);
+      scene.add(ambientLight);
+      scene.add(cone, torus, torusKnot);
 
       const abortController = new AbortController();
 
