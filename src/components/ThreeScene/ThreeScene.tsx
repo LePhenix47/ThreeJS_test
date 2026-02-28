@@ -2,7 +2,7 @@
  * Particles Lesson
  */
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -14,6 +14,19 @@ import "./ThreeScene.scss";
 type ThreeSceneProps = {
   className?: string;
 };
+
+const SECTIONS_ARRAY = [
+  {
+    title: "Section 1",
+  },
+
+  {
+    title: "Section 2",
+  },
+  {
+    title: "Section 3",
+  },
+];
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -75,9 +88,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createCamera(aspectRatio: number) {
     const fov = 75;
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
-    camera.position.x = 4;
-    camera.position.y = 2;
-    camera.position.z = 5;
+    camera.position.x = 0;
+    camera.position.y = 0;
+    camera.position.z = 2;
 
     return camera;
   }
@@ -87,22 +100,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     width: number,
     height: number,
   ) {
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: true,
+    });
     renderer.setSize(width, height, false);
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(minPixelRatio);
 
     return renderer;
-  }
-
-  function createOrbitControls(
-    camera: THREE.PerspectiveCamera,
-    canvas: HTMLCanvasElement,
-  ) {
-    const controls = new OrbitControls(camera, canvas);
-    controls.enableDamping = true;
-
-    return controls;
   }
 
   const setupThreeScene = useCallback(
@@ -115,7 +122,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const scene = createScene();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
-      const controls = createOrbitControls(camera, canvas);
 
       const axisHelper = new THREE.AxesHelper(3);
 
@@ -125,7 +131,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const abortController = new AbortController();
 
       function animate() {
-        controls.update();
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
       }
@@ -147,7 +152,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       return () => {
         cancelAnimation();
-        controls.dispose();
         abortController.abort();
         renderer.dispose();
       };
@@ -166,7 +170,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }, [setupThreeScene]);
 
   return (
-    <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
+    <>
+      <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
+      {SECTIONS_ARRAY.map((section, index) => {
+        const { title } = section;
+        return (
+          <section key={index} className={`three-scene__section ${className}`}>
+            <h2 className="three-scene__title">{title}</h2>
+          </section>
+        );
+      })}
+    </>
   );
 }
 
