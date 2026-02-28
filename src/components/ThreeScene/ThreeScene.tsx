@@ -10,6 +10,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
+import AnimatedText from "@/components/AnimatedText/AnimatedText";
 
 type ThreeSceneProps = {
   className?: string;
@@ -176,7 +177,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         const { title } = section;
         return (
           <section key={index} className={`three-scene__section ${className}`}>
-            <h2 className="three-scene__title">{title}</h2>
+            {/* <h2 className="three-scene__title">{title}</h2> */}
+            <AnimatedText>{title}</AnimatedText>
           </section>
         );
       })}
