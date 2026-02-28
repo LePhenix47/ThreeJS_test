@@ -1,0 +1,12 @@
+@use "../../sass/utils/" as *;
+
+.animated-text {
+  display: inline-block;
+
+  &__svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+}
