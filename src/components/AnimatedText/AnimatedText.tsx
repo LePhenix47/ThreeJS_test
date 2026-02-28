@@ -11,12 +11,34 @@ import "./AnimatedText.scss";
 
 gsap.registerPlugin(DrawSVGPlugin);
 
+type RGBA = [number, number, number, number?];
+
 type AnimatedTextProps = {
   children: ReactNode;
   className?: string;
+  outlineColor?: RGBA;
 };
 
-function AnimatedText({ children, className = "" }: AnimatedTextProps) {
+const DEFAULT_COLOR: RGBA = [51, 26, 230];
+
+function buildColorMatrix([r, g, b, a = 255]: RGBA): string {
+  const colorMatrix = [
+    [0, 0, 0, 0, r / 255],
+    [0, 0, 0, 0, g / 255],
+    [0, 0, 0, 0, b / 255],
+    [0, 0, 0, a / 255, 0],
+  ];
+
+  const matrixString = colorMatrix.map((row) => row.join(" ")).join(" ");
+
+  return matrixString;
+}
+
+function AnimatedText({
+  children,
+  className = "",
+  outlineColor = DEFAULT_COLOR,
+}: AnimatedTextProps) {
   const [viewBox, setViewBox] = useState("0 0 300 180");
   const textEl = useRef<SVGTextElement>(null);
 
@@ -45,18 +67,7 @@ function AnimatedText({ children, className = "" }: AnimatedTextProps) {
     };
   }, []);
 
-  const colorMatrix = [
-    // ! Old RGBA + Weight | Red channel
-    [0, 0, 0, 0, 0.2],
-    // ? Old RGBA + Weight | Blue channel
-    [0, 0, 0, 0, 0.1],
-    // * Old RGBA + Weight | Green channel
-    [0, 0, 0, 0, 0.9],
-    // - Old RGBA + Weight | Alpha channel
-    [0, 0, 0, 1, 0.0],
-  ];
-
-  const matrixString = colorMatrix.map((row) => row.join(" ")).join("\n");
+  const matrixString: string = buildColorMatrix(outlineColor);
 
   return (
     <span className={`animated-text ${className}`}>
