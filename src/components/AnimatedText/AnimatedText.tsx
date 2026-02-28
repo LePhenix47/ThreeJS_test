@@ -53,7 +53,7 @@ function AnimatedText({ children, className = "" }: AnimatedTextProps) {
         viewBox={viewBox}
         className="animated-text__svg"
       >
-        <filter id="outText" width="300%" height="300%" x="-20%" y="-20%">
+        <filter id="outText" colorInterpolationFilters="sRGB">
           <feMorphology
             in="SourceAlpha"
             operator="dilate"
