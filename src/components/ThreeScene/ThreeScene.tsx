@@ -5,6 +5,8 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import * as THREE from "three";
+import GUI from "lil-gui";
+
 import threePixelsGradient from "@public/textures/gradients/3.jpg";
 import fivePixelsGradient from "@public/textures/gradients/5.jpg";
 
@@ -29,6 +31,10 @@ const SECTIONS_ARRAY = [
     title: "Section 3",
   },
 ];
+
+const paramObj = {
+  toonMaterialColor: "#ffffff",
+};
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -93,6 +99,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new THREE.Scene();
   }
 
+  function setupGUI({
+    meshToonMaterial,
+  }: {
+    meshToonMaterial: THREE.MeshToonMaterial;
+  }): GUI {
+    const gui = new GUI({
+      title: "Scroll animation",
+    });
+
+    gui
+      .addColor(paramObj, "toonMaterialColor")
+      .name("Material color")
+      .onChange(() => {
+        meshToonMaterial.color.set(paramObj.toonMaterialColor);
+      });
+
+    return gui;
+  }
+
   function createCamera(aspectRatio: number) {
     const fov = 35;
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio, 0.1, 100);
@@ -117,7 +142,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   function createObjects(toonGradientTexture: THREE.Texture<HTMLImageElement>) {
     const commonMaterial = new THREE.MeshToonMaterial({
-      color: "white",
+      color: paramObj.toonMaterialColor,
       gradientMap: toonGradientTexture,
     });
     const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 60);
@@ -154,6 +179,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const axisHelper = new THREE.AxesHelper(3);
 
     const { cone, torus, torusKnot } = createObjects(loadedThreePixelsGradient);
+    const gui = setupGUI({ meshToonMaterial: cone.material });
     const { directionalLight } = createLights();
 
     scene.add(axisHelper);
@@ -179,6 +205,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       cancelAnimation();
       resizeObserver.disconnect();
       renderer.dispose();
+      gui.destroy();
     };
   }, []);
 
