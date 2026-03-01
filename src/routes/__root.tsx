@@ -107,8 +107,18 @@ export const Route = createRootRoute({
       { name: "twitter:image", content: "/img/ico/threejs_white.ico" },
     ],
     links: [
-      { rel: "icon", type: "image/x-icon", media: "(prefers-color-scheme: light)", href: "/img/ico/threejs_black.ico" },
-      { rel: "icon", type: "image/x-icon", media: "(prefers-color-scheme: dark)", href: "/img/ico/threejs_white.ico" },
+      {
+        rel: "icon",
+        type: "image/x-icon",
+        media: "(prefers-color-scheme: light)",
+        href: "/img/ico/threejs_black.ico",
+      },
+      {
+        rel: "icon",
+        type: "image/x-icon",
+        media: "(prefers-color-scheme: dark)",
+        href: "/img/ico/threejs_white.ico",
+      },
     ],
     scripts: [
       {
@@ -189,7 +199,7 @@ function RootComponent() {
       </footer>
 
       <Scripts />
-      {env.DEV && <TanStackRouterDevtools position="bottom-right" />}
+      {/* {env.DEV && <TanStackRouterDevtools position="bottom-right" />} */}
     </>
   );
 }
