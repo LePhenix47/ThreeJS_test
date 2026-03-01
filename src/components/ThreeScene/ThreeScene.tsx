@@ -180,6 +180,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { torus, cone, torusKnot };
   }
 
+  function rotateObjects(
+    elapsedTime: number,
+    {
+      torus,
+      cone,
+      torusKnot,
+    }: {
+      torus: THREE.Mesh;
+      cone: THREE.Mesh;
+      torusKnot: THREE.Mesh;
+    },
+  ) {
+    const meshes = [torus, cone, torusKnot];
+
+    for (const mesh of meshes) {
+      mesh.rotation.x = elapsedTime * 0.1;
+      mesh.rotation.y = elapsedTime * 0.12;
+    }
+  }
+
   function createLights() {
     const directionalLight = new THREE.DirectionalLight("white", 3);
     directionalLight.position.set(1, 1, 0);
@@ -200,6 +220,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       loadTextures();
 
     const axisHelper = new THREE.AxesHelper(3);
+    const clock = new THREE.Clock();
 
     const { cone, torus, torusKnot } = createObjects(loadedThreePixelsGradient);
     const gui = setupGUI({ meshToonMaterial: cone.material });
@@ -212,6 +233,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     function animate() {
       renderer.render(scene, camera);
+
+      const elapsedTime = clock.getElapsedTime();
+      rotateObjects(elapsedTime, { torus, cone, torusKnot });
       animationIdRef.current = requestAnimationFrame(animate);
     }
     animate();
