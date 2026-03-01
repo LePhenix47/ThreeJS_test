@@ -2,10 +2,14 @@
  * Particles Lesson
  */
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import GUI from "lil-gui";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 import threePixelsGradient from "@public/textures/gradients/3.jpg";
 import fivePixelsGradient from "@public/textures/gradients/5.jpg";
@@ -43,6 +47,8 @@ const objectsInfo = {
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const sectionsRef = useRef<(HTMLElement | null)[]>([]);
 
   // ? loadTextures is a regular function, not a hook — use getState() to access the store directly
   function loadTextures() {
@@ -222,6 +228,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const axisHelper = new THREE.AxesHelper(3);
     const clock = new THREE.Clock();
 
+    cameraRef.current = camera;
+
     const { cone, torus, torusKnot } = createObjects(loadedThreePixelsGradient);
     const gui = setupGUI({ meshToonMaterial: cone.material });
     const { directionalLight } = createLights();
@@ -266,13 +274,68 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return setupThreeScene(canvasRef.current) || undefined;
   }, [setupThreeScene]);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = gsap.context(() => {
+      const camera = cameraRef.current;
+      if (!camera) return;
+
+      /*
+       * scroll top    →  camera y = 0   (section 1, torus at y=0)
+       * scroll middle →  camera y = -4  (section 2, cone at y=-4)
+       * scroll bottom →  camera y = -8  (section 3, torusKnot at y=-8)
+       */
+      const endPositionY: number =
+        -1 * (objectsInfo.distance * (SECTIONS_ARRAY.length - 1));
+
+      gsap.to(camera.position, {
+        y: endPositionY,
+        ease: "none",
+        scrollTrigger: {
+          trigger: canvas.parentElement,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true,
+        },
+      });
+
+      // sectionsRef.current.forEach((section, index) => {
+      //   if (!section) return;
+
+      //   const isOdd = index % 2 === 0;
+      //   const xStart = isOdd ? 200 : -200;
+
+      //   gsap.from(".animated-text", {
+      //     x: xStart,
+      //     ease: "power2.out",
+      //     scrollTrigger: {
+      //       trigger: section,
+      //       start: "top bottom",
+      //       end: "top center",
+      //       scrub: 1,
+      //     },
+      //   });
+      // });
+    });
+
+    return () => ctx.revert();
+  }, []);
+
   return (
     <>
       <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
       {SECTIONS_ARRAY.map((section, index) => {
         const { title } = section;
         return (
-          <section key={index} className={`three-scene__section ${className}`}>
+          <section
+            key={index}
+            ref={(el) => {
+              sectionsRef.current[index] = el;
+            }}
+            className={`three-scene__section ${className}`}
+          >
             {/* <h2 className="three-scene__title">{title}</h2> */}
             <AnimatedText
               outlineColor={[255, 255, 255]}
