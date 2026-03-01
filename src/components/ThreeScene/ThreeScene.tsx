@@ -274,7 +274,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         return (
           <section key={index} className={`three-scene__section ${className}`}>
             {/* <h2 className="three-scene__title">{title}</h2> */}
-            <AnimatedText outlineColor={[255, 255, 255]}>{title}</AnimatedText>
+            <AnimatedText
+              outlineColor={[255, 255, 255]}
+              className="three-scene__title"
+            >
+              {title}
+            </AnimatedText>
           </section>
         );
       })}

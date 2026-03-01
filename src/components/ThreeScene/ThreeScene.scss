@@ -20,9 +20,12 @@
     align-items: center;
     justify-content: flex-start;
 
-    &:nth-child(odd) {
+    &:nth-child(odd of .three-scene__section) {
       justify-content: flex-end;
 
+      &>.three-scene__title {
+        mix-blend-mode: color-burn;
+      }
     }
 
 
@@ -33,9 +36,5 @@
 
   }
 
-  &__title {
-    text-transform: uppercase;
-    font-weight: 700;
-    font-size: 128px;
-  }
+  &__title {}
 }
