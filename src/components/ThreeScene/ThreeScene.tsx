@@ -154,11 +154,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const parent = canvas.parentElement;
       if (!parent) return null;
 
-      const { clientWidth, clientHeight } = parent;
+      const { clientWidth } = parent;
+      const viewportHeight = window.innerHeight;
 
       const scene = createScene();
-      const camera = createCamera(clientWidth / clientHeight);
-      const renderer = createRenderer(canvas, clientWidth, clientHeight);
+      const camera = createCamera(clientWidth / viewportHeight);
+      const renderer = createRenderer(canvas, clientWidth, viewportHeight);
 
       const axisHelper = new THREE.AxesHelper(3);
 
@@ -184,8 +185,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       function handleResize() {
         if (!canvas.parentElement) return;
 
-        const { clientWidth: width, clientHeight: height } =
-          canvas.parentElement;
+        const { clientWidth: width } = canvas.parentElement;
+        const height = window.innerHeight;
 
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
