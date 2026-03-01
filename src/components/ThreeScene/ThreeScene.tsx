@@ -151,15 +151,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   const setupThreeScene = useCallback(
     (canvas: HTMLCanvasElement) => {
-      const parent = canvas.parentElement;
-      if (!parent) return null;
-
-      const { clientWidth } = parent;
-      const viewportHeight = window.innerHeight;
+      const { clientWidth, clientHeight } = canvas;
 
       const scene = createScene();
-      const camera = createCamera(clientWidth / viewportHeight);
-      const renderer = createRenderer(canvas, clientWidth, viewportHeight);
+      const camera = createCamera(clientWidth / clientHeight);
+      const renderer = createRenderer(canvas, clientWidth, clientHeight);
 
       const axisHelper = new THREE.AxesHelper(3);
 
@@ -174,35 +170,27 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // scene.add(torus);
       scene.add(torusKnot);
 
-      const abortController = new AbortController();
-
       function animate() {
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
       }
       animate();
 
-      function handleResize() {
-        if (!canvas.parentElement) return;
-
-        const { clientWidth: width } = canvas.parentElement;
-        const height = window.innerHeight;
-
+      const resizeObserver = new ResizeObserver(() => {
+        const { clientWidth: width, clientHeight: height } = canvas;
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
-      }
-      window.addEventListener("resize", handleResize, {
-        signal: abortController.signal,
+        renderer.setSize(width, height, false);
       });
+      resizeObserver.observe(canvas);
 
       return () => {
         cancelAnimation();
-        abortController.abort();
+        resizeObserver.disconnect();
         renderer.dispose();
       };
     },
-    [canvasRef],
+    [],
   );
 
   function cancelAnimation() {
