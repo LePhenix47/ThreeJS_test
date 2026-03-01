@@ -139,10 +139,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function createLights() {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight("white", 3);
+
+    const directionalLight = new THREE.DirectionalLight("white", 3);
 
     return {
       ambientLight,
+      directionalLight,
     };
   }
 
@@ -160,11 +163,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const axisHelper = new THREE.AxesHelper(3);
 
       const { cone, torus, torusKnot } = createObjects();
-      const { ambientLight } = createLights();
+      const { ambientLight, directionalLight } = createLights();
 
       scene.add(axisHelper);
       scene.add(camera);
-      scene.add(ambientLight);
+      scene.add(ambientLight, directionalLight);
       // scene.add(cone, torus, torusKnot);
       // scene.add(cone);
       // scene.add(torus);
