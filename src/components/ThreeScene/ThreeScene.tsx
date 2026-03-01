@@ -112,7 +112,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const commonMaterial = new THREE.MeshToonMaterial({
       color: "white",
     });
-    const torusGeometry = new THREE.TorusGeometry(1, 0.6, 16, 60);
+    const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 60);
     const torus = new THREE.Mesh(torusGeometry, commonMaterial);
 
     const coneGeometry = new THREE.ConeGeometry(1, 2, 32);
