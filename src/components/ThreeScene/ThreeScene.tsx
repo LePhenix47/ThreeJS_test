@@ -109,26 +109,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function createObjects() {
-    const torusGeometry = new THREE.TorusGeometry(1, 0.6, 16, 60);
-    const torusMaterial = new THREE.MeshStandardMaterial({
-      // color: "#ff0000",
+    const commonMaterial = new THREE.MeshToonMaterial({
       color: "white",
     });
-    const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+    const torusGeometry = new THREE.TorusGeometry(1, 0.6, 16, 60);
+    const torus = new THREE.Mesh(torusGeometry, commonMaterial);
 
     const coneGeometry = new THREE.ConeGeometry(1, 2, 32);
-    const coneMaterial = new THREE.MeshStandardMaterial({
-      // color: "#ff0000",
-      color: "white",
-    });
-    const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+    const cone = new THREE.Mesh(coneGeometry, commonMaterial);
 
     const torusKnotGeometry = new THREE.TorusKnotGeometry(0.8, 0.35, 100, 16);
-    const torusKnotMaterial = new THREE.MeshStandardMaterial({
-      // color: "#ff0000",
-      color: "white",
-    });
-    const torusKnot = new THREE.Mesh(torusKnotGeometry, torusKnotMaterial);
+    const torusKnot = new THREE.Mesh(torusKnotGeometry, commonMaterial);
 
     return { torus, cone, torusKnot };
   }
@@ -144,49 +135,43 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   }
 
-  const setupThreeScene = useCallback(
-    (canvas: HTMLCanvasElement) => {
-      const { clientWidth, clientHeight } = canvas;
+  const setupThreeScene = useCallback((canvas: HTMLCanvasElement) => {
+    const { clientWidth, clientHeight } = canvas;
 
-      const scene = createScene();
-      const camera = createCamera(clientWidth / clientHeight);
-      const renderer = createRenderer(canvas);
+    const scene = createScene();
+    const camera = createCamera(clientWidth / clientHeight);
+    const renderer = createRenderer(canvas);
 
-      const axisHelper = new THREE.AxesHelper(3);
+    const axisHelper = new THREE.AxesHelper(3);
 
-      const { cone, torus, torusKnot } = createObjects();
-      const { ambientLight, directionalLight } = createLights();
+    const { cone, torus, torusKnot } = createObjects();
+    const { ambientLight, directionalLight } = createLights();
 
-      scene.add(axisHelper);
-      scene.add(camera);
-      scene.add(ambientLight, directionalLight);
-      // scene.add(cone, torus, torusKnot);
-      // scene.add(cone);
-      // scene.add(torus);
-      scene.add(torusKnot);
+    scene.add(axisHelper);
+    scene.add(camera);
+    scene.add(ambientLight, directionalLight);
+    scene.add(cone, torus, torusKnot);
 
-      function animate() {
-        renderer.render(scene, camera);
-        animationIdRef.current = requestAnimationFrame(animate);
-      }
-      animate();
+    function animate() {
+      renderer.render(scene, camera);
+      animationIdRef.current = requestAnimationFrame(animate);
+    }
+    animate();
 
-      const resizeObserver = new ResizeObserver(() => {
-        const { clientWidth: width, clientHeight: height } = canvas;
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height, false);
-      });
-      resizeObserver.observe(canvas);
+    const resizeObserver = new ResizeObserver(() => {
+      const { clientWidth: width, clientHeight: height } = canvas;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height, false);
+    });
+    resizeObserver.observe(canvas);
 
-      return () => {
-        cancelAnimation();
-        resizeObserver.disconnect();
-        renderer.dispose();
-      };
-    },
-    [],
-  );
+    return () => {
+      cancelAnimation();
+      resizeObserver.disconnect();
+      renderer.dispose();
+    };
+  }, []);
 
   function cancelAnimation() {
     cancelAnimationFrame(animationIdRef.current);
