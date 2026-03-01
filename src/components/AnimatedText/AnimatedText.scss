@@ -2,6 +2,7 @@
 
 .animated-text {
   display: inline-block;
+  mix-blend-mode: difference;
 
   &__svg {
     width: 100%;
