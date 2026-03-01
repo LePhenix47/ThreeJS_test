@@ -36,6 +36,10 @@ const paramObj = {
   toonMaterialColor: "#ffffff",
 };
 
+const objectsInfo = {
+  distance: 4,
+};
+
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
@@ -164,6 +168,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const torusKnotGeometry = new THREE.TorusKnotGeometry(0.8, 0.35, 100, 16);
     const torusKnot = new THREE.Mesh(torusKnotGeometry, commonMaterial);
+
+    const meshes = [torus, cone, torusKnot];
+
+    for (let i = 0; i < meshes.length; i++) {
+      const currentMesh = meshes[i];
+
+      currentMesh.position.y -= i * objectsInfo.distance;
+    }
 
     return { torus, cone, torusKnot };
   }
