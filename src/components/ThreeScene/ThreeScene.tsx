@@ -96,17 +96,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return camera;
   }
 
-  function createRenderer(
-    canvas: HTMLCanvasElement,
-    width: number,
-    height: number,
-  ) {
+  function createRenderer(canvas: HTMLCanvasElement) {
     const renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
       alpha: true,
     });
-    renderer.setSize(width, height, false);
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(minPixelRatio);
 
@@ -155,7 +150,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const scene = createScene();
       const camera = createCamera(clientWidth / clientHeight);
-      const renderer = createRenderer(canvas, clientWidth, clientHeight);
+      const renderer = createRenderer(canvas);
 
       const axisHelper = new THREE.AxesHelper(3);
 
