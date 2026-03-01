@@ -72,6 +72,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const textureLoader = new THREE.TextureLoader(loadingManager);
     const loadedThreePixelsGradient = textureLoader.load(threePixelsGradient);
     const loadedFivePixelsGradient = textureLoader.load(fivePixelsGradient);
+
+    const toonGradientTextures: THREE.Texture<HTMLImageElement>[] = [
+      loadedThreePixelsGradient,
+      loadedFivePixelsGradient,
+    ];
+
+    for (const toonGradientTexture of toonGradientTextures) {
+      toonGradientTexture.colorSpace = THREE.SRGBColorSpace;
+      toonGradientTexture.magFilter = THREE.NearestFilter;
+    }
     // const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [];
 
     // for (const colorLoadedTexture of colorLoadedTextures) {
@@ -145,6 +155,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       color: paramObj.toonMaterialColor,
       gradientMap: toonGradientTexture,
     });
+
     const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 60);
     const torus = new THREE.Mesh(torusGeometry, commonMaterial);
 
