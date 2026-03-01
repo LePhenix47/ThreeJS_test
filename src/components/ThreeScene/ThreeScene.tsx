@@ -87,8 +87,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function createCamera(aspectRatio: number) {
-    const fov = 75;
-    const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
+    const fov = 35;
+    const camera = new THREE.PerspectiveCamera(fov, aspectRatio, 0.1, 100);
     camera.position.x = 0;
     camera.position.y = 0;
     camera.position.z = 6;
@@ -165,7 +165,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(axisHelper);
       scene.add(camera);
       scene.add(ambientLight);
-      scene.add(cone, torus, torusKnot);
+      // scene.add(cone, torus, torusKnot);
+      // scene.add(cone);
+      // scene.add(torus);
+      scene.add(torusKnot);
 
       const abortController = new AbortController();
 
