@@ -180,6 +180,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     for (let i = 0; i < meshes.length; i++) {
       const currentMesh = meshes[i];
 
+      const isEven: boolean = i % 2 === 0;
+
+      currentMesh.position.x = isEven ? -2 : 2;
       currentMesh.position.y -= i * objectsInfo.distance;
     }
 
@@ -300,36 +303,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           scrub: true,
         },
       });
-
-      const sectionsArray = sectionsRef.current;
-
-      for (let i = 0; i < sectionsArray.length; i++) {
-        const section = sectionsArray[i];
-        if (!section) continue;
-
-        const isOdd = i % 2 === 0;
-
-        const titleElement = section.querySelector<HTMLSpanElement>(
-          ".three-scene__title",
-        );
-        if (!titleElement) continue;
-
-        const endPositionX = section.offsetWidth - titleElement.offsetWidth;
-
-        const xStart = isOdd ? -endPositionX : endPositionX;
-
-        gsap.to(titleElement, {
-          x: xStart,
-          ease: "none",
-          scrollTrigger: {
-            trigger: section,
-            start: "45% 50%",
-            end: "65% 50%",
-            scrub: 1,
-            markers: true,
-          },
-        });
-      }
     });
 
     return () => ctx.revert();
