@@ -5,7 +5,8 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import threePixelsGradient from "@public/textures/gradients/3.jpg";
+import fivePixelsGradient from "@public/textures/gradients/5.jpg";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
@@ -63,23 +64,29 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
 
     const textureLoader = new THREE.TextureLoader(loadingManager);
+    const loadedThreePixelsGradient = textureLoader.load(threePixelsGradient);
+    const loadedFivePixelsGradient = textureLoader.load(fivePixelsGradient);
+    // const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [];
 
-    const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [];
+    // for (const colorLoadedTexture of colorLoadedTextures) {
+    //   if (!colorLoadedTexture) continue;
 
-    for (const colorLoadedTexture of colorLoadedTextures) {
-      if (!colorLoadedTexture) continue;
+    //   colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
+    // }
 
-      colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
-    }
+    // const loadedTextures: THREE.Texture<HTMLImageElement>[] = [];
 
-    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [];
+    // const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
 
-    const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
+    // for (const loadedTexture of loadedTexturesArray) {
+    //   loadedTexture.wrapS = THREE.RepeatWrapping;
+    //   loadedTexture.wrapT = THREE.RepeatWrapping;
+    // }
 
-    for (const loadedTexture of loadedTexturesArray) {
-      loadedTexture.wrapS = THREE.RepeatWrapping;
-      loadedTexture.wrapT = THREE.RepeatWrapping;
-    }
+    return {
+      loadedThreePixelsGradient,
+      loadedFivePixelsGradient,
+    };
   }
 
   function createScene() {
@@ -108,9 +115,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return renderer;
   }
 
-  function createObjects() {
+  function createObjects(toonGradientTexture: THREE.Texture<HTMLImageElement>) {
     const commonMaterial = new THREE.MeshToonMaterial({
       color: "white",
+      gradientMap: toonGradientTexture,
     });
     const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 60);
     const torus = new THREE.Mesh(torusGeometry, commonMaterial);
@@ -140,9 +148,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const camera = createCamera(clientWidth / clientHeight);
     const renderer = createRenderer(canvas);
 
+    const { loadedThreePixelsGradient, loadedFivePixelsGradient } =
+      loadTextures();
+
     const axisHelper = new THREE.AxesHelper(3);
 
-    const { cone, torus, torusKnot } = createObjects();
+    const { cone, torus, torusKnot } = createObjects(loadedThreePixelsGradient);
     const { directionalLight } = createLights();
 
     scene.add(axisHelper);
