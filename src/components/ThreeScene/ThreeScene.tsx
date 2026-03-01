@@ -301,23 +301,35 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         },
       });
 
-      // sectionsRef.current.forEach((section, index) => {
-      //   if (!section) return;
+      const sectionsArray = sectionsRef.current;
 
-      //   const isOdd = index % 2 === 0;
-      //   const xStart = isOdd ? 200 : -200;
+      for (let i = 0; i < sectionsArray.length; i++) {
+        const section = sectionsArray[i];
+        if (!section) continue;
 
-      //   gsap.from(".animated-text", {
-      //     x: xStart,
-      //     ease: "power2.out",
-      //     scrollTrigger: {
-      //       trigger: section,
-      //       start: "top bottom",
-      //       end: "top center",
-      //       scrub: 1,
-      //     },
-      //   });
-      // });
+        const isOdd = i % 2 === 0;
+
+        const titleElement = section.querySelector<HTMLSpanElement>(
+          ".three-scene__title",
+        );
+        if (!titleElement) continue;
+
+        const endPositionX = section.offsetWidth - titleElement.offsetWidth;
+
+        const xStart = isOdd ? -endPositionX : endPositionX;
+
+        gsap.to(titleElement, {
+          x: xStart,
+          ease: "none",
+          scrollTrigger: {
+            trigger: section,
+            start: "45% 50%",
+            end: "65% 50%",
+            scrub: 1,
+            markers: true,
+          },
+        });
+      }
     });
 
     return () => ctx.revert();
