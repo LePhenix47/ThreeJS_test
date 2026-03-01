@@ -2,7 +2,7 @@
 
 .animated-text {
   display: inline-block;
-  mix-blend-mode: difference;
+  mix-blend-mode: color-burn;
 
   &__svg {
     width: 100%;
