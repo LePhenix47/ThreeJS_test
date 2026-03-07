@@ -214,14 +214,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     cursor: { x: number; y: number },
     deltaTime: number,
   ) {
-    const parallaxX: number = cursor.x * 0.5;
-    const parallaxY: number = -cursor.y * 0.5;
+    const amplifier: number = 0.5;
+
+    const parallaxX: number = cursor.x * amplifier;
+    const parallaxY: number = -cursor.y * amplifier;
 
     const currentParallaxX: number = parallaxX - cameraGroup.position.x;
     const currentParallaxY: number = parallaxY - cameraGroup.position.y;
 
-    cameraGroup.position.x += currentParallaxX * 5 * deltaTime;
-    cameraGroup.position.y += currentParallaxY * 5 * deltaTime;
+    const deltaTimeSlownessCompensation: number = 5;
+    cameraGroup.position.x +=
+      currentParallaxX * deltaTimeSlownessCompensation * deltaTime;
+
+    cameraGroup.position.y +=
+      currentParallaxY * deltaTimeSlownessCompensation * deltaTime;
   }
 
   function createLights() {
