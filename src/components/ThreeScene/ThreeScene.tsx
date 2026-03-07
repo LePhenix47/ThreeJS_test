@@ -18,6 +18,7 @@ import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
 import AnimatedText from "@/components/AnimatedText/AnimatedText";
+import { getValueFromNewRange } from "@/utils/numbers/range";
 
 type ThreeSceneProps = {
   className?: string;
@@ -42,6 +43,7 @@ const paramObj = {
 
 const objectsInfo = {
   distance: 4,
+  count: 3,
 };
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
@@ -239,6 +241,52 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   }
 
+  function createParticles() {
+    const particleGeometry = new THREE.BufferGeometry();
+    const particleMaterial = new THREE.PointsMaterial({
+      color: paramObj.toonMaterialColor,
+      size: 0.03,
+      sizeAttenuation: true,
+    });
+    // particleMaterial.alphaTest = 0.001; // ? Works but not perfect as it shows some dark pixels
+    // particleMaterial.depthTest = false; // ? Works but then creates an issue with the depth in our scene causing particles to show in front of any object
+    particleMaterial.depthWrite = false;
+    particleMaterial.blending = THREE.AdditiveBlending;
+
+    const particlesCount: number = 200;
+    const itemSize: number = 3;
+
+    // ? Array of XYZ coordinates for each particle, first 3 values are X, Y, Z,
+    const positions = new Float32Array(particlesCount * itemSize);
+
+    const minY: number = -objectsInfo.distance * objectsInfo.count;
+    const maxY: number = objectsInfo.distance;
+    for (let i = 0; i < positions.length; i += itemSize) {
+      // * x
+      positions[i] = getValueFromNewRange(Math.random(), [0, 1], [-5, 5]);
+      // * y
+      positions[i + 1] = getValueFromNewRange(
+        Math.random(),
+        [0, 1],
+        [minY, maxY],
+      );
+      // * z
+      positions[i + 2] = getValueFromNewRange(Math.random(), [0, 1], [-5, 5]);
+    }
+
+    particleGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(positions, itemSize),
+    );
+
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    particles.name = "particles";
+    const particlesGroup = new THREE.Group();
+    particlesGroup.add(particles);
+
+    return particlesGroup;
+  }
+
   const setupThreeScene = useCallback((canvas: HTMLCanvasElement) => {
     const { clientWidth, clientHeight } = canvas;
 
@@ -261,7 +309,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const gui = setupGUI({ meshToonMaterial: cone.material });
     const { directionalLight } = createLights();
 
+    const particlesGroup = createParticles();
+
     scene.add(axisHelper);
+    scene.add(particlesGroup);
     scene.add(cameraGroup);
     scene.add(directionalLight);
     scene.add(cone, torus, torusKnot);
