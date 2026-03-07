@@ -273,7 +273,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       cursor.y = parentCursorOffsetPercentY - 0.5;
     }
 
-    window.addEventListener("pointermove", handlePointerMove);
+    canvas.parentElement!.addEventListener("pointermove", handlePointerMove);
 
     function animate() {
       timer.update();
