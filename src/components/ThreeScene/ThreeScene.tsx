@@ -51,6 +51,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const animationIdRef = useRef<number>(0);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
+  const meshesRef = useRef<THREE.Mesh[]>([]);
 
   // ? loadTextures is a regular function, not a hook — use getState() to access the store directly
   function loadTextures() {
@@ -124,9 +125,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function setupGUI({
     meshToonMaterial,
     particlesMaterial,
+    axisHelper,
   }: {
     meshToonMaterial: THREE.MeshToonMaterial;
     particlesMaterial: THREE.PointsMaterial;
+    axisHelper: THREE.AxesHelper;
   }): GUI {
     const gui = new GUI({
       title: "Scroll animation",
@@ -139,6 +142,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         meshToonMaterial.color.set(paramObj.toonMaterialColor);
         particlesMaterial.color.set(paramObj.toonMaterialColor);
       });
+
+    gui.add(axisHelper, "visible").name("Material color");
 
     return gui;
   }
@@ -195,7 +200,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function rotateObjects(
-    elapsedTime: number,
+    deltaTime: number,
     {
       torus,
       cone,
@@ -209,8 +214,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const meshes = [torus, cone, torusKnot];
 
     for (const mesh of meshes) {
-      mesh.rotation.x = elapsedTime * 0.1;
-      mesh.rotation.y = elapsedTime * 0.12;
+      mesh.rotation.x += deltaTime * 0.1;
+      mesh.rotation.y += deltaTime * 0.12;
     }
   }
 
@@ -301,6 +306,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       loadTextures();
 
     const axisHelper = new THREE.AxesHelper(3);
+    axisHelper.visible = false;
+
     const timer = new THREE.Timer();
 
     cameraRef.current = camera;
@@ -309,10 +316,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     cameraGroup.add(camera);
 
     const { cone, torus, torusKnot } = createObjects(loadedThreePixelsGradient);
+    meshesRef.current = [torus, cone, torusKnot];
     const { particlesGroup, particleMaterial } = createParticles();
     const gui = setupGUI({
       meshToonMaterial: cone.material,
       particlesMaterial: particleMaterial,
+      axisHelper,
     });
     const { directionalLight } = createLights();
 
@@ -340,13 +349,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     function animate() {
       timer.update();
 
-      const deltaTime = timer.getDelta();
-      const elapsedTime = timer.getElapsed();
+      const deltaTime: number = timer.getDelta();
 
       renderer.render(scene, camera);
 
       updateParallax(cameraGroup, cursor, deltaTime);
-      rotateObjects(elapsedTime, { torus, cone, torusKnot });
+      rotateObjects(deltaTime, { torus, cone, torusKnot });
       animationIdRef.current = requestAnimationFrame(animate);
     }
     animationIdRef.current = requestAnimationFrame(animate);
@@ -382,7 +390,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = gsap.context(() => {
+    const ctx: gsap.Context = gsap.context(() => {
       const camera = cameraRef.current;
       if (!camera) return;
 
@@ -404,6 +412,30 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           scrub: true,
         },
       });
+
+      const sections = sectionsRef.current;
+      for (let i = 0; i < sections.length; i++) {
+        const section: HTMLElement | null = sections[i];
+        if (!section) continue;
+
+        const mesh = meshesRef.current[i];
+        if (!mesh) continue;
+
+        gsap.to(mesh.rotation, {
+          x: "+=6",
+          y: "+=3",
+          z: "+=1.5",
+          duration: 1.5,
+          ease: "power2.inOut",
+          scrollTrigger: {
+            trigger: section,
+            start: "top top",
+            end: "bottom bottom",
+            // ? Play animation on enter and exit
+            toggleActions: "play none none reverse",
+          },
+        });
+      }
     });
 
     return () => ctx.revert();
