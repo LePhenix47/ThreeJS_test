@@ -209,6 +209,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     }
   }
 
+  function updateParallax(
+    cameraGroup: THREE.Group,
+    cursor: { x: number; y: number },
+    deltaTime: number,
+  ) {
+    const parallaxX: number = cursor.x * 0.5;
+    const parallaxY: number = -cursor.y * 0.5;
+
+    const currentParallaxX: number = parallaxX - cameraGroup.position.x;
+    const currentParallaxY: number = parallaxY - cameraGroup.position.y;
+
+    cameraGroup.position.x += currentParallaxX * 5 * deltaTime;
+    cameraGroup.position.y += currentParallaxY * 5 * deltaTime;
+  }
+
   function createLights() {
     const directionalLight = new THREE.DirectionalLight("white", 3);
     directionalLight.position.set(1, 1, 0);
@@ -229,27 +244,50 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       loadTextures();
 
     const axisHelper = new THREE.AxesHelper(3);
-    const clock = new THREE.Clock();
+    const timer = new THREE.Timer();
 
     cameraRef.current = camera;
+
+    const cameraGroup = new THREE.Group();
+    cameraGroup.add(camera);
 
     const { cone, torus, torusKnot } = createObjects(loadedThreePixelsGradient);
     const gui = setupGUI({ meshToonMaterial: cone.material });
     const { directionalLight } = createLights();
 
     scene.add(axisHelper);
-    scene.add(camera);
+    scene.add(cameraGroup);
     scene.add(directionalLight);
     scene.add(cone, torus, torusKnot);
 
+    const cursor = { x: 0, y: 0 };
+
+    function handlePointerMove(event: PointerEvent) {
+      if (!canvas.parentElement) return;
+
+      const { offsetWidth, offsetHeight } = canvas.parentElement;
+      const parentCursorOffsetPercentX: number = event.pageX / offsetWidth;
+      const parentCursorOffsetPercentY: number = event.pageY / offsetHeight;
+
+      cursor.x = parentCursorOffsetPercentX - 0.5;
+      cursor.y = parentCursorOffsetPercentY - 0.5;
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+
     function animate() {
+      timer.update();
+
+      const deltaTime = timer.getDelta();
+      const elapsedTime = timer.getElapsed();
+
       renderer.render(scene, camera);
 
-      const elapsedTime = clock.getElapsedTime();
+      updateParallax(cameraGroup, cursor, deltaTime);
       rotateObjects(elapsedTime, { torus, cone, torusKnot });
       animationIdRef.current = requestAnimationFrame(animate);
     }
-    animate();
+    animationIdRef.current = requestAnimationFrame(animate);
 
     const resizeObserver = new ResizeObserver(() => {
       const { clientWidth: width, clientHeight: height } = canvas;
@@ -264,6 +302,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       resizeObserver.disconnect();
       renderer.dispose();
       gui.destroy();
+      window.removeEventListener("pointermove", handlePointerMove);
     };
   }, []);
 
