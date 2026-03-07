@@ -456,7 +456,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           >
             {/* <h2 className="three-scene__title">{title}</h2> */}
             <AnimatedText
-              outlineColor={[255, 255, 255]}
+              outlineColor={[0, 0, 0]}
               className="three-scene__title"
             >
               {title}

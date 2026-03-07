@@ -32,5 +32,9 @@
 
   }
 
-  &__title {}
+  &__title {
+    background-color: var(--color-white-100);
+    padding-block: 5px;
+    padding-inline: 15px;
+  }
 }
