@@ -187,35 +187,28 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const meshes = [torus, cone, torusKnot];
 
-    for (let i = 0; i < meshes.length; i++) {
-      const currentMesh = meshes[i];
+    // Each mesh is wrapped in its own group so that two animation systems
+    // can coexist without conflict:
+    //   - meshGroup.rotation  ← rAF loop (continuous spin)
+    //   - mesh.rotation       ← GSAP scroll trigger (section bump + reverse)
+    // If both wrote to the same object, GSAP reverse would snap back to stale
+    // recorded values because the rAF loop keeps mutating rotation every frame.
+    const meshGroups = meshes.map((mesh, i) => {
+      const isEven = i % 2 === 0;
+      const group = new THREE.Group();
+      group.position.x = isEven ? -2 : 2;
+      group.position.y = -i * objectsInfo.distance;
+      group.add(mesh);
+      return group;
+    });
 
-      const isEven: boolean = i % 2 === 0;
-
-      currentMesh.position.x = isEven ? -2 : 2;
-      currentMesh.position.y -= i * objectsInfo.distance;
-    }
-
-    return { torus, cone, torusKnot };
+    return { torus, cone, torusKnot, meshGroups };
   }
 
-  function rotateObjects(
-    deltaTime: number,
-    {
-      torus,
-      cone,
-      torusKnot,
-    }: {
-      torus: THREE.Mesh;
-      cone: THREE.Mesh;
-      torusKnot: THREE.Mesh;
-    },
-  ) {
-    const meshes = [torus, cone, torusKnot];
-
-    for (const mesh of meshes) {
-      mesh.rotation.x += deltaTime * 0.1;
-      mesh.rotation.y += deltaTime * 0.12;
+  function rotateObjects(deltaTime: number, meshGroups: THREE.Group[]) {
+    for (const group of meshGroups) {
+      group.rotation.x += deltaTime * 0.1;
+      group.rotation.y += deltaTime * 0.12;
     }
   }
 
@@ -315,7 +308,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const cameraGroup = new THREE.Group();
     cameraGroup.add(camera);
 
-    const { cone, torus, torusKnot } = createObjects(loadedThreePixelsGradient);
+    const { cone, torus, torusKnot, meshGroups } = createObjects(loadedThreePixelsGradient);
     meshesRef.current = [torus, cone, torusKnot];
     const { particlesGroup, particleMaterial } = createParticles();
     const gui = setupGUI({
@@ -329,7 +322,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     scene.add(particlesGroup);
     scene.add(cameraGroup);
     scene.add(directionalLight);
-    scene.add(cone, torus, torusKnot);
+    scene.add(...meshGroups);
 
     const cursor = { x: 0, y: 0 };
 
@@ -354,7 +347,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       renderer.render(scene, camera);
 
       updateParallax(cameraGroup, cursor, deltaTime);
-      rotateObjects(deltaTime, { torus, cone, torusKnot });
+      rotateObjects(deltaTime, meshGroups);
       animationIdRef.current = requestAnimationFrame(animate);
     }
     animationIdRef.current = requestAnimationFrame(animate);
