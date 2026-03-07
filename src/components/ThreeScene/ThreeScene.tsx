@@ -123,8 +123,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   function setupGUI({
     meshToonMaterial,
+    particlesMaterial,
   }: {
     meshToonMaterial: THREE.MeshToonMaterial;
+    particlesMaterial: THREE.PointsMaterial;
   }): GUI {
     const gui = new GUI({
       title: "Scroll animation",
@@ -135,6 +137,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Material color")
       .onChange(() => {
         meshToonMaterial.color.set(paramObj.toonMaterialColor);
+        particlesMaterial.color.set(paramObj.toonMaterialColor);
       });
 
     return gui;
@@ -284,7 +287,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const particlesGroup = new THREE.Group();
     particlesGroup.add(particles);
 
-    return particlesGroup;
+    return { particlesGroup, particleMaterial };
   }
 
   const setupThreeScene = useCallback((canvas: HTMLCanvasElement) => {
@@ -306,10 +309,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     cameraGroup.add(camera);
 
     const { cone, torus, torusKnot } = createObjects(loadedThreePixelsGradient);
-    const gui = setupGUI({ meshToonMaterial: cone.material });
+    const { particlesGroup, particleMaterial } = createParticles();
+    const gui = setupGUI({
+      meshToonMaterial: cone.material,
+      particlesMaterial: particleMaterial,
+    });
     const { directionalLight } = createLights();
-
-    const particlesGroup = createParticles();
 
     scene.add(axisHelper);
     scene.add(particlesGroup);
