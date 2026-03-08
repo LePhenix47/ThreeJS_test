@@ -92,6 +92,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(minPixelRatio);
 
+    renderer.shadowMap.enabled = true;
+    /* PCFSoftShadowMap was deprecated in r182 — PCFShadowMap is now soft by default.
+     * Earlier branches still use PCFSoftShadowMap because they were written before r182.
+     * @see https://github.com/mrdoob/three.js/wiki/Migration-Guide
+     */
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+
     return renderer;
   }
 
