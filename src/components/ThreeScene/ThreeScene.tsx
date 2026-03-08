@@ -1,11 +1,20 @@
 /*
- * Particles Lesson
+ * Physics Lesson
  */
 
 import { useCallback, useEffect, useRef } from "react";
 
+import GUI from "lil-gui";
+
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+import envMapPx from "@public/textures/environmentMaps/0/px.png";
+import envMapNx from "@public/textures/environmentMaps/0/nx.png";
+import envMapPy from "@public/textures/environmentMaps/0/py.png";
+import envMapNy from "@public/textures/environmentMaps/0/ny.png";
+import envMapPz from "@public/textures/environmentMaps/0/pz.png";
+import envMapNz from "@public/textures/environmentMaps/0/nz.png";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
@@ -48,13 +57,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       setLoading(false);
     };
 
-    const textureLoader = new THREE.TextureLoader(loadingManager);
+    const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
+    const environmentMapTexture = cubeTextureLoader.load([
+      envMapPx,
+      envMapNx,
+      envMapPy,
+      envMapNy,
+      envMapPz,
+      envMapNz,
+    ]);
 
     const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [];
 
     for (const colorLoadedTexture of colorLoadedTextures) {
-      if (!colorLoadedTexture) continue;
-
       colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
     }
 
@@ -66,18 +81,69 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       loadedTexture.wrapS = THREE.RepeatWrapping;
       loadedTexture.wrapT = THREE.RepeatWrapping;
     }
+
+    return { environmentMapTexture };
   }
 
   function createScene() {
     return new THREE.Scene();
   }
 
+  function createSphere(envMap: THREE.CubeTexture) {
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.5, 32, 32),
+      new THREE.MeshStandardMaterial({
+        metalness: 0.3,
+        roughness: 0.4,
+        envMap,
+        envMapIntensity: 0.5,
+      }),
+    );
+    sphere.castShadow = true;
+    sphere.position.y = 0.5;
+    return sphere;
+  }
+
+  function createFloor(envMap: THREE.CubeTexture) {
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(10, 10),
+      new THREE.MeshStandardMaterial({
+        color: "#777777",
+        metalness: 0.3,
+        roughness: 0.4,
+        envMap,
+        envMapIntensity: 0.5,
+      }),
+    );
+    floor.receiveShadow = true;
+    floor.rotation.x = -Math.PI * 0.5;
+    return floor;
+  }
+
+  function createLights() {
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.set(1024, 1024);
+    directionalLight.shadow.camera.far = 15;
+    directionalLight.shadow.camera.left = -7;
+    directionalLight.shadow.camera.top = 7;
+    directionalLight.shadow.camera.right = 7;
+    directionalLight.shadow.camera.bottom = -7;
+    directionalLight.position.set(5, 5, 5);
+
+    return { ambientLight, directionalLight };
+  }
+
+  function createGUI() {
+    return new GUI({ title: "THREE.JS GUI", width: 300 });
+  }
+
   function createCamera(aspectRatio: number) {
     const fov = 75;
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
-    camera.position.x = 4;
-    camera.position.y = 2;
-    camera.position.z = 5;
+    camera.position.set(-3, 3, 3);
 
     return camera;
   }
@@ -91,6 +157,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     renderer.setSize(width, height, false);
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(minPixelRatio);
+
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     return renderer;
   }
@@ -112,15 +181,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { clientWidth, clientHeight } = parent;
 
+      const { environmentMapTexture } = loadTextures();
+
       const scene = createScene();
+      const sphere = createSphere(environmentMapTexture);
+      const floor = createFloor(environmentMapTexture);
+      const { ambientLight, directionalLight } = createLights();
+      const gui = createGUI();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
-      const axisHelper = new THREE.AxesHelper(3);
-
-      scene.add(axisHelper);
-      scene.add(camera);
+      scene.add(sphere, floor, ambientLight, directionalLight, camera);
 
       const abortController = new AbortController();
 
@@ -150,6 +222,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         controls.dispose();
         abortController.abort();
         renderer.dispose();
+        gui.destroy();
       };
     },
     [canvasRef],
