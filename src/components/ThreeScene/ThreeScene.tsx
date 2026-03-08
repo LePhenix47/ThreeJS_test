@@ -183,6 +183,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     physicsWorld: CANNON.World,
     envMap: THREE.CubeTexture,
     plasticMaterial: CANNON.Material,
+    initialObjects: PhysicsObject[] = [],
   ): { gui: GUI; syncObjects: () => void; disposeObjects: () => void } {
     const gui = new GUI({
       title: "Physics Options",
@@ -195,7 +196,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .step(0.1)
       .onChange(() => {});
 
-    const extraObjects: PhysicsObject[] = [];
+    const extraObjects: PhysicsObject[] = [...initialObjects];
 
     // ? lil-gui renders an object property that is a function as a clickable button
     const guiActions = {
@@ -233,10 +234,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         physicsWorld.addBody(newBox.body);
         extraObjects.push(newBox);
       },
+      resetScene: () => {
+        for (const object of extraObjects) {
+          scene.remove(object.mesh);
+          physicsWorld.removeBody(object.body);
+          object.dispose();
+        }
+
+        extraObjects.length = 0;
+      },
     };
 
     gui.add(guiActions, "spawnSphere").name("Spawn sphere");
     gui.add(guiActions, "spawnBox").name("Spawn box");
+    gui.add(guiActions, "resetScene").name("Reset scene");
 
     const syncObjects = () => {
       for (const sphere of extraObjects) {
@@ -386,6 +397,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         physicsWorld,
         environmentMapTexture,
         plasticMaterial,
+        [sphere],
       );
 
       const abortController = new AbortController();
