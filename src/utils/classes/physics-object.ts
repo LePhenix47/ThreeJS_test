@@ -2,6 +2,10 @@ import * as THREE from "three";
 import * as CANNON from "cannon-es";
 
 import hitSoundUrl from "@public/sounds/hit.mp3";
+import hitSoundUrlMeme1 from "@public/sounds/AAAUUUUGH.mp3";
+import hitSoundUrlMeme2 from "@public/sounds/Fahhh.mp3";
+import hitSoundUrlMeme3 from "@public/sounds/metal-pipe.mp3";
+import hitSoundUrlMeme4 from "@public/sounds/vine-boom-sound-effect.mp3";
 
 // ? A single Audio instance is created once and cloned on each collision.
 // ? Cloning allows overlapping sounds — replaying the same instance would
