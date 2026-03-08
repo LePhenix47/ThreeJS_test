@@ -26,6 +26,10 @@ type ThreeSceneProps = {
   className?: string;
 };
 
+const physicsOptions = {
+  gravity: 9.82,
+};
+
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
@@ -138,9 +142,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { ambientLight, directionalLight };
   }
 
-  function createGUI() {
-    return new GUI({ title: "THREE.JS GUI", width: 300 });
+  function createGUI(): GUI {
+    const gui = new GUI({
+      title: "Physics Options",
+    });
+
+    gui.add(physicsOptions, "gravity").min(0).max(10).step(0.1);
+
+    return gui;
   }
+
+  function createCannonPhysicsWorld(): CANNON.World {
+    const world = new CANNON.World();
+
+    world.gravity.set(0, -1 * physicsOptions.gravity, 0);
+
+    return world;
+  }
+
+  function updatePhysics() {}
 
   function createCamera(aspectRatio: number) {
     const fov = 75;
@@ -194,6 +214,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
+      const physicsWorld = createCannonPhysicsWorld();
+
       scene.add(sphere, floor, ambientLight, directionalLight, camera);
 
       const abortController = new AbortController();
@@ -201,9 +223,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       console.log(CANNON);
 
       function animate() {
-        controls.update();
-        renderer.render(scene, camera);
-        animationIdRef.current = requestAnimationFrame(animate);
+        try {
+          controls.update();
+          renderer.render(scene, camera);
+
+          updatePhysics();
+          animationIdRef.current = requestAnimationFrame(animate);
+        } catch (error) {
+          console.error(error);
+        }
       }
       animate();
 
