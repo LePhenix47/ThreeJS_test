@@ -96,6 +96,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function createSphere(envMap: THREE.CubeTexture) {
+    // * THREE.js mesh
     const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
     const sphereMaterial = new THREE.MeshStandardMaterial({
       metalness: 0.3,
@@ -107,12 +108,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
 
     sphereMesh.castShadow = true;
-    sphereMesh.position.y = 0.5;
+    sphereMesh.position.y = 9;
 
-    return sphereMesh;
+    // * Cannon-es body
+    const sphereShape = new CANNON.Sphere(0.5);
+    const sphereBody = new CANNON.Body({ mass: 1, shape: sphereShape });
+    sphereBody.position.y = 9;
+
+    return { threeJsSphere: sphereMesh, cannonEsSphere: sphereBody };
   }
 
   function createFloor(envMap: THREE.CubeTexture) {
+    const floorRotation: number = -Math.PI * 0.5;
+    // * THREE.js mesh
     const floorGeometry = new THREE.PlaneGeometry(10, 10);
     const floorMaterial = new THREE.MeshStandardMaterial({
       color: "#777777",
@@ -124,8 +132,49 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
     floorMesh.receiveShadow = true;
-    floorMesh.rotation.x = -Math.PI * 0.5;
-    return floorMesh;
+    floorMesh.rotation.x = floorRotation;
+
+    // * Cannon-es body
+    const floorShape = new CANNON.Plane();
+    // ? Default mass of a plane is 0 so no need to set it
+    const floorBody = new CANNON.Body({ shape: floorShape, mass: 0 });
+
+    const floorVector = new CANNON.Vec3(-1, 0, 0);
+    floorBody.quaternion.setFromAxisAngle(floorVector, -1 * floorRotation);
+
+    return { threeJsFloor: floorMesh, cannonEsFloor: floorBody };
+  }
+
+  function setupPhysicsMaterials() {
+    const defaultMaterial = new CANNON.Material("default");
+
+    const defaultContactMaterial = new CANNON.ContactMaterial(
+      defaultMaterial,
+      defaultMaterial,
+      {
+        friction: 0.1,
+        restitution: 0.7,
+      },
+    );
+
+    const concreteMaterial = new CANNON.Material("concrete");
+    const plasticMaterial = new CANNON.Material("plastic");
+
+    const concretePlasticContactMaterial = new CANNON.ContactMaterial(
+      concreteMaterial,
+      plasticMaterial,
+      {
+        friction: 0.1,
+        restitution: 0.7,
+      },
+    );
+
+    return {
+      concreteMaterial,
+      plasticMaterial,
+      concretePlasticContactMaterial,
+      defaultContactMaterial,
+    };
   }
 
   function createLights() {
@@ -183,7 +232,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return world;
   }
 
-  function updatePhysics() {}
+  function updatePhysics(word: CANNON.World, timer: THREE.Timer) {
+    const fps = 1 / 60;
+    const deltaTime: number = timer.getDelta();
+    const delayIterationsCatchUp: number = 3;
+
+    word.step(fps, deltaTime, delayIterationsCatchUp);
+  }
+
+  function updateMeshes(
+    meshesBodiesArray: { mesh: THREE.Mesh; body: CANNON.Body }[],
+  ) {
+    for (let i = 0; i < meshesBodiesArray.length; i++) {
+      const { mesh, body } = meshesBodiesArray[i];
+
+      mesh.position.copy(body.position);
+      // mesh.quaternion.copy(body.quaternion);
+    }
+  }
 
   function createCamera(aspectRatio: number) {
     const fov = 75;
@@ -233,28 +299,62 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { environmentMapTexture } = loadTextures();
 
       const scene = createScene();
-      const sphere = createSphere(environmentMapTexture);
-      const floor = createFloor(environmentMapTexture);
+      const { threeJsSphere, cannonEsSphere } = createSphere(
+        environmentMapTexture,
+      );
+      const { threeJsFloor, cannonEsFloor } = createFloor(
+        environmentMapTexture,
+      );
       const { ambientLight, directionalLight } = createLights();
       const gui = createGUI();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
-      const physicsWorld = createCannonPhysicsWorld();
+      scene.add(threeJsSphere);
+      scene.add(threeJsFloor);
+      scene.add(ambientLight);
+      scene.add(directionalLight);
+      scene.add(camera);
 
-      scene.add(sphere, floor, ambientLight, directionalLight, camera);
+      const physicsWorld = createCannonPhysicsWorld();
+      const {
+        defaultContactMaterial,
+        plasticMaterial,
+        concreteMaterial,
+        concretePlasticContactMaterial,
+      } = setupPhysicsMaterials();
+
+      cannonEsSphere.material = plasticMaterial;
+      cannonEsFloor.material = concreteMaterial;
+
+      physicsWorld.addBody(cannonEsSphere);
+      physicsWorld.addBody(cannonEsFloor);
+
+      physicsWorld.defaultContactMaterial = defaultContactMaterial;
+      physicsWorld.addContactMaterial(concretePlasticContactMaterial);
 
       const abortController = new AbortController();
 
-      console.log(CANNON);
+      const timer = new THREE.Timer();
 
       function animate() {
         try {
           controls.update();
           renderer.render(scene, camera);
 
-          updatePhysics();
+          timer.update();
+
+          updatePhysics(physicsWorld, timer);
+
+          // ? We do not want the floor to update with the physics world to avoid making the floor fall
+          updateMeshes([
+            {
+              mesh: threeJsSphere,
+              body: cannonEsSphere,
+            },
+          ]);
+
           animationIdRef.current = requestAnimationFrame(animate);
         } catch (error) {
           console.error(error);
