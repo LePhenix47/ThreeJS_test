@@ -6,11 +6,26 @@ import hitSoundUrlMeme1 from "@public/sounds/AAAUUUUGH.mp3";
 import hitSoundUrlMeme2 from "@public/sounds/Fahhh.mp3";
 import hitSoundUrlMeme3 from "@public/sounds/metal-pipe.mp3";
 import hitSoundUrlMeme4 from "@public/sounds/vine-boom-sound-effect.mp3";
+import { getValueFromNewRange, randomInRange } from "@/utils/numbers/range";
 
 // ? A single Audio instance is created once and cloned on each collision.
 // ? Cloning allows overlapping sounds — replaying the same instance would
 // ? restart it and cut off any sound already in progress.
 const hitAudio = new Audio(hitSoundUrl);
+
+const auuuuughAudio = new Audio(hitSoundUrlMeme1);
+const fahhhAudio = new Audio(hitSoundUrlMeme2);
+const metalPipeAudio = new Audio(hitSoundUrlMeme3);
+const vineBoomAudio = new Audio(hitSoundUrlMeme4);
+
+const memeAudios: HTMLAudioElement[] = [
+  auuuuughAudio,
+  fahhhAudio,
+  metalPipeAudio,
+  vineBoomAudio,
+];
+
+let shitpostMode = true;
 
 /**
  * Plays the hit sound scaled to the impact velocity.
@@ -24,7 +39,16 @@ function playHitSound({ contact }: { contact: CANNON.ContactEquation }): void {
   if (impactVelocity < minImpactVelocity) return;
 
   try {
-    const sound = hitAudio.cloneNode() as HTMLAudioElement;
+    let sound = hitAudio.cloneNode() as HTMLAudioElement;
+    if (shitpostMode) {
+      const randomIndex: number = Math.floor(
+        randomInRange([0, memeAudios.length - 1]),
+      );
+
+      const randomMemeAudio = memeAudios[randomIndex];
+      sound = randomMemeAudio.cloneNode() as HTMLAudioElement;
+    }
+
     sound.volume = Math.min(impactVelocity / 20, 1);
     sound.play();
   } catch (error) {
