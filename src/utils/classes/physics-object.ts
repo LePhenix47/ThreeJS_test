@@ -6,11 +6,10 @@ import hitSoundUrlMeme1 from "@public/sounds/AAAUUUUGH.mp3";
 import hitSoundUrlMeme2 from "@public/sounds/Fahhh.mp3";
 import hitSoundUrlMeme3 from "@public/sounds/metal-pipe.mp3";
 import hitSoundUrlMeme4 from "@public/sounds/vine-boom-sound-effect.mp3";
-import { getValueFromNewRange, randomInRange } from "@/utils/numbers/range";
+import { randomInRange } from "@/utils/numbers/range";
 
-// ? A single Audio instance is created once and cloned on each collision.
-// ? Cloning allows overlapping sounds — replaying the same instance would
-// ? restart it and cut off any sound already in progress.
+// ? A single Audio instance per sound is created once and used as the source URL.
+// ? Each collision creates a fresh Audio(source.src) for reliable pause() control.
 const hitAudio = new Audio(hitSoundUrl);
 
 const auuuuughAudio = new Audio(hitSoundUrlMeme1);
@@ -29,45 +28,6 @@ let shitpostMode = false;
 
 export function setShitpostMode(value: boolean) {
   shitpostMode = value;
-}
-
-/**
- * Plays the hit sound scaled to the impact velocity.
- * Impacts below the threshold are ignored to avoid spam from
- * bodies resting against each other.
- *
- * Uses `new Audio(src)` rather than `cloneNode()` to guarantee that the
- * returned element is a fully independent HTMLAudioElement — `cloneNode()`
- * can share the underlying media resource in ways that make `pause()` unreliable.
- *
- * @returns The playing audio element, or `null` if below the velocity threshold.
- */
-function playHitSound({
-  contact,
-}: {
-  contact: CANNON.ContactEquation;
-}): HTMLAudioElement | null {
-  const impactVelocity: number = contact.getImpactVelocityAlongNormal();
-
-  const minImpactVelocity = 1.5;
-  if (impactVelocity < minImpactVelocity) return null;
-
-  try {
-    const source = shitpostMode
-      ? memeAudios[Math.floor(randomInRange([0, memeAudios.length - 1]))]
-      : hitAudio;
-
-    // ? new Audio(src) creates a fresh, fully independent element.
-    // ? pause() on it is guaranteed to work unlike cloneNode() clones.
-    const sound = new Audio(source.src);
-    sound.volume = Math.min(impactVelocity / 20, 1);
-    sound.play();
-
-    return sound;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
 }
 
 type PhysicsObjectParams = {
@@ -98,8 +58,45 @@ class PhysicsObject {
     this.body.addEventListener("collide", this.onCollision);
   }
 
+  /**
+   * Plays the hit sound scaled to the impact velocity.
+   * Impacts below the threshold are ignored to avoid spam from
+   * bodies resting against each other.
+   *
+   * Uses `new Audio(src)` rather than `cloneNode()` to guarantee that the
+   * returned element is a fully independent HTMLAudioElement — `cloneNode()`
+   * can share the underlying media resource in ways that make `pause()` unreliable.
+   *
+   * @returns The playing audio element, or `null` if below the velocity threshold.
+   */
+  private playHitSound = (
+    contact: CANNON.ContactEquation,
+  ): HTMLAudioElement | null => {
+    const impactVelocity: number = contact.getImpactVelocityAlongNormal();
+
+    const minImpactVelocity: number = 1.5;
+    if (impactVelocity < minImpactVelocity) return null;
+
+    try {
+      const source: HTMLAudioElement = shitpostMode
+        ? memeAudios[Math.floor(randomInRange([0, memeAudios.length - 1]))]
+        : hitAudio;
+
+      // ? new Audio(src) creates a fresh, fully independent element.
+      // ? pause() on it is guaranteed to work unlike cloneNode() clones.
+      const sound = new Audio(source.src);
+      sound.volume = Math.min(impactVelocity / 20, 1);
+      sound.play();
+
+      return sound;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
   onCollision = ({ contact }: { contact: CANNON.ContactEquation }) => {
-    const sound = playHitSound({ contact });
+    const sound = this.playHitSound(contact);
     if (!sound) return;
 
     this.activeSounds.add(sound);
@@ -216,7 +213,10 @@ class PhysicsObject {
     // * Cannon-es body
     // ? CANNON.Box takes halfExtents — half the full size on each axis
     const halfExtents = new CANNON.Vec3(width / 2, height / 2, depth / 2);
-    const boxBody = new CANNON.Body({ mass: 1, shape: new CANNON.Box(halfExtents) });
+    const boxBody = new CANNON.Body({
+      mass: 1,
+      shape: new CANNON.Box(halfExtents),
+    });
     boxBody.position.set(x, y, z);
     // ? setFromEuler mirrors Three.js's default XYZ rotation order
     boxBody.quaternion.setFromEuler(rx, ry, rz);
