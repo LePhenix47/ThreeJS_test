@@ -26,6 +26,9 @@ type ThreeSceneProps = {
   className?: string;
 };
 
+// ? Single source of truth for GUI-controlled physics values.
+// ? The GUI mutates this object directly, so the physics world
+// ? reads the latest value on each relevant call.
 const physicsOptions = {
   gravity: 9.82,
 };
@@ -95,6 +98,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new THREE.Scene();
   }
 
+  /**
+   * Creates the test sphere with both its Three.js mesh and its Cannon-es physics body.
+   * The radius (0.5) must match between SphereGeometry and CANNON.Sphere so the
+   * visual and the collider stay in sync.
+   *
+   * @returns `threeJsSphere` — the renderable mesh
+   * @returns `cannonEsSphere` — the physics body (mass: 1 → affected by gravity)
+   */
   function createSphere(envMap: THREE.CubeTexture) {
     // * THREE.js mesh
     const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
@@ -118,10 +129,23 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { threeJsSphere: sphereMesh, cannonEsSphere: sphereBody };
   }
 
+  /**
+   * Creates the floor with both its Three.js mesh and its Cannon-es physics body.
+   *
+   * Three.js PlaneGeometry is vertical by default (normal pointing toward +Z),
+   * so we rotate it -90° around X to lay it flat.
+   *
+   * CANNON.Plane is an infinite flat surface. Its default normal also points toward +Z,
+   * so we apply the same rotation via quaternion to match the Three.js floor orientation.
+   *
+   * @returns `threeJsFloor` — the renderable mesh
+   * @returns `cannonEsFloor` — the static physics body (mass: 0 → unmoved by gravity)
+   */
   function createFloor(envMap: THREE.CubeTexture) {
     const floorRotation: number = -Math.PI * 0.5;
     // * THREE.js mesh
-    const floorGeometry = new THREE.PlaneGeometry(10, 10);
+    const floorSize = 2 ** 12;
+    const floorGeometry = new THREE.PlaneGeometry(floorSize, floorSize);
     const floorMaterial = new THREE.MeshStandardMaterial({
       color: "#777777",
       metalness: 0.3,
@@ -139,12 +163,28 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // ? Default mass of a plane is 0 so no need to set it
     const floorBody = new CANNON.Body({ shape: floorShape, mass: 0 });
 
+    // ? Rotate the Cannon plane to match the Three.js floor rotation.
+    // ? setFromAxisAngle(axis, angle): rotates `angle` radians around `axis`.
+    // ? Axis (-1, 0, 0) = negative X, angle = +π/2 to counteract the negative rotation.
     const floorVector = new CANNON.Vec3(-1, 0, 0);
     floorBody.quaternion.setFromAxisAngle(floorVector, -1 * floorRotation);
 
     return { threeJsFloor: floorMesh, cannonEsFloor: floorBody };
   }
 
+  /**
+   * Sets up Cannon-es physics materials and their contact properties.
+   *
+   * A `CANNON.Material` is just a named tag — it has no physical properties on its own.
+   * Physical behavior (friction, restitution) is defined on `CANNON.ContactMaterial`,
+   * which describes what happens when two specific materials collide.
+   *
+   * - `friction`    — resistance to sliding (0 = ice, 1 = rubber)
+   * - `restitution` — bounciness (0 = no bounce, 1 = perfectly elastic)
+   *
+   * The `defaultContactMaterial` is applied globally to all body pairs
+   * that don't have a more specific ContactMaterial defined.
+   */
   function setupPhysicsMaterials() {
     const defaultMaterial = new CANNON.Material("default");
 
@@ -227,19 +267,38 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createCannonPhysicsWorld(): CANNON.World {
     const world = new CANNON.World();
 
+    // ? Gravity is negative Y (downward). physicsOptions.gravity is a positive value,
+    // ? so we negate it here.
     world.gravity.set(0, -1 * physicsOptions.gravity, 0);
 
     return world;
   }
 
-  function updatePhysics(word: CANNON.World, timer: THREE.Timer) {
-    const fps = 1 / 60;
+  /**
+   * Advances the physics simulation by one step.
+   *
+   * `world.step(fixedTimeStep, deltaTime, maxSubSteps)`:
+   * - `fixedTimeStep` — the physics tick rate (1/60 = 60 Hz)
+   * - `deltaTime`     — real elapsed time since last frame (from THREE.Timer)
+   * - `maxSubSteps`   — max catch-up iterations per frame to prevent the
+   *                     "spiral of death" when the frame rate drops below 60 fps
+   */
+  function updatePhysics(world: CANNON.World, timer: THREE.Timer) {
+    const tickRate: number = 1 / 60;
     const deltaTime: number = timer.getDelta();
     const delayIterationsCatchUp: number = 3;
 
-    word.step(fps, deltaTime, delayIterationsCatchUp);
+    world.step(tickRate, deltaTime, delayIterationsCatchUp);
   }
 
+  /**
+   * Syncs Three.js mesh transforms from their paired Cannon-es bodies.
+   * This is the bridge between the physics world and the render world —
+   * called every frame after `world.step()`.
+   *
+   * Position is always copied. Quaternion copy is commented out for now
+   * since the sphere's rotation isn't visually meaningful yet.
+   */
   function updateMeshes(
     meshesBodiesArray: { mesh: THREE.Mesh; body: CANNON.Body }[],
   ) {
@@ -325,12 +384,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         concretePlasticContactMaterial,
       } = setupPhysicsMaterials();
 
+      // ? Assign physics materials to bodies so Cannon knows which ContactMaterial to use
       cannonEsSphere.material = plasticMaterial;
       cannonEsFloor.material = concreteMaterial;
 
       physicsWorld.addBody(cannonEsSphere);
       physicsWorld.addBody(cannonEsFloor);
 
+      // ? defaultContactMaterial is the fallback for any body pair without a specific ContactMaterial
       physicsWorld.defaultContactMaterial = defaultContactMaterial;
       physicsWorld.addContactMaterial(concretePlasticContactMaterial);
 
@@ -347,7 +408,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
           updatePhysics(physicsWorld, timer);
 
-          // ? We do not want the floor to update with the physics world to avoid making the floor fall
+          // ? The floor is static (mass: 0) — Cannon never moves it, so we exclude it
+          // ? from updateMeshes to avoid overwriting its Three.js transform each frame.
           updateMeshes([
             {
               mesh: threeJsSphere,
