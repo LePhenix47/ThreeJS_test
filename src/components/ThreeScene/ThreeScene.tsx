@@ -18,6 +18,8 @@ import envMapNz from "@public/textures/environmentMaps/0/nz.png";
 
 import * as CANNON from "cannon-es";
 
+import PhysicsObject from "@/utils/classes/physics-object";
+
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
@@ -96,80 +98,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   function createScene() {
     return new THREE.Scene();
-  }
-
-  /**
-   * Creates the test sphere with both its Three.js mesh and its Cannon-es physics body.
-   * The radius (0.5) must match between SphereGeometry and CANNON.Sphere so the
-   * visual and the collider stay in sync.
-   *
-   * @returns `threeJsSphere` — the renderable mesh
-   * @returns `cannonEsSphere` — the physics body (mass: 1 → affected by gravity)
-   */
-  function createSphere(envMap: THREE.CubeTexture) {
-    // * THREE.js mesh
-    const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const sphereMaterial = new THREE.MeshStandardMaterial({
-      metalness: 0.3,
-      roughness: 0.4,
-      envMap,
-      envMapIntensity: 0.5,
-    });
-
-    const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-
-    sphereMesh.castShadow = true;
-    sphereMesh.position.y = 9;
-
-    // * Cannon-es body
-    const sphereShape = new CANNON.Sphere(0.5);
-    const sphereBody = new CANNON.Body({ mass: 1, shape: sphereShape });
-    sphereBody.position.y = 9;
-
-    return { threeJsSphere: sphereMesh, cannonEsSphere: sphereBody };
-  }
-
-  /**
-   * Creates the floor with both its Three.js mesh and its Cannon-es physics body.
-   *
-   * Three.js PlaneGeometry is vertical by default (normal pointing toward +Z),
-   * so we rotate it -90° around X to lay it flat.
-   *
-   * CANNON.Plane is an infinite flat surface. Its default normal also points toward +Z,
-   * so we apply the same rotation via quaternion to match the Three.js floor orientation.
-   *
-   * @returns `threeJsFloor` — the renderable mesh
-   * @returns `cannonEsFloor` — the static physics body (mass: 0 → unmoved by gravity)
-   */
-  function createFloor(envMap: THREE.CubeTexture) {
-    const floorRotation: number = -Math.PI * 0.5;
-    // * THREE.js mesh
-    const floorSize = 2 ** 12;
-    const floorGeometry = new THREE.PlaneGeometry(floorSize, floorSize);
-    const floorMaterial = new THREE.MeshStandardMaterial({
-      color: "#777777",
-      metalness: 0.3,
-      roughness: 0.4,
-      envMap,
-      envMapIntensity: 0.5,
-    });
-
-    const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
-    floorMesh.receiveShadow = true;
-    floorMesh.rotation.x = floorRotation;
-
-    // * Cannon-es body
-    const floorShape = new CANNON.Plane();
-    // ? Default mass of a plane is 0 so no need to set it
-    const floorBody = new CANNON.Body({ shape: floorShape, mass: 0 });
-
-    // ? Rotate the Cannon plane to match the Three.js floor rotation.
-    // ? setFromAxisAngle(axis, angle): rotates `angle` radians around `axis`.
-    // ? Axis (-1, 0, 0) = negative X, angle = +π/2 to counteract the negative rotation.
-    const floorVector = new CANNON.Vec3(-1, 0, 0);
-    floorBody.quaternion.setFromAxisAngle(floorVector, -1 * floorRotation);
-
-    return { threeJsFloor: floorMesh, cannonEsFloor: floorBody };
   }
 
   /**
@@ -291,25 +219,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     world.step(tickRate, deltaTime, delayIterationsCatchUp);
   }
 
-  /**
-   * Syncs Three.js mesh transforms from their paired Cannon-es bodies.
-   * This is the bridge between the physics world and the render world —
-   * called every frame after `world.step()`.
-   *
-   * Position is always copied. Quaternion copy is commented out for now
-   * since the sphere's rotation isn't visually meaningful yet.
-   */
-  function updateMeshes(
-    meshesBodiesArray: { mesh: THREE.Mesh; body: CANNON.Body }[],
-  ) {
-    for (let i = 0; i < meshesBodiesArray.length; i++) {
-      const { mesh, body } = meshesBodiesArray[i];
-
-      mesh.position.copy(body.position);
-      // mesh.quaternion.copy(body.quaternion);
-    }
-  }
-
   function createCamera(aspectRatio: number) {
     const fov = 75;
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
@@ -358,23 +267,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { environmentMapTexture } = loadTextures();
 
       const scene = createScene();
-      const { threeJsSphere, cannonEsSphere } = createSphere(
-        environmentMapTexture,
-      );
-      const { threeJsFloor, cannonEsFloor } = createFloor(
-        environmentMapTexture,
-      );
+      const sphere = PhysicsObject.sphere(0.5, environmentMapTexture, {
+        x: 0,
+        y: 1,
+        z: 0,
+      });
+
+      const floor = PhysicsObject.floor(environmentMapTexture);
       const { ambientLight, directionalLight } = createLights();
       const gui = createGUI();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
-      scene.add(threeJsSphere);
-      scene.add(threeJsFloor);
-      scene.add(ambientLight);
-      scene.add(directionalLight);
-      scene.add(camera);
+      scene.add(
+        sphere.mesh,
+        floor.mesh,
+        ambientLight,
+        directionalLight,
+        camera,
+      );
 
       const physicsWorld = createCannonPhysicsWorld();
       const {
@@ -385,11 +297,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       } = setupPhysicsMaterials();
 
       // ? Assign physics materials to bodies so Cannon knows which ContactMaterial to use
-      cannonEsSphere.material = plasticMaterial;
-      cannonEsFloor.material = concreteMaterial;
+      sphere.body.material = plasticMaterial;
+      floor.body.material = concreteMaterial;
 
-      physicsWorld.addBody(cannonEsSphere);
-      physicsWorld.addBody(cannonEsFloor);
+      physicsWorld.addBody(sphere.body);
+      physicsWorld.addBody(floor.body);
 
       // ? defaultContactMaterial is the fallback for any body pair without a specific ContactMaterial
       physicsWorld.defaultContactMaterial = defaultContactMaterial;
@@ -408,14 +320,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
           updatePhysics(physicsWorld, timer);
 
-          // ? The floor is static (mass: 0) — Cannon never moves it, so we exclude it
-          // ? from updateMeshes to avoid overwriting its Three.js transform each frame.
-          updateMeshes([
-            {
-              mesh: threeJsSphere,
-              body: cannonEsSphere,
-            },
-          ]);
+          // ? The floor is static (mass: 0) — Cannon never moves it, sync() is intentionally omitted
+          sphere.sync();
 
           animationIdRef.current = requestAnimationFrame(animate);
         } catch (error) {
@@ -444,6 +350,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         abortController.abort();
         renderer.dispose();
         gui.destroy();
+        sphere.dispose();
+        floor.dispose();
       };
     },
     [canvasRef],
