@@ -133,6 +133,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
     directionalLight.castShadow = true;
+    directionalLight.shadow.radius = 4;
 
     const shadowMapSize: number = 2 ** 10;
 
@@ -203,7 +204,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     renderer.setPixelRatio(minPixelRatio);
 
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    /* PCFSoftShadowMap was deprecated in r182 — PCFShadowMap is now soft by default.
+     * Earlier branches still use PCFSoftShadowMap because they were written before r182.
+     * @see https://github.com/mrdoob/three.js/wiki/Migration-Guide
+     */
+    renderer.shadowMap.type = THREE.PCFShadowMap;
 
     return renderer;
   }
