@@ -349,6 +349,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       );
 
       const physicsWorld = createCannonPhysicsWorld();
+
+      /*
+       * NaiveBroadphase (default) checks every body against every other body — O(n²).
+       * SAPBroadphase (Sweep and Prune) sorts bodies along axes and only tests pairs
+       * that overlap, keeping the cost closer to O(n log n) for large scenes.
+       */
+      physicsWorld.broadphase = new CANNON.SAPBroadphase(physicsWorld);
+
+      /*
+       * Bodies that have come to rest stop being simulated entirely until disturbed.
+       * This AVOIDS wasting physics budget on objects that aren't moving.
+       */
+      physicsWorld.allowSleep = true;
+
       const {
         defaultContactMaterial,
         plasticMaterial,
