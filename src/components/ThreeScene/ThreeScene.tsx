@@ -16,6 +16,8 @@ import envMapNy from "@public/textures/environmentMaps/0/ny.png";
 import envMapPz from "@public/textures/environmentMaps/0/pz.png";
 import envMapNz from "@public/textures/environmentMaps/0/nz.png";
 
+import * as CANNON from "cannon-es";
+
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
@@ -195,6 +197,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(sphere, floor, ambientLight, directionalLight, camera);
 
       const abortController = new AbortController();
+
+      console.log(CANNON);
 
       function animate() {
         controls.update();
