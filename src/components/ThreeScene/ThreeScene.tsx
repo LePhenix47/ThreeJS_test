@@ -19,6 +19,7 @@ import envMapNz from "@public/textures/environmentMaps/0/nz.png";
 import * as CANNON from "cannon-es";
 
 import PhysicsObject from "@/utils/classes/physics-object";
+import { randomInRange } from "@/utils/numbers/range";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
@@ -199,7 +200,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // ? lil-gui renders an object property that is a function as a clickable button
     const guiActions = {
       spawnSphere: () => {
-        const radius = Math.random() * 0.45 + 0.05;
+        const radius = randomInRange([0.05, 0.5]);
 
         const newSphere = PhysicsObject.sphere(radius, envMap, {
           x: (Math.random() - 0.5) * 3,
