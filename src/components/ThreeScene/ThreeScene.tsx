@@ -18,7 +18,7 @@ import envMapNz from "@public/textures/environmentMaps/0/nz.png";
 
 import * as CANNON from "cannon-es";
 
-import PhysicsObject from "@/utils/classes/physics-object";
+import PhysicsObject, { setShitpostMode } from "@/utils/classes/physics-object";
 import { randomInRange } from "@/utils/numbers/range";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
@@ -33,7 +33,9 @@ type ThreeSceneProps = {
 // ? The GUI mutates this object directly, so the physics world
 // ? reads the latest value on each relevant call.
 const physicsOptions = {
-  gravity: 9.82,
+  gravityX: 0,
+  gravityY: -9.82,
+  gravityZ: 0,
 };
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
@@ -189,12 +191,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       title: "Physics Options",
     });
 
-    gui
-      .add(physicsOptions, "gravity")
-      .min(0)
-      .max(10)
-      .step(0.1)
-      .onChange(() => {});
+    const updateGravity = () => {
+      const { gravityX, gravityY, gravityZ } = physicsOptions;
+      physicsWorld.gravity.set(gravityX, gravityY, gravityZ);
+    };
+
+    gui.add(physicsOptions, "gravityX").min(-20).max(20).step(0.1).name("Gravity X").onChange(updateGravity);
+    gui.add(physicsOptions, "gravityY").min(-20).max(20).step(0.1).name("Gravity Y").onChange(updateGravity);
+    gui.add(physicsOptions, "gravityZ").min(-20).max(20).step(0.1).name("Gravity Z").onChange(updateGravity);
+
+    const audioOptions = { shitpostMode: false };
+    gui.add(audioOptions, "shitpostMode").name("Shitpost mode").onChange(setShitpostMode);
 
     const extraObjects: PhysicsObject[] = [...initialObjects];
 
@@ -226,6 +233,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
             x: (Math.random() - 0.5) * 3,
             y: 3,
             z: (Math.random() - 0.5) * 3,
+          },
+          {
+            x: Math.random() * Math.PI,
+            y: Math.random() * Math.PI,
+            z: Math.random() * Math.PI,
           },
         );
         newBox.body.material = plasticMaterial;
@@ -267,9 +279,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createCannonPhysicsWorld(): CANNON.World {
     const world = new CANNON.World();
 
-    // ? Gravity is negative Y (downward). physicsOptions.gravity is a positive value,
-    // ? so we negate it here.
-    world.gravity.set(0, -1 * physicsOptions.gravity, 0);
+    const { gravityX, gravityY, gravityZ } = physicsOptions;
+    world.gravity.set(gravityX, gravityY, gravityZ);
 
     return world;
   }

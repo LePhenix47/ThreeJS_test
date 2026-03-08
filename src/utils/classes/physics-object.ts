@@ -27,6 +27,10 @@ const memeAudios: HTMLAudioElement[] = [
 
 let shitpostMode = false;
 
+export function setShitpostMode(value: boolean) {
+  shitpostMode = value;
+}
+
 /**
  * Plays the hit sound scaled to the impact velocity.
  * Impacts below the threshold are ignored to avoid spam from
@@ -187,11 +191,13 @@ class PhysicsObject {
    * @param dimensions - Full width (`x`), height (`y`), depth (`z`) in world units
    * @param envMap - Cube texture for reflections
    * @param position - Initial world position
+   * @param rotation - Initial Euler rotation in radians (default `{ x: 0, y: 0, z: 0 }`)
    */
   static box(
     { x: width, y: height, z: depth }: THREE.Vector3Like,
     envMap: THREE.CubeTexture,
     { x, y, z }: THREE.Vector3Like,
+    { x: rx, y: ry, z: rz }: THREE.Vector3Like = { x: 0, y: 0, z: 0 },
   ): PhysicsObject {
     // * THREE.js mesh
     const boxGeometry = new THREE.BoxGeometry(width, height, depth);
@@ -205,13 +211,15 @@ class PhysicsObject {
     const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
     boxMesh.castShadow = true;
     boxMesh.position.set(x, y, z);
+    boxMesh.rotation.set(rx, ry, rz);
 
     // * Cannon-es body
     // ? CANNON.Box takes halfExtents — half the full size on each axis
     const halfExtents = new CANNON.Vec3(width / 2, height / 2, depth / 2);
-    const boxShape = new CANNON.Box(halfExtents);
-    const boxBody = new CANNON.Body({ mass: 1, shape: boxShape });
+    const boxBody = new CANNON.Body({ mass: 1, shape: new CANNON.Box(halfExtents) });
     boxBody.position.set(x, y, z);
+    // ? setFromEuler mirrors Three.js's default XYZ rotation order
+    boxBody.quaternion.setFromEuler(rx, ry, rz);
 
     return new PhysicsObject({ mesh: boxMesh, body: boxBody });
   }
