@@ -96,34 +96,36 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function createSphere(envMap: THREE.CubeTexture) {
-    const sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(0.5, 32, 32),
-      new THREE.MeshStandardMaterial({
-        metalness: 0.3,
-        roughness: 0.4,
-        envMap,
-        envMapIntensity: 0.5,
-      }),
-    );
-    sphere.castShadow = true;
-    sphere.position.y = 0.5;
-    return sphere;
+    const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const sphereMaterial = new THREE.MeshStandardMaterial({
+      metalness: 0.3,
+      roughness: 0.4,
+      envMap,
+      envMapIntensity: 0.5,
+    });
+
+    const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+
+    sphereMesh.castShadow = true;
+    sphereMesh.position.y = 0.5;
+
+    return sphereMesh;
   }
 
   function createFloor(envMap: THREE.CubeTexture) {
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(10, 10),
-      new THREE.MeshStandardMaterial({
-        color: "#777777",
-        metalness: 0.3,
-        roughness: 0.4,
-        envMap,
-        envMapIntensity: 0.5,
-      }),
-    );
-    floor.receiveShadow = true;
-    floor.rotation.x = -Math.PI * 0.5;
-    return floor;
+    const floorGeometry = new THREE.PlaneGeometry(10, 10);
+    const floorMaterial = new THREE.MeshStandardMaterial({
+      color: "#777777",
+      metalness: 0.3,
+      roughness: 0.4,
+      envMap,
+      envMapIntensity: 0.5,
+    });
+
+    const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+    floorMesh.receiveShadow = true;
+    floorMesh.rotation.x = -Math.PI * 0.5;
+    return floorMesh;
   }
 
   function createLights() {
@@ -131,12 +133,27 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
     directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.set(1024, 1024);
-    directionalLight.shadow.camera.far = 15;
-    directionalLight.shadow.camera.left = -7;
-    directionalLight.shadow.camera.top = 7;
-    directionalLight.shadow.camera.right = 7;
-    directionalLight.shadow.camera.bottom = -7;
+
+    const shadowMapSize: number = 2 ** 10;
+
+    directionalLight.shadow.mapSize.set(shadowMapSize, shadowMapSize);
+
+    const lightCameraProperties = {
+      left: -7,
+      right: 7,
+      top: 7,
+      bottom: -7,
+      near: 0.1,
+      far: 15,
+    };
+
+    for (const key in lightCameraProperties) {
+      const typedObjectKey = key as keyof typeof lightCameraProperties;
+
+      const value: number = lightCameraProperties[typedObjectKey];
+      directionalLight.shadow.camera[typedObjectKey] = value;
+    }
+
     directionalLight.position.set(5, 5, 5);
 
     return { ambientLight, directionalLight };
@@ -147,7 +164,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       title: "Physics Options",
     });
 
-    gui.add(physicsOptions, "gravity").min(0).max(10).step(0.1);
+    gui
+      .add(physicsOptions, "gravity")
+      .min(0)
+      .max(10)
+      .step(0.1)
+      .onChange(() => {});
 
     return gui;
   }
