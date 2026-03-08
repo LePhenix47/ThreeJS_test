@@ -15,6 +15,7 @@ type PhysicsObjectParams = {
  *
  * Use the static factory methods to create common shapes:
  * @see {@link PhysicsObject.sphere}
+ * @see {@link PhysicsObject.box}
  * @see {@link PhysicsObject.floor}
  */
 class PhysicsObject {
@@ -89,6 +90,45 @@ class PhysicsObject {
     sphereBody.position.set(x, y, z);
 
     return new PhysicsObject({ mesh: sphereMesh, body: sphereBody });
+  }
+
+  /**
+   * Creates a box physics object.
+   *
+   * `THREE.BoxGeometry` takes full width/height/depth, but `CANNON.Box` takes
+   * `halfExtents` — a `Vec3` of half the dimensions — so each axis is halved
+   * before being passed to the physics shape.
+   *
+   * @param dimensions - Full width (`x`), height (`y`), depth (`z`) in world units
+   * @param envMap - Cube texture for reflections
+   * @param position - Initial world position
+   */
+  static box(
+    { x: width, y: height, z: depth }: THREE.Vector3Like,
+    envMap: THREE.CubeTexture,
+    { x, y, z }: THREE.Vector3Like,
+  ): PhysicsObject {
+    // * THREE.js mesh
+    const boxGeometry = new THREE.BoxGeometry(width, height, depth);
+    const boxMaterial = new THREE.MeshStandardMaterial({
+      metalness: 0.3,
+      roughness: 0.4,
+      envMap,
+      envMapIntensity: 0.5,
+    });
+
+    const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
+    boxMesh.castShadow = true;
+    boxMesh.position.set(x, y, z);
+
+    // * Cannon-es body
+    // ? CANNON.Box takes halfExtents — half the full size on each axis
+    const halfExtents = new CANNON.Vec3(width / 2, height / 2, depth / 2);
+    const boxShape = new CANNON.Box(halfExtents);
+    const boxBody = new CANNON.Body({ mass: 1, shape: boxShape });
+    boxBody.position.set(x, y, z);
+
+    return new PhysicsObject({ mesh: boxMesh, body: boxBody });
   }
 
   /**

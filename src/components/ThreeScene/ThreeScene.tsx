@@ -195,7 +195,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .step(0.1)
       .onChange(() => {});
 
-    const extraSpheres: PhysicsObject[] = [];
+    const extraObjects: PhysicsObject[] = [];
 
     // ? lil-gui renders an object property that is a function as a clickable button
     const guiActions = {
@@ -211,20 +211,41 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
         scene.add(newSphere.mesh);
         physicsWorld.addBody(newSphere.body);
-        extraSpheres.push(newSphere);
+        extraObjects.push(newSphere);
+      },
+      spawnBox: () => {
+        const newBox = PhysicsObject.box(
+          {
+            x: randomInRange([0.1, 1]),
+            y: randomInRange([0.1, 1]),
+            z: randomInRange([0.1, 1]),
+          },
+          envMap,
+          {
+            x: (Math.random() - 0.5) * 3,
+            y: 3,
+            z: (Math.random() - 0.5) * 3,
+          },
+        );
+        newBox.body.material = plasticMaterial;
+
+        scene.add(newBox.mesh);
+        physicsWorld.addBody(newBox.body);
+        extraObjects.push(newBox);
       },
     };
 
     gui.add(guiActions, "spawnSphere").name("Spawn sphere");
+    gui.add(guiActions, "spawnBox").name("Spawn box");
 
     const syncObjects = () => {
-      for (const sphere of extraSpheres) {
+      for (const sphere of extraObjects) {
         sphere.sync();
       }
     };
 
     const disposeObjects = () => {
-      for (const sphere of extraSpheres) {
+      for (const sphere of extraObjects) {
         sphere.dispose();
       }
     };
