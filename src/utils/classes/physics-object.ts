@@ -1,6 +1,33 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 
+import hitSoundUrl from "@public/sounds/hit.mp3";
+
+// ? A single Audio instance is created once and cloned on each collision.
+// ? Cloning allows overlapping sounds — replaying the same instance would
+// ? restart it and cut off any sound already in progress.
+const hitAudio = new Audio(hitSoundUrl);
+
+/**
+ * Plays the hit sound scaled to the impact velocity.
+ * Impacts below the threshold are ignored to avoid spam from
+ * bodies resting against each other.
+ */
+function playHitSound({ contact }: { contact: CANNON.ContactEquation }): void {
+  const impactVelocity: number = contact.getImpactVelocityAlongNormal();
+
+  const minImpactVelocity = 1.5;
+  if (impactVelocity < minImpactVelocity) return;
+
+  try {
+    const sound = hitAudio.cloneNode() as HTMLAudioElement;
+    sound.volume = Math.min(impactVelocity / 20, 1);
+    sound.play();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 type PhysicsObjectParams = {
   mesh: THREE.Mesh;
   body: CANNON.Body;
@@ -25,7 +52,12 @@ class PhysicsObject {
   constructor({ mesh, body }: PhysicsObjectParams) {
     this.mesh = mesh;
     this.body = body;
+    this.body.addEventListener("collide", this.onCollision);
   }
+
+  onCollision = ({ contact }: { contact: CANNON.ContactEquation }) => {
+    playHitSound({ contact });
+  };
 
   /**
    * Copies the body's position and quaternion to the mesh.
@@ -42,6 +74,7 @@ class PhysicsObject {
    * Call in the Three.js cleanup function.
    */
   dispose = () => {
+    this.body.removeEventListener("collide", this.onCollision);
     this.mesh.geometry.dispose();
 
     const { material } = this.mesh;
