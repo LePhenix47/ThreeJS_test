@@ -25,34 +25,44 @@ const memeAudios: HTMLAudioElement[] = [
   vineBoomAudio,
 ];
 
-let shitpostMode = true;
+let shitpostMode = false;
 
 /**
  * Plays the hit sound scaled to the impact velocity.
  * Impacts below the threshold are ignored to avoid spam from
  * bodies resting against each other.
+ *
+ * Uses `new Audio(src)` rather than `cloneNode()` to guarantee that the
+ * returned element is a fully independent HTMLAudioElement — `cloneNode()`
+ * can share the underlying media resource in ways that make `pause()` unreliable.
+ *
+ * @returns The playing audio element, or `null` if below the velocity threshold.
  */
-function playHitSound({ contact }: { contact: CANNON.ContactEquation }): void {
+function playHitSound({
+  contact,
+}: {
+  contact: CANNON.ContactEquation;
+}): HTMLAudioElement | null {
   const impactVelocity: number = contact.getImpactVelocityAlongNormal();
 
   const minImpactVelocity = 1.5;
-  if (impactVelocity < minImpactVelocity) return;
+  if (impactVelocity < minImpactVelocity) return null;
 
   try {
-    let sound = hitAudio.cloneNode() as HTMLAudioElement;
-    if (shitpostMode) {
-      const randomIndex: number = Math.floor(
-        randomInRange([0, memeAudios.length - 1]),
-      );
+    const source = shitpostMode
+      ? memeAudios[Math.floor(randomInRange([0, memeAudios.length - 1]))]
+      : hitAudio;
 
-      const randomMemeAudio = memeAudios[randomIndex];
-      sound = randomMemeAudio.cloneNode() as HTMLAudioElement;
-    }
-
+    // ? new Audio(src) creates a fresh, fully independent element.
+    // ? pause() on it is guaranteed to work unlike cloneNode() clones.
+    const sound = new Audio(source.src);
     sound.volume = Math.min(impactVelocity / 20, 1);
     sound.play();
+
+    return sound;
   } catch (error) {
     console.error(error);
+    return null;
   }
 }
 
@@ -76,6 +86,7 @@ type PhysicsObjectParams = {
 class PhysicsObject {
   mesh: THREE.Mesh;
   body: CANNON.Body;
+  readonly activeSounds = new Set<HTMLAudioElement>();
 
   constructor({ mesh, body }: PhysicsObjectParams) {
     this.mesh = mesh;
@@ -84,7 +95,14 @@ class PhysicsObject {
   }
 
   onCollision = ({ contact }: { contact: CANNON.ContactEquation }) => {
-    playHitSound({ contact });
+    const sound = playHitSound({ contact });
+    if (!sound) return;
+
+    this.activeSounds.add(sound);
+    // ? Auto-remove when the sound finishes so the set doesn't grow unbounded
+    sound.addEventListener("ended", () => this.activeSounds.delete(sound), {
+      once: true,
+    });
   };
 
   /**
@@ -103,6 +121,12 @@ class PhysicsObject {
    */
   dispose = () => {
     this.body.removeEventListener("collide", this.onCollision);
+
+    for (const sound of this.activeSounds) {
+      sound.pause();
+    }
+    this.activeSounds.clear();
+
     this.mesh.geometry.dispose();
 
     const { material } = this.mesh;
