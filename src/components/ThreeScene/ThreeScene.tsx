@@ -177,7 +177,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { ambientLight, directionalLight };
   }
 
-  function createGUI(): GUI {
+  function setupGUI(
+    scene: THREE.Scene,
+    physicsWorld: CANNON.World,
+    envMap: THREE.CubeTexture,
+    plasticMaterial: CANNON.Material,
+  ): { gui: GUI; syncObjects: () => void; disposeObjects: () => void } {
     const gui = new GUI({
       title: "Physics Options",
     });
@@ -189,7 +194,41 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .step(0.1)
       .onChange(() => {});
 
-    return gui;
+    const extraSpheres: PhysicsObject[] = [];
+
+    // ? lil-gui renders an object property that is a function as a clickable button
+    const guiActions = {
+      spawnSphere: () => {
+        const radius = Math.random() * 0.45 + 0.05;
+
+        const newSphere = PhysicsObject.sphere(radius, envMap, {
+          x: (Math.random() - 0.5) * 3,
+          y: 3,
+          z: (Math.random() - 0.5) * 3,
+        });
+        newSphere.body.material = plasticMaterial;
+
+        scene.add(newSphere.mesh);
+        physicsWorld.addBody(newSphere.body);
+        extraSpheres.push(newSphere);
+      },
+    };
+
+    gui.add(guiActions, "spawnSphere").name("Spawn sphere");
+
+    const syncObjects = () => {
+      for (const sphere of extraSpheres) {
+        sphere.sync();
+      }
+    };
+
+    const disposeObjects = () => {
+      for (const sphere of extraSpheres) {
+        sphere.dispose();
+      }
+    };
+
+    return { gui, syncObjects, disposeObjects };
   }
 
   function createCannonPhysicsWorld(): CANNON.World {
@@ -275,7 +314,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const floor = PhysicsObject.floor(environmentMapTexture);
       const { ambientLight, directionalLight } = createLights();
-      const gui = createGUI();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
@@ -307,6 +345,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       physicsWorld.defaultContactMaterial = defaultContactMaterial;
       physicsWorld.addContactMaterial(concretePlasticContactMaterial);
 
+      const { gui, syncObjects, disposeObjects } = setupGUI(
+        scene,
+        physicsWorld,
+        environmentMapTexture,
+        plasticMaterial,
+      );
+
       const abortController = new AbortController();
 
       const timer = new THREE.Timer();
@@ -322,6 +367,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
           // ? The floor is static (mass: 0) — Cannon never moves it, sync() is intentionally omitted
           sphere.sync();
+          syncObjects();
 
           animationIdRef.current = requestAnimationFrame(animate);
         } catch (error) {
@@ -352,6 +398,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         gui.destroy();
         sphere.dispose();
         floor.dispose();
+        disposeObjects();
       };
     },
     [canvasRef],
