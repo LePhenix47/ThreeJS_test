@@ -8,6 +8,11 @@ type TransformsCallback = (data: Float32Array, ids: readonly string[]) => void;
 type CollisionCallback = (id: string, velocity: number) => void;
 
 class PhysicsManager {
+  private readonly workerUrl = new URL(
+    "../../workers/physics.worker.ts",
+    import.meta.url,
+  );
+
   private readonly worker: Worker;
   /**
    * Array — not `Set` or `Map` — because the transform loop needs O(1) integer index access:
@@ -24,10 +29,7 @@ class PhysicsManager {
   onCollision: CollisionCallback | null = null;
 
   constructor() {
-    this.worker = new Worker(
-      new URL("../../workers/physics.worker.ts", import.meta.url),
-      { type: "module" },
-    );
+    this.worker = new Worker(this.workerUrl, { type: "module" });
 
     this.initWorkerListeners();
   }

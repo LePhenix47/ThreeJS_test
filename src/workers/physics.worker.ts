@@ -242,15 +242,9 @@ class PhysicsWorldWorker {
 
     for (let i = 0; i < this.ids.length; i++) {
       const { body } = this.entries.get(this.ids[i])!;
-      const o = i * 7;
+      const { position: p, quaternion: q } = body;
 
-      cannonBuffer[o] = body.position.x;
-      cannonBuffer[o + 1] = body.position.y;
-      cannonBuffer[o + 2] = body.position.z;
-      cannonBuffer[o + 3] = body.quaternion.x;
-      cannonBuffer[o + 4] = body.quaternion.y;
-      cannonBuffer[o + 5] = body.quaternion.z;
-      cannonBuffer[o + 6] = body.quaternion.w;
+      cannonBuffer.set([p.x, p.y, p.z, q.x, q.y, q.z, q.w], i * 7);
     }
 
     self.postMessage(
