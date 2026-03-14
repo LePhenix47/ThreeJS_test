@@ -112,6 +112,18 @@ class PhysicsWorldWorker {
 
   // ─── Body registration ──────────────────────────────────────────────────────
 
+  /**
+   * Returns a `CollisionHandler` bound to `id`.
+   *
+   * The handler is a factory rather than a plain method because it must close
+   * over `id` to know which body to report in the outbound `collision` message.
+   * The reference is stored in `entries` so it can be passed to
+   * `removeEventListener` later — Cannon-es requires the exact same function
+   * reference that was passed to `addEventListener`.
+   *
+   * The velocity threshold (1.5 m/s) filters out micro-collisions (resting
+   * contact, slow slides) that would otherwise spam the main thread with sounds.
+   */
   private createCollisionHandler = (id: string): CollisionHandler => {
     return ({ contact }) => {
       const velocity = contact.getImpactVelocityAlongNormal();
@@ -125,6 +137,14 @@ class PhysicsWorldWorker {
     };
   };
 
+  /**
+   * Assigns a material, registers a collision listener, adds the body to the
+   * world, and records it in `entries` and `ids`.
+   *
+   * The `collisionHandler` reference is stored alongside the body in `entries`
+   * so that `removeBody` can call `removeEventListener` with the exact same
+   * function — Cannon-es ignores removals that pass a different reference.
+   */
   private registerBody = (
     body: CANNON.Body,
     id: string,
@@ -144,6 +164,13 @@ class PhysicsWorldWorker {
 
   // ─── Message handlers ────────────────────────────────────────────────────────
 
+  /**
+   * Creates a Cannon body for the requested shape and registers it in the world.
+   *
+   * Delegates shape construction to `CannonBodyFactory` and material/listener
+   * setup to `registerBody`. The `plane` case ignores `position` and `rotation`
+   * — the floor is always static at the world origin.
+   */
   addBody = (msg: AddBodyMessage): void => {
     switch (msg.shape) {
       case "sphere": {
@@ -169,6 +196,13 @@ class PhysicsWorldWorker {
     }
   };
 
+  /**
+   * Detaches the collision listener, removes the body from the world, and
+   * cleans up both `entries` and `ids`.
+   *
+   * Silently no-ops if `id` is unknown — the guard clause avoids throwing on
+   * a double-remove that could occur during scene teardown.
+   */
   removeBody = (id: string): void => {
     const entry = this.entries.get(id);
     if (!entry) return;
@@ -181,10 +215,25 @@ class PhysicsWorldWorker {
     this.ids.splice(this.ids.indexOf(id), 1);
   };
 
+  /**
+   * Forwards a gravity change to the Cannon world.
+   * Called from the main thread via `PhysicsManager.setGravity`.
+   */
   setGravity = (x: number, y: number, z: number): void => {
     this.world.gravity.set(x, y, z);
   };
 
+  /**
+   * Advances the simulation by `delta` seconds and posts the resulting
+   * transforms back to the main thread as a transferable `Float32Array`.
+   *
+   * Each body occupies 7 consecutive floats: `[px, py, pz, qx, qy, qz, qw]`.
+   * Index `i` in `ids` maps directly to offset `i * 7` in the buffer —
+   * the same invariant that `PhysicsManager.onTransforms` relies on.
+   *
+   * The buffer is transferred (zero-copy ownership handoff) rather than
+   * copied — `cannonBuffer` must not be read after `postMessage` returns.
+   */
   step = (delta: number): void => {
     const tickRate = 1 / 60;
     this.world.step(tickRate, delta, 3);
