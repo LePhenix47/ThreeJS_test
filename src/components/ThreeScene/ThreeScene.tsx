@@ -320,7 +320,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           const obj = objectsById.get(ids[i]);
           if (!obj) continue; // floor and any unknown ids are silently skipped
 
-          const [px, py, pz, qx, qy, qz, qw] = data.subarray(i * 7, i * 7 + 7);
+          const startIndex: number = i * 7;
+          const endIndex: number = startIndex + 7;
+
+          const [px, py, pz, qx, qy, qz, qw] = data.subarray(
+            startIndex,
+            endIndex,
+          );
+
           obj.mesh.position.set(px, py, pz);
           obj.mesh.quaternion.set(qx, qy, qz, qw);
         }
