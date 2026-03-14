@@ -16,9 +16,8 @@ import envMapNy from "@public/textures/environmentMaps/0/ny.png";
 import envMapPz from "@public/textures/environmentMaps/0/pz.png";
 import envMapNz from "@public/textures/environmentMaps/0/nz.png";
 
-import * as CANNON from "cannon-es";
-
 import PhysicsObject, { setShitpostMode } from "@/utils/classes/physics-object";
+import PhysicsManager from "@/utils/classes/physics-manager";
 import { randomInRange } from "@/utils/numbers/range";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
@@ -27,15 +26,6 @@ import "./ThreeScene.scss";
 
 type ThreeSceneProps = {
   className?: string;
-};
-
-// ? Single source of truth for GUI-controlled physics values.
-// ? The GUI mutates this object directly, so the physics world
-// ? reads the latest value on each relevant call.
-const physicsOptions = {
-  gravityX: 0,
-  gravityY: -9.82,
-  gravityZ: 0,
 };
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
@@ -103,51 +93,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new THREE.Scene();
   }
 
-  /**
-   * Sets up Cannon-es physics materials and their contact properties.
-   *
-   * A `CANNON.Material` is just a named tag — it has no physical properties on its own.
-   * Physical behavior (friction, restitution) is defined on `CANNON.ContactMaterial`,
-   * which describes what happens when two specific materials collide.
-   *
-   * - `friction`    — resistance to sliding (0 = ice, 1 = rubber)
-   * - `restitution` — bounciness (0 = no bounce, 1 = perfectly elastic)
-   *
-   * The `defaultContactMaterial` is applied globally to all body pairs
-   * that don't have a more specific ContactMaterial defined.
-   */
-  function setupPhysicsMaterials() {
-    const defaultMaterial = new CANNON.Material("default");
-
-    const defaultContactMaterial = new CANNON.ContactMaterial(
-      defaultMaterial,
-      defaultMaterial,
-      {
-        friction: 0.1,
-        restitution: 0.7,
-      },
-    );
-
-    const concreteMaterial = new CANNON.Material("concrete");
-    const plasticMaterial = new CANNON.Material("plastic");
-
-    const concretePlasticContactMaterial = new CANNON.ContactMaterial(
-      concreteMaterial,
-      plasticMaterial,
-      {
-        friction: 0.1,
-        restitution: 0.7,
-      },
-    );
-
-    return {
-      concreteMaterial,
-      plasticMaterial,
-      concretePlasticContactMaterial,
-      defaultContactMaterial,
-    };
-  }
-
   function createLights() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
 
@@ -182,78 +127,115 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   function setupGUI(
     scene: THREE.Scene,
-    physicsWorld: CANNON.World,
+    physicsManager: PhysicsManager,
     envMap: THREE.CubeTexture,
-    plasticMaterial: CANNON.Material,
-    initialObjects: PhysicsObject[] = [],
-  ): { gui: GUI; syncObjects: () => void; disposeObjects: () => void } {
+    objectsById: Map<string, PhysicsObject>,
+  ): { gui: GUI; disposeSpawned: () => void } {
     const gui = new GUI({
       title: "Physics Options",
     });
 
+    // ? Gravity state is local — changes are sent to the worker as commands
+    const gravityState = { gravityX: 0, gravityY: -9.82, gravityZ: 0 };
+
     const updateGravity = () => {
-      const { gravityX, gravityY, gravityZ } = physicsOptions;
-      physicsWorld.gravity.set(gravityX, gravityY, gravityZ);
+      const { gravityX, gravityY, gravityZ } = gravityState;
+      physicsManager.setGravity(gravityX, gravityY, gravityZ);
     };
 
-    gui.add(physicsOptions, "gravityX").min(-20).max(20).step(0.1).name("Gravity X").onChange(updateGravity);
-    gui.add(physicsOptions, "gravityY").min(-20).max(20).step(0.1).name("Gravity Y").onChange(updateGravity);
-    gui.add(physicsOptions, "gravityZ").min(-20).max(20).step(0.1).name("Gravity Z").onChange(updateGravity);
+    gui
+      .add(gravityState, "gravityX")
+      .min(-20)
+      .max(20)
+      .step(0.1)
+      .name("Gravity X")
+      .onChange(updateGravity);
+    gui
+      .add(gravityState, "gravityY")
+      .min(-20)
+      .max(20)
+      .step(0.1)
+      .name("Gravity Y")
+      .onChange(updateGravity);
+    gui
+      .add(gravityState, "gravityZ")
+      .min(-20)
+      .max(20)
+      .step(0.1)
+      .name("Gravity Z")
+      .onChange(updateGravity);
 
     const audioOptions = { shitpostMode: false };
-    gui.add(audioOptions, "shitpostMode").name("Shitpost mode").onChange(setShitpostMode);
-
-    const extraObjects: PhysicsObject[] = [...initialObjects];
+    gui
+      .add(audioOptions, "shitpostMode")
+      .name("Shitpost mode")
+      .onChange(setShitpostMode);
 
     // ? lil-gui renders an object property that is a function as a clickable button
     const guiActions = {
       spawnSphere: () => {
         const radius = randomInRange([0.05, 0.5]);
-
-        const newSphere = PhysicsObject.sphere(radius, envMap, {
+        const position = {
           x: (Math.random() - 0.5) * 3,
           y: 3,
           z: (Math.random() - 0.5) * 3,
-        });
-        newSphere.body.material = plasticMaterial;
+        };
 
-        scene.add(newSphere.mesh);
-        physicsWorld.addBody(newSphere.body);
-        extraObjects.push(newSphere);
+        const { id, object } = PhysicsObject.sphere(radius, envMap, position);
+        scene.add(object.mesh);
+        physicsManager.addBody({
+          id,
+          shape: "sphere",
+          radius,
+          mass: 1,
+          material: "plastic",
+          position,
+        });
+        objectsById.set(id, object);
       },
       spawnBox: () => {
-        const newBox = PhysicsObject.box(
-          {
-            x: randomInRange([0.1, 1]),
-            y: randomInRange([0.1, 1]),
-            z: randomInRange([0.1, 1]),
-          },
-          envMap,
-          {
-            x: (Math.random() - 0.5) * 3,
-            y: 3,
-            z: (Math.random() - 0.5) * 3,
-          },
-          {
-            x: Math.random() * Math.PI,
-            y: Math.random() * Math.PI,
-            z: Math.random() * Math.PI,
-          },
-        );
-        newBox.body.material = plasticMaterial;
+        const dimensions = {
+          x: randomInRange([0.1, 1]),
+          y: randomInRange([0.1, 1]),
+          z: randomInRange([0.1, 1]),
+        };
+        const position = {
+          x: (Math.random() - 0.5) * 3,
+          y: 3,
+          z: (Math.random() - 0.5) * 3,
+        };
+        const rotation = {
+          x: Math.random() * Math.PI,
+          y: Math.random() * Math.PI,
+          z: Math.random() * Math.PI,
+        };
 
-        scene.add(newBox.mesh);
-        physicsWorld.addBody(newBox.body);
-        extraObjects.push(newBox);
+        const { id, object } = PhysicsObject.box(
+          dimensions,
+          envMap,
+          position,
+          rotation,
+        );
+        scene.add(object.mesh);
+        physicsManager.addBody({
+          id,
+          shape: "box",
+          dimensions,
+          mass: 1,
+          material: "plastic",
+          position,
+          rotation,
+        });
+        objectsById.set(id, object);
       },
       resetScene: () => {
-        for (const object of extraObjects) {
+        for (const [id, object] of objectsById) {
           scene.remove(object.mesh);
-          physicsWorld.removeBody(object.body);
+          physicsManager.removeBody(id);
           object.dispose();
         }
 
-        extraObjects.length = 0;
+        objectsById.clear();
       },
     };
 
@@ -261,45 +243,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     gui.add(guiActions, "spawnBox").name("Spawn box");
     gui.add(guiActions, "resetScene").name("Reset scene");
 
-    const syncObjects = () => {
-      for (const sphere of extraObjects) {
-        sphere.sync();
+    const disposeSpawned = () => {
+      for (const object of objectsById.values()) {
+        object.dispose();
       }
     };
 
-    const disposeObjects = () => {
-      for (const sphere of extraObjects) {
-        sphere.dispose();
-      }
-    };
-
-    return { gui, syncObjects, disposeObjects };
-  }
-
-  function createCannonPhysicsWorld(): CANNON.World {
-    const world = new CANNON.World();
-
-    const { gravityX, gravityY, gravityZ } = physicsOptions;
-    world.gravity.set(gravityX, gravityY, gravityZ);
-
-    return world;
-  }
-
-  /**
-   * Advances the physics simulation by one step.
-   *
-   * `world.step(fixedTimeStep, deltaTime, maxSubSteps)`:
-   * - `fixedTimeStep` — the physics tick rate (1/60 = 60 Hz)
-   * - `deltaTime`     — real elapsed time since last frame (from THREE.Timer)
-   * - `maxSubSteps`   — max catch-up iterations per frame to prevent the
-   *                     "spiral of death" when the frame rate drops below 60 fps
-   */
-  function updatePhysics(world: CANNON.World, timer: THREE.Timer) {
-    const tickRate: number = 1 / 60;
-    const deltaTime: number = timer.getDelta();
-    const delayIterationsCatchUp: number = 3;
-
-    world.step(tickRate, deltaTime, delayIterationsCatchUp);
+    return { gui, disposeSpawned };
   }
 
   function createCamera(aspectRatio: number) {
@@ -350,17 +300,73 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { environmentMapTexture } = loadTextures();
 
       const scene = createScene();
-      const sphere = PhysicsObject.sphere(0.5, environmentMapTexture, {
-        x: 0,
-        y: 1,
-        z: 0,
-      });
-
-      const floor = PhysicsObject.floor(environmentMapTexture);
       const { ambientLight, directionalLight } = createLights();
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
+
+      // ── Physics worker ────────────────────────────────────────────────────────
+
+      const physicsManager = new PhysicsManager();
+
+      // ? Map from body id → PhysicsObject (mesh + audio on the main thread)
+      // ? Floor is intentionally excluded — it never moves, no transform needed
+      const objectsById = new Map<string, PhysicsObject>();
+
+      // ? Runs every frame when the worker posts back updated body transforms.
+      // ? ids[] and data[] are in the same insertion order as addBody calls.
+      physicsManager.onTransforms = (data, ids) => {
+        for (let i = 0; i < ids.length; i++) {
+          const obj = objectsById.get(ids[i]);
+          if (!obj) continue; // floor and any unknown ids are silently skipped
+
+          const o = i * 7;
+          obj.mesh.position.set(data[o], data[o + 1], data[o + 2]);
+          obj.mesh.quaternion.set(
+            data[o + 3],
+            data[o + 4],
+            data[o + 5],
+            data[o + 6],
+          );
+        }
+      };
+
+      physicsManager.onCollision = (id, velocity) => {
+        objectsById.get(id)?.playSound(velocity);
+      };
+
+      // ── Initial objects ───────────────────────────────────────────────────────
+
+      const { id: floorId, object: floor } = PhysicsObject.floor(
+        environmentMapTexture,
+      );
+      physicsManager.addBody({
+        id: floorId,
+        shape: "plane",
+        mass: 0,
+        material: "concrete",
+        position: { x: 0, y: 0, z: 0 },
+      });
+      // ? Floor NOT added to objectsById — static, transforms are never applied
+
+      const { id: sphereId, object: sphere } = PhysicsObject.sphere(
+        0.5,
+        environmentMapTexture,
+        {
+          x: 0,
+          y: 1,
+          z: 0,
+        },
+      );
+      physicsManager.addBody({
+        id: sphereId,
+        shape: "sphere",
+        radius: 0.5,
+        mass: 1,
+        material: "plastic",
+        position: { x: 0, y: 1, z: 0 },
+      });
+      objectsById.set(sphereId, sphere);
 
       scene.add(
         sphere.mesh,
@@ -370,49 +376,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         camera,
       );
 
-      const physicsWorld = createCannonPhysicsWorld();
-
-      /*
-       * NaiveBroadphase (default) checks every body against every other body — O(n²).
-       * SAPBroadphase (Sweep and Prune) sorts bodies along axes and only tests pairs
-       * that overlap, keeping the cost closer to O(n log n) for large scenes.
-       */
-      physicsWorld.broadphase = new CANNON.SAPBroadphase(physicsWorld);
-
-      /*
-       * Bodies that have come to rest stop being simulated entirely until disturbed.
-       * This AVOIDS wasting physics budget on objects that aren't moving.
-       */
-      physicsWorld.allowSleep = true;
-
-      const {
-        defaultContactMaterial,
-        plasticMaterial,
-        concreteMaterial,
-        concretePlasticContactMaterial,
-      } = setupPhysicsMaterials();
-
-      // ? Assign physics materials to bodies so Cannon knows which ContactMaterial to use
-      sphere.body.material = plasticMaterial;
-      floor.body.material = concreteMaterial;
-
-      physicsWorld.addBody(sphere.body);
-      physicsWorld.addBody(floor.body);
-
-      // ? defaultContactMaterial is the fallback for any body pair without a specific ContactMaterial
-      physicsWorld.defaultContactMaterial = defaultContactMaterial;
-      physicsWorld.addContactMaterial(concretePlasticContactMaterial);
-
-      const { gui, syncObjects, disposeObjects } = setupGUI(
+      const { gui, disposeSpawned } = setupGUI(
         scene,
-        physicsWorld,
+        physicsManager,
         environmentMapTexture,
-        plasticMaterial,
-        [sphere],
+        objectsById,
       );
 
       const abortController = new AbortController();
-
       const timer = new THREE.Timer();
 
       function animate() {
@@ -421,12 +392,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           renderer.render(scene, camera);
 
           timer.update();
-
-          updatePhysics(physicsWorld, timer);
-
-          // ? The floor is static (mass: 0) — Cannon never moves it, sync() is intentionally omitted
-          sphere.sync();
-          syncObjects();
+          // ? getDelta() is called exactly once per frame — it is NOT idempotent
+          physicsManager.step(timer.getDelta());
 
           animationIdRef.current = requestAnimationFrame(animate);
         } catch (error) {
@@ -455,9 +422,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         abortController.abort();
         renderer.dispose();
         gui.destroy();
+        physicsManager.dispose();
         sphere.dispose();
         floor.dispose();
-        disposeObjects();
+        disposeSpawned();
       };
     },
     [canvasRef],
