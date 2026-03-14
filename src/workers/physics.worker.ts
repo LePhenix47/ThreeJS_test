@@ -6,6 +6,8 @@ import type {
   WorkerOutboundMessage,
 } from "@utils/types/physics-worker.types";
 
+import CannonBodyFactory from "@utils/classes/cannon-body-factory";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type CollisionHandler = (event: { contact: CANNON.ContactEquation }) => void;
@@ -15,146 +17,220 @@ type BodyEntry = {
   collisionHandler: CollisionHandler;
 };
 
-// ─── World setup ──────────────────────────────────────────────────────────────
+// ─── Physics World for the Web Worker ─────────────────────────────────────────────────────────────
 
-const world = new CANNON.World();
-const entries = new Map<string, BodyEntry>();
-const ids: string[] = [];
+/**
+ * Self-contained physics simulation that runs entirely inside the Web Worker.
+ *
+ * Owns the Cannon-es world, all registered bodies, and the ordered `ids` array
+ * that maps index `i` to the i-th body's 7-float block in each `transforms`
+ * `Float32Array`.
+ *
+ * Communicates with the main thread exclusively via `self.postMessage`:
+ * - `transforms` — emitted every step, carries position + quaternion for every body
+ * - `collision`  — emitted when an impact exceeds the velocity threshold
+ */
+class PhysicsWorldWorker {
+  private readonly defaultMaterial = new CANNON.Material("default");
 
-const concreteMaterial = new CANNON.Material("concrete");
-const plasticMaterial = new CANNON.Material("plastic");
+  private readonly concreteMaterial = new CANNON.Material("concrete");
+  private readonly plasticMaterial = new CANNON.Material("plastic");
 
-world.gravity.set(0, -9.82, 0);
-world.broadphase = new CANNON.SAPBroadphase(world);
-world.allowSleep = true;
-world.addContactMaterial(
-  new CANNON.ContactMaterial(concreteMaterial, plasticMaterial, {
-    friction: 0.1,
-    restitution: 0.7,
-  }),
-);
+  private readonly world: CANNON.World;
 
-// ─── Body helpers ─────────────────────────────────────────────────────────────
+  /**
+   * Ordered list of body IDs — mirrors the worker-side `ids[]` in PhysicsManager.
+   *
+   * Must be an array (not `Set` or `Map`) because the transform loop needs O(1)
+   * integer index access: `ids[i]` maps directly to the i-th body's 7-float block
+   * in the `Float32Array`. Removal is O(n) via `indexOf + splice`, but removals are
+   * rare compared to the per-frame step, so the array is the right trade-off.
+   */
+  private readonly ids: string[] = [];
+  private readonly entries = new Map<string, BodyEntry>();
 
-function createCannonBody(msg: AddBodyMessage): CANNON.Body {
-  if (msg.shape === "sphere") {
-    return new CANNON.Body({
-      mass: msg.mass,
-      shape: new CANNON.Sphere(msg.radius ?? 0.5),
-    });
+  constructor() {
+    this.world = this.initWorld();
   }
 
-  if (msg.shape === "box") {
-    const { x, y, z } = msg.dimensions ?? { x: 1, y: 1, z: 1 };
-    return new CANNON.Body({
-      mass: msg.mass,
-      shape: new CANNON.Box(new CANNON.Vec3(x / 2, y / 2, z / 2)),
-    });
-  }
+  // ─── World setup ────────────────────────────────────────────────────────────
 
-  // plane — always static, always rotated flat
-  const body = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
-  body.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI * 0.5);
-  return body;
-}
+  /**
+   * Creates and configures the Cannon-es physics world.
+   *
+   * - `SAPBroadphase` (Sweep and Prune): sorts bodies along axes and only tests
+   *   pairs that overlap — O(n log n) vs the default `NaiveBroadphase`'s O(n²).
+   * - `allowSleep`: bodies that come to rest are removed from simulation entirely
+   *   until disturbed, saving physics budget on inactive objects.
+   *
+   * A `CANNON.Material` is just a named tag — physical behaviour (friction,
+   * restitution) is defined on `CANNON.ContactMaterial`, which describes what
+   * happens when two specific materials collide.
+   *
+   * - `friction`    — resistance to sliding (0 = ice, 1 = rubber)
+   * - `restitution` — bounciness (0 = no bounce, 1 = perfectly elastic)
+   */
+  private initWorld = (): CANNON.World => {
+    const world = new CANNON.World();
+    world.gravity.set(0, -9.82, 0);
 
-function registerBody(
-  body: CANNON.Body,
-  id: string,
-  material: "concrete" | "plastic",
-): void {
-  body.material = material === "concrete" ? concreteMaterial : plasticMaterial;
+    /*
+     * NaiveBroadphase (default) checks every body against every other — O(n²).
+     * SAPBroadphase sorts bodies along axes and only tests overlapping pairs,
+     * keeping cost closer to O(n log n) for large scenes.
+     */
+    world.broadphase = new CANNON.SAPBroadphase(world);
 
-  const collisionHandler: CollisionHandler = ({ contact }) => {
-    const velocity = contact.getImpactVelocityAlongNormal();
-    if (Math.abs(velocity) < 1.5) return;
+    /*
+     * Bodies that have come to rest stop being simulated entirely until disturbed.
+     * Avoids wasting physics budget on objects that aren't moving.
+     */
+    world.allowSleep = true;
 
-    self.postMessage({
-      type: "collision",
-      id,
-      velocity: Math.abs(velocity),
-    } satisfies WorkerOutboundMessage);
+    const plasticConcreteContactMaterial = new CANNON.ContactMaterial(
+      this.concreteMaterial,
+      this.plasticMaterial,
+      {
+        friction: 0.1,
+        restitution: 0.7,
+      },
+    );
+    world.addContactMaterial(plasticConcreteContactMaterial);
+
+    const defaultContactMaterial = new CANNON.ContactMaterial(
+      this.defaultMaterial,
+      this.defaultMaterial,
+      {
+        friction: 0.1,
+        restitution: 0.7,
+      },
+    );
+    world.defaultContactMaterial = defaultContactMaterial;
+
+    return world;
   };
 
-  body.addEventListener("collide", collisionHandler);
-  world.addBody(body);
+  // ─── Body registration ──────────────────────────────────────────────────────
 
-  entries.set(id, { body, collisionHandler });
-  ids.push(id);
-}
+  private createCollisionHandler = (id: string): CollisionHandler => {
+    return ({ contact }) => {
+      const velocity = contact.getImpactVelocityAlongNormal();
+      if (Math.abs(velocity) < 1.5) return;
 
-// ─── Message handlers ─────────────────────────────────────────────────────────
+      self.postMessage({
+        type: "collision",
+        id,
+        velocity: Math.abs(velocity),
+      } satisfies WorkerOutboundMessage);
+    };
+  };
 
-function handleAddBody(msg: AddBodyMessage): void {
-  const body = createCannonBody(msg);
+  private registerBody = (
+    body: CANNON.Body,
+    id: string,
+    material: "concrete" | "plastic",
+  ): void => {
+    body.material =
+      material === "concrete" ? this.concreteMaterial : this.plasticMaterial;
 
-  if (msg.shape !== "plane") {
-    const { x, y, z } = msg.position;
-    body.position.set(x, y, z);
+    const collisionHandler = this.createCollisionHandler(id);
 
-    if (msg.rotation) {
-      body.quaternion.setFromEuler(
-        msg.rotation.x,
-        msg.rotation.y,
-        msg.rotation.z,
-      );
+    body.addEventListener("collide", collisionHandler);
+    this.world.addBody(body);
+
+    this.entries.set(id, { body, collisionHandler });
+    this.ids.push(id);
+  };
+
+  // ─── Message handlers ────────────────────────────────────────────────────────
+
+  addBody = (msg: AddBodyMessage): void => {
+    switch (msg.shape) {
+      case "sphere": {
+        const body = CannonBodyFactory.sphere(msg.radius ?? 0.5, msg.position);
+        this.registerBody(body, msg.id, msg.material);
+        break;
+      }
+      case "box": {
+        const body = CannonBodyFactory.box(
+          msg.dimensions ?? { x: 1, y: 1, z: 1 },
+          msg.position,
+          msg.rotation,
+        );
+        this.registerBody(body, msg.id, msg.material);
+        break;
+      }
+      case "plane": {
+        // position and rotation ignored — always static at origin
+        const body = CannonBodyFactory.floor();
+        this.registerBody(body, msg.id, msg.material);
+        break;
+      }
     }
-  }
+  };
 
-  registerBody(body, msg.id, msg.material);
-}
+  removeBody = (id: string): void => {
+    const entry = this.entries.get(id);
+    if (!entry) return;
 
-function handleRemoveBody(id: string): void {
-  const entry = entries.get(id);
-  if (!entry) return;
+    const { body, collisionHandler } = entry;
+    body.removeEventListener("collide", collisionHandler);
+    this.world.removeBody(body);
 
-  const { body, collisionHandler } = entry;
-  body.removeEventListener("collide", collisionHandler);
-  world.removeBody(body);
+    this.entries.delete(id);
+    this.ids.splice(this.ids.indexOf(id), 1);
+  };
 
-  entries.delete(id);
-  ids.splice(ids.indexOf(id), 1);
-}
+  setGravity = (x: number, y: number, z: number): void => {
+    this.world.gravity.set(x, y, z);
+  };
 
-function handleStep(delta: number): void {
-  world.step(1 / 60, delta, 3);
+  step = (delta: number): void => {
+    const tickRate = 1 / 60;
+    this.world.step(tickRate, delta, 3);
 
-  const buffer = new Float32Array(ids.length * 7);
+    const cannonBuffer = new Float32Array(this.ids.length * 7);
 
-  for (let i = 0; i < ids.length; i++) {
-    const { body } = entries.get(ids[i])!;
-    const o = i * 7;
+    for (let i = 0; i < this.ids.length; i++) {
+      const { body } = this.entries.get(this.ids[i])!;
+      const o = i * 7;
 
-    buffer[o] = body.position.x;
-    buffer[o + 1] = body.position.y;
-    buffer[o + 2] = body.position.z;
-    buffer[o + 3] = body.quaternion.x;
-    buffer[o + 4] = body.quaternion.y;
-    buffer[o + 5] = body.quaternion.z;
-    buffer[o + 6] = body.quaternion.w;
-  }
+      cannonBuffer[o] = body.position.x;
+      cannonBuffer[o + 1] = body.position.y;
+      cannonBuffer[o + 2] = body.position.z;
+      cannonBuffer[o + 3] = body.quaternion.x;
+      cannonBuffer[o + 4] = body.quaternion.y;
+      cannonBuffer[o + 5] = body.quaternion.z;
+      cannonBuffer[o + 6] = body.quaternion.w;
+    }
 
-  self.postMessage(
-    { type: "transforms", data: buffer } satisfies WorkerOutboundMessage,
-    { transfer: [buffer.buffer] },
-  );
+    self.postMessage(
+      {
+        type: "transforms",
+        data: cannonBuffer,
+      } satisfies WorkerOutboundMessage,
+      { transfer: [cannonBuffer.buffer] },
+    );
+  };
 }
 
 // ─── Message dispatcher ───────────────────────────────────────────────────────
 
+const physicsForWorker = new PhysicsWorldWorker();
+
 self.onmessage = ({ data }: MessageEvent<WorkerInboundMessage>) => {
   switch (data.type) {
     case "addBody":
-      handleAddBody(data);
+      physicsForWorker.addBody(data);
       break;
     case "removeBody":
-      handleRemoveBody(data.id);
+      physicsForWorker.removeBody(data.id);
       break;
     case "setGravity":
-      world.gravity.set(data.x, data.y, data.z);
+      physicsForWorker.setGravity(data.x, data.y, data.z);
       break;
     case "step":
-      handleStep(data.delta);
+      physicsForWorker.step(data.delta);
       break;
     default: {
       const _exhaustive: never = data;
