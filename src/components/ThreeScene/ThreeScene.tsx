@@ -10,6 +10,8 @@ import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 // ? Importing the model as a URL (with the ?url suffix) for Vite to handle the import
 import duckModel from "@public/models/Duck/glTF-Embedded/Duck.gltf?url";
+import flightHelmetModel from "@public/models/FlightHelmet/glTF/FlightHelmet.gltf?url";
+import foxModel from "@public/models/Fox/glTF-Embedded/Fox.gltf?url";
 
 import GUI from "lil-gui";
 
@@ -87,7 +89,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // TODO: Add the loading manager from the loadTextures function
     const gltfLoader = new GLTFLoader();
 
-    const modelsToLoad = [duckModel];
+    const modelsToLoad = [duckModel, flightHelmetModel, foxModel];
 
     // ? Loading the models concurrently
     const loadedModels = await Promise.all(
@@ -272,7 +274,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
-      const [gltfModel]: GLTF[] = await loadGltfModel();
+      const [duckModel, flightHelmetModel, foxModel]: GLTF[] =
+        await loadGltfModel();
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
@@ -283,7 +286,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       scene.add(ambientLight, directionalLight, floor, axisHelper, lightHelper);
       scene.add(camera);
-      scene.add(gltfModel.scene);
+      scene.add(foxModel.scene);
 
       const abortController = new AbortController();
 
