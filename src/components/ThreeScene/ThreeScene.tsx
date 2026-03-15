@@ -286,7 +286,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       scene.add(ambientLight, directionalLight, floor, axisHelper, lightHelper);
       scene.add(camera);
-      scene.add(foxModel.scene);
+      scene.add(flightHelmetModel.scene);
 
       const abortController = new AbortController();
 
