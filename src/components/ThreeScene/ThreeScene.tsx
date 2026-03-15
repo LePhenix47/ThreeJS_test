@@ -75,9 +75,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createCamera(aspectRatio: number) {
     const fov = 75;
     const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
-    camera.position.x = 4;
-    camera.position.y = 2;
-    camera.position.z = 5;
+    camera.position.set(4, 2, 5);
 
     return camera;
   }
