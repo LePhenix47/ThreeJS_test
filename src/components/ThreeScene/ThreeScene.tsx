@@ -7,11 +7,14 @@ import { useCallback, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
 // ? Importing the model as a URL (with the ?url suffix) for Vite to handle the import
 import duckModel from "@public/models/Duck/glTF-Embedded/Duck.gltf?url";
 import flightHelmetModel from "@public/models/FlightHelmet/glTF/FlightHelmet.gltf?url";
 import foxModel from "@public/models/Fox/glTF-Embedded/Fox.gltf?url";
+
+import duckDracoModel from "@public/models/Duck/glTF-Draco/DuckCM.png?url";
 
 import GUI from "lil-gui";
 
@@ -88,6 +91,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   async function loadGltfModel(): Promise<GLTF[]> {
     // TODO: Add the loading manager from the loadTextures function
     const gltfLoader = new GLTFLoader();
+    const dracoGltfLoader = new DRACOLoader();
+    dracoGltfLoader.setDecoderPath("/draco/");
+
+    gltfLoader.setDRACOLoader(dracoGltfLoader);
 
     const modelsToLoad = [duckModel, flightHelmetModel, foxModel];
 
