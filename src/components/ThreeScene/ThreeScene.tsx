@@ -6,7 +6,9 @@ import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+
+// ? Importing the model as a URL (with the ?url suffix) for Vite to handle the import
 import duckModel from "@public/models/Duck/glTF-Embedded/Duck.gltf?url";
 
 import GUI from "lil-gui";
@@ -81,15 +83,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     }
   }
 
-  async function loadGltfModel() {
+  async function loadGltfModel(): Promise<GLTF[]> {
     // TODO: Add the loading manager from the loadTextures function
     const gltfLoader = new GLTFLoader();
 
     const modelsToLoad = [duckModel];
 
+    // ? Loading the models concurrently
     const loadedModels = await Promise.all(
       modelsToLoad.map((model) => gltfLoader.loadAsync(model)),
     );
+
+    return loadedModels;
   }
 
   function createScene() {
@@ -256,7 +261,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   const setupThreeScene = useCallback(
-    (canvas: HTMLCanvasElement) => {
+    async (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
       if (!parent) return null;
 
@@ -267,6 +272,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
+      const [gltfModel]: GLTF[] = await loadGltfModel();
+
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
       const { ambientLight, directionalLight } = createLights();
@@ -276,6 +283,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       scene.add(ambientLight, directionalLight, floor, axisHelper, lightHelper);
       scene.add(camera);
+      scene.add(gltfModel.scene);
 
       const abortController = new AbortController();
 
@@ -317,9 +325,40 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    /*
+     * useEffect callbacks must be synchronous — returning a Promise would
+     * cause React to ignore the cleanup entirely. A named async function
+     * lets us use await while keeping the effect callback itself sync.
+     */
+    let cleanup: (() => void) | undefined;
 
-    return setupThreeScene(canvasRef.current) || undefined;
+    /*
+     * Guards against the race condition where the component unmounts before
+     * the async setup resolves. Without this, `cleanup` would be assigned
+     * after unmount and never called — leaking the renderer, RAF loop, etc.
+     */
+    let mounted = true;
+
+    async function setup() {
+      if (!canvasRef.current) return;
+
+      const result = await setupThreeScene(canvasRef.current);
+
+      if (!mounted || !result) return;
+      cleanup = result;
+    }
+
+    setup();
+
+    /*
+     * React calls this synchronous return on unmount. If setup hasn't
+     * resolved yet, `mounted = false` tells it to skip assigning cleanup;
+     * if it already resolved, cleanup() tears everything down normally.
+     */
+    return () => {
+      mounted = false;
+      cleanup?.();
+    };
   }, [setupThreeScene]);
 
   return (
