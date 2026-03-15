@@ -31,6 +31,8 @@ type CameraState = {
   target: THREE.Vector3Like;
 };
 
+type ModelName = "duck" | "flightHelmet" | "fox";
+
 type ThreeSceneProps = {
   className?: string;
 };
@@ -222,23 +224,109 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function setupGUI(
     axisHelper: THREE.AxesHelper,
     lightHelper: THREE.DirectionalLightHelper,
+    models: Record<ModelName, GLTF>,
+    mixerRef: { current: THREE.AnimationMixer | null },
   ): () => void {
-    const gui = new GUI({ title: "Helpers" });
+    const gui = new GUI({ title: "Scene Controls" });
 
-    const state = { axisHelper: true, lightHelper: true };
+    const modelNames = Object.keys(models) as ModelName[];
 
-    gui
-      .add(state, "axisHelper")
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    const helpersFolder = gui.addFolder("Helpers");
+    const helpersState = { axisHelper: true, lightHelper: true };
+
+    helpersFolder
+      .add(helpersState, "axisHelper")
       .name("Axis Helper")
-      .onChange((value: boolean) => {
-        axisHelper.visible = value;
+      .onChange((visible: boolean) => {
+        axisHelper.visible = visible;
       });
-    gui
-      .add(state, "lightHelper")
+
+    helpersFolder
+      .add(helpersState, "lightHelper")
       .name("Light Helper")
-      .onChange((value: boolean) => {
-        lightHelper.visible = value;
+      .onChange((visible: boolean) => {
+        lightHelper.visible = visible;
       });
+
+    // ─── Models ───────────────────────────────────────────────────────────────
+
+    const modelsFolder = gui.addFolder("Models");
+    const modelsState = { model: "fox" as ModelName, animation: "" };
+
+    /*
+     * Returns the animation clip names for the given model.
+     * Static models with no clips fall back to ["(none)"].
+     */
+    function getAnimationOptions(modelName: ModelName): string[] {
+      const { animations } = models[modelName];
+
+      if (!animations.length) {
+        return ["(none)"];
+      }
+      return animations.map(({ name }) => name);
+    }
+
+    /*
+     * `animationController` is declared before `setModel` because `setModel`
+     * closes over it to repopulate the dropdown on model switch.
+     * It is safe to reference before assignment here because `setModel` is
+     * only ever called after the GUI is fully built — either by user interaction
+     * or by the explicit `setModel("fox")` init call at the bottom.
+     */
+    let animationController!: ReturnType<typeof modelsFolder.add>;
+
+    function setModel(modelName: ModelName): void {
+      /* Hide every model then reveal only the selected one */
+      for (const name of modelNames) {
+        models[name].scene.visible = false;
+      }
+      models[modelName].scene.visible = true;
+
+      /* Tear down the previous mixer before creating a new one */
+      mixerRef.current?.stopAllAction();
+
+      const { animations } = models[modelName];
+
+      if (animations.length > 0) {
+        mixerRef.current = new THREE.AnimationMixer(models[modelName].scene);
+        const [firstClip] = animations;
+        mixerRef.current.clipAction(firstClip).play();
+        modelsState.animation = firstClip.name;
+      } else {
+        mixerRef.current = null;
+        modelsState.animation = "(none)";
+      }
+
+      /* Repopulate the animation dropdown for the newly selected model */
+      animationController
+        .options(getAnimationOptions(modelName))
+        .setValue(modelsState.animation);
+    }
+
+    modelsFolder
+      .add(modelsState, "model", modelNames)
+      .name("Model")
+      .onChange(setModel);
+
+    animationController = modelsFolder
+      .add(modelsState, "animation", getAnimationOptions("fox"))
+      .name("Animation")
+      .onChange((clipName: string) => {
+        if (!mixerRef.current || clipName === "(none)") return;
+
+        const clip = models[modelsState.model].animations.find(
+          ({ name }) => name === clipName,
+        );
+        if (!clip) return;
+
+        mixerRef.current.stopAllAction();
+        mixerRef.current.clipAction(clip).play();
+      });
+
+    /* Initialize with the default model */
+    setModel("fox");
 
     return () => gui.destroy();
   }
@@ -269,19 +357,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
-  function createAnimationMixer(gltfModel: GLTF) {
-    const mixer = new THREE.AnimationMixer(gltfModel.scene);
-
-    const [idleAnimation, walkAnimation, runAnimation]: THREE.AnimationClip[] =
-      gltfModel.animations;
-
-    const action: THREE.AnimationAction = mixer.clipAction(walkAnimation);
-    action.play();
-    console.log(action);
-
-    return mixer;
-  }
-
   const setupThreeScene = useCallback(
     async (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
@@ -294,24 +369,41 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
-      const [duckModel, flightHelmetModel, foxModel]: GLTF[] =
+      const [loadedDuck, loadedFlightHelmet, loadedFox]: GLTF[] =
         await loadGltfModel();
 
-      const mixer = createAnimationMixer(foxModel);
+      const foxScale = 1 / 40;
+      loadedFox.scene.scale.set(foxScale, foxScale, foxScale);
 
-      const foxScale: number = 1 / 40;
-      foxModel.scene.scale.set(foxScale, foxScale, foxScale);
+      const models: Record<ModelName, GLTF> = {
+        duck: loadedDuck,
+        flightHelmet: loadedFlightHelmet,
+        fox: loadedFox,
+      };
+
+      /*
+       * All model scenes are added upfront — visibility is toggled by the GUI
+       * rather than add/remove, to avoid re-uploading geometry to the GPU on
+       * every switch.
+       */
+      for (const { scene: modelScene } of Object.values(models)) {
+        modelScene.visible = false;
+        scene.add(modelScene);
+      }
+
+      const mixerRef: { current: THREE.AnimationMixer | null } = {
+        current: null,
+      };
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
       const floor = createFloor();
-      const cleanupGUI = setupGUI(axisHelper, lightHelper);
+      const cleanupGUI = setupGUI(axisHelper, lightHelper, models, mixerRef);
 
       scene.add(ambientLight, directionalLight, floor, axisHelper, lightHelper);
       scene.add(camera);
-      scene.add(foxModel.scene);
 
       const abortController = new AbortController();
 
@@ -325,7 +417,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
         const delta: number = timer.getDelta();
 
-        mixer.update(delta);
+        mixerRef.current?.update(delta);
 
         animationIdRef.current = requestAnimationFrame(animate);
       }
