@@ -7,9 +7,18 @@ import { useCallback, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
+import { WebStorage } from "@lephenix47/webstorage-utility";
+
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
+
+const CAMERA_STATE_KEY = "three-camera-state";
+
+type CameraState = {
+  position: THREE.Vector3Like;
+  target: THREE.Vector3Like;
+};
 
 type ThreeSceneProps = {
   className?: string;
@@ -80,6 +89,50 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return camera;
   }
 
+  function setupCameraStatePersistence(
+    camera: THREE.PerspectiveCamera,
+    controls: OrbitControls | null,
+  ): () => void {
+    if (!controls) return () => {};
+
+    const savedCameraState = WebStorage.getKey<CameraState>(
+      CAMERA_STATE_KEY,
+      true,
+    );
+
+    if (savedCameraState) {
+      const { position, target } = savedCameraState;
+      camera.position.set(position.x, position.y, position.z);
+      controls.target.set(target.x, target.y, target.z);
+      controls.update();
+    }
+
+    let saveDebounceTimer: ReturnType<typeof setTimeout>;
+    function saveCameraState() {
+      if (!controls) return;
+
+      clearTimeout(saveDebounceTimer);
+      saveDebounceTimer = setTimeout(() => {
+        const { x: px, y: py, z: pz } = camera.position;
+        const { x: tx, y: ty, z: tz } = controls.target;
+        WebStorage.setKey(
+          CAMERA_STATE_KEY,
+          {
+            position: { x: px, y: py, z: pz },
+            target: { x: tx, y: ty, z: tz },
+          } satisfies CameraState,
+          true,
+        );
+      }, 150);
+    }
+    controls.addEventListener("change", saveCameraState);
+
+    return () => {
+      clearTimeout(saveDebounceTimer);
+      controls.removeEventListener("change", saveCameraState);
+    };
+  }
+
   function createRenderer(
     canvas: HTMLCanvasElement,
     width: number,
@@ -122,6 +175,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
+      const cleanupCameraState = setupCameraStatePersistence(camera, controls);
+
       const axisHelper = new THREE.AxesHelper(3);
 
       scene.add(axisHelper);
@@ -151,6 +206,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       });
 
       return () => {
+        cleanupCameraState();
         cancelAnimation();
         controls.dispose();
         abortController.abort();
