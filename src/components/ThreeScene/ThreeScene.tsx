@@ -6,6 +6,9 @@ import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import duckModel from "@public/models/Duck/glTF-Embedded/Duck.gltf?url";
+
 import GUI from "lil-gui";
 
 import { WebStorage } from "@lephenix47/webstorage-utility";
@@ -78,13 +81,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     }
   }
 
+  async function loadGltfModel() {
+    // TODO: Add the loading manager from the loadTextures function
+    const gltfLoader = new GLTFLoader();
+
+    const modelsToLoad = [duckModel];
+
+    const loadedModels = await Promise.all(
+      modelsToLoad.map((model) => gltfLoader.loadAsync(model)),
+    );
+  }
+
   function createScene() {
     return new THREE.Scene();
   }
 
   function createCamera(aspectRatio: number) {
     const fov = 75;
-    const camera = new THREE.PerspectiveCamera(fov, aspectRatio);
+    const camera = new THREE.PerspectiveCamera(fov, aspectRatio, 0.1, 4_000);
     camera.position.set(4, 2, 5);
 
     return camera;
@@ -175,7 +189,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     for (const key in lightCameraProperties) {
       const typedKey = key as keyof typeof lightCameraProperties;
-      directionalLight.shadow.camera[typedKey] = lightCameraProperties[typedKey];
+      directionalLight.shadow.camera[typedKey] =
+        lightCameraProperties[typedKey];
     }
 
     directionalLight.position.set(5, 5, 5);
@@ -198,12 +213,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const state = { axisHelper: true, lightHelper: true };
 
-    gui.add(state, "axisHelper").name("Axis Helper").onChange((value: boolean) => {
-      axisHelper.visible = value;
-    });
-    gui.add(state, "lightHelper").name("Light Helper").onChange((value: boolean) => {
-      lightHelper.visible = value;
-    });
+    gui
+      .add(state, "axisHelper")
+      .name("Axis Helper")
+      .onChange((value: boolean) => {
+        axisHelper.visible = value;
+      });
+    gui
+      .add(state, "lightHelper")
+      .name("Light Helper")
+      .onChange((value: boolean) => {
+        lightHelper.visible = value;
+      });
 
     return () => gui.destroy();
   }
