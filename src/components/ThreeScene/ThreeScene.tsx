@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import GUI from "lil-gui";
 
 import { WebStorage } from "@lephenix47/webstorage-utility";
 
@@ -153,6 +154,76 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return renderer;
   }
 
+  function createLights() {
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.radius = 4;
+
+    const shadowMapSize = 2 ** 10;
+    directionalLight.shadow.mapSize.set(shadowMapSize, shadowMapSize);
+
+    const lightCameraProperties = {
+      left: -7,
+      right: 7,
+      top: 7,
+      bottom: -7,
+      near: 0.1,
+      far: 15,
+    };
+
+    for (const key in lightCameraProperties) {
+      const typedKey = key as keyof typeof lightCameraProperties;
+      directionalLight.shadow.camera[typedKey] = lightCameraProperties[typedKey];
+    }
+
+    directionalLight.position.set(5, 5, 5);
+
+    return { ambientLight, directionalLight };
+  }
+
+  function createHelpers(directionalLight: THREE.DirectionalLight) {
+    const axisHelper = new THREE.AxesHelper(3);
+    const lightHelper = new THREE.DirectionalLightHelper(directionalLight);
+
+    return { axisHelper, lightHelper };
+  }
+
+  function setupGUI(
+    axisHelper: THREE.AxesHelper,
+    lightHelper: THREE.DirectionalLightHelper,
+  ): () => void {
+    const gui = new GUI({ title: "Helpers" });
+
+    const state = { axisHelper: true, lightHelper: true };
+
+    gui.add(state, "axisHelper").name("Axis Helper").onChange((value: boolean) => {
+      axisHelper.visible = value;
+    });
+    gui.add(state, "lightHelper").name("Light Helper").onChange((value: boolean) => {
+      lightHelper.visible = value;
+    });
+
+    return () => gui.destroy();
+  }
+
+  function createFloor() {
+    const floorSize = 2 ** 12;
+    const floorGeometry = new THREE.PlaneGeometry(floorSize, floorSize);
+    const floorMaterial = new THREE.MeshStandardMaterial({
+      color: "#777777",
+      metalness: 0.3,
+      roughness: 0.4,
+    });
+
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI * 0.5;
+    floor.receiveShadow = true;
+
+    return floor;
+  }
+
   function createOrbitControls(
     camera: THREE.PerspectiveCamera,
     canvas: HTMLCanvasElement,
@@ -177,9 +248,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
-      const axisHelper = new THREE.AxesHelper(3);
+      const { ambientLight, directionalLight } = createLights();
+      const { axisHelper, lightHelper } = createHelpers(directionalLight);
+      const floor = createFloor();
+      const cleanupGUI = setupGUI(axisHelper, lightHelper);
 
-      scene.add(axisHelper);
+      scene.add(ambientLight, directionalLight, floor, axisHelper, lightHelper);
       scene.add(camera);
 
       const abortController = new AbortController();
@@ -207,6 +281,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       return () => {
         cleanupCameraState();
+        cleanupGUI();
         cancelAnimation();
         controls.dispose();
         abortController.abort();
