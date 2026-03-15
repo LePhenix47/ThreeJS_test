@@ -269,6 +269,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
+  function createAnimationMixer(gltfModel: GLTF) {
+    const mixer = new THREE.AnimationMixer(gltfModel.scene);
+
+    const [idleAnimation, walkAnimation, runAnimation]: THREE.AnimationClip[] =
+      gltfModel.animations;
+
+    const action: THREE.AnimationAction = mixer.clipAction(walkAnimation);
+    action.play();
+    console.log(action);
+
+    return mixer;
+  }
+
   const setupThreeScene = useCallback(
     async (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
@@ -284,6 +297,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const [duckModel, flightHelmetModel, foxModel]: GLTF[] =
         await loadGltfModel();
 
+      const mixer = createAnimationMixer(foxModel);
+
+      const foxScale: number = 1 / 40;
+      foxModel.scene.scale.set(foxScale, foxScale, foxScale);
+
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
       const { ambientLight, directionalLight } = createLights();
@@ -293,13 +311,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       scene.add(ambientLight, directionalLight, floor, axisHelper, lightHelper);
       scene.add(camera);
-      scene.add(flightHelmetModel.scene);
+      scene.add(foxModel.scene);
 
       const abortController = new AbortController();
+
+      const timer = new THREE.Timer();
 
       function animate() {
         controls.update();
         renderer.render(scene, camera);
+
+        timer.update();
+
+        const delta: number = timer.getDelta();
+
+        mixer.update(delta);
+
         animationIdRef.current = requestAnimationFrame(animate);
       }
       animate();
