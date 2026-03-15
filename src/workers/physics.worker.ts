@@ -51,7 +51,36 @@ class PhysicsWorldWorker {
 
   constructor() {
     this.world = this.initWorld();
+
+    this.initWorker();
   }
+
+  private initWorker = () => {
+    self.onmessage = ({ data }: MessageEvent<WorkerInboundMessage>) => {
+      switch (data.type) {
+        case "addBody": {
+          this.addBody(data);
+          break;
+        }
+        case "removeBody": {
+          this.removeBody(data.id);
+          break;
+        }
+        case "setGravity": {
+          this.setGravity(data.x, data.y, data.z);
+          break;
+        }
+        case "step": {
+          this.step(data.delta);
+          break;
+        }
+        default: {
+          const _exhaustive: never = data;
+          console.warn("[physics.worker] Unknown message type:", _exhaustive);
+        }
+      }
+    };
+  };
 
   // ─── World setup ────────────────────────────────────────────────────────────
 
@@ -259,25 +288,4 @@ class PhysicsWorldWorker {
 
 // ─── Message dispatcher ───────────────────────────────────────────────────────
 
-const physicsForWorker = new PhysicsWorldWorker();
-
-self.onmessage = ({ data }: MessageEvent<WorkerInboundMessage>) => {
-  switch (data.type) {
-    case "addBody":
-      physicsForWorker.addBody(data);
-      break;
-    case "removeBody":
-      physicsForWorker.removeBody(data.id);
-      break;
-    case "setGravity":
-      physicsForWorker.setGravity(data.x, data.y, data.z);
-      break;
-    case "step":
-      physicsForWorker.step(data.delta);
-      break;
-    default: {
-      const _exhaustive: never = data;
-      console.warn("[physics.worker] Unknown message type:", _exhaustive);
-    }
-  }
-};
+new PhysicsWorldWorker();
