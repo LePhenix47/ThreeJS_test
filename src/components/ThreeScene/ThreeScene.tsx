@@ -272,6 +272,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return meshes;
   }
 
+  function createRaycaster() {
+    const raycaster = new THREE.Raycaster();
+
+    const rayOrigin = new THREE.Vector3(-3, 0, 0);
+
+    const rayDirection = new THREE.Vector3(10, 0, 0);
+
+    raycaster.set(rayOrigin, rayDirection);
+    // ? Sets the value to 1 while keeping its direction
+    rayDirection.normalize();
+
+    return { raycaster, rayOrigin, rayDirection };
+  }
+
   function createOrbitControls(
     camera: THREE.PerspectiveCamera,
     canvas: HTMLCanvasElement,
@@ -280,6 +294,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     controls.enableDamping = true;
 
     return controls;
+  }
+
+  function checkIntersections(
+    raycaster: THREE.Raycaster,
+    objects: THREE.Object3D[],
+  ) {
+    const intersects = raycaster.intersectObjects(objects);
+    console.log(intersects);
   }
 
   const setupThreeScene = useCallback(
@@ -298,11 +320,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
+
+      const { raycaster, rayOrigin, rayDirection } = createRaycaster();
+      console.log(raycaster, rayOrigin, rayDirection);
+
       const cleanupGUI = setupGUI(axisHelper, lightHelper, controls);
-      const spheres = createSpheres();
+      const [sphere1, sphere2, sphere3] = createSpheres();
+
+      checkIntersections(raycaster, [sphere1, sphere2, sphere3]);
 
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
-      scene.add(...spheres);
+      scene.add(sphere1, sphere2, sphere3);
       scene.add(camera);
 
       const abortController = new AbortController();
