@@ -26,6 +26,19 @@ type ThreeSceneProps = {
   className?: string;
 };
 
+const guiState = {
+  // * Helpers
+  axisHelper: true,
+  lightHelper: true,
+  // * Floor settings
+  floorColor: "#777777",
+  floorWireframe: false,
+  floorSubdivisions: 1,
+  floorSide: "double",
+};
+
+type GUIState = typeof guiState;
+
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
@@ -189,16 +202,65 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { axisHelper, lightHelper };
   }
 
+  function addFloorSettings(
+    gui: GUI,
+    floor: ReturnType<typeof createFloor>,
+    registry: GUIStateRegistry<GUIState>,
+  ): void {
+    const sideMap = new Map(
+      Object.entries({
+        front: THREE.FrontSide,
+        back: THREE.BackSide,
+        double: THREE.DoubleSide,
+      }),
+    );
+
+    registry
+      .bind("floorColor", (v) => {
+        floor.material.color.set(v);
+      })
+      .bind("floorWireframe", (v) => {
+        floor.material.wireframe = v;
+      })
+      .bind("floorSide", (v) => {
+        floor.material.side = sideMap.get(v)!;
+      });
+
+    const { state } = registry;
+
+    const floorFolder = gui.addFolder("Floor");
+    floorFolder.add(state, "floorWireframe").name("Wireframe");
+    floorFolder.addColor(state, "floorColor").name("Color");
+    floorFolder
+      .add(state, "floorSide", ["front", "back", "double"])
+      .name("Side");
+    floorFolder
+      .add(state, "floorSubdivisions", 1, 100, 1)
+      .name("Subdivisions")
+      .onFinishChange(
+        registry.bindFinal("floorSubdivisions", (segments) => {
+          floor.mesh.geometry.dispose();
+          floor.mesh.geometry = new THREE.PlaneGeometry(
+            floor.size,
+            floor.size,
+            segments,
+            segments,
+          );
+        }),
+      );
+  }
+
   function setupGUI(
     axisHelper: THREE.AxesHelper,
     lightHelper: THREE.DirectionalLightHelper,
+    floor: ReturnType<typeof createFloor>,
   ): () => void {
-    const gui = new GUI({ title: "Helpers" });
+    const gui = new GUI({ title: "Scene Controls" });
 
-    const registry = new GUIStateRegistry("three-gui-state", {
-      axisHelper: true,
-      lightHelper: true,
-    });
+    const registry = new GUIStateRegistry<GUIState>(
+      "three-gui-state",
+      guiState,
+    );
 
     registry
       .bind("axisHelper", (v) => {
@@ -210,8 +272,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const { state } = registry;
 
-    gui.add(state, "axisHelper").name("Axis Helper");
-    gui.add(state, "lightHelper").name("Light Helper");
+    const helpersFolder = gui.addFolder("Helpers");
+    helpersFolder.add(state, "axisHelper").name("Axis Helper");
+    helpersFolder.add(state, "lightHelper").name("Light Helper");
+
+    addFloorSettings(gui, floor, registry);
 
     return () => {
       registry.dispose();
@@ -220,19 +285,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   function createFloor() {
-    const floorSize = 2 ** 12;
-    const floorGeometry = new THREE.PlaneGeometry(floorSize, floorSize);
-    const floorMaterial = new THREE.MeshStandardMaterial({
+    const size = 2 ** 12;
+    const material = new THREE.MeshStandardMaterial({
       color: "#777777",
       metalness: 0.3,
       roughness: 0.4,
     });
 
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -Math.PI * 0.5;
-    floor.receiveShadow = true;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size, size), material);
+    mesh.rotation.x = -Math.PI * 0.5;
+    mesh.receiveShadow = true;
 
-    return floor;
+    return { mesh, material, size };
   }
 
   function createOrbitControls(
@@ -262,9 +326,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
       const floor = createFloor();
-      const cleanupGUI = setupGUI(axisHelper, lightHelper);
+      const cleanupGUI = setupGUI(axisHelper, lightHelper, floor);
 
-      scene.add(ambientLight, directionalLight, floor, axisHelper, lightHelper);
+      scene.add(
+        ambientLight,
+        directionalLight,
+        floor.mesh,
+        axisHelper,
+        lightHelper,
+      );
       scene.add(camera);
 
       const abortController = new AbortController();
