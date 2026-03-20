@@ -231,11 +231,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const { state } = registry;
 
     const floorFolder = gui.addFolder("Floor");
+
+    // * Wireframe
     floorFolder.add(state, "floorWireframe").name("Wireframe");
+
+    // * Color with color input
     floorFolder.addColor(state, "floorColor").name("Color");
+
+    // * Side with dropdown
     floorFolder
       .add(state, "floorSide", ["front", "back", "double"])
       .name("Side");
+
+    // * Subdivisions with slider and complex logic
     floorFolder
       .add(state, "floorSubdivisions", 1, 100, 1)
       .name("Subdivisions")
