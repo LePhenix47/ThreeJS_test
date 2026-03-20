@@ -10,6 +10,8 @@ import GUI from "lil-gui";
 
 import { WebStorage } from "@lephenix47/webstorage-utility";
 
+import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
@@ -191,17 +193,37 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     lightHelper: THREE.DirectionalLightHelper,
   ): () => void {
     const gui = new GUI({ title: "Helpers" });
+    const registry = new GUIStateRegistry("three-gui-state");
 
-    const state = { axisHelper: true, lightHelper: true };
+    const state = {
+      axisHelper: registry.register("axisHelper", true, (v) => {
+        axisHelper.visible = v;
+      }),
+      lightHelper: registry.register("lightHelper", true, (v) => {
+        lightHelper.visible = v;
+      }),
+    };
 
-    gui.add(state, "axisHelper").name("Axis Helper").onChange((value: boolean) => {
-      axisHelper.visible = value;
-    });
-    gui.add(state, "lightHelper").name("Light Helper").onChange((value: boolean) => {
-      lightHelper.visible = value;
-    });
+    gui
+      .add(state, "axisHelper")
+      .name("Axis Helper")
+      .onChange((value: boolean) => {
+        axisHelper.visible = value;
+        registry.update("axisHelper", value);
+      });
 
-    return () => gui.destroy();
+    gui
+      .add(state, "lightHelper")
+      .name("Light Helper")
+      .onChange((value: boolean) => {
+        lightHelper.visible = value;
+        registry.update("lightHelper", value);
+      });
+
+    return () => {
+      registry.dispose();
+      gui.destroy();
+    };
   }
 
   function createFloor() {
