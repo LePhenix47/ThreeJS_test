@@ -280,19 +280,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     function setModel(modelName: ModelName): void {
       /* Hide every model then reveal only the selected one */
       for (const name of modelNames) {
-        models[name].scene.visible = false;
+        const gltfModel: GLTF = models[name];
+        gltfModel.scene.visible = false;
       }
-      models[modelName].scene.visible = true;
+
+      const currentlySelectedModel: GLTF = models[modelName];
+      currentlySelectedModel.scene.visible = true;
 
       /* Tear down the previous mixer before creating a new one */
       mixerRef.current?.stopAllAction();
 
-      const { animations } = models[modelName];
+      if (currentlySelectedModel.animations.length > 0) {
+        mixerRef.current = new THREE.AnimationMixer(
+          currentlySelectedModel.scene,
+        );
+        const [firstClip] = currentlySelectedModel.animations;
 
-      if (animations.length > 0) {
-        mixerRef.current = new THREE.AnimationMixer(models[modelName].scene);
-        const [firstClip] = animations;
-        mixerRef.current.clipAction(firstClip).play();
+        const mixer: THREE.AnimationMixer = mixerRef.current;
+
+        mixer.clipAction(firstClip).play();
         modelsState.animation = firstClip.name;
       } else {
         mixerRef.current = null;
