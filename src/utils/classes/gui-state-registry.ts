@@ -3,8 +3,7 @@ import { WebStorage } from "@lephenix47/webstorage-utility";
 type Primitive = string | number | boolean;
 
 function isPrimitive(value: unknown): value is Primitive {
-  const type = typeof value;
-  return type === "string" || type === "number" || type === "boolean";
+  return ["string", "number", "boolean"].includes(typeof value);
 }
 
 class GUIStateRegistry<T extends Record<string, Primitive>> {
@@ -64,10 +63,19 @@ class GUIStateRegistry<T extends Record<string, Primitive>> {
 
     this.state = new Proxy(raw, {
       set: (target, key, value): boolean => {
-        if (typeof key !== "string") return Reflect.set(target, key, value);
+        // * Symbols can't be storage keys — let them pass through untouched
+        if (typeof key !== "string") {
+          return Reflect.set(target, key, value);
+        }
 
+        // * Write the new value to the underlying raw object using the Reflect API
         Reflect.set(target, key, value);
-        this.applyCallbacks.get(key)?.(value as Primitive);
+
+        // * Apply the value to the scene if a callback was registered for this key
+        const applyCallback = this.applyCallbacks.get(key);
+        applyCallback?.(value);
+
+        // * Schedule a debounced write to sessionStorage
         this.scheduleSave();
 
         return true;
