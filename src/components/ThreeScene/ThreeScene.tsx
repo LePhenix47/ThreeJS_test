@@ -43,9 +43,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
-  // ? loadTextures is a regular function, not a hook — use getState() to access the store directly
-  function loadTextures() {
-    // ? We're in a regular function so we can't use `useLoadingStore`
+  // * Regular function (not a hook) — uses getState() to access the store directly
+  function createLoadingManager(): THREE.LoadingManager {
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
     const loadingManager = new THREE.LoadingManager();
@@ -72,13 +71,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       setLoading(false);
     };
 
+    return loadingManager;
+  }
+
+  function loadTextures(loadingManager: THREE.LoadingManager) {
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
     const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [];
 
     for (const colorLoadedTexture of colorLoadedTextures) {
       if (!colorLoadedTexture) continue;
-
       colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
     }
 
