@@ -32,6 +32,7 @@ const guiState = {
   axisHelper: true,
   lightHelper: true,
   // * Floor settings
+  // ? Do git cherry-pick 4894aa9f8fb028fc9d880dd39b5a03ad56561564 to remove all floor related stuff from this file
   floorColor: "#777777",
   floorWireframe: false,
   floorSubdivisions: 1,
