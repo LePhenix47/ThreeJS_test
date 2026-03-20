@@ -257,6 +257,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   }
 
+  function createSpheres() {
+    const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+    const material = new THREE.MeshStandardMaterial({ color: "red" });
+
+    const positions: number[] = [-2, 0, 2];
+
+    const meshes = positions.map((x) => {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.x = x;
+      return mesh;
+    });
+
+    return meshes;
+  }
+
   function createOrbitControls(
     camera: THREE.PerspectiveCamera,
     canvas: HTMLCanvasElement,
@@ -284,8 +299,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
       const cleanupGUI = setupGUI(axisHelper, lightHelper, controls);
+      const spheres = createSpheres();
 
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
+      scene.add(...spheres);
       scene.add(camera);
 
       const abortController = new AbortController();
