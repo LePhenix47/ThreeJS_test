@@ -257,6 +257,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   }
 
+  function createOrbitControls(
+    camera: THREE.PerspectiveCamera,
+    canvas: HTMLCanvasElement,
+  ) {
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+
+    return controls;
+  }
+
   function createSpheres() {
     const geometry = new THREE.SphereGeometry(0.5, 16, 16);
     const material = new THREE.MeshStandardMaterial({ color: "red" });
@@ -284,16 +294,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     rayDirection.normalize();
 
     return { raycaster, rayOrigin, rayDirection };
-  }
-
-  function createOrbitControls(
-    camera: THREE.PerspectiveCamera,
-    canvas: HTMLCanvasElement,
-  ) {
-    const controls = new OrbitControls(camera, canvas);
-    controls.enableDamping = true;
-
-    return controls;
   }
 
   function checkIntersections(
