@@ -20,6 +20,7 @@ const CAMERA_STATE_KEY = "three-camera-state";
 
 type CameraState = {
   position: THREE.Vector3Like;
+  target: THREE.Vector3Like;
 };
 
 type ThreeSceneProps = {
@@ -110,6 +111,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     camera: THREE.PerspectiveCamera,
     controls: OrbitControls | null,
   ): () => void {
+    /*
+    TODO: If the project starts to lag, we may need to set up a signal system to save the camera state
+    TODO: For instance when the user changes the camera position:
+    TODO: → fires signal 
+    TODO: → signal saves the camera state + starts debouncing the saving 
+    TODO: → stop moving the camera 
+    TODO: → signal saves the camera state and ends debouncing    
+    */
     if (!controls) return () => {};
 
     const savedCameraState = WebStorage.getKey<CameraState>(
@@ -118,8 +127,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     );
 
     if (savedCameraState) {
-      const { position } = savedCameraState;
+      const { position, target } = savedCameraState;
       camera.position.set(position.x, position.y, position.z);
+      if (target) {
+        controls.target.set(target.x, target.y, target.z);
+      }
+
       controls.update();
     }
 
@@ -130,10 +143,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       clearTimeout(saveDebounceTimer);
       saveDebounceTimer = setTimeout(() => {
         const { x: px, y: py, z: pz } = camera.position;
+        const { x: tx, y: ty, z: tz } = controls.target;
         WebStorage.setKey(
           CAMERA_STATE_KEY,
           {
             position: { x: px, y: py, z: pz },
+            target: { x: tx, y: ty, z: tz },
           } satisfies CameraState,
           true,
         );
@@ -264,6 +279,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     axisHelper: THREE.AxesHelper,
     lightHelper: THREE.DirectionalLightHelper,
     floor: ReturnType<typeof createFloor>,
+    controls: OrbitControls,
   ): () => void {
     const gui = new GUI({ title: "Scene Controls" });
 
@@ -285,6 +301,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
     helpersFolder.add(state, "lightHelper").name("Light Helper");
+    helpersFolder
+      .add(
+        {
+          resetPivot: () => {
+            controls.target.set(0, 0, 0);
+            controls.update();
+          },
+        },
+        "resetPivot",
+      )
+      .name("Reset Camera Pivot");
 
     addFloorSettings(gui, floor, registry);
 
@@ -336,7 +363,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
       const floor = createFloor();
-      const cleanupGUI = setupGUI(axisHelper, lightHelper, floor);
+      const cleanupGUI = setupGUI(axisHelper, lightHelper, floor, controls);
 
       scene.add(
         ambientLight,
