@@ -173,7 +173,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     for (const key in lightCameraProperties) {
       const typedKey = key as keyof typeof lightCameraProperties;
-      directionalLight.shadow.camera[typedKey] = lightCameraProperties[typedKey];
+      directionalLight.shadow.camera[typedKey] =
+        lightCameraProperties[typedKey];
     }
 
     directionalLight.position.set(5, 5, 5);
@@ -193,32 +194,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     lightHelper: THREE.DirectionalLightHelper,
   ): () => void {
     const gui = new GUI({ title: "Helpers" });
-    const registry = new GUIStateRegistry("three-gui-state");
 
-    const state = {
-      axisHelper: registry.register("axisHelper", true, (v) => {
+    const registry = new GUIStateRegistry("three-gui-state", {
+      axisHelper: true,
+      lightHelper: true,
+    });
+
+    registry
+      .bind("axisHelper", (v) => {
         axisHelper.visible = v;
-      }),
-      lightHelper: registry.register("lightHelper", true, (v) => {
+      })
+      .bind("lightHelper", (v) => {
         lightHelper.visible = v;
-      }),
-    };
-
-    gui
-      .add(state, "axisHelper")
-      .name("Axis Helper")
-      .onChange((value: boolean) => {
-        axisHelper.visible = value;
-        registry.update("axisHelper", value);
       });
 
-    gui
-      .add(state, "lightHelper")
-      .name("Light Helper")
-      .onChange((value: boolean) => {
-        lightHelper.visible = value;
-        registry.update("lightHelper", value);
-      });
+    const { state } = registry;
+
+    gui.add(state, "axisHelper").name("Axis Helper");
+    gui.add(state, "lightHelper").name("Light Helper");
 
     return () => {
       registry.dispose();

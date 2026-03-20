@@ -2,97 +2,131 @@ import { WebStorage } from "@lephenix47/webstorage-utility";
 
 type Primitive = string | number | boolean;
 
-type RegistryEntry = {
-  value: Primitive;
-  onRestore: (value: Primitive) => void;
-};
-
 function isPrimitive(value: unknown): value is Primitive {
   const type = typeof value;
   return type === "string" || type === "number" || type === "boolean";
 }
 
-class GUIStateRegistry {
-  private readonly entries = new Map<string, RegistryEntry>();
-  private readonly savedValues: Record<string, unknown>;
+class GUIStateRegistry<T extends Record<string, Primitive>> {
+  /*
+   * The Proxy-wrapped state object — pass this directly to `gui.add()`.
+   *
+   * Every write lil-gui makes (e.g. `state.metalness = 0.7`) is intercepted
+   * by the `set` trap, which:
+   *   1. Applies the value to the scene via the registered callback.
+   *   2. Schedules a debounced save to sessionStorage.
+   *
+   * No `onChange` wiring needed — the Proxy handles everything centrally.
+   */
+  readonly state: T;
+
+  private readonly applyCallbacks = new Map<
+    string,
+    (value: Primitive) => void
+  >();
+
+  /*
+   * Callbacks registered via `bindFinal` — intentionally NOT in `applyCallbacks`
+   * so the Proxy trap never calls them on mid-drag writes. They are applied once
+   * on init (restore) and then only when lil-gui fires `onFinishChange`.
+   */
+  private readonly finalCallbacks = new Map<
+    string,
+    (value: Primitive) => void
+  >();
   private readonly storageKey: string;
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(storageKey: string) {
+  constructor(storageKey: string, defaults: T) {
     this.storageKey = storageKey;
 
     /*
-     * Read once on construction — all `register` calls then look up from this
-     * in-memory snapshot instead of hitting storage on every call.
+     * Merge saved values over defaults — if a saved value's type doesn't
+     * match the default (stale key after a refactor), fall back to the default
+     * silently rather than crashing.
      */
-    this.savedValues =
+    const saved =
       WebStorage.getKey<Record<string, unknown>>(storageKey, true) ?? {};
+
+    const raw = { ...defaults };
+
+    for (const key in defaults) {
+      const savedValue: unknown = saved[key];
+      if (
+        !isPrimitive(savedValue) ||
+        typeof savedValue !== typeof defaults[key]
+      ) {
+        continue;
+      }
+
+      raw[key] = savedValue as T[typeof key];
+    }
+
+    this.state = new Proxy(raw, {
+      set: (target, key, value): boolean => {
+        if (typeof key !== "string") return Reflect.set(target, key, value);
+
+        Reflect.set(target, key, value);
+        this.applyCallbacks.get(key)?.(value as Primitive);
+        this.scheduleSave();
+
+        return true;
+      },
+    });
   }
 
   /*
-   * Declares a persisted value.
+   * Registers an apply callback for a key and calls it immediately with the
+   * current value (which is already the saved value if one exists).
    *
-   * - Looks up any previously saved value for `key`.
-   * - Falls back to `defaultValue` if nothing is saved or the saved type
-   *   doesn't match (guards against stale state after a refactor).
-   * - Calls `onRestore` immediately so the scene reflects the saved state
-   *   before the GUI is even built.
-   * - Returns the resolved value so it can seed the GUI-bound params object
-   *   directly — the controller will display the correct value from the start.
+   * Returns `this` so calls can be chained:
+   *   registry
+   *     .bind("metalness", v => { material.metalness = v; })
+   *     .bind("roughness", v => { material.roughness = v; });
    */
-  register = <T extends Primitive>(
-    key: string,
-    defaultValue: T,
-    onRestore: (value: T) => void,
-  ): T => {
-    const saved: unknown = this.savedValues[key];
+  bind = <K extends keyof T & string>(
+    key: K,
+    apply: (value: T[K]) => void,
+  ): this => {
+    this.applyCallbacks.set(key, apply as (value: Primitive) => void);
 
-    /*
-     * Type-check the saved value against the default — if someone renames a
-     * param or changes its type, the stale saved value is silently discarded
-     * and the default takes over instead of crashing.
-     */
-    const value =
-      isPrimitive(saved) && typeof saved === typeof defaultValue
-        ? (saved as T)
-        : defaultValue;
-
-    this.entries.set(key, {
-      value,
-      onRestore: onRestore as (value: Primitive) => void,
-    });
-
-    onRestore(value);
-
-    return value;
+    const currentValue: T[K] = this.state[key];
+    apply(currentValue);
+    return this;
   };
 
   /*
-   * Call this inside each GUI `.onChange` handler after applying the value to
-   * the scene. Schedules a debounced write — only registered primitive keys
-   * are ever written, so functions, Three.js objects, etc. can't sneak in.
+   * Registers an expensive apply callback that should only fire when the user
+   * finishes interacting (e.g. geometry rebuilds, shader recompiles).
+   *
+   * - Applied once immediately on init so restored values take effect on load.
+   * - NOT called by the Proxy trap on mid-drag writes — only fires via lil-gui's
+   *   `onFinishChange`, which receives the returned callback directly:
+   *
+   *   gui.add(registry.state, "subdivisions")
+   *     .onFinishChange(registry.bindFinal("subdivisions", v => rebuildGeometry(v)));
    */
-  update = (key: string, value: Primitive): void => {
-    const entry = this.entries.get(key);
-    if (!entry) return;
+  bindFinal = <K extends keyof T & string>(
+    key: K,
+    apply: (value: T[K]) => void,
+  ): ((value: T[K]) => void) => {
+    this.finalCallbacks.set(key, apply as (value: Primitive) => void);
 
-    entry.value = value;
-    this.scheduleSave();
+    const currentValue: T[K] = this.state[key];
+    apply(currentValue);
+
+    return apply;
   };
 
   private scheduleSave = (): void => {
     clearTimeout(this.saveTimer);
 
     this.saveTimer = setTimeout(() => {
-      const data = Object.fromEntries(
-        [...this.entries.entries()].map(([key, { value }]) => [key, value]),
-      );
-
-      WebStorage.setKey(this.storageKey, data, true);
+      WebStorage.setKey(this.storageKey, { ...this.state }, true);
     }, 150);
   };
 
-  /* Call in the GUI cleanup function to cancel any pending debounced write. */
+  /* Call in the GUI cleanup to cancel any pending debounced write. */
   dispose = (): void => {
     clearTimeout(this.saveTimer);
   };
