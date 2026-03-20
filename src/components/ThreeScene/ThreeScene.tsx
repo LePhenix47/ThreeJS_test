@@ -276,10 +276,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const meshes = positions.map((x) => {
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.x = x;
+
       return mesh;
     });
 
     return meshes;
+  }
+
+  /**
+   * Updates the world matrix for each mesh in the given array.
+   * This is necessary for the raycaster to work correctly, as it uses the world matrix to calculate intersections.
+   *
+   * Three.js updates the objects coordinates (called matrices) right before rendering them.
+   * Since we do the ray casting immediately, none of the objects have been rendered.
+   *
+   * @param {THREE.Mesh[]} meshes - An array of THREE.Mesh objects.
+   */
+  function updateMeshesMatrixWorld(meshes: THREE.Mesh[]) {
+    for (const mesh of meshes) {
+      mesh.updateMatrixWorld();
+    }
   }
 
   function createRaycaster() {
@@ -325,7 +341,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       console.log(raycaster, rayOrigin, rayDirection);
 
       const cleanupGUI = setupGUI(axisHelper, lightHelper, controls);
-      const [sphere1, sphere2, sphere3] = createSpheres();
+      const spheres = createSpheres();
+      updateMeshesMatrixWorld(spheres);
+      const [sphere1, sphere2, sphere3] = spheres;
 
       checkIntersections(raycaster, [sphere1, sphere2, sphere3]);
 
