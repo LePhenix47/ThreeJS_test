@@ -18,7 +18,6 @@ const CAMERA_STATE_KEY = "three-camera-state";
 
 type CameraState = {
   position: THREE.Vector3Like;
-  target: THREE.Vector3Like;
 };
 
 type ThreeSceneProps = {
@@ -102,9 +101,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     );
 
     if (savedCameraState) {
-      const { position, target } = savedCameraState;
+      const { position } = savedCameraState;
       camera.position.set(position.x, position.y, position.z);
-      controls.target.set(target.x, target.y, target.z);
       controls.update();
     }
 
@@ -115,12 +113,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       clearTimeout(saveDebounceTimer);
       saveDebounceTimer = setTimeout(() => {
         const { x: px, y: py, z: pz } = camera.position;
-        const { x: tx, y: ty, z: tz } = controls.target;
         WebStorage.setKey(
           CAMERA_STATE_KEY,
           {
             position: { x: px, y: py, z: pz },
-            target: { x: tx, y: ty, z: tz },
           } satisfies CameraState,
           true,
         );
