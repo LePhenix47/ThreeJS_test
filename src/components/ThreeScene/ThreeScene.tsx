@@ -31,11 +31,6 @@ const guiState = {
   // * Helpers
   axisHelper: true,
   lightHelper: true,
-  // * Floor settings
-  floorColor: "#777777",
-  floorWireframe: false,
-  floorSubdivisions: 1,
-  floorSide: "double",
 };
 
 type GUIState = typeof guiState;
@@ -222,7 +217,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function setupGUI(
     axisHelper: THREE.AxesHelper,
     lightHelper: THREE.DirectionalLightHelper,
-    floor: ReturnType<typeof createFloor>,
     controls: OrbitControls,
   ): () => void {
     const gui = new GUI({ title: "Scene Controls" });
@@ -263,21 +257,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   }
 
-  function createFloor() {
-    const size = 2 ** 12;
-    const material = new THREE.MeshStandardMaterial({
-      color: "#777777",
-      metalness: 0.3,
-      roughness: 0.4,
-    });
-
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size, size), material);
-    mesh.rotation.x = -Math.PI * 0.5;
-    mesh.receiveShadow = true;
-
-    return { mesh, material, size };
-  }
-
   function createOrbitControls(
     camera: THREE.PerspectiveCamera,
     canvas: HTMLCanvasElement,
@@ -304,16 +283,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
-      const floor = createFloor();
-      const cleanupGUI = setupGUI(axisHelper, lightHelper, floor, controls);
+      const cleanupGUI = setupGUI(axisHelper, lightHelper, controls);
 
-      scene.add(
-        ambientLight,
-        directionalLight,
-        floor.mesh,
-        axisHelper,
-        lightHelper,
-      );
+      scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
       scene.add(camera);
 
       const abortController = new AbortController();
