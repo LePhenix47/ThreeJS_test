@@ -219,62 +219,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { axisHelper, lightHelper };
   }
 
-  function addFloorSettings(
-    gui: GUI,
-    floor: ReturnType<typeof createFloor>,
-    registry: GUIStateRegistry<GUIState>,
-  ): void {
-    const sideMap = new Map(
-      Object.entries({
-        front: THREE.FrontSide,
-        back: THREE.BackSide,
-        double: THREE.DoubleSide,
-      }),
-    );
-
-    registry
-      .bind("floorColor", (v) => {
-        floor.material.color.set(v);
-      })
-      .bind("floorWireframe", (v) => {
-        floor.material.wireframe = v;
-      })
-      .bind("floorSide", (v) => {
-        floor.material.side = sideMap.get(v)!;
-      });
-
-    const { state } = registry;
-
-    const floorFolder = gui.addFolder("Floor");
-
-    // * Wireframe
-    floorFolder.add(state, "floorWireframe").name("Wireframe");
-
-    // * Color with color input
-    floorFolder.addColor(state, "floorColor").name("Color");
-
-    // * Side with dropdown
-    floorFolder
-      .add(state, "floorSide", ["front", "back", "double"])
-      .name("Side");
-
-    // * Subdivisions with slider and complex logic
-    floorFolder
-      .add(state, "floorSubdivisions", 1, 100, 1)
-      .name("Subdivisions")
-      .onFinishChange(
-        registry.bindFinal("floorSubdivisions", (segments) => {
-          floor.mesh.geometry.dispose();
-          floor.mesh.geometry = new THREE.PlaneGeometry(
-            floor.size,
-            floor.size,
-            segments,
-            segments,
-          );
-        }),
-      );
-  }
-
   function setupGUI(
     axisHelper: THREE.AxesHelper,
     lightHelper: THREE.DirectionalLightHelper,
@@ -312,8 +256,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         "resetPivot",
       )
       .name("Reset Camera Pivot");
-
-    addFloorSettings(gui, floor, registry);
 
     return () => {
       registry.dispose();
