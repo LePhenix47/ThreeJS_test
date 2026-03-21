@@ -13,6 +13,10 @@ type LeaveCallback<T extends THREE.Object3D> = (
   intersection: THREE.Intersection<T>,
 ) => void;
 
+type ClickCallback<T extends THREE.Object3D> = (
+  intersection: THREE.Intersection<T>,
+) => void;
+
 /**
  * Encapsulates the Three.js `Raycaster` + pointer NDC coordinates and
  * exposes an enter/leave event system similar to `pointerenter`/`pointerleave`
@@ -54,6 +58,12 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
    * object changes from something to nothing, or from one object to another).
    */
   onLeave: LeaveCallback<T> | null = null;
+
+  /**
+   * Called when the user clicks while the ray is intersecting an object.
+   * Uses the already-tracked `currentIntersect` — no extra ray cast needed.
+   */
+  onClick: ClickCallback<T> | null = null;
 
   /**
    * Updates the pointer NDC coordinates from raw canvas-relative percentages.
@@ -110,6 +120,18 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
     }
 
     this.currentIntersect = nearestIntersect;
+  };
+
+  /**
+   * Call from a `click` event listener on the canvas.
+   *
+   * Reads `currentIntersect` directly — no re-cast needed since
+   * `checkIntersections` already keeps it up to date every frame.
+   */
+  handleClick = (): void => {
+    if (!this.currentIntersect) return;
+
+    this.onClick?.(this.currentIntersect);
   };
 }
 

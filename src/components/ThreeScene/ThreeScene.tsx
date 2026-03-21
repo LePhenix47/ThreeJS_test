@@ -35,10 +35,10 @@ const guiState = {
   lightHelper: true,
 };
 
-const pointerInfo = {
-  x: NaN,
-  y: NaN,
-};
+// const pointerInfo = {
+//   x: NaN,
+//   y: NaN,
+// };
 
 type GUIState = typeof guiState;
 
@@ -311,41 +311,47 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     }
   }
 
-  // function createRaycaster() {
-  //   const raycaster = new THREE.Raycaster();
+  /*
+  function createRaycaster() {
+    const raycaster = new THREE.Raycaster();
 
-  //   const rayOrigin = new THREE.Vector3(-3, 0, 0);
+    const rayOrigin = new THREE.Vector3(-3, 0, 0);
 
-  //   const rayDirection = new THREE.Vector3(10, 0, 0);
+    const rayDirection = new THREE.Vector3(10, 0, 0);
 
-  //   // ? We use mouse position as ray direction later on
-  //   // raycaster.set(rayOrigin, rayDirection);
+    // ? We use mouse position as ray direction later on
+    // raycaster.set(rayOrigin, rayDirection);
 
-  //   // ? Sets the value to 1 while keeping its direction
-  //   rayDirection.normalize();
+    // ? Sets the value to 1 while keeping its direction
+    rayDirection.normalize();
 
-  //   return raycaster;
-  // }
+    return raycaster;
+  }
+  */
 
-  function resetSphereColor<
+  /*
+ function resetSphereColor<
+   T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
+ >(spheres: T[]) {
+   for (const sphere of spheres) {
+     sphere.material.color.set("red");
+   }
+ }
+   */
+
+  /*
+  function checkIntersections<
     T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
-  >(spheres: T[]) {
-    for (const sphere of spheres) {
-      sphere.material.color.set("red");
+  >(raycaster: THREE.Raycaster, objects: T[]) {
+    const intersects = raycaster.intersectObjects<T>(objects);
+    console.log(intersects);
+
+    for (const intersect of intersects) {
+      const { object } = intersect;
+      object.material.color.set("blue");
     }
   }
-
-  // function checkIntersections<
-  //   T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
-  // >(raycaster: THREE.Raycaster, objects: T[]) {
-  //   const intersects = raycaster.intersectObjects<T>(objects);
-  //   console.log(intersects);
-
-  //   for (const intersect of intersects) {
-  //     const { object } = intersect;
-  //     object.material.color.set("blue");
-  //   }
-  // }
+   */
 
   function animateSpheres<
     T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
@@ -412,6 +418,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         intersection.object.material.color.set("red");
       };
 
+      raycasterManager.onClick = (intersection) => {
+        console.log(
+          "%cclicked (and toggled)",
+          "background-color: white; color: black",
+          intersection.object,
+        );
+
+        intersection.object.material.color.set("white");
+      };
+
       const abortController = new AbortController();
 
       const timer = new THREE.Timer();
@@ -445,6 +461,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         renderer.setSize(width, height);
       }
       window.addEventListener("resize", handleResize, {
+        signal: abortController.signal,
+      });
+
+      canvas.addEventListener("click", () => raycasterManager.handleClick(), {
         signal: abortController.signal,
       });
 
