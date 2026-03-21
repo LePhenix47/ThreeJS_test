@@ -348,6 +348,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   const setupThreeScene = useCallback(
+    // ? TO make it async: git cherry-pick c3ce678364848c77c3429d6f63342dc2e47cb1c4
     (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
       if (!parent) return null;
