@@ -14,6 +14,8 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
+import gsap from "gsap";
+
 import "./ThreeScene.scss";
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
@@ -434,29 +436,55 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const raycasterManager = new RaycasterManager<GLTFModel>();
 
-      raycasterManager.onEnter = (intersection) => {
-        console.log("%cobj enter", "background-color: blue", intersection);
+      raycasterManager.onEnter = () => {
+        gsap.killTweensOf(duckModel.scene.scale);
+        gsap.killTweensOf(duckModel.scene.rotation);
 
-        if (!intersection) return;
-
-        // intersection.object.material.color.set("blue");
+        // * Slight scale bounce + gentle Y rotation on hover
+        gsap.to(duckModel.scene.scale, {
+          x: 1.2,
+          y: 1.2,
+          z: 1.2,
+          duration: 0.4,
+          ease: "back.out(1.7)",
+        });
+        gsap.to(duckModel.scene.rotation, {
+          y: Math.PI * 0.2,
+          duration: 0.5,
+          ease: "power2.out",
+        });
       };
 
-      raycasterManager.onLeave = (intersection) => {
-        console.log("%cobj leave", "background-color: red", intersection);
-        if (!intersection) return;
+      raycasterManager.onLeave = () => {
+        gsap.killTweensOf(duckModel.scene.scale);
+        gsap.killTweensOf(duckModel.scene.rotation);
 
-        // intersection.object.material.color.set("red");
+        // * Smoothly reset scale and rotation back to default
+        gsap.to(duckModel.scene.scale, {
+          x: 1,
+          y: 1,
+          z: 1,
+          duration: 0.4,
+          ease: "power2.out",
+        });
+        gsap.to(duckModel.scene.rotation, {
+          y: 0,
+          duration: 0.5,
+          ease: "power2.out",
+        });
       };
 
-      raycasterManager.onClick = (intersection) => {
-        console.log(
-          "%cclicked (and toggled)",
-          "background-color: white; color: black",
-          intersection.object,
-        );
+      raycasterManager.onClick = () => {
+        gsap.killTweensOf(duckModel.scene.scale);
 
-        // intersection.object.material.color.set("white");
+        // * Scale up to 2x with a bouncy ease on click
+        gsap.to(duckModel.scene.scale, {
+          x: 2,
+          y: 2,
+          z: 2,
+          duration: 0.5,
+          ease: "back.out(1.7)",
+        });
       };
 
       const abortController = new AbortController();
