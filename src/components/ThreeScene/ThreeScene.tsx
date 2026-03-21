@@ -23,6 +23,8 @@ import RaycasterManager from "@/utils/classes/raycaster-manager";
 
 // @ts-ignore
 import duckModel from "@public/models/Duck/glTF-Binary/Duck.glb?url";
+// @ts-ignore
+import duckingSound from "@public/sounds/you mans were ducking.mp3?url";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
@@ -398,6 +400,31 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     }
   }
 
+  function createDuckSound(camera: THREE.PerspectiveCamera) {
+    /*
+     * AudioListener is Three.js's representation of "ears" in the scene.
+     * It must be attached to the camera so the Web Audio API knows the
+     * listener's position (relevant for positional audio — harmless here).
+     */
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+
+    /*
+     * THREE.Audio is non-positional — volume doesn't change with distance.
+     * Use THREE.PositionalAudio instead if you want the sound to come from
+     * a specific point in 3D space (e.g. the duck's mouth).
+     */
+    const sound = new THREE.Audio(listener);
+
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load(duckingSound, (buffer) => {
+      sound.setBuffer(buffer);
+      sound.setVolume(0.8);
+    });
+
+    return sound;
+  }
+
   const setupThreeScene = useCallback(
     async (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
@@ -429,6 +456,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(camera);
 
       scene.add(duckModel.scene);
+
+      const duckSound = createDuckSound(camera);
 
       // ? See note inside the animate() function
       type SphereType = typeof sphere1;
@@ -485,6 +514,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           duration: 0.5,
           ease: "back.out(1.7)",
         });
+
+        // * Stop and rewind before playing so rapid clicks don't get swallowed
+        if (duckSound.isPlaying) duckSound.stop();
+        duckSound.play();
       };
 
       const abortController = new AbortController();
