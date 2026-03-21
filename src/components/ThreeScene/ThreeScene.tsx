@@ -432,21 +432,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       type SphereType = typeof sphere1;
       type GLTFModel = typeof duckModel.scene;
 
-      const raycasterManager = new RaycasterManager<SphereType | GLTFModel>();
+      const raycasterManager = new RaycasterManager<GLTFModel>();
 
       raycasterManager.onEnter = (intersection) => {
         console.log("%cobj enter", "background-color: blue", intersection);
 
         if (!intersection) return;
 
-        intersection.object.material.color.set("blue");
+        // intersection.object.material.color.set("blue");
       };
 
       raycasterManager.onLeave = (intersection) => {
         console.log("%cobj leave", "background-color: red", intersection);
         if (!intersection) return;
 
-        intersection.object.material.color.set("red");
+        // intersection.object.material.color.set("red");
       };
 
       raycasterManager.onClick = (intersection) => {
@@ -456,7 +456,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           intersection.object,
         );
 
-        intersection.object.material.color.set("white");
+        // intersection.object.material.color.set("white");
       };
 
       const abortController = new AbortController();
@@ -474,7 +474,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         animateSpheres<SphereType>(spheres, timer);
         // resetSphereColor<SphereType>(spheres);
         //  checkIntersections<SphereType>(raycaster, spheres);
-        raycasterManager.checkIntersections(spheres, camera);
+        // raycasterManager.checkIntersections(spheres, camera);
+        raycasterManager.checkIntersections([duckModel.scene], camera);
 
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);

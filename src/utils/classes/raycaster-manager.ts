@@ -91,12 +91,17 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
    *
    * @param objects - Meshes to test against
    * @param camera  - The active scene camera
+   * @param recursive [default: true] - Whether to check for intersections with child objects (useful for nested meshes)
    */
-  checkIntersections = (objects: T[], camera: THREE.Camera): void => {
+  checkIntersections = (
+    objects: T[],
+    camera: THREE.Camera,
+    recursive: boolean = true,
+  ): void => {
     // * Updates the ray with the current pointer position, VERY IMPORTANT
     this.raycaster.setFromCamera(this.pointer as THREE.Vector2, camera);
 
-    const intersects = this.raycaster.intersectObjects<T>(objects);
+    const intersects = this.raycaster.intersectObjects<T>(objects, recursive);
 
     // * Take only the nearest hit — closest object wins
     const [nearestIntersect, ..._rest] = intersects || null;
