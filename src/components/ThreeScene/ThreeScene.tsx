@@ -19,6 +19,9 @@ import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import RaycasterManager from "@/utils/classes/raycaster-manager";
 
+// @ts-ignore
+import duckModel from "@public/models/Duck/glTF-Binary/Duck.glb?url";
+
 const CAMERA_STATE_KEY = "three-camera-state";
 
 type CameraState = {
@@ -108,7 +111,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     gltfLoader.setDRACOLoader(dracoGltfLoader);
 
-    const modelsToLoad = [];
+    const modelsToLoad = [duckModel];
 
     // ? Loading the models concurrently
     const loadedModels = await Promise.all(
@@ -406,7 +409,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
 
       const loadingManager = createLoadingManager();
-      const models = await loadGltfModel(loadingManager);
+      const [duckModel]: GLTF[] = await loadGltfModel(loadingManager);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
@@ -421,6 +424,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
       scene.add(sphere1, sphere2, sphere3);
       scene.add(camera);
+
+      scene.add(duckModel.scene);
 
       // ? See note inside the animate() function
       type SphereType = typeof sphere1;
