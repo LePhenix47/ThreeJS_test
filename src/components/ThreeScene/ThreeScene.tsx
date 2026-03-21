@@ -309,7 +309,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // ? Sets the value to 1 while keeping its direction
     rayDirection.normalize();
 
-    return { raycaster, rayOrigin, rayDirection };
+    return raycaster;
+  }
+
+  function resetSphereColor(spheres: THREE.Mesh[]) {
+    for (const sphere of spheres) {
+      sphere.material.color.set("red");
+    }
   }
 
   function checkIntersections(
@@ -317,7 +323,35 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     objects: THREE.Object3D[],
   ) {
     const intersects = raycaster.intersectObjects(objects);
-    console.log(intersects);
+    console.log(intersects.length);
+
+    for (const intersect of intersects) {
+      intersect.object.material.color.set("blue");
+    }
+  }
+
+  function animateSpheres(
+    spheres: THREE.Mesh<
+      THREE.SphereGeometry,
+      THREE.MeshStandardMaterial,
+      THREE.Object3DEventMap
+    >[],
+    timer: THREE.Timer,
+  ) {
+    const sphereInfoArray = [
+      { elapsedAmplitude: 0.3 },
+      { elapsedAmplitude: 0.8 },
+      { elapsedAmplitude: 1.4 },
+    ];
+    for (let i = 0; i < sphereInfoArray.length; i++) {
+      const { elapsedAmplitude } = sphereInfoArray[i];
+      const sphere = spheres[i];
+
+      const randomAngle: number = timer.getElapsed() * elapsedAmplitude;
+      const amplitude: number = 1.5;
+
+      sphere.position.y = Math.sin(randomAngle) * amplitude;
+    }
   }
 
   const setupThreeScene = useCallback(
@@ -337,15 +371,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
 
-      const { raycaster, rayOrigin, rayDirection } = createRaycaster();
-      console.log(raycaster, rayOrigin, rayDirection);
+      const raycaster = createRaycaster();
 
       const cleanupGUI = setupGUI(axisHelper, lightHelper, controls);
       const spheres = createSpheres();
       updateMeshesMatrixWorld(spheres);
       const [sphere1, sphere2, sphere3] = spheres;
-
-      checkIntersections(raycaster, [sphere1, sphere2, sphere3]);
 
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
       scene.add(sphere1, sphere2, sphere3);
@@ -353,8 +384,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const abortController = new AbortController();
 
+      const timer = new THREE.Timer();
+
       function animate() {
         controls.update();
+        timer.update();
+
+        animateSpheres(spheres, timer);
+        resetSphereColor([sphere1, sphere2, sphere3]);
+        checkIntersections(raycaster, [sphere1, sphere2, sphere3]);
+
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
       }
