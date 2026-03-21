@@ -16,6 +16,7 @@ import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
 import { getValueFromNewRange } from "@/utils/numbers/range";
+import RaycasterManager from "@/utils/classes/raycaster-manager";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
@@ -310,21 +311,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     }
   }
 
-  function createRaycaster() {
-    const raycaster = new THREE.Raycaster();
+  // function createRaycaster() {
+  //   const raycaster = new THREE.Raycaster();
 
-    const rayOrigin = new THREE.Vector3(-3, 0, 0);
+  //   const rayOrigin = new THREE.Vector3(-3, 0, 0);
 
-    const rayDirection = new THREE.Vector3(10, 0, 0);
+  //   const rayDirection = new THREE.Vector3(10, 0, 0);
 
-    // ? We use mouse position as ray direction later on
-    // raycaster.set(rayOrigin, rayDirection);
+  //   // ? We use mouse position as ray direction later on
+  //   // raycaster.set(rayOrigin, rayDirection);
 
-    // ? Sets the value to 1 while keeping its direction
-    rayDirection.normalize();
+  //   // ? Sets the value to 1 while keeping its direction
+  //   rayDirection.normalize();
 
-    return raycaster;
-  }
+  //   return raycaster;
+  // }
 
   function resetSphereColor<
     T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
@@ -334,17 +335,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     }
   }
 
-  function checkIntersections<
-    T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
-  >(raycaster: THREE.Raycaster, objects: T[]) {
-    const intersects = raycaster.intersectObjects<T>(objects);
-    console.log(intersects);
+  // function checkIntersections<
+  //   T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
+  // >(raycaster: THREE.Raycaster, objects: T[]) {
+  //   const intersects = raycaster.intersectObjects<T>(objects);
+  //   console.log(intersects);
 
-    for (const intersect of intersects) {
-      const { object } = intersect;
-      object.material.color.set("blue");
-    }
-  }
+  //   for (const intersect of intersects) {
+  //     const { object } = intersect;
+  //     object.material.color.set("blue");
+  //   }
+  // }
 
   function animateSpheres<
     T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
@@ -382,8 +383,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
 
-      const raycaster = createRaycaster();
-
       const cleanupGUI = setupGUI(axisHelper, lightHelper, controls);
       const spheres = createSpheres();
       updateMeshesMatrixWorld(spheres);
@@ -393,26 +392,42 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(sphere1, sphere2, sphere3);
       scene.add(camera);
 
+      // ? See note inside the animate() function
+      type SphereType = typeof sphere1;
+
+      const raycasterManager = new RaycasterManager<SphereType>();
+
+      raycasterManager.onEnter = (intersection) => {
+        console.log("%cobj enter", "background-color: blue", intersection);
+
+        if (!intersection) return;
+
+        intersection.object.material.color.set("blue");
+      };
+
+      raycasterManager.onLeave = (intersection) => {
+        console.log("%cobj leave", "background-color: red", intersection);
+        if (!intersection) return;
+
+        intersection.object.material.color.set("red");
+      };
+
       const abortController = new AbortController();
 
       const timer = new THREE.Timer();
 
-      // ? See note inside the animate() function
-      type SphereType = typeof sphere1;
-
       function animate() {
         controls.update();
         timer.update();
-
-        raycaster.setFromCamera(pointerInfo as THREE.Vector2, camera);
 
         /*
         ? Note: The generic type is redundant and thus NOT required here
         ? as they're inferred by the function, it's just to make the type more explicit        
         */
         animateSpheres<SphereType>(spheres, timer);
-        resetSphereColor<SphereType>(spheres);
-        checkIntersections<SphereType>(raycaster, spheres);
+        // resetSphereColor<SphereType>(spheres);
+        //  checkIntersections<SphereType>(raycaster, spheres);
+        raycasterManager.checkIntersections(spheres, camera);
 
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
@@ -440,11 +455,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           const xPercent: number = e.offsetX / canvas.offsetWidth;
           const yPercent: number = e.offsetY / canvas.offsetHeight;
 
-          pointerInfo.x = getValueFromNewRange(xPercent, [0, 1], [-1, 1]);
-          // ? There's a mismatch between the page's Y axis and THree's Y axis, thus we flip it
-          pointerInfo.y = getValueFromNewRange(-1 * yPercent, [-1, 0], [-1, 1]);
-
-          console.log(pointerInfo.x, pointerInfo.y);
+          raycasterManager.updatePointer(xPercent, yPercent);
         },
         {
           signal: abortController.signal,
