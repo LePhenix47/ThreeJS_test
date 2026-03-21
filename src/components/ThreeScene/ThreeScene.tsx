@@ -318,32 +318,29 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return raycaster;
   }
 
-  function resetSphereColor(spheres: THREE.Mesh[]) {
+  function resetSphereColor<
+    T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
+  >(spheres: T[]) {
     for (const sphere of spheres) {
       sphere.material.color.set("red");
     }
   }
 
-  function checkIntersections(
-    raycaster: THREE.Raycaster,
-    objects: THREE.Object3D[],
-  ) {
-    const intersects = raycaster.intersectObjects(objects);
+  function checkIntersections<
+    T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
+  >(raycaster: THREE.Raycaster, objects: T[]) {
+    const intersects = raycaster.intersectObjects<T>(objects);
     console.log(intersects.length);
 
     for (const intersect of intersects) {
-      intersect.object.material.color.set("blue");
+      const { object } = intersect;
+      object.material.color.set("blue");
     }
   }
 
-  function animateSpheres(
-    spheres: THREE.Mesh<
-      THREE.SphereGeometry,
-      THREE.MeshStandardMaterial,
-      THREE.Object3DEventMap
-    >[],
-    timer: THREE.Timer,
-  ) {
+  function animateSpheres<
+    T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
+  >(spheres: T[], timer: THREE.Timer) {
     const sphereInfoArray = [
       { elapsedAmplitude: 0.3 },
       { elapsedAmplitude: 0.8 },
@@ -392,13 +389,20 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const timer = new THREE.Timer();
 
+      // ? See note inside the animate() function
+      type SphereType = typeof sphere1;
+
       function animate() {
         controls.update();
         timer.update();
 
-        animateSpheres(spheres, timer);
-        resetSphereColor([sphere1, sphere2, sphere3]);
-        checkIntersections(raycaster, [sphere1, sphere2, sphere3]);
+        /*
+        ? Note: The generic type is redundant and thus NOT required here
+        ? as they're inferred by the function, it's just to make the type more explicit        
+        */
+        animateSpheres<SphereType>(spheres, timer);
+        resetSphereColor<SphereType>(spheres);
+        checkIntersections<SphereType>(raycaster, spheres);
 
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
