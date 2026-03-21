@@ -410,6 +410,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const loadingManager = createLoadingManager();
       const [duckModel]: GLTF[] = await loadGltfModel(loadingManager);
+      duckModel.scene.position.set(0, -1.2, 0);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
@@ -429,8 +430,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       // ? See note inside the animate() function
       type SphereType = typeof sphere1;
+      type GLTFModel = typeof duckModel.scene;
 
-      const raycasterManager = new RaycasterManager<SphereType>();
+      const raycasterManager = new RaycasterManager<SphereType | GLTFModel>();
 
       raycasterManager.onEnter = (intersection) => {
         console.log("%cobj enter", "background-color: blue", intersection);
