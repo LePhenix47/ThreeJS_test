@@ -268,8 +268,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   const setupThreeScene = useCallback(
-    // ? TO make it async: git cherry-pick c3ce678364848c77c3429d6f63342dc2e47cb1c4
-    (canvas: HTMLCanvasElement) => {
+    async (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
       if (!parent) return null;
 
@@ -279,6 +278,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
+
+      const loadingManager = createLoadingManager();
+      const models = await loadGltfModel(loadingManager);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
@@ -329,9 +331,40 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    /*
+     * useEffect callbacks must be synchronous — returning a Promise would
+     * cause React to ignore the cleanup entirely. A named async function
+     * lets us use await while keeping the effect callback itself sync.
+     */
+    let cleanup: (() => void) | undefined;
 
-    return setupThreeScene(canvasRef.current) || undefined;
+    /*
+     * Guards against the race condition where the component unmounts before
+     * the async setup resolves. Without this, `cleanup` would be assigned
+     * after unmount and never called — leaking the renderer, RAF loop, etc.
+     */
+    let mounted = true;
+
+    async function setup() {
+      if (!canvasRef.current) return;
+
+      const result = await setupThreeScene(canvasRef.current);
+
+      if (!mounted || !result) return;
+      cleanup = result;
+    }
+
+    setup();
+
+    /*
+     * React calls this synchronous return on unmount. If setup hasn't
+     * resolved yet, `mounted = false` tells it to skip assigning cleanup;
+     * if it already resolved, cleanup() tears everything down normally.
+     */
+    return () => {
+      mounted = false;
+      cleanup?.();
+    };
   }, [setupThreeScene]);
 
   return (
