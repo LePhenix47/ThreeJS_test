@@ -15,6 +15,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
+import { getValueFromNewRange } from "@/utils/numbers/range";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
@@ -31,6 +32,11 @@ const guiState = {
   // * Helpers
   axisHelper: true,
   lightHelper: true,
+};
+
+const pointerInfo = {
+  x: NaN,
+  y: NaN,
 };
 
 type GUIState = typeof guiState;
@@ -311,7 +317,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const rayDirection = new THREE.Vector3(10, 0, 0);
 
-    raycaster.set(rayOrigin, rayDirection);
+    // ? We use mouse position as ray direction later on
+    // raycaster.set(rayOrigin, rayDirection);
+
     // ? Sets the value to 1 while keeping its direction
     rayDirection.normalize();
 
@@ -330,7 +338,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     T extends THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>,
   >(raycaster: THREE.Raycaster, objects: T[]) {
     const intersects = raycaster.intersectObjects<T>(objects);
-    console.log(intersects.length);
+    console.log(intersects);
 
     for (const intersect of intersects) {
       const { object } = intersect;
@@ -396,6 +404,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         controls.update();
         timer.update();
 
+        raycaster.setFromCamera(pointerInfo as THREE.Vector2, camera);
+
         /*
         ? Note: The generic type is redundant and thus NOT required here
         ? as they're inferred by the function, it's just to make the type more explicit        
@@ -422,6 +432,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       window.addEventListener("resize", handleResize, {
         signal: abortController.signal,
       });
+
+      canvas.addEventListener(
+        "pointermove",
+        (e: PointerEvent) => {
+          // * Percentages of the cursor from the left and top of the canvas
+          const xPercent: number = e.offsetX / canvas.offsetWidth;
+          const yPercent: number = e.offsetY / canvas.offsetHeight;
+
+          pointerInfo.x = getValueFromNewRange(xPercent, [0, 1], [-1, 1]);
+          // ? There's a mismatch between the page's Y axis and THree's Y axis, thus we flip it
+          pointerInfo.y = getValueFromNewRange(-1 * yPercent, [-1, 0], [-1, 1]);
+
+          console.log(pointerInfo.x, pointerInfo.y);
+        },
+        {
+          signal: abortController.signal,
+        },
+      );
 
       return () => {
         cleanupCameraState();
