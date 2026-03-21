@@ -15,7 +15,8 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
-import { getValueFromNewRange } from "@/utils/numbers/range";
+import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import RaycasterManager from "@/utils/classes/raycaster-manager";
 
 const CAMERA_STATE_KEY = "three-camera-state";
@@ -95,6 +96,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       loadedTexture.wrapS = THREE.RepeatWrapping;
       loadedTexture.wrapT = THREE.RepeatWrapping;
     }
+  }
+
+  async function loadGltfModel(
+    loadingManager: THREE.LoadingManager,
+  ): Promise<GLTF[]> {
+    // TODO: Add the loading manager from the loadTextures function
+    const gltfLoader = new GLTFLoader(loadingManager);
+    const dracoGltfLoader = new DRACOLoader();
+    dracoGltfLoader.setDecoderPath("/draco/");
+
+    gltfLoader.setDRACOLoader(dracoGltfLoader);
+
+    const modelsToLoad = [];
+
+    // ? Loading the models concurrently
+    const loadedModels = await Promise.all(
+      modelsToLoad.map((model) => gltfLoader.loadAsync(model)),
+    );
+
+    return loadedModels;
   }
 
   function createScene() {
@@ -383,6 +404,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
+
+      const loadingManager = createLoadingManager();
+      // ! Async
+      const models = loadGltfModel(loadingManager);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
