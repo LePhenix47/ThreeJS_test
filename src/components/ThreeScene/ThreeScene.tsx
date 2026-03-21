@@ -269,12 +269,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   function createSpheres() {
     const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-    const material = new THREE.MeshStandardMaterial({ color: "red" });
 
     const positions: number[] = [-2, 0, 2];
 
     const meshes = positions.map((x) => {
-      const mesh = new THREE.Mesh(geometry, material);
+      /*
+       * IMPORTANT: Each sphere NEEDS its own material,
+       * otherwise if one sphere changes color, the others will be affected as well
+       */
+      const individualSphereMaterial = new THREE.MeshStandardMaterial({
+        color: "red",
+      });
+      const mesh = new THREE.Mesh(geometry, individualSphereMaterial);
       mesh.position.x = x;
 
       return mesh;
