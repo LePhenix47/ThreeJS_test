@@ -7,7 +7,7 @@ function isPrimitive(value: unknown): value is Primitive {
 }
 
 class GUIStateRegistry<T extends Record<string, Primitive>> {
-  /*
+  /**
    * The Proxy-wrapped state object — pass this directly to `gui.add()`.
    *
    * Every write lil-gui makes (e.g. `state.metalness = 0.7`) is intercepted
@@ -24,7 +24,7 @@ class GUIStateRegistry<T extends Record<string, Primitive>> {
     (value: Primitive) => void
   >();
 
-  /*
+  /**
    * Callbacks registered via `bindFinal` — intentionally NOT in `applyCallbacks`
    * so the Proxy trap never calls them on mid-drag writes. They are applied once
    * on init (restore) and then only when lil-gui fires `onFinishChange`.
@@ -83,14 +83,22 @@ class GUIStateRegistry<T extends Record<string, Primitive>> {
     });
   }
 
-  /*
-   * Registers an apply callback for a key and calls it immediately with the
-   * current value (which is already the saved value if one exists).
+  /**
+   * Registers a callback for `key` and immediately applies the current value.
+   *
+   * The callback fires on every lil-gui write (mid-drag included) via the Proxy
+   * trap — suitable for cheap operations like updating a material property.
    *
    * Returns `this` so calls can be chained:
-   *   registry
-   *     .bind("metalness", v => { material.metalness = v; })
-   *     .bind("roughness", v => { material.roughness = v; });
+   * ```ts
+   * registry
+   *   .bind("metalness", v => { material.metalness = v; })
+   *   .bind("roughness", v => { material.roughness = v; });
+   * ```
+   *
+   * @param key   - The state key to watch.
+   * @param apply - Called with the current (or new) value whenever it changes.
+   * @returns `this` for chaining.
    */
   bind = <K extends keyof T & string>(
     key: K,
@@ -103,16 +111,22 @@ class GUIStateRegistry<T extends Record<string, Primitive>> {
     return this;
   };
 
-  /*
-   * Registers an expensive apply callback that should only fire when the user
+  /**
+   * Registers an expensive callback that should only fire when the user
    * finishes interacting (e.g. geometry rebuilds, shader recompiles).
    *
    * - Applied once immediately on init so restored values take effect on load.
    * - NOT called by the Proxy trap on mid-drag writes — only fires via lil-gui's
    *   `onFinishChange`, which receives the returned callback directly:
    *
-   *   gui.add(registry.state, "subdivisions")
-   *     .onFinishChange(registry.bindFinal("subdivisions", v => rebuildGeometry(v)));
+   * ```ts
+   * gui.add(registry.state, "subdivisions")
+   *   .onFinishChange(registry.bindFinal("subdivisions", v => rebuildGeometry(v)));
+   * ```
+   *
+   * @param key   - The state key to watch.
+   * @param apply - Called once on init and again on `onFinishChange`.
+   * @returns The same `apply` function, for passing directly to `.onFinishChange()`.
    */
   bindFinal = <K extends keyof T & string>(
     key: K,
@@ -134,7 +148,10 @@ class GUIStateRegistry<T extends Record<string, Primitive>> {
     }, 150);
   };
 
-  /* Call in the GUI cleanup to cancel any pending debounced write. */
+  /**
+   * Cancels any pending debounced sessionStorage write.
+   * Call this in the GUI cleanup function to avoid writing after disposal.
+   */
   dispose = (): void => {
     clearTimeout(this.saveTimer);
   };
