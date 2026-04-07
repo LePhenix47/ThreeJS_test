@@ -11,10 +11,12 @@ import GUI from "lil-gui";
 import { WebStorage } from "@lephenix47/webstorage-utility";
 
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import burgerModel from "@public/models/burger/BURGER.glb?url";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
+import { DRACOLoader, GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
@@ -100,6 +102,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     camera.position.set(4, 2, 5);
 
     return camera;
+  }
+  async function loadGltfModel(
+    loadingManager: THREE.LoadingManager,
+  ): Promise<GLTF[]> {
+    // TODO: Add the loading manager from the loadTextures function
+    const gltfLoader = new GLTFLoader(loadingManager);
+    const dracoGltfLoader = new DRACOLoader();
+    dracoGltfLoader.setDecoderPath("/draco/");
+
+    gltfLoader.setDRACOLoader(dracoGltfLoader);
+
+    const modelsToLoad = [burgerModel];
+
+    // ? Loading the models concurrently
+    const loadedModels = await Promise.all(
+      modelsToLoad.map((model) => gltfLoader.loadAsync(model)),
+    );
+
+    return loadedModels;
   }
 
   function setupCameraStatePersistence(
@@ -280,7 +301,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
 
       const loadingManager = createLoadingManager();
-      const models = await loadGltfModel(loadingManager);
+      const [burger] = await loadGltfModel(loadingManager);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
@@ -290,6 +311,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
       scene.add(camera);
+      scene.add(burger.scene);
 
       const abortController = new AbortController();
 
