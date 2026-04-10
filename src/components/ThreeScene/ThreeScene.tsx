@@ -23,9 +23,13 @@ import particleAlphaMap11 from "@public/textures/particles/11.png";
 import particleAlphaMap12 from "@public/textures/particles/12.png";
 import particleAlphaMap13 from "@public/textures/particles/13.png";
 
+import GUI from "lil-gui";
+
 import "./ThreeScene.scss";
 import { getValueFromNewRange } from "@/utils/numbers/range";
 import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placement";
+
+type ParticleMode = "sphere" | "wave";
 
 type ThreeSceneProps = {
   className?: string;
@@ -168,6 +172,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
+  function setParticlePositions(
+    mode: ParticleMode,
+    positions: Float32Array,
+  ): void {
+    const itemSize = 3;
+    for (let i = 0; i < positions.length; i += itemSize) {
+      if (mode === "sphere") {
+        const { x, y, z } = getRandomUniformSpherePlacement(0, 5);
+        positions[i] = x;
+        positions[i + 1] = y;
+        positions[i + 2] = z;
+      } else {
+        positions[i] = getValueFromNewRange(Math.random(), [0, 1], [-5, 5]);
+        positions[i + 1] = getValueFromNewRange(Math.random(), [0, 1], [-5, 5]);
+        positions[i + 2] = getValueFromNewRange(Math.random(), [0, 1], [-5, 5]);
+      }
+    }
+  }
+
   function createParticles(particleTextures: ParticleTextures) {
     const { alphaMaps } = particleTextures;
 
@@ -175,14 +198,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const particleGeometry = new THREE.BufferGeometry();
     const particleMaterial = new THREE.PointsMaterial({
-      // color: "pink",
       size: 0.2,
       sizeAttenuation: true,
       alphaMap: alphaMaps.at(nthMap(2)),
       transparent: true,
     });
-    // particleMaterial.alphaTest = 0.001; // ? Works but not perfect as it shows some dark pixels
-    // particleMaterial.depthTest = false; // ? Works but then creates an issue with the depth in our scene causing particles to show in front of any object
     particleMaterial.depthWrite = false;
     particleMaterial.blending = THREE.AdditiveBlending;
     particleMaterial.vertexColors = true;
@@ -190,23 +210,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const particlesCount: number = 1e3;
     const itemSize: number = 3;
 
-    // ? Array of XYZ coordinates for each particle, first 3 values are X, Y, Z,
     const positions = new Float32Array(particlesCount * itemSize);
     const colors = new Float32Array(particlesCount * itemSize);
 
-    // for (let i = 0; i < positions.length; i += itemSize) {
-    //   const { x, y, z } = getRandomUniformSpherePlacement(0, 10);
-    //   positions[i] = x;
-    //   positions[i + 1] = y;
-    //   positions[i + 2] = z;
-
-    //   colors[i] = Math.random();
-    //   colors[i + 1] = Math.random();
-    //   colors[i + 2] = Math.random();
-    // }
-
-    for (let i = 0; i < positions.length; i++) {
-      positions[i] = getValueFromNewRange(Math.random(), [0, 1], [-5, 5]);
+    // * Seed initial positions as wave, randomize colors
+    setParticlePositions("wave", positions);
+    for (let i = 0; i < colors.length; i++) {
       colors[i] = Math.random();
     }
 
@@ -214,7 +223,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       "position",
       new THREE.BufferAttribute(positions, itemSize),
     );
-
     particleGeometry.setAttribute(
       "color",
       new THREE.BufferAttribute(colors, itemSize),
@@ -222,16 +230,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     particles.name = "particles";
+
     const particlesGroup = new THREE.Group();
     particlesGroup.add(particles);
 
-    return particlesGroup;
+    return { particlesGroup, positions };
+  }
+
+  function setupGUI(onModeChange: (mode: ParticleMode) => void): () => void {
+    const gui = new GUI({ title: "Particles" });
+    const state = { mode: "wave" as ParticleMode };
+
+    gui
+      .add(state, "mode", ["wave", "sphere"] as ParticleMode[])
+      .name("Mode")
+      .onChange(onModeChange);
+
+    return () => gui.destroy();
   }
 
   function animateParticles(
     particlesGroup: THREE.Group<THREE.Object3DEventMap>,
     elapsedTime: number,
+    mode: ParticleMode,
   ): void {
+    if (mode !== "wave") return;
+
     const particles = particlesGroup.getObjectByName(
       "particles",
     ) as THREE.Points;
@@ -241,11 +265,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const positions = particles.geometry.attributes.position.array;
 
     for (let i = 0; i < positions.length; i += 3) {
-      // positions[i];
       const x = positions[i];
-
       positions[i + 1] = Math.sin(elapsedTime + x);
-      // positions[i + 2];
     }
 
     particles.geometry.attributes.position.needsUpdate = true;
@@ -275,26 +296,36 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
 
-      const particles = createParticles(particleTextures);
+      const { particlesGroup, positions } = createParticles(particleTextures);
       const axisHelper = new THREE.AxesHelper(3);
 
       const lightsGroup = createLights();
 
-      scene.add(particles);
+      const modeRef = { current: "wave" as ParticleMode };
+
+      const cleanupGUI = setupGUI((newMode) => {
+        modeRef.current = newMode;
+        setParticlePositions(newMode, positions);
+
+        const particles = particlesGroup.getObjectByName(
+          "particles",
+        ) as THREE.Points | undefined;
+        if (particles) particles.geometry.attributes.position.needsUpdate = true;
+      });
+
+      scene.add(particlesGroup);
       scene.add(axisHelper);
       scene.add(camera);
-
       scene.add(lightsGroup);
 
       const abortController = new AbortController();
 
-      // Clock for delta time
       const clock = new THREE.Clock();
 
       function animate() {
         controls.update();
         renderer.render(scene, camera);
-        animateParticles(particles, clock.getElapsedTime());
+        animateParticles(particlesGroup, clock.getElapsedTime(), modeRef.current);
         animationIdRef.current = requestAnimationFrame(animate);
       }
       animate();
@@ -314,6 +345,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       });
 
       return () => {
+        cleanupGUI();
         cancelAnimation();
         controls.dispose();
         abortController.abort();
