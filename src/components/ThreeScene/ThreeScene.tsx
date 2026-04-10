@@ -11,7 +11,6 @@ import GUI from "lil-gui";
 import { WebStorage } from "@lephenix47/webstorage-utility";
 
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-import burgerModel from "@public/models/burger/BURGER.glb?url";
 
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
@@ -109,11 +108,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     // TODO: Add the loading manager from the loadTextures function
     const gltfLoader = new GLTFLoader(loadingManager);
     const dracoGltfLoader = new DRACOLoader();
-    dracoGltfLoader.setDecoderPath("/draco/");
+    const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
+    dracoGltfLoader.setDecoderPath(`${basePath}draco/`);
 
     gltfLoader.setDRACOLoader(dracoGltfLoader);
 
-    const modelsToLoad = [burgerModel];
+    const modelsToLoad = [`${basePath}models/burger/BURGER.gltf`];
 
     // ? Loading the models concurrently
     const loadedModels = await Promise.all(
