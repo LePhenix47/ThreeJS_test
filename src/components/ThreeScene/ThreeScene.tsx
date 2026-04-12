@@ -1,6 +1,7 @@
 /*
  * Particles Lesson
  */
+import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 
 import { useCallback, useEffect, useRef } from "react";
 
@@ -69,6 +70,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
 
     return loadingManager;
+  }
+
+  async function loadEnvironmentMap(loadingManager: THREE.LoadingManager) {
+    const hdrLoader = new HDRLoader(loadingManager);
+    const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
+    // const environmentMap = await hdrLoader.loadAsync()
+    //  environmentMap.mapping = THREE.EquirectangularReflectionMapping;
   }
 
   function loadTextures(loadingManager: THREE.LoadingManager) {
