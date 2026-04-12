@@ -343,13 +343,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const { state } = registry;
 
-    /*
-     * Guards against infinite recursion when bound pairs (intensity, rotation) are linked:
-     * env bind → sets state.background* → bg bind → sets state.environmentMap* → …
-     * The flag breaks the cycle so each side only propagates once per user gesture.
-     */
-    let isSyncing = false;
-
     registry
       .bind("axisHelper", (v) => {
         axisHelper.visible = v;
@@ -357,45 +350,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .bind("lightHelper", (v) => {
         lightHelper.visible = v;
       })
-      .bind("environmentMapIntensity", (v) => {
-        scene.environmentIntensity = v;
-        if (!state.bindIntensity || isSyncing) return;
-        isSyncing = true;
-        state.backgroundIntensity = v;
-        isSyncing = false;
-      })
-      .bind("bindIntensity", (v) => {
-        if (!v) return;
-        state.backgroundIntensity = state.environmentMapIntensity;
-      })
       .bind("backgroundBlurriness", (v) => {
         scene.backgroundBlurriness = v;
       })
-      .bind("backgroundIntensity", (v) => {
-        scene.backgroundIntensity = v;
-        if (!state.bindIntensity || isSyncing) return;
-        isSyncing = true;
-        state.environmentMapIntensity = v;
-        isSyncing = false;
-      })
-      .bind("environmentMapRotationY", (v) => {
-        scene.environmentRotation.y = v;
-        if (!state.bindRotation || isSyncing) return;
-        isSyncing = true;
-        state.backgroundRotationY = v;
-        isSyncing = false;
-      })
-      .bind("bindRotation", (v) => {
-        if (!v) return;
-        state.backgroundRotationY = state.environmentMapRotationY;
-      })
-      .bind("backgroundRotationY", (v) => {
-        scene.backgroundRotation.y = v;
-        if (!state.bindRotation || isSyncing) return;
-        isSyncing = true;
-        state.environmentMapRotationY = v;
-        isSyncing = false;
-      });
+      .bindBidirectional(
+        "bindIntensity",
+        "environmentMapIntensity", (v) => { scene.environmentIntensity = v; },
+        "backgroundIntensity",     (v) => { scene.backgroundIntensity = v; },
+      )
+      .bindBidirectional(
+        "bindRotation",
+        "environmentMapRotationY", (v) => { scene.environmentRotation.y = v; },
+        "backgroundRotationY",     (v) => { scene.backgroundRotation.y = v; },
+      );
     // .bind("environmentMapIndex", (v) => {
 
     // })
