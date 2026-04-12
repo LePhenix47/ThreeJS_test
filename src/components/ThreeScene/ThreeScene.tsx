@@ -68,6 +68,8 @@ const guiState = {
   // * Helpers
   axisHelper: true,
   lightHelper: true,
+  environmentMapIndex: 0,
+  environmentMapIntensity: 1,
 };
 
 type GUIState = typeof guiState;
@@ -312,11 +314,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return { axisHelper, lightHelper };
   }
 
-  function setupGUI(
-    axisHelper: THREE.AxesHelper,
-    lightHelper: THREE.DirectionalLightHelper,
-    controls: OrbitControls,
-  ): () => void {
+  function setupGUI({
+    axisHelper,
+    lightHelper,
+    controls,
+    scene,
+  }: {
+    axisHelper: THREE.AxesHelper;
+    lightHelper: THREE.DirectionalLightHelper;
+    controls: OrbitControls;
+    scene: THREE.Scene;
+  }): () => void {
     const gui = new GUI({ title: "Scene Controls" });
 
     const registry = new GUIStateRegistry<GUIState>(
@@ -330,7 +338,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("lightHelper", (v) => {
         lightHelper.visible = v;
+      })
+      .bind("environmentMapIntensity", (v) => {
+        scene.environmentIntensity = v;
       });
+    // .bind("environmentMapIndex", (v) => {
+
+    // })
 
     const { state } = registry;
 
@@ -348,6 +362,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         "resetPivot",
       )
       .name("Reset Camera Pivot");
+
+    const envMapFolder = gui.addFolder("Environment Map");
+    envMapFolder.add(state, "environmentMapIntensity", 0, 5).name("Intensity");
+    // envMapFolder.add(state, "environmentMapIndex", 0, 2).name("Index");
 
     return () => {
       registry.dispose();
@@ -396,7 +414,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
       const loadingManager = createLoadingManager();
 
-      const envMap = await loadLowDynamicRangeEnvMap(loadingManager);
+      const envMap: THREE.CubeTexture =
+        await loadLowDynamicRangeEnvMap(loadingManager);
+
+      /*
+       * This is very important, adds the env map as a bg BUT ALSO to the models in the scene !
+       * Avoids manually setting the env map on the models
+       */
+      scene.environment = envMap;
       scene.background = envMap;
 
       const torusKnot = createTorusKnot();
@@ -411,7 +436,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
-      const cleanupGUI = setupGUI(axisHelper, lightHelper, controls);
+      const cleanupGUI = setupGUI({
+        axisHelper,
+        lightHelper,
+        controls,
+        scene,
+      });
 
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
       scene.add(camera);
