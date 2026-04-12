@@ -166,9 +166,9 @@ class GUIStateRegistry<T extends Record<string, Primitive>> {
    * @returns `this` for chaining.
    */
   bindBidirectional = <
+    BindKey extends StateKey<T>,
     KeyA extends StateKey<T>,
     KeyB extends StateKey<T>,
-    BindKey extends StateKey<T>,
   >(
     bindKey: BindKey,
     keyA: KeyA,
@@ -176,14 +176,14 @@ class GUIStateRegistry<T extends Record<string, Primitive>> {
     keyB: KeyB,
     applyB: (value: T[KeyB]) => void,
   ): this => {
-    /*
+    /**
      * Shared flag between the keyA and keyB callbacks.
      * When one side propagates to the other, it raises this flag so the
      * receiving side skips its own propagation — breaking the potential loop.
      */
     let isSyncing = false;
 
-    /*
+    /**
      * Pushes `value` into `targetKey` if the binding toggle is on and we're
      * not already mid-propagation. Owns the isSyncing bookend so callers
      * don't have to repeat the guard logic.
