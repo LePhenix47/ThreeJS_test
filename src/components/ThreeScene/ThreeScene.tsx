@@ -22,6 +22,8 @@ import environmentMap0 from "@/utils/environment-maps/ldr/cubic-map-0";
 import environmentMap1 from "@/utils/environment-maps/ldr/cubic-map-1";
 import environmentMap2 from "@/utils/environment-maps/ldr/cubic-map-2";
 
+import _2kHdrMap from "@/utils/environment-maps/hdr/2k-map";
+
 const CAMERA_STATE_KEY = "three-camera-state";
 
 const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
@@ -147,10 +149,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   ) {
     const hdrLoader = new HDRLoader(loadingManager);
 
-    // const environmentMap = await hdrLoader.loadAsync()
-    //  environmentMap.mapping = THREE.EquirectangularReflectionMapping;
+    const environmentMap = await hdrLoader.loadAsync(_2kHdrMap);
+    environmentMap.mapping = THREE.EquirectangularReflectionMapping;
 
-    // return environmentMap;
+    return environmentMap;
   }
 
   function loadTextures(loadingManager: THREE.LoadingManager) {
@@ -355,13 +357,25 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bindBidirectional(
         "bindIntensity",
-        "environmentMapIntensity", (v) => { scene.environmentIntensity = v; },
-        "backgroundIntensity",     (v) => { scene.backgroundIntensity = v; },
+        "environmentMapIntensity",
+        (v) => {
+          scene.environmentIntensity = v;
+        },
+        "backgroundIntensity",
+        (v) => {
+          scene.backgroundIntensity = v;
+        },
       )
       .bindBidirectional(
         "bindRotation",
-        "environmentMapRotationY", (v) => { scene.environmentRotation.y = THREE.MathUtils.degToRad(v); },
-        "backgroundRotationY",     (v) => { scene.backgroundRotation.y = THREE.MathUtils.degToRad(v); },
+        "environmentMapRotationY",
+        (v) => {
+          scene.environmentRotation.y = THREE.MathUtils.degToRad(v);
+        },
+        "backgroundRotationY",
+        (v) => {
+          scene.backgroundRotation.y = THREE.MathUtils.degToRad(v);
+        },
       );
     // .bind("environmentMapIndex", (v) => {
 
@@ -484,15 +498,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
       const loadingManager = createLoadingManager();
 
-      const envMap: THREE.CubeTexture =
+      // const ldrEnvMap: THREE.CubeTexture =
+      //   await loadLowDynamicRangeEnvMap(loadingManager);
+
+      const hdrEnvMap: THREE.CubeTexture =
         await loadLowDynamicRangeEnvMap(loadingManager);
 
       /*
        * This is very important, adds the env map as a bg BUT ALSO to the models in the scene !
        * Avoids manually setting the env map on the models
        */
-      scene.environment = envMap;
-      scene.background = envMap;
+      scene.environment = hdrEnvMap;
+      scene.background = hdrEnvMap;
 
       const torusKnot = createTorusKnot();
       scene.add(torusKnot);
