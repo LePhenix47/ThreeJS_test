@@ -155,11 +155,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     loadingManager: THREE.LoadingManager,
   ): Promise<GLTF[]> {
     const gltfLoader = new GLTFLoader(loadingManager);
-    const dracoGltfLoader = new DRACOLoader();
-
-    dracoGltfLoader.setDecoderPath(`${basePath}draco/`);
-
-    gltfLoader.setDRACOLoader(dracoGltfLoader);
 
     const modelsPathToLoad = [getModelImportPath("helmet")];
 
