@@ -220,9 +220,7 @@ class GUIStateRegistry<T extends Record<string, Primitive>> {
       const isNowLinked = v as boolean;
       if (!isNowLinked) return;
 
-      const currentValueOfA = this.state[keyA];
-      const snapValueForB = currentValueOfA as unknown as T[KeyB];
-      this.state[keyB] = snapValueForB;
+      this.state[keyB] = this.state[keyA] as unknown as T[KeyB];
     });
 
     return this;
