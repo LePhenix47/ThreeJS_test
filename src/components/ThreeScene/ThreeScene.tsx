@@ -18,6 +18,10 @@ import { useLoadingStore } from "@/stores/useLoadingStore";
 import "./ThreeScene.scss";
 import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 
+import environmentMap0 from "@/utils/environment-maps/ldr/cubic-map-0";
+import environmentMap1 from "@/utils/environment-maps/ldr/cubic-map-1";
+import environmentMap2 from "@/utils/environment-maps/ldr/cubic-map-2";
+
 const CAMERA_STATE_KEY = "three-camera-state";
 
 const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
@@ -103,11 +107,40 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return loadingManager;
   }
 
-  async function loadEnvironmentMap(loadingManager: THREE.LoadingManager) {
-    const hdrLoader = new HDRLoader(loadingManager);
+  async function loadLowDynamicRangeEnvMap(
+    loadingManager: THREE.LoadingManager,
+  ) {
     const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
+    const mapsAvailableToLoad = [
+      environmentMap0,
+      environmentMap1,
+      environmentMap2,
+    ];
+
+    const chosenMapToLoad = mapsAvailableToLoad[0];
+
+    const { px, nx, py, ny, pz, nz } = chosenMapToLoad;
+    const environmentMap: THREE.CubeTexture = cubeTextureLoader.load([
+      px,
+      nx,
+      py,
+      ny,
+      pz,
+      nz,
+    ]);
+
+    return environmentMap;
+  }
+
+  async function loadHighDynamicRangeEnvMap(
+    loadingManager: THREE.LoadingManager,
+  ) {
+    const hdrLoader = new HDRLoader(loadingManager);
+
     // const environmentMap = await hdrLoader.loadAsync()
     //  environmentMap.mapping = THREE.EquirectangularReflectionMapping;
+
+    // return environmentMap;
   }
 
   function loadTextures(loadingManager: THREE.LoadingManager) {
@@ -362,11 +395,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
+      const loadingManager = createLoadingManager();
+
+      const envMap = await loadLowDynamicRangeEnvMap(loadingManager);
+      scene.background = envMap;
 
       const torusKnot = createTorusKnot();
       scene.add(torusKnot);
 
-      const loadingManager = createLoadingManager();
       const [flightHelmetModel] = await loadGltfModel(loadingManager);
       tweakFlightHelmetScene(flightHelmetModel);
 
