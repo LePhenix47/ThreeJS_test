@@ -16,7 +16,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
-import { DRACOLoader, GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
+import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
