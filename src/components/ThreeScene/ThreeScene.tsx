@@ -68,10 +68,14 @@ const guiState = {
   // * Helpers
   axisHelper: true,
   lightHelper: true,
+  // * Environment
   environmentMapIndex: 0,
   environmentMapIntensity: 1,
+  // * Background
   backgroundBlurriness: 0,
   backgroundIntensity: 1,
+  // * Bindings
+  bindIntensity: false,
 };
 
 type GUIState = typeof guiState;
@@ -334,6 +338,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       guiState,
     );
 
+    const { state } = registry;
+
+    /*
+     * Guards against infinite recursion when both intensity binds are linked:
+     * env bind → sets state.backgroundIntensity → bg bind → sets state.environmentMapIntensity → …
+     * The flag breaks the cycle so each side only propagates once per user gesture.
+     */
+    let isSyncing = false;
+
     registry
       .bind("axisHelper", (v) => {
         axisHelper.visible = v;
@@ -343,18 +356,31 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("environmentMapIntensity", (v) => {
         scene.environmentIntensity = v;
+        if (state.bindIntensity && !isSyncing) {
+          isSyncing = true;
+          state.backgroundIntensity = v;
+          isSyncing = false;
+        }
+      })
+      .bind("bindIntensity", (v) => {
+        if (v) {
+          state.backgroundIntensity = state.environmentMapIntensity;
+        }
       })
       .bind("backgroundBlurriness", (v) => {
         scene.backgroundBlurriness = v;
       })
       .bind("backgroundIntensity", (v) => {
         scene.backgroundIntensity = v;
+        if (state.bindIntensity && !isSyncing) {
+          isSyncing = true;
+          state.environmentMapIntensity = v;
+          isSyncing = false;
+        }
       });
     // .bind("environmentMapIndex", (v) => {
 
     // })
-
-    const { state } = registry;
 
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
@@ -371,13 +397,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       )
       .name("Reset Camera Pivot");
 
+    const bindersFolder = gui.addFolder("Bindings");
+    bindersFolder
+      .add(state, "bindIntensity")
+      .name("Env intensity ↔ bg intensity");
+
     const envMapFolder = gui.addFolder("Environment Map");
     envMapFolder
       .add(state, "environmentMapIntensity")
       .min(0)
       .max(10)
       .step(0.01)
-      .name("Intensity");
+      .name("Intensity")
+      /* .listen() — registers this controller in lil-gui's internal rAF loop.
+       * Every frame it reads state.environmentMapIntensity and patches the <input> value directly.
+       * Keeps the slider visually in sync when bindIntensity drives it from the bg side. */
+      .listen();
 
     const backgroundFolder = gui.addFolder("Background scene");
 
@@ -393,7 +428,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .min(0)
       .max(10)
       .step(0.01)
-      .name("Intensity");
+      .name("Intensity")
+      /* Same as above — keeps this slider in sync when driven from the env side. */
+      .listen();
     // envMapFolder.add(state, "environmentMapIndex", 0, 2).name("Index");
 
     return () => {
