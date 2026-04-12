@@ -70,6 +70,8 @@ const guiState = {
   lightHelper: true,
   environmentMapIndex: 0,
   environmentMapIntensity: 1,
+  backgroundBlurriness: 0,
+  backgroundIntensity: 1,
 };
 
 type GUIState = typeof guiState;
@@ -341,6 +343,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("environmentMapIntensity", (v) => {
         scene.environmentIntensity = v;
+      })
+      .bind("backgroundBlurriness", (v) => {
+        scene.backgroundBlurriness = v;
+      })
+      .bind("backgroundIntensity", (v) => {
+        scene.backgroundIntensity = v;
       });
     // .bind("environmentMapIndex", (v) => {
 
@@ -364,7 +372,28 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Reset Camera Pivot");
 
     const envMapFolder = gui.addFolder("Environment Map");
-    envMapFolder.add(state, "environmentMapIntensity", 0, 5).name("Intensity");
+    envMapFolder
+      .add(state, "environmentMapIntensity")
+      .min(0)
+      .max(10)
+      .step(0.01)
+      .name("Intensity");
+
+    const backgroundFolder = gui.addFolder("Background scene");
+
+    backgroundFolder
+      .add(state, "backgroundBlurriness")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("Blurriness");
+
+    backgroundFolder
+      .add(state, "backgroundIntensity")
+      .min(0)
+      .max(10)
+      .step(0.01)
+      .name("Intensity");
     // envMapFolder.add(state, "environmentMapIndex", 0, 2).name("Index");
 
     return () => {
