@@ -16,7 +16,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
-import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
+import { GLTF, GLTFLoader, EXRLoader } from "three/examples/jsm/Addons.js";
 
 import environmentMap0 from "@/utils/environment-maps/ldr/cubic-map-0";
 import environmentMap1 from "@/utils/environment-maps/ldr/cubic-map-1";
@@ -27,6 +27,8 @@ import {
   blenderEnvMap,
   blenderEnvMap2,
 } from "@/utils/environment-maps/hdr/own-blender-maps";
+
+import nvidiaExrMap from "@/utils/environment-maps/hdr/nvidia-canvas-map";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
@@ -152,8 +154,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     loadingManager: THREE.LoadingManager,
   ) {
     const hdrLoader = new HDRLoader(loadingManager);
+    const exrLoader = new EXRLoader(loadingManager);
 
-    const environmentMap = await hdrLoader.loadAsync(blenderEnvMap2);
+    const hdrEnvironmentMaps = [_2kHdrMap, blenderEnvMap, blenderEnvMap2];
+    const exrEnvironmentMaps = [nvidiaExrMap];
+
+    const environmentMap = await exrLoader.loadAsync(nvidiaExrMap);
+    // const environmentMap = await hdrLoader.loadAsync(blenderEnvMap2);
     environmentMap.mapping = THREE.EquirectangularReflectionMapping;
 
     return environmentMap;
