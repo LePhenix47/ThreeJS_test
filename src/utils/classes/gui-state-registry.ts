@@ -1,6 +1,7 @@
 import { WebStorage } from "@lephenix47/webstorage-utility";
 
 type Primitive = string | number | boolean;
+type StateKey<TState> = keyof TState & string;
 
 function isPrimitive(value: unknown): value is Primitive {
   return ["string", "number", "boolean"].includes(typeof value);
@@ -138,6 +139,90 @@ class GUIStateRegistry<T extends Record<string, Primitive>> {
     apply(currentValue);
 
     return apply;
+  };
+
+  /**
+   * Wires two state keys for bidirectional sync, gated by a boolean toggle key.
+   *
+   * When `state[bindKey]` is `true`, changing either value automatically mirrors
+   * it to the other — both in the scene (via `applyA`/`applyB`) and in the state
+   * object, so `.listen()`-enabled GUI controls follow visually.
+   *
+   * An `isSyncing` guard local to this pair prevents infinite recursion:
+   * keyA fires → sets `state[keyB]` → keyB fires → sees guard → stops.
+   *
+   * When the toggle is switched on, `state[keyB]` is immediately snapped to
+   * the current value of `state[keyA]` (A is the master on activation).
+   *
+   * ```ts
+   * registry.bindBidirectional(
+   *   "bindIntensity",
+   *   "environmentMapIntensity", (v) => { scene.environmentIntensity = v; },
+   *   "backgroundIntensity",     (v) => { scene.backgroundIntensity = v; },
+   * );
+   * ```
+   *
+   * @returns `this` for chaining.
+   */
+  bindBidirectional = <
+    BindKey extends StateKey<T>,
+    KeyA extends StateKey<T>,
+    KeyB extends StateKey<T>,
+  >(
+    bindKey: BindKey,
+    keyA: KeyA,
+    applyA: (value: T[KeyA]) => void,
+    keyB: KeyB,
+    applyB: (value: T[KeyB]) => void,
+  ): this => {
+    /**
+     * Shared flag between the keyA and keyB callbacks.
+     * When one side propagates to the other, it raises this flag so the
+     * receiving side skips its own propagation — breaking the potential loop.
+     */
+    let isSyncing = false;
+
+    /**
+     * Pushes `value` into `targetKey` if the binding toggle is on and we're
+     * not already mid-propagation. Owns the isSyncing bookend so callers
+     * don't have to repeat the guard logic.
+     */
+    const propagateTo = (targetKey: StateKey<T>, value: Primitive): void => {
+      const isLinked = this.state[bindKey] as boolean;
+      if (!isLinked || isSyncing) return;
+
+      isSyncing = true;
+      this.state[targetKey] = value as T[typeof targetKey];
+      isSyncing = false;
+    };
+
+    this.bind(keyA, (v) => {
+      applyA(v);
+      propagateTo(keyB, v);
+    });
+
+    /*
+     * Mirror of the keyA callback — applies the B-side scene change and
+     * pushes back to keyA when linked.
+     */
+    this.bind(keyB, (v) => {
+      applyB(v);
+      propagateTo(keyA, v);
+    });
+
+    /*
+     * Fires when the toggle is switched on or off.
+     * On activation, snaps keyB to the current value of keyA so both sides
+     * start in sync (A is the master on activation).
+     */
+    this.bind(bindKey, (v) => {
+      const isNowLinked = v as boolean;
+      if (!isNowLinked) return;
+
+      this.state[keyB] = this.state[keyA] as unknown as T[KeyB];
+    });
+
+    return this;
   };
 
   private scheduleSave = (): void => {
