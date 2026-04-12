@@ -29,6 +29,7 @@ import environmentMap2 from "@/utils/environment-maps/ldr/cubic-map-2";
 
 import {
   _2kHdrMap,
+  _2kHdrMap2,
   grounded2kHdrMap,
 } from "@/utils/environment-maps/hdr/2k-maps";
 import {
@@ -164,14 +165,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const hdrLoader = new HDRLoader(loadingManager);
     const exrLoader = new EXRLoader(loadingManager);
 
-    const hdrEnvironmentMaps = [_2kHdrMap, blenderEnvMap, blenderEnvMap2];
+    const hdrEnvironmentMaps = [
+      _2kHdrMap,
+      _2kHdrMap2,
+      blenderEnvMap,
+      blenderEnvMap2,
+    ];
 
     const exrEnvironmentMaps = [nvidiaExrMap];
 
     const groundedSkyBoxEnvMaps = [grounded2kHdrMap];
 
     // const environmentMap = await exrLoader.loadAsync(nvidiaExrMap);
-    const environmentMap = await hdrLoader.loadAsync(grounded2kHdrMap);
+    const environmentMap = await hdrLoader.loadAsync(blenderEnvMap2);
 
     environmentMap.mapping = THREE.EquirectangularReflectionMapping;
 
@@ -536,7 +542,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       /*
        * This is very important, adds the env map as a bg BUT ALSO to the models in the scene !
-       * Avoids manually setting the env map on the models
+       * Avoids manually setting the env map on all the models & shapes
        */
       scene.environment = hdrEnvMap;
       scene.background = hdrEnvMap;
@@ -548,9 +554,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       tweakFlightHelmetScene(flightHelmetModel);
       scene.add(flightHelmetModel.scene);
 
-      // * Adds "ground" to the environment map, to avoid making object look like they're floating
-      const skybox = createGroundSkyBox(hdrEnvMap);
-      scene.add(skybox);
+      /*
+       * Adds "ground" to the environment map, to avoid making object
+       * look like it's floating in the middle of the scene
+       */
+      // const skybox = createGroundSkyBox(hdrEnvMap);
+      // scene.add(skybox);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
