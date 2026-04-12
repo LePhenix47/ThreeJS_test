@@ -113,9 +113,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   async function loadGltfModel(
     loadingManager: THREE.LoadingManager,
   ): Promise<GLTF[]> {
-    // TODO: Add the loading manager from the loadTextures function
     const gltfLoader = new GLTFLoader(loadingManager);
     const dracoGltfLoader = new DRACOLoader();
+
     const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
     dracoGltfLoader.setDecoderPath(`${basePath}draco/`);
 
@@ -298,9 +298,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   function createTorusKnot() {
     const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
-    const material = new THREE.MeshStandardMaterial({ color: "white" });
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xaaaaaa,
+      roughness: 0.3,
+      metalness: 1,
+    });
 
     const torusKnot = new THREE.Mesh(geometry, material);
+    torusKnot.position.set(-4, 4, 0);
 
     return torusKnot;
   }
