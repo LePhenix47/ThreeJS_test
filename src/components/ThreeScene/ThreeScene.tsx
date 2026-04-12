@@ -71,11 +71,14 @@ const guiState = {
   // * Environment
   environmentMapIndex: 0,
   environmentMapIntensity: 1,
+  environmentMapRotationY: 0,
   // * Background
   backgroundBlurriness: 0,
   backgroundIntensity: 1,
+  backgroundRotationY: 0,
   // * Bindings
   bindIntensity: false,
+  bindRotation: false,
 };
 
 type GUIState = typeof guiState;
@@ -341,8 +344,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const { state } = registry;
 
     /*
-     * Guards against infinite recursion when both intensity binds are linked:
-     * env bind → sets state.backgroundIntensity → bg bind → sets state.environmentMapIntensity → …
+     * Guards against infinite recursion when bound pairs (intensity, rotation) are linked:
+     * env bind → sets state.background* → bg bind → sets state.environmentMap* → …
      * The flag breaks the cycle so each side only propagates once per user gesture.
      */
     let isSyncing = false;
@@ -363,9 +366,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         }
       })
       .bind("bindIntensity", (v) => {
-        if (v) {
-          state.backgroundIntensity = state.environmentMapIntensity;
-        }
+        if (!v) return;
+        state.backgroundIntensity = state.environmentMapIntensity;
       })
       .bind("backgroundBlurriness", (v) => {
         scene.backgroundBlurriness = v;
@@ -375,6 +377,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         if (state.bindIntensity && !isSyncing) {
           isSyncing = true;
           state.environmentMapIntensity = v;
+          isSyncing = false;
+        }
+      })
+      .bind("environmentMapRotationY", (v) => {
+        scene.environmentRotation.y = v;
+        if (state.bindRotation && !isSyncing) {
+          isSyncing = true;
+          state.backgroundRotationY = v;
+          isSyncing = false;
+        }
+      })
+      .bind("bindRotation", (v) => {
+        if (!v) return;
+        state.backgroundRotationY = state.environmentMapRotationY;
+      })
+      .bind("backgroundRotationY", (v) => {
+        scene.backgroundRotation.y = v;
+        if (state.bindRotation && !isSyncing) {
+          isSyncing = true;
+          state.environmentMapRotationY = v;
           isSyncing = false;
         }
       });
@@ -401,6 +423,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     bindersFolder
       .add(state, "bindIntensity")
       .name("Env intensity ↔ bg intensity");
+    bindersFolder
+      .add(state, "bindRotation")
+      .name("Env rotation Y ↔ bg rotation Y");
 
     const envMapFolder = gui.addFolder("Environment Map");
     envMapFolder
@@ -412,6 +437,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       /* .listen() — registers this controller in lil-gui's internal rAF loop.
        * Every frame it reads state.environmentMapIntensity and patches the <input> value directly.
        * Keeps the slider visually in sync when bindIntensity drives it from the bg side. */
+      .listen();
+    envMapFolder
+      .add(state, "environmentMapRotationY")
+      .min(-Math.PI)
+      .max(Math.PI)
+      .step(0.01)
+      .name("Rotation Y")
+      /* Same as above — keeps this slider in sync when bindRotation drives it from the bg side. */
       .listen();
 
     const backgroundFolder = gui.addFolder("Background scene");
@@ -430,6 +463,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .step(0.01)
       .name("Intensity")
       /* Same as above — keeps this slider in sync when driven from the env side. */
+      .listen();
+    backgroundFolder
+      .add(state, "backgroundRotationY")
+      .min(-Math.PI)
+      .max(Math.PI)
+      .step(0.01)
+      .name("Rotation Y")
+      /* Same as above — keeps this slider in sync when bindRotation drives it from the env side. */
       .listen();
     // envMapFolder.add(state, "environmentMapIndex", 0, 2).name("Index");
 
