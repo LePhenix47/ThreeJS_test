@@ -38,6 +38,7 @@ import {
 } from "@/utils/environment-maps/hdr/own-blender-maps";
 
 import nvidiaExrMap from "@/utils/environment-maps/hdr/nvidia-canvas-map";
+import gsap from "gsap";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
@@ -510,6 +511,29 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return torusKnot;
   }
 
+  function createHolyDonut() {
+    const geometry = new THREE.TorusGeometry(8, 0.5);
+
+    const material = new THREE.MeshStandardMaterial({
+      color: "white",
+    });
+
+    const torus = new THREE.Mesh(geometry, material);
+    torus.position.y = 4;
+
+    return torus;
+  }
+
+  function animateDonut(donut: THREE.Mesh) {
+    gsap.to(donut.rotation, {
+      x: Math.PI * 2,
+      duration: 5,
+      repeat: -1,
+      ease: "sine.inOut",
+      yoyo: true,
+    });
+  }
+
   function tweakFlightHelmetScene(helmet: GLTF) {
     helmet.scene.scale.set(10, 10, 10);
   }
@@ -549,6 +573,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const torusKnot = createTorusKnot();
       scene.add(torusKnot);
+
+      const holyDonut = createHolyDonut();
+      scene.add(holyDonut);
+
+      animateDonut(holyDonut);
 
       const [flightHelmetModel] = await loadGltfModel(loadingManager);
       tweakFlightHelmetScene(flightHelmetModel);
