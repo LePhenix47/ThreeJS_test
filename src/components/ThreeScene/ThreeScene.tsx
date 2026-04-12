@@ -352,6 +352,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return torusKnot;
   }
 
+  function tweakFlightHelmetScene(helmet: GLTF) {
+    helmet.scene.scale.set(10, 10, 10);
+  }
+
   const setupThreeScene = useCallback(
     async (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
@@ -369,7 +373,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const loadingManager = createLoadingManager();
       const [flightHelmetModel] = await loadGltfModel(loadingManager);
-      flightHelmetModel.scene.scale.set(10, 10, 10);
+      tweakFlightHelmetScene(flightHelmetModel);
+
       scene.add(flightHelmetModel.scene);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
