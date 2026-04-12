@@ -359,11 +359,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("environmentMapIntensity", (v) => {
         scene.environmentIntensity = v;
-        if (state.bindIntensity && !isSyncing) {
-          isSyncing = true;
-          state.backgroundIntensity = v;
-          isSyncing = false;
-        }
+        if (!state.bindIntensity || isSyncing) return;
+        isSyncing = true;
+        state.backgroundIntensity = v;
+        isSyncing = false;
       })
       .bind("bindIntensity", (v) => {
         if (!v) return;
@@ -374,19 +373,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("backgroundIntensity", (v) => {
         scene.backgroundIntensity = v;
-        if (state.bindIntensity && !isSyncing) {
-          isSyncing = true;
-          state.environmentMapIntensity = v;
-          isSyncing = false;
-        }
+        if (!state.bindIntensity || isSyncing) return;
+        isSyncing = true;
+        state.environmentMapIntensity = v;
+        isSyncing = false;
       })
       .bind("environmentMapRotationY", (v) => {
         scene.environmentRotation.y = v;
-        if (state.bindRotation && !isSyncing) {
-          isSyncing = true;
-          state.backgroundRotationY = v;
-          isSyncing = false;
-        }
+        if (!state.bindRotation || isSyncing) return;
+        isSyncing = true;
+        state.backgroundRotationY = v;
+        isSyncing = false;
       })
       .bind("bindRotation", (v) => {
         if (!v) return;
@@ -394,11 +391,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("backgroundRotationY", (v) => {
         scene.backgroundRotation.y = v;
-        if (state.bindRotation && !isSyncing) {
-          isSyncing = true;
-          state.environmentMapRotationY = v;
-          isSyncing = false;
-        }
+        if (!state.bindRotation || isSyncing) return;
+        isSyncing = true;
+        state.environmentMapRotationY = v;
+        isSyncing = false;
       });
     // .bind("environmentMapIndex", (v) => {
 
