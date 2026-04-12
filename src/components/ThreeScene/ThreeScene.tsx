@@ -121,7 +121,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     gltfLoader.setDRACOLoader(dracoGltfLoader);
 
-    const modelsToLoad = [`${basePath}models/burger/BURGER.gltf`];
+    const modelsToLoad = [];
 
     // ? Loading the models concurrently
     const loadedModels = await Promise.all(
@@ -296,6 +296,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
+  function createTorus() {
+    const geometry = new THREE.TorusGeometry(10, 3, 16, 100);
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const torus = new THREE.Mesh(geometry, material);
+
+    return torus;
+  }
+
   const setupThreeScene = useCallback(
     async (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
@@ -309,7 +317,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
 
       const loadingManager = createLoadingManager();
-      const [burger] = await loadGltfModel(loadingManager);
+      const [] = await loadGltfModel(loadingManager);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
@@ -319,7 +327,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
       scene.add(camera);
-      scene.add(burger.scene);
 
       const abortController = new AbortController();
 
