@@ -23,7 +23,10 @@ import environmentMap1 from "@/utils/environment-maps/ldr/cubic-map-1";
 import environmentMap2 from "@/utils/environment-maps/ldr/cubic-map-2";
 
 import _2kHdrMap from "@/utils/environment-maps/hdr/2k-map";
-import blenderEnvMap from "@/utils/environment-maps/hdr/own-blender-map";
+import {
+  blenderEnvMap,
+  blenderEnvMap2,
+} from "@/utils/environment-maps/hdr/own-blender-maps";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
@@ -150,7 +153,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   ) {
     const hdrLoader = new HDRLoader(loadingManager);
 
-    const environmentMap = await hdrLoader.loadAsync(blenderEnvMap);
+    const environmentMap = await hdrLoader.loadAsync(blenderEnvMap2);
     environmentMap.mapping = THREE.EquirectangularReflectionMapping;
 
     return environmentMap;
