@@ -119,15 +119,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const chosenMapToLoad = mapsAvailableToLoad[0];
 
-    const { px, nx, py, ny, pz, nz } = chosenMapToLoad;
-    const environmentMap: THREE.CubeTexture = cubeTextureLoader.load([
-      px,
-      nx,
-      py,
-      ny,
-      pz,
-      nz,
-    ]);
+    const environmentMap: THREE.CubeTexture = cubeTextureLoader.load(
+      Object.values(chosenMapToLoad),
+    );
+    /*
+   ? Equivalent of:
+   ? const { px, nx, py, ny, pz, nz } = chosenMapToLoad;
+   ? const environmentMap: THREE.CubeTexture = cubeTextureLoader.load([ px, nx, py, ny, pz, nz]);
+    */
 
     return environmentMap;
   }
