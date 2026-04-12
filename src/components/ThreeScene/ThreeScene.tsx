@@ -360,8 +360,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       )
       .bindBidirectional(
         "bindRotation",
-        "environmentMapRotationY", (v) => { scene.environmentRotation.y = v; },
-        "backgroundRotationY",     (v) => { scene.backgroundRotation.y = v; },
+        "environmentMapRotationY", (v) => { scene.environmentRotation.y = THREE.MathUtils.degToRad(v); },
+        "backgroundRotationY",     (v) => { scene.backgroundRotation.y = THREE.MathUtils.degToRad(v); },
       );
     // .bind("environmentMapIndex", (v) => {
 
@@ -403,10 +403,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .listen();
     envMapFolder
       .add(state, "environmentMapRotationY")
-      .min(-Math.PI)
-      .max(Math.PI)
-      .step(0.01)
-      .name("Rotation Y")
+      .min(-180)
+      .max(180)
+      .step(1)
+      .name("Rotation Y (deg)")
       /* Same as above — keeps this slider in sync when bindRotation drives it from the bg side. */
       .listen();
 
@@ -429,10 +429,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .listen();
     backgroundFolder
       .add(state, "backgroundRotationY")
-      .min(-Math.PI)
-      .max(Math.PI)
-      .step(0.01)
-      .name("Rotation Y")
+      .min(-180)
+      .max(180)
+      .step(1)
+      .name("Rotation Y (deg)")
       /* Same as above — keeps this slider in sync when bindRotation drives it from the env side. */
       .listen();
     // envMapFolder.add(state, "environmentMapIndex", 0, 2).name("Index");
