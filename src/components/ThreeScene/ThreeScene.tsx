@@ -16,13 +16,21 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
-import { GLTF, GLTFLoader, EXRLoader } from "three/examples/jsm/Addons.js";
+import {
+  GLTF,
+  GLTFLoader,
+  EXRLoader,
+  GroundedSkybox,
+} from "three/examples/jsm/Addons.js";
 
 import environmentMap0 from "@/utils/environment-maps/ldr/cubic-map-0";
 import environmentMap1 from "@/utils/environment-maps/ldr/cubic-map-1";
 import environmentMap2 from "@/utils/environment-maps/ldr/cubic-map-2";
 
-import _2kHdrMap from "@/utils/environment-maps/hdr/2k-map";
+import {
+  _2kHdrMap,
+  grounded2kHdrMap,
+} from "@/utils/environment-maps/hdr/2k-maps";
 import {
   blenderEnvMap,
   blenderEnvMap2,
@@ -157,10 +165,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const exrLoader = new EXRLoader(loadingManager);
 
     const hdrEnvironmentMaps = [_2kHdrMap, blenderEnvMap, blenderEnvMap2];
+
     const exrEnvironmentMaps = [nvidiaExrMap];
 
-    const environmentMap = await exrLoader.loadAsync(nvidiaExrMap);
-    // const environmentMap = await hdrLoader.loadAsync(blenderEnvMap2);
+    const groundedSkyBoxEnvMaps = [grounded2kHdrMap];
+
+    // const environmentMap = await exrLoader.loadAsync(nvidiaExrMap);
+    const environmentMap = await hdrLoader.loadAsync(grounded2kHdrMap);
+
     environmentMap.mapping = THREE.EquirectangularReflectionMapping;
 
     return environmentMap;
@@ -496,6 +508,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     helmet.scene.scale.set(10, 10, 10);
   }
 
+  function createGroundSkyBox(hdrEnvMap: THREE.DataTexture) {
+    const skybox = new GroundedSkybox(hdrEnvMap, 15, 70);
+    skybox.position.y = 15;
+
+    return skybox;
+  }
+
   const setupThreeScene = useCallback(
     async (canvas: HTMLCanvasElement) => {
       const parent = canvas.parentElement;
@@ -527,8 +546,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const [flightHelmetModel] = await loadGltfModel(loadingManager);
       tweakFlightHelmetScene(flightHelmetModel);
-
       scene.add(flightHelmetModel.scene);
+
+      // * Adds "ground" to the environment map, to avoid making object look like they're floating
+      const skybox = createGroundSkyBox(hdrEnvMap);
+      scene.add(skybox);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
