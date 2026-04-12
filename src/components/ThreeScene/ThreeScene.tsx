@@ -501,8 +501,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       // const ldrEnvMap: THREE.CubeTexture =
       //   await loadLowDynamicRangeEnvMap(loadingManager);
 
-      const hdrEnvMap: THREE.CubeTexture =
-        await loadLowDynamicRangeEnvMap(loadingManager);
+      const hdrEnvMap: THREE.DataTexture =
+        await loadHighDynamicRangeEnvMap(loadingManager);
 
       /*
        * This is very important, adds the env map as a bg BUT ALSO to the models in the scene !
