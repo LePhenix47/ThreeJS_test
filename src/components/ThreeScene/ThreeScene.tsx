@@ -20,6 +20,37 @@ import { DRACOLoader, GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
+const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
+const FLIGHT_HELMET_PATH = "/models/FlightHelmet/glTF/FlightHelmet.gltf";
+
+type ModelImports = "helmet";
+/**
+ * Resolves a named model key to its full public URL path.
+ *
+ * Prepends `basePath` so the resolved path is correct whether the app is
+ * hosted at the root or under a sub-path (e.g. `/ThreeJS_test/`).
+ *
+ * @param modelPath - Named model key (e.g. `"helmet"`)
+ * @returns Full URL path to the model file
+ * @throws If the key is not registered in the map
+ */
+function getModelImportPath(modelPath: ModelImports) {
+  const modelPathsMap = new Map(
+    Object.entries({
+      helmet: FLIGHT_HELMET_PATH,
+    }),
+  );
+
+  if (!modelPathsMap.has(modelPath)) {
+    throw new Error(`Unknown model path: ${modelPath}`);
+  }
+
+  const chosenModelPath: string = modelPathsMap.get(modelPath)!;
+  const fullPath: string = `${basePath}${chosenModelPath}`;
+
+  return fullPath;
+}
+
 type CameraState = {
   position: THREE.Vector3Like;
   target: THREE.Vector3Like;
@@ -110,22 +141,33 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     return camera;
   }
+  /**
+   * Loads all GLTF/GLB models concurrently via a shared `LoadingManager`.
+   *
+   * Wires a `DRACOLoader` to the `GLTFLoader` so Draco-compressed meshes
+   * are decoded automatically. The WASM decoder is served from `public/draco/`
+   * to stay compatible with Vite's non-root `base` path configuration.
+   *
+   * @param loadingManager - Shared manager that drives the loading progress UI
+   * @returns Array of loaded `GLTF` objects in the same order as the paths list
+   */
   async function loadGltfModel(
     loadingManager: THREE.LoadingManager,
   ): Promise<GLTF[]> {
     const gltfLoader = new GLTFLoader(loadingManager);
     const dracoGltfLoader = new DRACOLoader();
 
-    const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
     dracoGltfLoader.setDecoderPath(`${basePath}draco/`);
 
     gltfLoader.setDRACOLoader(dracoGltfLoader);
 
-    const modelsToLoad = [];
+    const modelsPathToLoad = [getModelImportPath("helmet")];
 
     // ? Loading the models concurrently
     const loadedModels = await Promise.all(
-      modelsToLoad.map((model) => gltfLoader.loadAsync(model)),
+      modelsPathToLoad
+        .filter((modelPath) => typeof modelPath === "string")
+        .map((modelPath) => gltfLoader.loadAsync(modelPath)),
     );
 
     return loadedModels;
@@ -326,7 +368,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       scene.add(torusKnot);
 
       const loadingManager = createLoadingManager();
-      const [] = await loadGltfModel(loadingManager);
+      const [flightHelmetModel] = await loadGltfModel(loadingManager);
+      flightHelmetModel.scene.scale.set(10, 10, 10);
+      scene.add(flightHelmetModel.scene);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
