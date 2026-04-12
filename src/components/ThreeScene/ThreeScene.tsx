@@ -31,6 +31,7 @@ const guiState = {
   // * Helpers
   axisHelper: true,
   lightHelper: true,
+  gridHelper: true,
   // * Floor settings
   // ? Do git cherry-pick ccae51c3ad967228f6273f23f7d7b6f922de7321 to remove all floor related stuff from this file
   floorColor: "#777777",
@@ -216,8 +217,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createHelpers(directionalLight: THREE.DirectionalLight) {
     const axisHelper = new THREE.AxesHelper(3);
     const lightHelper = new THREE.DirectionalLightHelper(directionalLight);
+    const gridHelper = new THREE.GridHelper(10, 10);
 
-    return { axisHelper, lightHelper };
+    return { axisHelper, lightHelper, gridHelper };
   }
 
   function addFloorSettings(
@@ -279,6 +281,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function setupGUI(
     axisHelper: THREE.AxesHelper,
     lightHelper: THREE.DirectionalLightHelper,
+    gridHelper: THREE.GridHelper,
     floor: ReturnType<typeof createFloor>,
     controls: OrbitControls,
   ): () => void {
@@ -295,6 +298,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("lightHelper", (v) => {
         lightHelper.visible = v;
+      })
+      .bind("gridHelper", (v) => {
+        gridHelper.visible = v;
       });
 
     const { state } = registry;
@@ -302,6 +308,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
     helpersFolder.add(state, "lightHelper").name("Light Helper");
+    helpersFolder.add(state, "gridHelper").name("Grid Helper");
     helpersFolder
       .add(
         {
@@ -363,9 +370,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
       const { ambientLight, directionalLight } = createLights();
-      const { axisHelper, lightHelper } = createHelpers(directionalLight);
+      const { axisHelper, lightHelper, gridHelper } = createHelpers(directionalLight);
       const floor = createFloor();
-      const cleanupGUI = setupGUI(axisHelper, lightHelper, floor, controls);
+      const cleanupGUI = setupGUI(axisHelper, lightHelper, gridHelper, floor, controls);
 
       scene.add(
         ambientLight,
@@ -373,6 +380,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         floor.mesh,
         axisHelper,
         lightHelper,
+        gridHelper,
       );
       scene.add(camera);
 
