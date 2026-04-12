@@ -296,12 +296,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return controls;
   }
 
-  function createTorus() {
-    const geometry = new THREE.TorusGeometry(10, 3, 16, 100);
-    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-    const torus = new THREE.Mesh(geometry, material);
+  function createTorusKnot() {
+    const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
+    const material = new THREE.MeshStandardMaterial({ color: "white" });
 
-    return torus;
+    const torusKnot = new THREE.Mesh(geometry, material);
+
+    return torusKnot;
   }
 
   const setupThreeScene = useCallback(
@@ -315,6 +316,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const camera = createCamera(clientWidth / clientHeight);
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
+
+      const torusKnot = createTorusKnot();
+      scene.add(torusKnot);
 
       const loadingManager = createLoadingManager();
       const [] = await loadGltfModel(loadingManager);
