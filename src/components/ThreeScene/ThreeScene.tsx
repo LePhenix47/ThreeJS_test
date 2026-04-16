@@ -32,6 +32,9 @@ import {
   _2kHdrMap2,
   grounded2kHdrMap,
 } from "@/utils/environment-maps/hdr/2k-maps";
+
+import blockadesLabSkyBox from "@public/environmentMaps/blockadesLabsSkybox/interior_views_cozy_wood_cabin_with_cauldron_and_p.jpg";
+
 import {
   blenderEnvMap,
   blenderEnvMap2,
@@ -188,7 +191,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function loadTextures(loadingManager: THREE.LoadingManager) {
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
-    const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [];
+    const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [
+      // blockadesLabSkyBox,
+    ];
 
     for (const colorLoadedTexture of colorLoadedTextures) {
       if (!colorLoadedTexture) continue;
@@ -558,18 +563,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
       const loadingManager = createLoadingManager();
 
-      // const ldrEnvMap: THREE.CubeTexture =
-      //   await loadLowDynamicRangeEnvMap(loadingManager);
+      const ldrEnvMap: THREE.CubeTexture =
+        await loadLowDynamicRangeEnvMap(loadingManager);
 
-      const hdrEnvMap: THREE.DataTexture =
-        await loadHighDynamicRangeEnvMap(loadingManager);
+      // const hdrEnvMap: THREE.DataTexture =
+      //   await loadHighDynamicRangeEnvMap(loadingManager);
 
       /*
        * This is very important, adds the env map as a bg BUT ALSO to the models in the scene !
        * Avoids manually setting the env map on all the models & shapes
        */
-      scene.environment = hdrEnvMap;
-      scene.background = hdrEnvMap;
+
+      scene.environment = ldrEnvMap;
+      scene.background = ldrEnvMap;
+      // scene.environment = hdrEnvMap;
+      // scene.background = hdrEnvMap;
 
       const torusKnot = createTorusKnot();
       scene.add(torusKnot);
