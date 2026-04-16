@@ -188,11 +188,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return environmentMap;
   }
 
-  function loadTextures(loadingManager: THREE.LoadingManager) {
+  function loadTextures(
+    loadingManager: THREE.LoadingManager,
+  ): THREE.Texture<HTMLImageElement>[] {
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
+    const blockadesLabSkyBoxLoaded = textureLoader.load(blockadesLabSkyBox);
     const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [
-      // blockadesLabSkyBox,
+      blockadesLabSkyBoxLoaded,
     ];
 
     for (const colorLoadedTexture of colorLoadedTextures) {
@@ -200,7 +203,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
     }
 
-    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [];
+    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [
+      blockadesLabSkyBoxLoaded,
+    ];
 
     const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
 
@@ -208,6 +213,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       loadedTexture.wrapS = THREE.RepeatWrapping;
       loadedTexture.wrapT = THREE.RepeatWrapping;
     }
+
+    return loadedTexturesArray;
   }
 
   function createScene() {
@@ -563,8 +570,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
       const loadingManager = createLoadingManager();
 
-      const ldrEnvMap: THREE.CubeTexture =
-        await loadLowDynamicRangeEnvMap(loadingManager);
+      const [imgEnvMap] = loadTextures(loadingManager);
+      imgEnvMap.mapping = THREE.EquirectangularReflectionMapping;
+
+      // const ldrEnvMap: THREE.CubeTexture =
+      //   await loadLowDynamicRangeEnvMap(loadingManager);
 
       // const hdrEnvMap: THREE.DataTexture =
       //   await loadHighDynamicRangeEnvMap(loadingManager);
@@ -574,8 +584,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
        * Avoids manually setting the env map on all the models & shapes
        */
 
-      scene.environment = ldrEnvMap;
-      scene.background = ldrEnvMap;
+      scene.environment = imgEnvMap;
+      scene.background = imgEnvMap;
+      // scene.environment = ldrEnvMap;
+      // scene.background = ldrEnvMap;
       // scene.environment = hdrEnvMap;
       // scene.background = hdrEnvMap;
 
