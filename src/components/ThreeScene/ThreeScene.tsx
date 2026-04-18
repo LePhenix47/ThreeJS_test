@@ -533,7 +533,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const torus = new THREE.Mesh(geometry, material);
     torus.position.y = 4;
 
-    return torus;
+    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
+      type: THREE.HalfFloatType,
+    });
+
+    return { torus, cubeRenderTarget };
   }
 
   function animateDonut(donut: THREE.Mesh) {
@@ -584,7 +588,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
        * Avoids manually setting the env map on all the models & shapes
        */
 
-      scene.environment = imgEnvMap;
       scene.background = imgEnvMap;
       // scene.environment = ldrEnvMap;
       // scene.background = ldrEnvMap;
@@ -594,9 +597,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const torusKnot = createTorusKnot();
       scene.add(torusKnot);
 
-      const holyDonut = createHolyDonut();
+      const { torus: holyDonut, cubeRenderTarget } = createHolyDonut();
+      scene.environment = cubeRenderTarget.texture;
       scene.add(holyDonut);
-
       animateDonut(holyDonut);
 
       const [flightHelmetModel] = await loadGltfModel(loadingManager);
@@ -626,6 +629,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const abortController = new AbortController();
 
+      const cubeCamera = new THREE.CubeCamera(0.1, 10, cubeRenderTarget);
+
       function animate() {
         controls.update();
         /*
@@ -639,6 +644,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
          * and re-bind the correct buffers for each object on the next draw.
          */
         renderer.resetState();
+
+        cubeCamera.update(renderer, scene);
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
       }
