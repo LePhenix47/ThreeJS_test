@@ -686,19 +686,19 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const { torus: holyDonut, cubeRenderTarget } = createHolyDonut();
       scene.environment = cubeRenderTarget.texture;
+      /*
+       * Layer 1 — the "CubeCamera-visible" layer.
+       * The donut ring is what the CubeCamera captures to build the real-time env map.
+       * Enabling layer 1 here makes the donut visible to the CubeCamera while keeping
+       * it on layer 0 as well, so the main camera (layer 0) still renders it.
+       */
+      holyDonut.layers.enable(1);
       scene.add(holyDonut);
       animateDonut(holyDonut);
 
       const [flightHelmetModel] = await loadGltfModel(loadingManager);
       tweakFlightHelmetScene(flightHelmetModel);
       scene.add(flightHelmetModel.scene);
-
-      /*
-       * Adds "ground" to the environment map, to avoid making object
-       * look like it's floating in the middle of the scene
-       */
-      // const skybox = createGroundSkyBox(hdrEnvMap);
-      // scene.add(skybox);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
@@ -717,6 +717,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const abortController = new AbortController();
 
       const cubeCamera = new THREE.CubeCamera(0.1, 10, cubeRenderTarget);
+      /*
+       * Restrict the CubeCamera to layer 1 only — it will NOT render anything
+       * on the default layer 0 (torus knot, flight helmet, lights, etc.).
+       * This breaks the self-reflection loop: reflective objects can no longer
+       * see themselves because the CubeCamera never captures them.
+       *
+       * The holy donut is the only object on layer 1, so the CubeCamera
+       * renders just the background + the donut ring → the "halo" ring
+       * you see in metallic reflections is the donut itself.
+       */
+      cubeCamera.layers.set(1);
 
       function animate() {
         controls.update();
