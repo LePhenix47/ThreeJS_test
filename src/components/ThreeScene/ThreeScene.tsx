@@ -513,7 +513,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
     const material = new THREE.MeshStandardMaterial({
       color: 0xaaaaaa,
-      roughness: 0.3,
+      roughness: 0,
       metalness: 1,
     });
 
