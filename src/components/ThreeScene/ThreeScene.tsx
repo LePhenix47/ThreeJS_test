@@ -100,6 +100,9 @@ const guiState = {
   // * Bindings
   bindIntensity: false,
   bindRotation: false,
+  // * Env Map Type Switcher
+  envMapType: "img-equirect",
+  groundedSkybox: false,
 };
 
 type GUIState = typeof guiState;
@@ -410,11 +413,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     lightHelper,
     controls,
     scene,
+    envMaps,
   }: {
     axisHelper: THREE.AxesHelper;
     lightHelper: THREE.DirectionalLightHelper;
     controls: OrbitControls;
     scene: THREE.Scene;
+    envMaps: {
+      img: THREE.Texture;
+      ldr: THREE.CubeTexture;
+      hdr: THREE.DataTexture;
+    };
   }): () => void {
     const gui = new GUI({ title: "Scene Controls" });
 
@@ -425,6 +434,27 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const { state } = registry;
 
+    /* Mutable ref tracking the optional grounded skybox mesh. */
+    let currentSkybox: GroundedSkybox | null = null;
+
+    /*
+     * Declared before the bind callbacks so they can reference it as a closure.
+     * Assigned after the GUI element is created below.
+     */
+    let groundedSkyboxController: ReturnType<GUI["add"]> | undefined;
+
+    /*
+     * All three maps are preloaded — switching is just a scene.background reassignment,
+     * no async loading on every dropdown change.
+     */
+    const envMapByType = new Map<string, THREE.Texture>(
+      Object.entries({
+        "img-equirect": envMaps.img,
+        "ldr-cube": envMaps.ldr,
+        "hdr-equirect": envMaps.hdr,
+      }),
+    );
+
     registry
       .bind("axisHelper", (v) => {
         axisHelper.visible = v;
@@ -434,6 +464,38 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("backgroundBlurriness", (v) => {
         scene.backgroundBlurriness = v;
+      })
+      .bind("envMapType", (type) => {
+        /* Always tear down the skybox before switching — it is tied to the HDR map */
+        if (currentSkybox) {
+          scene.remove(currentSkybox);
+          currentSkybox = null;
+          state.groundedSkybox = false;
+        }
+
+        const map = envMapByType.get(type);
+        if (!map) return;
+
+        scene.background = map;
+
+        const isHdr = type === "hdr-equirect";
+        isHdr
+          ? groundedSkyboxController?.enable()
+          : groundedSkyboxController?.disable();
+      })
+      .bind("groundedSkybox", (enabled) => {
+        if (!enabled) {
+          if (!currentSkybox) return;
+          scene.remove(currentSkybox);
+          currentSkybox = null;
+          return;
+        }
+
+        /* Skybox only works with HDR — DataTexture is required by GroundedSkybox */
+        if (state.envMapType !== "hdr-equirect" || currentSkybox) return;
+
+        currentSkybox = createGroundSkyBox(envMaps.hdr);
+        scene.add(currentSkybox);
       })
       .bindBidirectional(
         "bindIntensity",
@@ -457,9 +519,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
           scene.backgroundRotation.y = THREE.MathUtils.degToRad(v);
         },
       );
-    // .bind("environmentMapIndex", (v) => {
-
-    // })
 
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
@@ -486,6 +545,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const envMapFolder = gui.addFolder("Environment Map");
     envMapFolder
+      .add(state, "envMapType", {
+        "Image (JPEG/PNG)": "img-equirect",
+        "LDR Cube Map": "ldr-cube",
+        "HDR Equirect": "hdr-equirect",
+      })
+      .name("Type");
+
+    envMapFolder
       .add(state, "environmentMapIntensity")
       .min(0)
       .max(10)
@@ -503,6 +570,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Rotation Y (deg)")
       /* Same as above — keeps this slider in sync when bindRotation drives it from the bg side. */
       .listen();
+
+    groundedSkyboxController = envMapFolder
+      .add(state, "groundedSkybox")
+      .name("Grounded Skybox (HDR only)");
+    /* Disable on init unless session storage restored an HDR type */
+    if (state.envMapType !== "hdr-equirect") {
+      groundedSkyboxController.disable();
+    }
 
     const backgroundFolder = gui.addFolder("Background scene");
 
@@ -529,10 +604,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .name("Rotation Y (deg)")
       /* Same as above — keeps this slider in sync when bindRotation drives it from the env side. */
       .listen();
-    // envMapFolder.add(state, "environmentMapIndex", 0, 2).name("Index");
 
     return () => {
       registry.dispose();
+      if (currentSkybox) scene.remove(currentSkybox);
       gui.destroy();
     };
   }
@@ -658,38 +733,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
       const loadingManager = createLoadingManager();
 
-      /* ─── Pick one env map type ─────────────────────────────────────────────
-       *
-       * Three formats are available — un-comment exactly one block:
-       *
-       *  A) Image (JPEG/PNG) as equirectangular  — LDR, simplest setup
-       *  B) LDR cube map (6 × PNG)              — LDR, classic skybox format
-       *  C) HDR equirectangular (.hdr / .exr)   — HDR, best reflection quality
-       *
-       * scene.environment — auto-applies the map to ALL objects in the scene
-       *   (no need to assign envMap on each material individually).
-       * scene.background  — sets the visible skybox behind the scene.
-       * Both can be set independently or assigned the same map.
-       * ──────────────────────────────────────────────────────────────────────*/
-
-      /* A) Image as equirectangular env map (active) */
-      const imageEnvMap = loadImageEquirectEnvMap(loadingManager);
-      scene.background = imageEnvMap;
-      // scene.environment = imageEnvMap;
-
-      /* B) LDR cube map */
-      // const ldrCubeMap = loadLdrCubeEnvMap(loadingManager);
-      // scene.background = ldrCubeMap;
-      // scene.environment = ldrCubeMap;
-
-      /* C) HDR equirectangular */
-      // const hdrEnvMap = await loadHdrEquirectEnvMap(loadingManager);
-      // scene.background = hdrEnvMap;
-      // scene.environment = hdrEnvMap;
-
-      /* Optional: grounded skybox — adds a floor to the HDR map (option C only) */
-      // const skybox = createGroundSkyBox(hdrEnvMap);
-      // scene.add(skybox);
+      /*
+       * Preload all three env map formats up front so the GUI "Type" dropdown
+       * switches instantly — no re-fetch, no async on selection.
+       * See each function's JSDoc for why the format requires specific settings.
+       */
+      const imgMap = loadImageEquirectEnvMap(loadingManager);
+      const ldrCubeMap = loadLdrCubeEnvMap(loadingManager);
+      const hdrMap = await loadHdrEquirectEnvMap(loadingManager);
 
       const torusKnot = createTorusKnot();
       scene.add(torusKnot);
@@ -719,6 +770,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         lightHelper,
         controls,
         scene,
+        envMaps: { img: imgMap, ldr: ldrCubeMap, hdr: hdrMap },
       });
 
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
