@@ -741,17 +741,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       function animate() {
         controls.update();
-        /*
-         * Reset Three.js's cached WebGL state before every frame.
-         *
-         * Without this, when both helpers are absent from the scene the renderer
-         * can end up setting uniforms on the wrong WebGL program — manifesting as
-         * scattered geometry (wrong VAO binding) and a dark scene (wrong uniform
-         * locations). resetState() nulls the cached currentProgram and unbinds
-         * the current VAO, forcing Three.js to re-activate the correct program
-         * and re-bind the correct buffers for each object on the next draw.
-         */
-        renderer.resetState();
 
         cubeCamera.update(renderer, scene);
         renderer.render(scene, camera);
