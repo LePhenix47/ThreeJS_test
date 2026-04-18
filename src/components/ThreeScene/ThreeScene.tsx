@@ -139,9 +139,27 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return loadingManager;
   }
 
-  async function loadLowDynamicRangeEnvMap(
+  /**
+   * Loads 6 separate images into a cube map (LDR format).
+   *
+   * `CubeTextureLoader` assembles the six faces (±X, ±Y, ±Z) into a `CubeTexture`
+   * that Three.js already knows how to use as an environment map.
+   *
+   * Unlike equirectangular formats, `CubeTexture` does NOT need:
+   *  - `mapping = EquirectangularReflectionMapping` — cube textures use their own
+   *    internal mapping (`CubeReflectionMapping`) by default.
+   *  - `colorSpace = SRGBColorSpace` — Three.js handles color space automatically
+   *    for textures loaded via `CubeTextureLoader`.
+   *
+   * Quality note: these are standard PNG/JPG images (LDR) — reflections on metallic
+   * surfaces will look flat compared to an HDR/EXR map.
+   *
+   * @param loadingManager - Shared manager that drives the loading progress UI
+   * @returns Configured `CubeTexture` ready for `scene.environment` and/or `scene.background`
+   */
+  function loadLdrCubeEnvMap(
     loadingManager: THREE.LoadingManager,
-  ) {
+  ): THREE.CubeTexture {
     const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
     const mapsAvailableToLoad = [
       environmentMap0,
@@ -149,72 +167,92 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       environmentMap2,
     ];
 
+    /* Pick one of the available cube maps */
     const chosenMapToLoad = mapsAvailableToLoad[0];
 
+    /*
+     * The loader expects exactly [px, nx, py, ny, pz, nz] — Object.values() gives
+     * that order because the keys were declared in that order in the source file.
+     *
+     * Equivalent to:
+     *   const { px, nx, py, ny, pz, nz } = chosenMapToLoad;
+     *   cubeTextureLoader.load([px, nx, py, ny, pz, nz]);
+     */
     const environmentMap: THREE.CubeTexture = cubeTextureLoader.load(
       Object.values(chosenMapToLoad),
     );
-    /*
-   ? Equivalent of:
-   ? const { px, nx, py, ny, pz, nz } = chosenMapToLoad;
-   ? const environmentMap: THREE.CubeTexture = cubeTextureLoader.load([ px, nx, py, ny, pz, nz]);
-    */
 
     return environmentMap;
   }
 
-  async function loadHighDynamicRangeEnvMap(
+  /**
+   * Loads an HDR or EXR file as an equirectangular environment map.
+   *
+   * HDR/EXR files store High Dynamic Range data — light values above 1.0 — which
+   * produces accurate, physically-based reflections on metallic surfaces.
+   *
+   * `HDRLoader` (formerly called `RGBELoader` in older Three.js versions) returns
+   * a `DataTexture`. `EXRLoader` does the same for OpenEXR files.
+   *
+   * One setting is mandatory:
+   *  - `mapping = EquirectangularReflectionMapping` — the file is an equirectangular
+   *    panorama; this tells Three.js to treat it as such. Without it objects appear
+   *    with no reflections (flat/black).
+   *
+   * Unlike plain images, HDR/EXR loaders handle color space internally — you do NOT
+   * need to set `colorSpace` manually.
+   *
+   * @param loadingManager - Shared manager that drives the loading progress UI
+   * @returns Configured `DataTexture` ready for `scene.environment` and/or `scene.background`
+   */
+  async function loadHdrEquirectEnvMap(
     loadingManager: THREE.LoadingManager,
-  ) {
+  ): Promise<THREE.DataTexture> {
     const hdrLoader = new HDRLoader(loadingManager);
-    const exrLoader = new EXRLoader(loadingManager);
+    /* Alternative for OpenEXR files: const exrLoader = new EXRLoader(loadingManager); */
 
-    const hdrEnvironmentMaps = [
-      _2kHdrMap,
-      _2kHdrMap2,
-      blenderEnvMap,
-      blenderEnvMap2,
-    ];
+    /* Available maps — pick one for the loadAsync call below */
+    /* HDR:  _2kHdrMap | _2kHdrMap2 | blenderEnvMap | blenderEnvMap2 */
+    /* EXR:  nvidiaExrMap */
+    /* Grounded skybox HDR: grounded2kHdrMap (pass to createGroundSkyBox) */
 
-    const exrEnvironmentMaps = [nvidiaExrMap];
-
-    const groundedSkyBoxEnvMaps = [grounded2kHdrMap];
-
-    // const environmentMap = await exrLoader.loadAsync(nvidiaExrMap);
     const environmentMap = await hdrLoader.loadAsync(blenderEnvMap2);
 
+    /* Required: equirectangular panoramas need this; omitting gives flat/black objects */
     environmentMap.mapping = THREE.EquirectangularReflectionMapping;
 
     return environmentMap;
   }
 
-  function loadTextures(
+  /**
+   * Loads a plain image (JPEG/PNG) as an equirectangular environment map.
+   *
+   * Two settings are mandatory for this format:
+   *  - `mapping = EquirectangularReflectionMapping` — tells Three.js the image
+   *    wraps around the scene like a sphere. Without it the texture is treated as
+   *    a flat UV map and objects appear black or distorted.
+   *  - `colorSpace = SRGBColorSpace` — plain images are encoded in sRGB. Marking
+   *    it explicitly prevents Three.js from double-converting and washing out colors.
+   *
+   * Quality note: a plain image is LDR (Low Dynamic Range) — it has no values above
+   * 1.0, so reflections on metallic surfaces will look flat compared to an HDR/EXR map.
+   *
+   * @param loadingManager - Shared manager that drives the loading progress UI
+   * @returns Configured texture ready for `scene.environment` and/or `scene.background`
+   */
+  function loadImageEquirectEnvMap(
     loadingManager: THREE.LoadingManager,
-  ): THREE.Texture<HTMLImageElement>[] {
+  ): THREE.Texture {
     const textureLoader = new THREE.TextureLoader(loadingManager);
+    const texture = textureLoader.load(blockadesLabSkyBox);
 
-    const blockadesLabSkyBoxLoaded = textureLoader.load(blockadesLabSkyBox);
-    const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [
-      blockadesLabSkyBoxLoaded,
-    ];
+    /* Without this the texture is treated as a flat UV map — objects appear black */
+    texture.mapping = THREE.EquirectangularReflectionMapping;
 
-    for (const colorLoadedTexture of colorLoadedTextures) {
-      if (!colorLoadedTexture) continue;
-      colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
-    }
+    /* Plain images are sRGB-encoded; mark it explicitly so Three.js doesn't double-convert */
+    texture.colorSpace = THREE.SRGBColorSpace;
 
-    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [
-      blockadesLabSkyBoxLoaded,
-    ];
-
-    const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
-
-    for (const loadedTexture of loadedTexturesArray) {
-      loadedTexture.wrapS = THREE.RepeatWrapping;
-      loadedTexture.wrapT = THREE.RepeatWrapping;
-    }
-
-    return loadedTexturesArray;
+    return texture;
   }
 
   function createScene() {
@@ -523,17 +561,35 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return torusKnot;
   }
 
+  /**
+   * Creates the "holy donut" — a large torus that acts as a real-time reflection probe.
+   *
+   * How it works:
+   *  - `WebGLCubeRenderTarget(256)` — an off-screen render target with 6 faces (256×256 each).
+   *    Its `.texture` is a live `CubeTexture` we assign to `scene.environment`, so every object
+   *    in the scene dynamically reflects whatever the donut "sees" around it.
+   *  - `HalfFloatType` — stores HDR values (>1.0) in the render target, enabling physically
+   *    accurate reflections. The default `UnsignedByteType` clamps to LDR and loses highlights.
+   *
+   * The matching `CubeCamera` is created in `setupThreeScene` (it needs the render target) and
+   * must be updated every frame via `cubeCamera.update(renderer, scene)` — this re-renders the
+   * 6 cube faces from the donut's position before the main render pass.
+   *
+   * @returns The torus mesh and its `cubeRenderTarget` (assign `.texture` to `scene.environment`)
+   */
   function createHolyDonut() {
     const geometry = new THREE.TorusGeometry(8, 0.5);
-
-    const material = new THREE.MeshStandardMaterial({
-      color: "white",
-    });
+    const material = new THREE.MeshStandardMaterial({ color: "white" });
 
     const torus = new THREE.Mesh(geometry, material);
     torus.position.y = 4;
 
+    /*
+     * The render target that backs the real-time env map.
+     * Assign cubeRenderTarget.texture to scene.environment so all objects sample from it.
+     */
     const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
+      /* HalfFloatType preserves HDR values (>1.0) — needed for accurate reflections */
       type: THREE.HalfFloatType,
     });
 
@@ -574,25 +630,38 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
       const loadingManager = createLoadingManager();
 
-      const [imgEnvMap] = loadTextures(loadingManager);
-      imgEnvMap.mapping = THREE.EquirectangularReflectionMapping;
+      /* ─── Pick one env map type ─────────────────────────────────────────────
+       *
+       * Three formats are available — un-comment exactly one block:
+       *
+       *  A) Image (JPEG/PNG) as equirectangular  — LDR, simplest setup
+       *  B) LDR cube map (6 × PNG)              — LDR, classic skybox format
+       *  C) HDR equirectangular (.hdr / .exr)   — HDR, best reflection quality
+       *
+       * scene.environment — auto-applies the map to ALL objects in the scene
+       *   (no need to assign envMap on each material individually).
+       * scene.background  — sets the visible skybox behind the scene.
+       * Both can be set independently or assigned the same map.
+       * ──────────────────────────────────────────────────────────────────────*/
 
-      // const ldrEnvMap: THREE.CubeTexture =
-      //   await loadLowDynamicRangeEnvMap(loadingManager);
+      /* A) Image as equirectangular env map (active) */
+      const imageEnvMap = loadImageEquirectEnvMap(loadingManager);
+      scene.background = imageEnvMap;
+      // scene.environment = imageEnvMap;
 
-      // const hdrEnvMap: THREE.DataTexture =
-      //   await loadHighDynamicRangeEnvMap(loadingManager);
+      /* B) LDR cube map */
+      // const ldrCubeMap = loadLdrCubeEnvMap(loadingManager);
+      // scene.background = ldrCubeMap;
+      // scene.environment = ldrCubeMap;
 
-      /*
-       * This is very important, adds the env map as a bg BUT ALSO to the models in the scene !
-       * Avoids manually setting the env map on all the models & shapes
-       */
-
-      scene.background = imgEnvMap;
-      // scene.environment = ldrEnvMap;
-      // scene.background = ldrEnvMap;
-      // scene.environment = hdrEnvMap;
+      /* C) HDR equirectangular */
+      // const hdrEnvMap = await loadHdrEquirectEnvMap(loadingManager);
       // scene.background = hdrEnvMap;
+      // scene.environment = hdrEnvMap;
+
+      /* Optional: grounded skybox — adds a floor to the HDR map (option C only) */
+      // const skybox = createGroundSkyBox(hdrEnvMap);
+      // scene.add(skybox);
 
       const torusKnot = createTorusKnot();
       scene.add(torusKnot);
