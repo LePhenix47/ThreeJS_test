@@ -610,6 +610,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     helmet.scene.scale.set(10, 10, 10);
   }
 
+  /**
+   * Wraps an HDR equirectangular map in a `GroundedSkybox` — a Three.js addon that
+   * projects the panorama onto a large dome mesh with a flat ground plane at its base.
+   *
+   * Without it the env map is a perfect sphere, so objects appear to float in mid-air
+   * with the horizon line wrapping under their feet. The grounded skybox anchors the
+   * horizon at scene Y=0, making the ground look solid.
+   *
+   * Only works with HDR/EXR `DataTexture` — a plain image or LDR cube map won't give
+   * enough dynamic range for the ground projection to look correct.
+   *
+   * Constructor parameters: `GroundedSkybox(envMap, groundHeight, radius)`
+   *  - `groundHeight` (15) — how far above Y=0 the horizon sits inside the dome
+   *  - `radius` (70)       — radius of the dome mesh; should exceed the camera's far plane
+   *
+   * @param hdrEnvMap - HDR `DataTexture` returned by `loadHdrEquirectEnvMap`
+   * @returns A `GroundedSkybox` mesh ready to be added to the scene
+   */
   function createGroundSkyBox(hdrEnvMap: THREE.DataTexture) {
     const skybox = new GroundedSkybox(hdrEnvMap, 15, 70);
     skybox.position.y = 15;
