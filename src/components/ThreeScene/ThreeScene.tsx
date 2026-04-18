@@ -579,7 +579,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
    */
   function createHolyDonut() {
     const geometry = new THREE.TorusGeometry(8, 0.5);
-    const material = new THREE.MeshStandardMaterial({ color: "white" });
+    const material = new THREE.MeshStandardMaterial({
+      color: "white",
+      /*
+       * emissive makes the donut self-illuminate independently of scene lights.
+       * emissiveIntensity > 1 is valid here because the render target uses HalfFloatType
+       * (HDR) — values above 1.0 are preserved, so the donut ring appears as a
+       * genuinely bright HDR light source in metallic reflections.
+       */
+      emissive: new THREE.Color("white"),
+      emissiveIntensity: 20,
+    });
 
     const torus = new THREE.Mesh(geometry, material);
     torus.position.y = 4;
