@@ -455,15 +455,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       }),
     );
 
+    /*
+     * bindFinal — fires only when the user releases the slider, not mid-drag.
+     * backgroundBlurriness > 0 triggers an expensive GPU pass (PMREMGenerator)
+     * inside Three.js; firing it on every drag pixel would cause noticeable lag.
+     */
+    const handleBlurrinessChange = registry.bindFinal(
+      "backgroundBlurriness",
+      (v) => {
+        scene.backgroundBlurriness = v;
+      },
+    );
+
     registry
       .bind("axisHelper", (v) => {
         axisHelper.visible = v;
       })
       .bind("lightHelper", (v) => {
         lightHelper.visible = v;
-      })
-      .bind("backgroundBlurriness", (v) => {
-        scene.backgroundBlurriness = v;
       })
       .bind("envMapType", (type) => {
         /* Always tear down the skybox before switching — it is tied to the HDR map */
@@ -586,7 +595,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .min(0)
       .max(1)
       .step(0.001)
-      .name("Blurriness");
+      .name("Blurriness")
+      .onFinishChange(handleBlurrinessChange);
 
     backgroundFolder
       .add(state, "backgroundIntensity")
@@ -794,7 +804,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       function animate() {
         controls.update();
 
-        cubeCamera.update(renderer, scene);
+        if (scene.backgroundBlurriness === 0) {
+          cubeCamera.update(renderer, scene);
+        }
+
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
       }
