@@ -92,6 +92,8 @@ const guiState = {
   toneMappingExposure: 1.0,
   // * Lights
   castShadow: true,
+  shadowNormalBias: 0.027,
+  shadowBias: -0.004,
   directionalLightIntensity: 0.5,
   directionalLightPosX: 0,
   directionalLightPosY: 0,
@@ -352,6 +354,32 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const shadowMapSize: number = 2 ** 10;
     directionalLight.shadow.mapSize.set(shadowMapSize, shadowMapSize);
 
+    /*
+     * Shadow acne fix — `bias` and `normalBias`.
+     *
+     * Shadow acne is the stripy self-shadowing artifact you see on lit surfaces.
+     * It happens because the shadow map has finite resolution: a pixel samples the
+     * shadow map and lands just barely on the wrong side of its own depth value,
+     * making the surface think it's in shadow when it isn't.
+     *
+     * Two knobs control this:
+     *
+     *  - `bias` — shifts the shadow depth value by a flat amount.
+     *    Use for flat / low-poly surfaces (e.g. floors, walls).
+     *    Negative values push shadows closer to the caster, reducing acne.
+     *    Too much → "peter panning" (shadow detaches and floats away from object).
+     *
+     *  - `normalBias` — shifts the shadow sample point along the surface normal
+     *    before comparing depth. More effective on curved or detailed geometry
+     *    (e.g. the flight helmet) where `bias` alone isn't enough.
+     *    Too much → shadows shrink or disappear at silhouette edges.
+     *
+     * The values below were tuned visually for this scene — if you change the
+     * light position or model scale, you may need to re-tune them via the GUI.
+     *
+     * Initial values are set in guiState and applied via the registry bind.
+     */
+
     return { ambientLight, directionalLight };
   }
 
@@ -412,6 +440,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .bind("castShadow", (v) => {
         directionalLight.castShadow = v;
       })
+      .bind("shadowNormalBias", (v) => {
+        directionalLight.shadow.normalBias = v;
+      })
+      .bind("shadowBias", (v) => {
+        directionalLight.shadow.bias = v;
+      })
       .bind("directionalLightIntensity", (v) => {
         directionalLight.intensity = v;
       })
@@ -466,6 +500,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const lightFolder = gui.addFolder("Light");
 
     lightFolder.add(state, "castShadow").name("Cast Shadow");
+    lightFolder
+      .add(state, "shadowNormalBias")
+      .min(-0.05)
+      .max(0.05)
+      .step(0.001)
+      .name("Shadow Normal Bias");
+    lightFolder
+      .add(state, "shadowBias")
+      .min(-0.05)
+      .max(0.05)
+      .step(0.001)
+      .name("Shadow Bias");
 
     lightFolder
       .add(state, "directionalLightIntensity")
