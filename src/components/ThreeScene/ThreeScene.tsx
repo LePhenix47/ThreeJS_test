@@ -70,6 +70,7 @@ const guiState = {
   lightHelper: true,
   // * Renderer
   toneMapping: THREE.NoToneMapping,
+  toneMappingExposure: 1.0,
 };
 
 type GUIState = typeof guiState;
@@ -310,6 +311,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("toneMapping", (v) => {
         renderer.toneMapping = v;
+      })
+      .bind("toneMappingExposure", (v) => {
+        renderer.toneMappingExposure = v;
       });
 
     const helpersFolder = gui.addFolder("Helpers");
@@ -338,6 +342,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         ACESFilmic: THREE.ACESFilmicToneMapping,
       })
       .name("Tone Mapping");
+
+    rendererFolder
+      .add(state, "toneMappingExposure")
+      .min(0)
+      .max(10)
+      .step(0.001)
+      .name("Tone Mapping Exposure");
 
     return () => {
       registry.dispose();
