@@ -1,5 +1,5 @@
 /*
- * Particles Lesson
+ * Realistic Render Lesson
  */
 import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 
@@ -16,52 +16,32 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
-import {
-  GLTF,
-  GLTFLoader,
-  EXRLoader,
-  GroundedSkybox,
-} from "three/examples/jsm/Addons.js";
+import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 
-import environmentMap0 from "@/utils/environment-maps/ldr/cubic-map-0";
-import environmentMap1 from "@/utils/environment-maps/ldr/cubic-map-1";
-import environmentMap2 from "@/utils/environment-maps/ldr/cubic-map-2";
-
-import {
-  _2kHdrMap,
-  _2kHdrMap2,
-  grounded2kHdrMap,
-} from "@/utils/environment-maps/hdr/2k-maps";
-
-import blockadesLabSkyBox from "@public/environmentMaps/blockadesLabsSkybox/interior_views_cozy_wood_cabin_with_cauldron_and_p.jpg";
-
-import {
-  blenderEnvMap,
-  blenderEnvMap2,
-} from "@/utils/environment-maps/hdr/own-blender-maps";
-
-import nvidiaExrMap from "@/utils/environment-maps/hdr/nvidia-canvas-map";
-import gsap from "gsap";
+import { _2kHdrMap } from "@/utils/environment-maps/hdr/2k-maps";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
 const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
+const HAMBURGER_PATH = "/models/hamburger.glb";
 const FLIGHT_HELMET_PATH = "/models/FlightHelmet/glTF/FlightHelmet.gltf";
 
-type ModelImports = "helmet";
+type ModelImports = "hamburger" | "helmet";
+
 /**
  * Resolves a named model key to its full public URL path.
  *
  * Prepends `basePath` so the resolved path is correct whether the app is
  * hosted at the root or under a sub-path (e.g. `/ThreeJS_test/`).
  *
- * @param modelPath - Named model key (e.g. `"helmet"`)
+ * @param modelPath - Named model key (e.g. `"hamburger"`)
  * @returns Full URL path to the model file
  * @throws If the key is not registered in the map
  */
 function getModelImportPath(modelPath: ModelImports) {
   const modelPathsMap = new Map(
     Object.entries({
+      hamburger: HAMBURGER_PATH,
       helmet: FLIGHT_HELMET_PATH,
     }),
   );
@@ -86,23 +66,8 @@ type ThreeSceneProps = {
 };
 
 const guiState = {
-  // * Helpers
   axisHelper: true,
   lightHelper: true,
-  // * Environment
-  environmentMapIndex: 0,
-  environmentMapIntensity: 1,
-  environmentMapRotationY: 0,
-  // * Background
-  backgroundBlurriness: 0,
-  backgroundIntensity: 1,
-  backgroundRotationY: 0,
-  // * Bindings
-  bindIntensity: false,
-  bindRotation: false,
-  // * Env Map Type Switcher
-  envMapType: "img-equirect",
-  groundedSkybox: false,
 };
 
 type GUIState = typeof guiState;
@@ -111,7 +76,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationIdRef = useRef<number>(0);
 
-  // * Regular function (not a hook) — uses getState() to access the store directly
+  /* Regular function (not a hook) — uses getState() to access the store directly */
   function createLoadingManager(): THREE.LoadingManager {
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
 
@@ -143,119 +108,34 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   /**
-   * Loads 6 separate images into a cube map (LDR format).
+   * Loads an HDR file as an equirectangular environment map.
    *
-   * `CubeTextureLoader` assembles the six faces (±X, ±Y, ±Z) into a `CubeTexture`
-   * that Three.js already knows how to use as an environment map.
-   *
-   * Unlike equirectangular formats, `CubeTexture` does NOT need:
-   *  - `mapping = EquirectangularReflectionMapping` — cube textures use their own
-   *    internal mapping (`CubeReflectionMapping`) by default.
-   *  - `colorSpace = SRGBColorSpace` — Three.js handles color space automatically
-   *    for textures loaded via `CubeTextureLoader`.
-   *
-   * Quality note: these are standard PNG/JPG images (LDR) — reflections on metallic
-   * surfaces will look flat compared to an HDR/EXR map.
-   *
-   * @param loadingManager - Shared manager that drives the loading progress UI
-   * @returns Configured `CubeTexture` ready for `scene.environment` and/or `scene.background`
-   */
-  function loadLdrCubeEnvMap(
-    loadingManager: THREE.LoadingManager,
-  ): THREE.CubeTexture {
-    const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
-    const mapsAvailableToLoad = [
-      environmentMap0,
-      environmentMap1,
-      environmentMap2,
-    ];
-
-    /* Pick one of the available cube maps */
-    const chosenMapToLoad = mapsAvailableToLoad[0];
-
-    /*
-     * The loader expects exactly [px, nx, py, ny, pz, nz] — Object.values() gives
-     * that order because the keys were declared in that order in the source file.
-     *
-     * Equivalent to:
-     *   const { px, nx, py, ny, pz, nz } = chosenMapToLoad;
-     *   cubeTextureLoader.load([px, nx, py, ny, pz, nz]);
-     */
-    const environmentMap: THREE.CubeTexture = cubeTextureLoader.load(
-      Object.values(chosenMapToLoad),
-    );
-
-    return environmentMap;
-  }
-
-  /**
-   * Loads an HDR or EXR file as an equirectangular environment map.
-   *
-   * HDR/EXR files store High Dynamic Range data — light values above 1.0 — which
+   * HDR files store High Dynamic Range data — light values above 1.0 — which
    * produces accurate, physically-based reflections on metallic surfaces.
    *
    * `HDRLoader` (formerly called `RGBELoader` in older Three.js versions) returns
-   * a `DataTexture`. `EXRLoader` does the same for OpenEXR files.
-   *
-   * One setting is mandatory:
+   * a `DataTexture`. One setting is mandatory:
    *  - `mapping = EquirectangularReflectionMapping` — the file is an equirectangular
    *    panorama; this tells Three.js to treat it as such. Without it objects appear
    *    with no reflections (flat/black).
    *
-   * Unlike plain images, HDR/EXR loaders handle color space internally — you do NOT
+   * Unlike plain images, HDR loaders handle color space internally — you do NOT
    * need to set `colorSpace` manually.
    *
    * @param loadingManager - Shared manager that drives the loading progress UI
    * @returns Configured `DataTexture` ready for `scene.environment` and/or `scene.background`
    */
-  async function loadHdrEquirectEnvMap(
+  async function loadHdrEnvMap(
     loadingManager: THREE.LoadingManager,
   ): Promise<THREE.DataTexture> {
     const hdrLoader = new HDRLoader(loadingManager);
-    /* Alternative for OpenEXR files: const exrLoader = new EXRLoader(loadingManager); */
 
-    /* Available maps — pick one for the loadAsync call below */
-    /* HDR:  _2kHdrMap | _2kHdrMap2 | blenderEnvMap | blenderEnvMap2 */
-    /* EXR:  nvidiaExrMap */
-    /* Grounded skybox HDR: grounded2kHdrMap (pass to createGroundSkyBox) */
-
-    const environmentMap = await hdrLoader.loadAsync(blenderEnvMap2);
+    const environmentMap = await hdrLoader.loadAsync(_2kHdrMap);
 
     /* Required: equirectangular panoramas need this; omitting gives flat/black objects */
     environmentMap.mapping = THREE.EquirectangularReflectionMapping;
 
     return environmentMap;
-  }
-
-  /**
-   * Loads a plain image (JPEG/PNG) as an equirectangular environment map.
-   *
-   * Two settings are mandatory for this format:
-   *  - `mapping = EquirectangularReflectionMapping` — tells Three.js the image
-   *    wraps around the scene like a sphere. Without it the texture is treated as
-   *    a flat UV map and objects appear black or distorted.
-   *  - `colorSpace = SRGBColorSpace` — plain images are encoded in sRGB. Marking
-   *    it explicitly prevents Three.js from double-converting and washing out colors.
-   *
-   * Quality note: a plain image is LDR (Low Dynamic Range) — it has no values above
-   * 1.0, so reflections on metallic surfaces will look flat compared to an HDR/EXR map.
-   *
-   * @param loadingManager - Shared manager that drives the loading progress UI
-   * @returns Configured texture ready for `scene.environment` and/or `scene.background`
-   */
-  function loadImageEquirectEnvMap(
-    loadingManager: THREE.LoadingManager,
-  ): THREE.Texture {
-    const textureLoader = new THREE.TextureLoader(loadingManager);
-    const texture = textureLoader.load(blockadesLabSkyBox);
-
-    /* Without this the texture is treated as a flat UV map — objects appear black */
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-
-    /* Plain images are sRGB-encoded; mark it explicitly so Three.js doesn't double-convert */
-    texture.colorSpace = THREE.SRGBColorSpace;
-
-    return texture;
   }
 
   function createScene() {
@@ -269,12 +149,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     return camera;
   }
+
   /**
    * Loads all GLTF/GLB models concurrently via a shared `LoadingManager`.
-   *
-   * Wires a `DRACOLoader` to the `GLTFLoader` so Draco-compressed meshes
-   * are decoded automatically. The WASM decoder is served from `public/draco/`
-   * to stay compatible with Vite's non-root `base` path configuration.
    *
    * @param loadingManager - Shared manager that drives the loading progress UI
    * @returns Array of loaded `GLTF` objects in the same order as the paths list
@@ -284,9 +161,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   ): Promise<GLTF[]> {
     const gltfLoader = new GLTFLoader(loadingManager);
 
-    const modelsPathToLoad = [getModelImportPath("helmet")];
+    const modelsPathToLoad = [
+      getModelImportPath("hamburger"),
+      getModelImportPath("helmet"),
+    ];
 
-    // ? Loading the models concurrently
     const loadedModels = await Promise.all(
       modelsPathToLoad
         .filter((modelPath) => typeof modelPath === "string")
@@ -300,14 +179,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     camera: THREE.PerspectiveCamera,
     controls: OrbitControls | null,
   ): () => void {
-    /*
-    TODO: If the project starts to lag, we may need to set up a signal system to save the camera state
-    TODO: For instance when the user changes the camera position:
-    TODO: → fires signal 
-    TODO: → signal saves the camera state + starts debouncing the saving 
-    TODO: → stop moving the camera 
-    TODO: → signal saves the camera state and ends debouncing    
-    */
     if (!controls) return () => {};
 
     const savedCameraState = WebStorage.getKey<CameraState>(
@@ -362,10 +233,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     renderer.setPixelRatio(minPixelRatio);
 
     renderer.shadowMap.enabled = true;
-    /* PCFSoftShadowMap was deprecated in r182 — PCFShadowMap is now soft by default.
-     * Earlier branches still use PCFSoftShadowMap because they were written before r182.
-     * @see https://github.com/mrdoob/three.js/wiki/Migration-Guide
-     */
     renderer.shadowMap.type = THREE.PCFShadowMap;
 
     return renderer;
@@ -412,18 +279,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     axisHelper,
     lightHelper,
     controls,
-    scene,
-    envMaps,
   }: {
     axisHelper: THREE.AxesHelper;
     lightHelper: THREE.DirectionalLightHelper;
     controls: OrbitControls;
-    scene: THREE.Scene;
-    envMaps: {
-      img: THREE.Texture;
-      ldr: THREE.CubeTexture;
-      hdr: THREE.DataTexture;
-    };
   }): () => void {
     const gui = new GUI({ title: "Scene Controls" });
 
@@ -434,100 +293,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const { state } = registry;
 
-    /* Mutable ref tracking the optional grounded skybox mesh. */
-    let currentSkybox: GroundedSkybox | null = null;
-
-    /*
-     * Declared before the bind callbacks so they can reference it as a closure.
-     * Assigned after the GUI element is created below.
-     */
-    let groundedSkyboxController: ReturnType<GUI["add"]> | undefined;
-
-    /*
-     * All three maps are preloaded — switching is just a scene.background reassignment,
-     * no async loading on every dropdown change.
-     */
-    const envMapByType = new Map<string, THREE.Texture>(
-      Object.entries({
-        "img-equirect": envMaps.img,
-        "ldr-cube": envMaps.ldr,
-        "hdr-equirect": envMaps.hdr,
-      }),
-    );
-
-    /*
-     * bindFinal — fires only when the user releases the slider, not mid-drag.
-     * backgroundBlurriness > 0 triggers an expensive GPU pass (PMREMGenerator)
-     * inside Three.js; firing it on every drag pixel would cause noticeable lag.
-     */
-    const handleBlurrinessChange = registry.bindFinal(
-      "backgroundBlurriness",
-      (v) => {
-        scene.backgroundBlurriness = v;
-      },
-    );
-
     registry
       .bind("axisHelper", (v) => {
         axisHelper.visible = v;
       })
       .bind("lightHelper", (v) => {
         lightHelper.visible = v;
-      })
-      .bind("envMapType", (type) => {
-        /* Always tear down the skybox before switching — it is tied to the HDR map */
-        if (currentSkybox) {
-          scene.remove(currentSkybox);
-          currentSkybox = null;
-          state.groundedSkybox = false;
-        }
-
-        const map = envMapByType.get(type);
-        if (!map) return;
-
-        scene.background = map;
-
-        const isHdr = type === "hdr-equirect";
-        isHdr
-          ? groundedSkyboxController?.enable()
-          : groundedSkyboxController?.disable();
-      })
-      .bind("groundedSkybox", (enabled) => {
-        if (!enabled) {
-          if (!currentSkybox) return;
-          scene.remove(currentSkybox);
-          currentSkybox = null;
-          return;
-        }
-
-        /* Skybox only works with HDR — DataTexture is required by GroundedSkybox */
-        if (state.envMapType !== "hdr-equirect" || currentSkybox) return;
-
-        currentSkybox = createGroundSkyBox(envMaps.hdr);
-        scene.add(currentSkybox);
-      })
-      .bindBidirectional(
-        "bindIntensity",
-        "environmentMapIntensity",
-        (v) => {
-          scene.environmentIntensity = v;
-        },
-        "backgroundIntensity",
-        (v) => {
-          scene.backgroundIntensity = v;
-        },
-      )
-      .bindBidirectional(
-        "bindRotation",
-        "environmentMapRotationY",
-        (v) => {
-          scene.environmentRotation.y = THREE.MathUtils.degToRad(v);
-        },
-        "backgroundRotationY",
-        (v) => {
-          scene.backgroundRotation.y = THREE.MathUtils.degToRad(v);
-        },
-      );
+      });
 
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
@@ -544,80 +316,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       )
       .name("Reset Camera Pivot");
 
-    const bindersFolder = gui.addFolder("Bindings");
-    bindersFolder
-      .add(state, "bindIntensity")
-      .name("Env intensity ↔ bg intensity");
-    bindersFolder
-      .add(state, "bindRotation")
-      .name("Env rotation Y ↔ bg rotation Y");
-
-    const envMapFolder = gui.addFolder("Environment Map");
-    envMapFolder
-      .add(state, "envMapType", {
-        "Image (JPEG/PNG)": "img-equirect",
-        "LDR Cube Map": "ldr-cube",
-        "HDR Equirect": "hdr-equirect",
-      })
-      .name("Type");
-
-    envMapFolder
-      .add(state, "environmentMapIntensity")
-      .min(0)
-      .max(10)
-      .step(0.01)
-      .name("Intensity")
-      /* .listen() — registers this controller in lil-gui's internal rAF loop.
-       * Every frame it reads state.environmentMapIntensity and patches the <input> value directly.
-       * Keeps the slider visually in sync when bindIntensity drives it from the bg side. */
-      .listen();
-    envMapFolder
-      .add(state, "environmentMapRotationY")
-      .min(-180)
-      .max(180)
-      .step(1)
-      .name("Rotation Y (deg)")
-      /* Same as above — keeps this slider in sync when bindRotation drives it from the bg side. */
-      .listen();
-
-    groundedSkyboxController = envMapFolder
-      .add(state, "groundedSkybox")
-      .name("Grounded Skybox (HDR only)");
-    /* Disable on init unless session storage restored an HDR type */
-    if (state.envMapType !== "hdr-equirect") {
-      groundedSkyboxController.disable();
-    }
-
-    const backgroundFolder = gui.addFolder("Background scene");
-
-    backgroundFolder
-      .add(state, "backgroundBlurriness")
-      .min(0)
-      .max(1)
-      .step(0.001)
-      .name("Blurriness")
-      .onFinishChange(handleBlurrinessChange);
-
-    backgroundFolder
-      .add(state, "backgroundIntensity")
-      .min(0)
-      .max(10)
-      .step(0.01)
-      .name("Intensity")
-      /* Same as above — keeps this slider in sync when driven from the env side. */
-      .listen();
-    backgroundFolder
-      .add(state, "backgroundRotationY")
-      .min(-180)
-      .max(180)
-      .step(1)
-      .name("Rotation Y (deg)")
-      /* Same as above — keeps this slider in sync when bindRotation drives it from the env side. */
-      .listen();
-
     return () => {
       registry.dispose();
-      if (currentSkybox) scene.remove(currentSkybox);
       gui.destroy();
     };
   }
@@ -630,104 +330,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     controls.enableDamping = true;
 
     return controls;
-  }
-
-  function createTorusKnot() {
-    const geometry = new THREE.TorusKnotGeometry(1, 0.4, 100, 16);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xaaaaaa,
-      roughness: 0,
-      metalness: 1,
-    });
-
-    const torusKnot = new THREE.Mesh(geometry, material);
-    torusKnot.position.set(-4, 4, 0);
-
-    return torusKnot;
-  }
-
-  /**
-   * Creates the "holy donut" — a large torus that acts as a real-time reflection probe.
-   *
-   * How it works:
-   *  - `WebGLCubeRenderTarget(256)` — an off-screen render target with 6 faces (256×256 each).
-   *    Its `.texture` is a live `CubeTexture` we assign to `scene.environment`, so every object
-   *    in the scene dynamically reflects whatever the donut "sees" around it.
-   *  - `HalfFloatType` — stores HDR values (>1.0) in the render target, enabling physically
-   *    accurate reflections. The default `UnsignedByteType` clamps to LDR and loses highlights.
-   *
-   * The matching `CubeCamera` is created in `setupThreeScene` (it needs the render target) and
-   * must be updated every frame via `cubeCamera.update(renderer, scene)` — this re-renders the
-   * 6 cube faces from the donut's position before the main render pass.
-   *
-   * @returns The torus mesh and its `cubeRenderTarget` (assign `.texture` to `scene.environment`)
-   */
-  function createHolyDonut() {
-    const geometry = new THREE.TorusGeometry(8, 0.5);
-    const material = new THREE.MeshStandardMaterial({
-      color: "white",
-      /*
-       * emissive makes the donut self-illuminate independently of scene lights.
-       * emissiveIntensity > 1 is valid here because the render target uses HalfFloatType
-       * (HDR) — values above 1.0 are preserved, so the donut ring appears as a
-       * genuinely bright HDR light source in metallic reflections.
-       */
-      emissive: new THREE.Color("white"),
-      emissiveIntensity: 20,
-    });
-
-    const torus = new THREE.Mesh(geometry, material);
-    torus.position.y = 4;
-
-    /*
-     * The render target that backs the real-time env map.
-     * Assign cubeRenderTarget.texture to scene.environment so all objects sample from it.
-     */
-    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, {
-      /* HalfFloatType preserves HDR values (>1.0) — needed for accurate reflections */
-      type: THREE.HalfFloatType,
-    });
-
-    return { torus, cubeRenderTarget };
-  }
-
-  function animateDonut(donut: THREE.Mesh) {
-    gsap.to(donut.rotation, {
-      x: Math.PI * 2,
-      duration: 5,
-      repeat: -1,
-      ease: "sine.inOut",
-      yoyo: true,
-    });
-  }
-
-  function tweakFlightHelmetScene(helmet: GLTF) {
-    helmet.scene.scale.set(10, 10, 10);
-  }
-
-  /**
-   * Wraps an HDR equirectangular map in a `GroundedSkybox` — a Three.js addon that
-   * projects the panorama onto a large dome mesh with a flat ground plane at its base.
-   *
-   * Without it the env map is a perfect sphere, so objects appear to float in mid-air
-   * with the horizon line wrapping under their feet. The grounded skybox anchors the
-   * horizon at scene Y=0, making the ground look solid.
-   *
-   * Only works with HDR/EXR `DataTexture` — a plain image or LDR cube map won't give
-   * enough dynamic range for the ground projection to look correct.
-   *
-   * Constructor parameters: `GroundedSkybox(envMap, groundHeight, radius)`
-   *  - `groundHeight` (15) — how far above Y=0 the horizon sits inside the dome
-   *  - `radius` (70)       — radius of the dome mesh; should exceed the camera's far plane
-   *
-   * @param hdrEnvMap - HDR `DataTexture` returned by `loadHdrEquirectEnvMap`
-   * @returns A `GroundedSkybox` mesh ready to be added to the scene
-   */
-  function createGroundSkyBox(hdrEnvMap: THREE.DataTexture) {
-    const skybox = new GroundedSkybox(hdrEnvMap, 15, 70);
-    skybox.position.y = 15;
-
-    return skybox;
   }
 
   const setupThreeScene = useCallback(
@@ -743,71 +345,27 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const controls = createOrbitControls(camera, canvas);
       const loadingManager = createLoadingManager();
 
-      /*
-       * Preload all three env map formats up front so the GUI "Type" dropdown
-       * switches instantly — no re-fetch, no async on selection.
-       * See each function's JSDoc for why the format requires specific settings.
-       */
-      const imgMap = loadImageEquirectEnvMap(loadingManager);
-      const ldrCubeMap = loadLdrCubeEnvMap(loadingManager);
-      const hdrMap = await loadHdrEquirectEnvMap(loadingManager);
+      const envMap = await loadHdrEnvMap(loadingManager);
+      scene.environment = envMap;
+      scene.background = envMap;
 
-      const torusKnot = createTorusKnot();
-      scene.add(torusKnot);
-
-      const { torus: holyDonut, cubeRenderTarget } = createHolyDonut();
-      scene.environment = cubeRenderTarget.texture;
-      /*
-       * Layer 1 — the "CubeCamera-visible" layer.
-       * The donut ring is what the CubeCamera captures to build the real-time env map.
-       * Enabling layer 1 here makes the donut visible to the CubeCamera while keeping
-       * it on layer 0 as well, so the main camera (layer 0) still renders it.
-       */
-      holyDonut.layers.enable(1);
-      scene.add(holyDonut);
-      animateDonut(holyDonut);
-
-      const [flightHelmetModel] = await loadGltfModel(loadingManager);
-      tweakFlightHelmetScene(flightHelmetModel);
-      scene.add(flightHelmetModel.scene);
+      const [hamburgerModel, helmetModel] = await loadGltfModel(loadingManager);
+      helmetModel.scene.scale.set(10, 10, 10);
+      scene.add(helmetModel.scene);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
-      const cleanupGUI = setupGUI({
-        axisHelper,
-        lightHelper,
-        controls,
-        scene,
-        envMaps: { img: imgMap, ldr: ldrCubeMap, hdr: hdrMap },
-      });
+      const cleanupGUI = setupGUI({ axisHelper, lightHelper, controls });
 
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
       scene.add(camera);
 
       const abortController = new AbortController();
 
-      const cubeCamera = new THREE.CubeCamera(0.1, 10, cubeRenderTarget);
-      /*
-       * Restrict the CubeCamera to layer 1 only — it will NOT render anything
-       * on the default layer 0 (torus knot, flight helmet, lights, etc.).
-       * This breaks the self-reflection loop: reflective objects can no longer
-       * see themselves because the CubeCamera never captures them.
-       *
-       * The holy donut is the only object on layer 1, so the CubeCamera
-       * renders just the background + the donut ring → the "halo" ring
-       * you see in metallic reflections is the donut itself.
-       */
-      cubeCamera.layers.set(1);
-
       function animate() {
         controls.update();
-
-        if (scene.backgroundBlurriness === 0) {
-          cubeCamera.update(renderer, scene);
-        }
-
         renderer.render(scene, camera);
         animationIdRef.current = requestAnimationFrame(animate);
       }
