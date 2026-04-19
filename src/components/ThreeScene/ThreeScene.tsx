@@ -16,14 +16,14 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
-import { GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
+import { GLTF, GLTFLoader, DRACOLoader } from "three/examples/jsm/Addons.js";
 
 import { _2kHdrMap } from "@/utils/environment-maps/hdr/2k-maps";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
 const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
-const HAMBURGER_PATH = "/models/hamburger.glb";
+const HAMBURGER_PATH = "/models/burger/BURGER.gltf";
 const FLIGHT_HELMET_PATH = "/models/FlightHelmet/glTF/FlightHelmet.gltf";
 
 type ModelImports = "hamburger" | "helmet";
@@ -159,7 +159,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   async function loadGltfModel(
     loadingManager: THREE.LoadingManager,
   ): Promise<GLTF[]> {
+    const dracoLoader = new DRACOLoader(loadingManager);
+    dracoLoader.setDecoderPath(`${basePath}draco/`);
+
     const gltfLoader = new GLTFLoader(loadingManager);
+    gltfLoader.setDRACOLoader(dracoLoader);
 
     const modelsPathToLoad = [
       getModelImportPath("hamburger"),
@@ -351,7 +355,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const [hamburgerModel, helmetModel] = await loadGltfModel(loadingManager);
       helmetModel.scene.scale.set(10, 10, 10);
-      scene.add(helmetModel.scene);
+      hamburgerModel.scene.scale.set(10, 10, 10);
+      scene.add(hamburgerModel.scene);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
