@@ -285,12 +285,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     directionalLight.target.position.set(0, 4, 0);
 
     const lightCameraProperties = {
-      // left: -7,
-      // right: 7,
-      // top: 7,
-      // bottom: -7,
-      // near: 0.1,
-      far: 15,
+      left: -10,
+      right: 10,
+      top: 10,
+      bottom: -10,
+      near: 0.1,
+      far: 20,
     };
 
     for (const key in lightCameraProperties) {
@@ -449,6 +449,29 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   }
 
+  /**
+   * Enables shadows and applies scene-wide material settings on every `Mesh`
+   * in the scene graph.
+   *
+   * Three.js stores `castShadow`/`receiveShadow` per mesh — there is no inherited
+   * flag on `Group` or `Object3D`. `traverse()` is the idiomatic way to reach every
+   * mesh in a loaded GLTF regardless of how deeply nested it is.
+   *
+   * `instanceof THREE.Mesh` is preferred over `child.isMesh` (duck typing) because
+   * TypeScript narrows the type correctly, so `child.castShadow` is typed without casting.
+   *
+   * Extend this function whenever a property needs to be applied scene-wide
+   * (e.g. envMapIntensity on MeshStandardMaterial).
+   */
+  function updateAllMaterials(scene: THREE.Scene) {
+    scene.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+
+      child.castShadow = true;
+      child.receiveShadow = true;
+    });
+  }
+
   function createOrbitControls(
     camera: THREE.PerspectiveCamera,
     canvas: HTMLCanvasElement,
@@ -480,6 +503,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       helmetModel.scene.scale.set(10, 10, 10);
       hamburgerModel.scene.scale.set(10, 10, 10);
       scene.add(helmetModel.scene);
+      updateAllMaterials(scene);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
