@@ -68,6 +68,8 @@ type ThreeSceneProps = {
 const guiState = {
   axisHelper: true,
   lightHelper: true,
+  // * Renderer
+  toneMapping: THREE.NoToneMapping,
 };
 
 type GUIState = typeof guiState;
@@ -283,10 +285,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     axisHelper,
     lightHelper,
     controls,
+    renderer,
   }: {
     axisHelper: THREE.AxesHelper;
     lightHelper: THREE.DirectionalLightHelper;
     controls: OrbitControls;
+    renderer: THREE.WebGLRenderer;
   }): () => void {
     const gui = new GUI({ title: "Scene Controls" });
 
@@ -303,11 +307,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("lightHelper", (v) => {
         lightHelper.visible = v;
+      })
+      .bind("toneMapping", (v) => {
+        renderer.toneMapping = v;
       });
 
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
     helpersFolder.add(state, "lightHelper").name("Light Helper");
+
     helpersFolder
       .add(
         {
@@ -319,6 +327,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         "resetPivot",
       )
       .name("Reset Camera Pivot");
+
+    const rendererFolder = gui.addFolder("Renderer");
+    rendererFolder
+      .add(state, "toneMapping", {
+        None: THREE.NoToneMapping,
+        Linear: THREE.LinearToneMapping,
+        Reinhard: THREE.ReinhardToneMapping,
+        Cineon: THREE.CineonToneMapping,
+        ACESFilmic: THREE.ACESFilmicToneMapping,
+      })
+      .name("Tone Mapping");
 
     return () => {
       registry.dispose();
@@ -356,13 +375,18 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const [hamburgerModel, helmetModel] = await loadGltfModel(loadingManager);
       helmetModel.scene.scale.set(10, 10, 10);
       hamburgerModel.scene.scale.set(10, 10, 10);
-      scene.add(hamburgerModel.scene);
+      scene.add(helmetModel.scene);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
       const { ambientLight, directionalLight } = createLights();
       const { axisHelper, lightHelper } = createHelpers(directionalLight);
-      const cleanupGUI = setupGUI({ axisHelper, lightHelper, controls });
+      const cleanupGUI = setupGUI({
+        axisHelper,
+        lightHelper,
+        controls,
+        renderer,
+      });
 
       scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
       scene.add(camera);
