@@ -41,7 +41,9 @@
       "Bash(./build_with_vulkan.bat)",
       "Bash(git push)",
       "Bash(rm:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git ls-tree *)",
+      "Bash(git checkout *)"
     ],
     "deny": [],
     "ask": []
