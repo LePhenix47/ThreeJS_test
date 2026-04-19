@@ -174,6 +174,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       loadedTexture.wrapS = THREE.RepeatWrapping;
       loadedTexture.wrapT = THREE.RepeatWrapping;
     }
+
+    return loadedTexturesArray;
   }
 
   /**
@@ -545,6 +547,51 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     controls.enableDamping = true;
 
     return controls;
+  }
+
+  function createWallAndFloor({
+    floorTextures,
+    wallTextures,
+  }: {
+    floorTextures: {
+      colorMap: THREE.Texture;
+      normalMap: THREE.Texture;
+      aoMap: THREE.Texture;
+      roughnessMap: THREE.Texture;
+      metalnessMap: THREE.Texture;
+    };
+    wallTextures: {
+      colorMap: THREE.Texture;
+      normalMap: THREE.Texture;
+      aoMap: THREE.Texture;
+      roughnessMap: THREE.Texture;
+      metalnessMap: THREE.Texture;
+    };
+  }) {
+    const planeGeometry = new THREE.PlaneGeometry(8, 8);
+
+    const floorMaterial = new THREE.MeshStandardMaterial({
+      map: floorTextures.colorMap,
+      normalMap: floorTextures.normalMap,
+      aoMap: floorTextures.aoMap,
+      roughnessMap: floorTextures.roughnessMap,
+      metalnessMap: floorTextures.metalnessMap,
+    });
+
+    const floor = new THREE.Mesh(planeGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+
+    const wallMaterial = new THREE.MeshStandardMaterial({
+      map: wallTextures.colorMap,
+      normalMap: wallTextures.normalMap,
+      aoMap: wallTextures.aoMap,
+      roughnessMap: wallTextures.roughnessMap,
+      metalnessMap: wallTextures.metalnessMap,
+    });
+
+    const wall = new THREE.Mesh(planeGeometry, wallMaterial);
+
+    return { floor, wall };
   }
 
   const setupThreeScene = useCallback(
