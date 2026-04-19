@@ -35,7 +35,7 @@ import {
 const CAMERA_STATE_KEY = "three-camera-state";
 
 const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
-const HAMBURGER_PATH = "/models/burger/BURGER.gltf";
+const HAMBURGER_PATH = "/models/burger/burger.gltf";
 const FLIGHT_HELMET_PATH = "/models/FlightHelmet/glTF/FlightHelmet.gltf";
 
 type ModelImports = "hamburger" | "helmet";
@@ -604,7 +604,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const [hamburgerModel, helmetModel] = await loadGltfModel(loadingManager);
       helmetModel.scene.scale.set(10, 10, 10);
       hamburgerModel.scene.scale.set(10, 10, 10);
-      scene.add(helmetModel.scene);
+      scene.add(hamburgerModel.scene);
       updateAllMaterials(scene);
 
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);

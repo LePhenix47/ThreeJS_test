@@ -43,7 +43,8 @@
       "Bash(rm:*)",
       "WebSearch",
       "Bash(git ls-tree *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(python3 -c ' *)"
     ],
     "deny": [],
     "ask": []
