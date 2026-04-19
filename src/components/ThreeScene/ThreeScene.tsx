@@ -234,7 +234,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     width: number,
     height: number,
   ) {
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      /* MSAA only needed on 1× screens — on retina (≥ 2×) the pixel density
+       * already eliminates visible aliasing, and MSAA at that resolution wastes GPU memory */
+      antialias: window.devicePixelRatio < 2,
+    });
     renderer.setSize(width, height, false);
     const minPixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(minPixelRatio);
