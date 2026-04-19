@@ -73,6 +73,12 @@ type CameraState = {
   target: THREE.Vector3Like;
 };
 
+type SurfaceTextures = {
+  colorMap: THREE.Texture;
+  normalMap: THREE.Texture;
+  armMap: THREE.Texture;
+};
+
 type ThreeSceneProps = {
   className?: string;
 };
@@ -131,51 +137,35 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return loadingManager;
   }
 
-  function loadTextures(loadingManager: THREE.LoadingManager) {
+  function loadTextures(loadingManager: THREE.LoadingManager): {
+    floorTextures: SurfaceTextures;
+    castleBrickTextures: SurfaceTextures;
+  } {
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
-    const floorColorTextureLoaded = textureLoader.load(floorColorTexture);
+    const textures = {
+      floorTextures: {
+        colorMap: textureLoader.load(floorColorTexture),
+        normalMap: textureLoader.load(floorNormalTexture),
+        armMap: textureLoader.load(floorARMTexture),
+      },
+      castleBrickTextures: {
+        colorMap: textureLoader.load(castleBrickColorTexture),
+        normalMap: textureLoader.load(castleBrickNormalTexture),
+        armMap: textureLoader.load(castleBrickARMTexture),
+      },
+    };
 
-    const castleBrickColorTextureLoaded = textureLoader.load(
-      castleBrickColorTexture,
-    );
+    for (const surface of Object.values(textures)) {
+      surface.colorMap.colorSpace = THREE.SRGBColorSpace;
 
-    const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [
-      floorColorTextureLoaded,
-
-      castleBrickColorTextureLoaded,
-    ];
-
-    for (const colorLoadedTexture of colorLoadedTextures) {
-      if (!colorLoadedTexture) continue;
-      colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
+      for (const texture of Object.values(surface)) {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+      }
     }
 
-    const floorARMTextureLoaded = textureLoader.load(floorARMTexture);
-    const floorNormalTextureLoaded = textureLoader.load(floorNormalTexture);
-
-    const castleBrickARMTextureLoaded = textureLoader.load(
-      castleBrickARMTexture,
-    );
-    const castleBrickNormalTextureLoaded = textureLoader.load(
-      castleBrickNormalTexture,
-    );
-
-    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [
-      floorARMTextureLoaded,
-      floorNormalTextureLoaded,
-      castleBrickARMTextureLoaded,
-      castleBrickNormalTextureLoaded,
-    ];
-
-    const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
-
-    for (const loadedTexture of loadedTexturesArray) {
-      loadedTexture.wrapS = THREE.RepeatWrapping;
-      loadedTexture.wrapT = THREE.RepeatWrapping;
-    }
-
-    return loadedTexturesArray;
+    return textures;
   }
 
   /**
@@ -553,29 +543,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     floorTextures,
     wallTextures,
   }: {
-    floorTextures: {
-      colorMap: THREE.Texture;
-      normalMap: THREE.Texture;
-      aoMap: THREE.Texture;
-      roughnessMap: THREE.Texture;
-      metalnessMap: THREE.Texture;
-    };
-    wallTextures: {
-      colorMap: THREE.Texture;
-      normalMap: THREE.Texture;
-      aoMap: THREE.Texture;
-      roughnessMap: THREE.Texture;
-      metalnessMap: THREE.Texture;
-    };
+    floorTextures: SurfaceTextures;
+    wallTextures: SurfaceTextures;
   }) {
     const planeGeometry = new THREE.PlaneGeometry(8, 8);
 
     const floorMaterial = new THREE.MeshStandardMaterial({
       map: floorTextures.colorMap,
       normalMap: floorTextures.normalMap,
-      aoMap: floorTextures.aoMap,
-      roughnessMap: floorTextures.roughnessMap,
-      metalnessMap: floorTextures.metalnessMap,
+      aoMap: floorTextures.armMap,
+      roughnessMap: floorTextures.armMap,
+      metalnessMap: floorTextures.armMap,
     });
 
     const floor = new THREE.Mesh(planeGeometry, floorMaterial);
@@ -584,12 +562,14 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const wallMaterial = new THREE.MeshStandardMaterial({
       map: wallTextures.colorMap,
       normalMap: wallTextures.normalMap,
-      aoMap: wallTextures.aoMap,
-      roughnessMap: wallTextures.roughnessMap,
-      metalnessMap: wallTextures.metalnessMap,
+      aoMap: wallTextures.armMap,
+      roughnessMap: wallTextures.armMap,
+      metalnessMap: wallTextures.armMap,
     });
 
     const wall = new THREE.Mesh(planeGeometry, wallMaterial);
+    wall.position.y = 4;
+    wall.position.z = -4;
 
     return { floor, wall };
   }
@@ -606,6 +586,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const renderer = createRenderer(canvas, clientWidth, clientHeight);
       const controls = createOrbitControls(camera, canvas);
       const loadingManager = createLoadingManager();
+
+      const { floorTextures, castleBrickTextures } =
+        loadTextures(loadingManager);
+
+      const { floor, wall } = createWallAndFloor({
+        floorTextures,
+        wallTextures: castleBrickTextures,
+      });
+
+      scene.add(floor, wall);
 
       const envMap = await loadHdrEnvMap(loadingManager);
       scene.environment = envMap;
