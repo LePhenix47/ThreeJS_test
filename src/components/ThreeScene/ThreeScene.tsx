@@ -20,6 +20,18 @@ import { GLTF, GLTFLoader, DRACOLoader } from "three/examples/jsm/Addons.js";
 
 import { _2kHdrMap } from "@/utils/environment-maps/hdr/2k-maps";
 
+import {
+  floorARMTexture,
+  floorColorTexture,
+  floorNormalTexture,
+} from "@utils/textures/wood-cabin";
+
+import {
+  castleBrickARMTexture,
+  castleBrickColorTexture,
+  castleBrickNormalTexture,
+} from "@utils/textures/castle-brick";
+
 const CAMERA_STATE_KEY = "three-camera-state";
 
 const basePath = `/${import.meta.env.VITE_BASE_PATH}/`;
@@ -68,6 +80,7 @@ type ThreeSceneProps = {
 const guiState = {
   axisHelper: true,
   lightHelper: true,
+  cameraLightHelper: true,
   // * Renderer
   toneMapping: THREE.NoToneMapping,
   toneMappingExposure: 1.0,
@@ -116,6 +129,51 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
 
     return loadingManager;
+  }
+
+  function loadTextures(loadingManager: THREE.LoadingManager) {
+    const textureLoader = new THREE.TextureLoader(loadingManager);
+
+    const floorColorTextureLoaded = textureLoader.load(floorColorTexture);
+
+    const castleBrickColorTextureLoaded = textureLoader.load(
+      castleBrickColorTexture,
+    );
+
+    const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [
+      floorColorTextureLoaded,
+
+      castleBrickColorTextureLoaded,
+    ];
+
+    for (const colorLoadedTexture of colorLoadedTextures) {
+      if (!colorLoadedTexture) continue;
+      colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
+    }
+
+    const floorARMTextureLoaded = textureLoader.load(floorARMTexture);
+    const floorNormalTextureLoaded = textureLoader.load(floorNormalTexture);
+
+    const castleBrickARMTextureLoaded = textureLoader.load(
+      castleBrickARMTexture,
+    );
+    const castleBrickNormalTextureLoaded = textureLoader.load(
+      castleBrickNormalTexture,
+    );
+
+    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [
+      floorARMTextureLoaded,
+      floorNormalTextureLoaded,
+      castleBrickARMTextureLoaded,
+      castleBrickNormalTextureLoaded,
+    ];
+
+    const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
+
+    for (const loadedTexture of loadedTexturesArray) {
+      loadedTexture.wrapS = THREE.RepeatWrapping;
+      loadedTexture.wrapT = THREE.RepeatWrapping;
+    }
   }
 
   /**
@@ -323,6 +381,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     renderer,
     directionalLight,
     scene,
+    shadowMapLightHelper,
   }: {
     axisHelper: THREE.AxesHelper;
     lightHelper: THREE.DirectionalLightHelper;
@@ -330,6 +389,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     renderer: THREE.WebGLRenderer;
     directionalLight: THREE.DirectionalLight;
     scene: THREE.Scene;
+    shadowMapLightHelper: THREE.CameraHelper;
   }): () => void {
     const gui = new GUI({ title: "Scene Controls" });
 
@@ -347,6 +407,10 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .bind("lightHelper", (v) => {
         lightHelper.visible = v;
       })
+      .bind("cameraLightHelper", (v) => {
+        shadowMapLightHelper.visible = v;
+      })
+
       .bind("toneMapping", (v) => {
         renderer.toneMapping = v;
       })
@@ -375,6 +439,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
     helpersFolder.add(state, "lightHelper").name("Light Helper");
+    helpersFolder.add(state, "cameraLightHelper").name("Camera Helper");
 
     helpersFolder
       .add(
@@ -517,6 +582,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         controls,
         renderer,
         scene,
+        shadowMapLightHelper,
       });
 
       scene.add(
