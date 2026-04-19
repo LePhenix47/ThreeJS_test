@@ -71,6 +71,14 @@ const guiState = {
   // * Renderer
   toneMapping: THREE.NoToneMapping,
   toneMappingExposure: 1.0,
+  // * Lights
+  castShadow: true,
+  directionalLightIntensity: 0.5,
+  directionalLightPosX: 0,
+  directionalLightPosY: 0,
+  directionalLightPosZ: 0,
+  // * Scene
+  envMapIntensity: 1.0,
 };
 
 type GUIState = typeof guiState;
@@ -245,6 +253,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     renderer.setPixelRatio(minPixelRatio);
 
     renderer.shadowMap.enabled = true;
+    /* PCFSoftShadowMap was deprecated in r182 — PCFShadowMap is now soft by default */
     renderer.shadowMap.type = THREE.PCFShadowMap;
 
     return renderer;
@@ -253,19 +262,34 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function createLights() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 6);
     directionalLight.castShadow = true;
-    directionalLight.shadow.radius = 4;
+    directionalLight.position.set(3, 7, 6);
 
-    const shadowMapSize = 2 ** 10;
-    directionalLight.shadow.mapSize.set(shadowMapSize, shadowMapSize);
+    /*
+     * `target` is an Object3D that defines where the light is aiming.
+     * The light direction is calculated as: light.position → target.position.
+     *
+     * Think of it like a theater spotlight: the fixture has its own coordinates,
+     * but it always points at whatever the target is — just like OrbitControls
+     * has a target point the camera orbits around and looks at.
+     *
+     * By default target is at (0, 0, 0), which points the light at the floor of
+     * the scene. Moving it to (0, 4, 0) shifts the aim to mid-model so the shadow
+     * frustum covers the whole object instead of just its base.
+     *
+     * IMPORTANT: target must also be added to the scene (scene.add(directionalLight.target))
+     * for the position change to take effect — Three.js needs it in the scene graph
+     * to compute the world transform.
+     */
+    directionalLight.target.position.set(0, 4, 0);
 
     const lightCameraProperties = {
-      left: -7,
-      right: 7,
-      top: 7,
-      bottom: -7,
-      near: 0.1,
+      // left: -7,
+      // right: 7,
+      // top: 7,
+      // bottom: -7,
+      // near: 0.1,
       far: 15,
     };
 
@@ -275,7 +299,8 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         lightCameraProperties[typedKey];
     }
 
-    directionalLight.position.set(5, 5, 5);
+    const shadowMapSize: number = 2 ** 10;
+    directionalLight.shadow.mapSize.set(shadowMapSize, shadowMapSize);
 
     return { ambientLight, directionalLight };
   }
@@ -284,7 +309,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const axisHelper = new THREE.AxesHelper(3);
     const lightHelper = new THREE.DirectionalLightHelper(directionalLight);
 
-    return { axisHelper, lightHelper };
+    const shadowMapLightHelper = new THREE.CameraHelper(
+      directionalLight.shadow.camera,
+    );
+
+    return { axisHelper, lightHelper, shadowMapLightHelper };
   }
 
   function setupGUI({
@@ -292,11 +321,15 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     lightHelper,
     controls,
     renderer,
+    directionalLight,
+    scene,
   }: {
     axisHelper: THREE.AxesHelper;
     lightHelper: THREE.DirectionalLightHelper;
     controls: OrbitControls;
     renderer: THREE.WebGLRenderer;
+    directionalLight: THREE.DirectionalLight;
+    scene: THREE.Scene;
   }): () => void {
     const gui = new GUI({ title: "Scene Controls" });
 
@@ -319,6 +352,24 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("toneMappingExposure", (v) => {
         renderer.toneMappingExposure = v;
+      })
+      .bind("castShadow", (v) => {
+        directionalLight.castShadow = v;
+      })
+      .bind("directionalLightIntensity", (v) => {
+        directionalLight.intensity = v;
+      })
+      .bind("directionalLightPosX", (v) => {
+        directionalLight.position.x = v;
+      })
+      .bind("directionalLightPosY", (v) => {
+        directionalLight.position.y = v;
+      })
+      .bind("directionalLightPosZ", (v) => {
+        directionalLight.position.z = v;
+      })
+      .bind("envMapIntensity", (v) => {
+        scene.environmentIntensity = v;
       });
 
     const helpersFolder = gui.addFolder("Helpers");
@@ -354,6 +405,43 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       .max(10)
       .step(0.001)
       .name("Tone Mapping Exposure");
+
+    const lightFolder = gui.addFolder("Light");
+
+    lightFolder.add(state, "castShadow").name("Cast Shadow");
+
+    lightFolder
+      .add(state, "directionalLightIntensity")
+      .min(0)
+      .max(10)
+      .step(0.001)
+      .name("Intensity");
+
+    lightFolder
+      .add(state, "directionalLightPosX")
+      .min(-10)
+      .max(10)
+      .step(0.001)
+      .name("Light pos X");
+    lightFolder
+      .add(state, "directionalLightPosY")
+      .min(-10)
+      .max(10)
+      .step(0.001)
+      .name("Light pos Y");
+    lightFolder
+      .add(state, "directionalLightPosZ")
+      .min(-10)
+      .max(10)
+      .step(0.001)
+      .name("Light pos Z");
+
+    lightFolder
+      .add(state, "envMapIntensity")
+      .min(0)
+      .max(10)
+      .step(0.001)
+      .name("Env Map Intensity");
 
     return () => {
       registry.dispose();
@@ -396,15 +484,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
       const { ambientLight, directionalLight } = createLights();
-      const { axisHelper, lightHelper } = createHelpers(directionalLight);
+      const { axisHelper, lightHelper, shadowMapLightHelper } =
+        createHelpers(directionalLight);
       const cleanupGUI = setupGUI({
         axisHelper,
         lightHelper,
+        directionalLight,
         controls,
         renderer,
+        scene,
       });
 
-      scene.add(ambientLight, directionalLight, axisHelper, lightHelper);
+      scene.add(
+        ambientLight,
+        directionalLight,
+        /* target must be in the scene graph for its position to take effect */
+        directionalLight.target,
+        axisHelper,
+        lightHelper,
+        shadowMapLightHelper,
+      );
       scene.add(camera);
 
       const abortController = new AbortController();
