@@ -239,9 +239,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       })
       .bind("lightHelper", (v) => {
         lightHelper.visible = v;
-      })
-      .bind("gridHelper", (v) => {
-        gridHelper.visible = v;
       });
 
     const { state } = registry;
@@ -249,7 +246,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
     helpersFolder.add(state, "lightHelper").name("Light Helper");
-    helpersFolder.add(state, "gridHelper").name("Grid Helper");
     helpersFolder
       .add(
         {
