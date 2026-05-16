@@ -80,23 +80,30 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   function loadTextures(loadingManager: THREE.LoadingManager) {
     const textureLoader = new THREE.TextureLoader(loadingManager);
 
-    const colorLoadedTextures: THREE.Texture<HTMLImageElement>[] = [];
+    const textures = {
+      // floorTextures: {
+      //   colorMap: textureLoader.load(floorColorTexture),
+      //   normalMap: textureLoader.load(floorNormalTexture),
+      //   armMap: textureLoader.load(floorARMTexture),
+      // },
+      // castleBrickTextures: {
+      //   colorMap: textureLoader.load(castleBrickColorTexture),
+      //   normalMap: textureLoader.load(castleBrickNormalTexture),
+      //   armMap: textureLoader.load(castleBrickARMTexture),
+      // },
+    };
 
-    for (const colorLoadedTexture of colorLoadedTextures) {
-      if (!colorLoadedTexture) continue;
-      colorLoadedTexture.colorSpace = THREE.SRGBColorSpace;
-    }
+    // for (const surface of Object.values(textures)) {
+    //   surface.colorMap.colorSpace = THREE.SRGBColorSpace;
 
-    const loadedTextures: THREE.Texture<HTMLImageElement>[] = [];
+    //   for (const texture of Object.values(surface)) {
+    //     texture.wrapS = THREE.RepeatWrapping;
+    //     texture.wrapT = THREE.RepeatWrapping;
+    //   }
+    // }
 
-    const loadedTexturesArray = loadedTextures.concat(colorLoadedTextures);
-
-    for (const loadedTexture of loadedTexturesArray) {
-      loadedTexture.wrapS = THREE.RepeatWrapping;
-      loadedTexture.wrapT = THREE.RepeatWrapping;
-    }
+    return textures;
   }
-
   function createScene() {
     return new THREE.Scene();
   }
@@ -370,9 +377,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       const cleanupCameraState = setupCameraStatePersistence(camera, controls);
 
       const { ambientLight, directionalLight } = createLights();
-      const { axisHelper, lightHelper, gridHelper } = createHelpers(directionalLight);
+      const { axisHelper, lightHelper, gridHelper } =
+        createHelpers(directionalLight);
       const floor = createFloor();
-      const cleanupGUI = setupGUI(axisHelper, lightHelper, gridHelper, floor, controls);
+      const cleanupGUI = setupGUI(
+        axisHelper,
+        lightHelper,
+        gridHelper,
+        floor,
+        controls,
+      );
 
       scene.add(
         ambientLight,
