@@ -10,19 +10,24 @@ import Experience, {
 import { WebStorage } from "@lephenix47/webstorage-utility";
 import Debounce from "@/utils/classes/debounce";
 
-const CAMERA_STATE_KEY = "three-camera-state";
-
 type CameraState = {
   position: THREE.Vector3Like;
   target: THREE.Vector3Like;
 };
 
+type CameraConstructor = Partial<{
+  persistence: boolean;
+}>;
+
 class Camera implements Resizable, Updatable, Destroyable {
+  public static readonly CAMERA_STATE_KEY = "three-camera-state";
+
   public readonly instance: THREE.PerspectiveCamera;
   public readonly controls: OrbitControls;
   private readonly experience: Experience;
+  private cleanupPersistence: (() => void) | null = null;
 
-  constructor() {
+  constructor({ persistence }: CameraConstructor = {}) {
     if (!Experience.instance) {
       throw new Error("Experience instance not found");
     }
@@ -30,6 +35,10 @@ class Camera implements Resizable, Updatable, Destroyable {
 
     this.instance = this.initCamera();
     this.controls = this.initControls();
+
+    if (persistence) {
+      this.cleanupPersistence = this.setupCameraStatePersistence();
+    }
   }
 
   private initCamera = () => {
@@ -63,12 +72,13 @@ class Camera implements Resizable, Updatable, Destroyable {
   };
 
   public destroy = () => {
+    this.cleanupPersistence?.();
     this.controls.dispose();
   };
 
   public setupCameraStatePersistence = (): (() => void) => {
     const savedCameraState = WebStorage.getKey<CameraState>(
-      CAMERA_STATE_KEY,
+      Camera.CAMERA_STATE_KEY,
       true,
     );
 
@@ -87,12 +97,13 @@ class Camera implements Resizable, Updatable, Destroyable {
       debounce.call(() => {
         const { x: px, y: py, z: pz } = this.instance.position;
         const { x: tx, y: ty, z: tz } = this.controls.target;
+
         WebStorage.setKey(
-          CAMERA_STATE_KEY,
+          Camera.CAMERA_STATE_KEY,
           {
             position: { x: px, y: py, z: pz },
             target: { x: tx, y: ty, z: tz },
-          } satisfies CameraState,
+          },
           true,
         );
       }, 150);
