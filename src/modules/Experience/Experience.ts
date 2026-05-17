@@ -23,7 +23,15 @@ class Experience {
     this.setDebugMode(debugMode);
 
     this.sizes = new Sizes(this.canvas.width, this.canvas.height);
+
+    this.sizes.beginObserve(this.canvas);
+
+    this.sizes.on("resize", this.resize);
   }
+
+  resize = ({ width, height }) => {
+    console.log("RESIZING");
+  };
 
   /**
    * Initializes the canvas property
@@ -71,6 +79,10 @@ class Experience {
     }
 
     return this;
+  };
+
+  destroy = () => {
+    this.sizes.destroy();
   };
 }
 
