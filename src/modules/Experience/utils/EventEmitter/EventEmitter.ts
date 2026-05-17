@@ -21,6 +21,9 @@ class EventEmitter {
   }
 
   private log = (message: string): void => {
+    if (!this.DEBUG_MODE) {
+      return;
+    }
     console.log(
       `%c${message}`,
       "background: blue; color: white; font-weight: bold",
@@ -62,9 +65,7 @@ class EventEmitter {
       once: options.once || false,
     });
 
-    if (this.DEBUG_MODE) {
-      this.log(`[EventEmitter] Listener added for "${normalizedEvent}"`);
-    }
+    this.log(`[EventEmitter] Listener added for "${normalizedEvent}"`);
 
     return this;
   };
@@ -131,11 +132,9 @@ class EventEmitter {
       }
     }
 
-    if (this.DEBUG_MODE) {
-      this.log(
-        `[EventEmitter] Emitted "${normalizedEvent}" to ${listenersToExecute.length} listener(s)`,
-      );
-    }
+    this.log(
+      `[EventEmitter] Emitted "${normalizedEvent}" to ${listenersToExecute.length} listener(s)`,
+    );
 
     return true;
   };
@@ -168,9 +167,7 @@ class EventEmitter {
       return false; // Callback not found
     }
 
-    if (this.DEBUG_MODE) {
-      this.log(`[EventEmitter] Removed listener for "${normalizedEvent}"`);
-    }
+    this.log(`[EventEmitter] Removed listener for "${normalizedEvent}"`);
 
     return true;
   };
@@ -183,16 +180,12 @@ class EventEmitter {
     if (event) {
       const normalizedEvent = this.normalizeEvent(event);
       this.events.delete(normalizedEvent);
-      if (this.DEBUG_MODE) {
-        this.log(
-          `[EventEmitter] Removed all listeners for "${normalizedEvent}"`,
-        );
-      }
+
+      this.log(`[EventEmitter] Removed all listeners for "${normalizedEvent}"`);
     } else {
       this.events.clear();
-      if (this.DEBUG_MODE) {
-        this.log(`[EventEmitter] Removed all listeners`);
-      }
+
+      this.log(`[EventEmitter] Removed all listeners`);
     }
     return this;
   };
