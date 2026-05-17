@@ -42,8 +42,10 @@ class Experience {
     this.setDebugMode(debugMode);
 
     // * Sizes
-    this.sizes = new Sizes(this.canvas.width, this.canvas.height);
-    this.sizes.beginObserve(this.canvas);
+    const parent: HTMLElement | null = this.canvas.parentElement;
+    if (!parent) throw new Error("Canvas has no parent element");
+    this.sizes = new Sizes(parent.clientWidth, parent.clientHeight);
+    this.sizes.beginObserve(parent);
     this.sizes.on("resize", this.resize);
 
     // * Time

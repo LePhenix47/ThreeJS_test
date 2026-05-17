@@ -37,12 +37,12 @@ class Sizes extends EventEmitter {
     }
   };
 
-  beginObserve = (canvas: HTMLCanvasElement) => {
-    this.resizeObserver.observe(canvas);
+  beginObserve = (element: Element) => {
+    this.resizeObserver.observe(element);
   };
 
-  endObserve = (canvas: HTMLCanvasElement) => {
-    this.resizeObserver.unobserve(canvas);
+  endObserve = (element: Element) => {
+    this.resizeObserver.unobserve(element);
   };
 
   destroy = () => {
