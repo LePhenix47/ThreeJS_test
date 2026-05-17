@@ -35,6 +35,9 @@ class Camera {
       100,
     );
 
+    // * We must set the position in order to use OrbitControls otherwise controls won't work (pos ≠ 0, 0, 0)
+    perspectiveCamera.position.set(1, 1, 1);
+
     return perspectiveCamera;
   };
 
