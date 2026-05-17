@@ -1,5 +1,8 @@
+import Camera from "./three/Camera";
 import Sizes from "./utils/Sizes";
 import Time from "./utils/Time";
+
+import * as THREE from "three";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>
@@ -12,17 +15,35 @@ type ExperienceConstructor = {
 };
 
 class Experience {
-  private canvas: HTMLCanvasElement;
+  public canvas: HTMLCanvasElement;
   private debugMode: boolean;
 
-  private sizes: Sizes;
-  private time: Time;
+  public sizes: Sizes;
+  public time: Time;
+  public scene: THREE.Scene<THREE.Object3DEventMap>;
+
+  public static instance: Experience;
+  camera: Camera;
 
   constructor({ canvas, debugMode = false }: ExperienceConstructor) {
+    if (Experience.instance) {
+      console.warn(
+        "Experience instance already exists, returning existing instance",
+      );
+      return Experience.instance;
+    }
+    Experience.instance = this;
+
     console.log("Let us commence fourth");
     this.initCanvas(canvas);
-
     this.setDebugMode(debugMode);
+
+    // * THREE stuff
+    // ? Scene
+    this.scene = new THREE.Scene();
+
+    // ? Camera
+    this.camera = new Camera();
 
     // * Sizes
     this.sizes = new Sizes(this.canvas.width, this.canvas.height);
