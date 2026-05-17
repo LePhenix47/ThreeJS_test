@@ -9,9 +9,10 @@ class Camera {
   private readonly experience: Experience;
 
   constructor() {
+    if (!Experience.instance) {
+      throw new Error("Experience instance not found");
+    }
     this.experience = Experience.instance;
-
-    console.log(this.experience.canvas);
 
     this.camera = this.initCamera();
     this.controls = this.initControls();
@@ -34,6 +35,64 @@ class Camera {
 
     return controls;
   };
+
+  public resize = () => {
+    this.camera.aspect = this.experience.sizes.aspectRatio;
+    this.camera.updateProjectionMatrix();
+  };
+
+  public update = () => {
+    this.controls.update();
+  };
+
+  /*
+   setupCameraStatePersistence(
+    camera: THREE.PerspectiveCamera,
+    controls: OrbitControls | null,
+  ): () => void {
+    if (!controls) return () => {};
+
+    const savedCameraState = WebStorage.getKey<CameraState>(
+      CAMERA_STATE_KEY,
+      true,
+    );
+
+    if (savedCameraState) {
+      const { position, target } = savedCameraState;
+      camera.position.set(position.x, position.y, position.z);
+      if (target) {
+        controls.target.set(target.x, target.y, target.z);
+      }
+
+      controls.update();
+    }
+
+    let saveDebounceTimer: ReturnType<typeof setTimeout>;
+    function saveCameraState() {
+      if (!controls) return;
+
+      clearTimeout(saveDebounceTimer);
+      saveDebounceTimer = setTimeout(() => {
+        const { x: px, y: py, z: pz } = camera.position;
+        const { x: tx, y: ty, z: tz } = controls.target;
+        WebStorage.setKey(
+          CAMERA_STATE_KEY,
+          {
+            position: { x: px, y: py, z: pz },
+            target: { x: tx, y: ty, z: tz },
+          } satisfies CameraState,
+          true,
+        );
+      }, 150);
+    }
+    controls.addEventListener("change", saveCameraState);
+
+    return () => {
+      clearTimeout(saveDebounceTimer);
+      controls.removeEventListener("change", saveCameraState);
+    };
+  }
+  */
 }
 
 export default Camera;
