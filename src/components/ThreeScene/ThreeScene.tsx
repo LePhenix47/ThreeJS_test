@@ -114,14 +114,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     camera: THREE.PerspectiveCamera,
     controls: OrbitControls | null,
   ): () => void {
-    /*
-    TODO: If the project starts to lag, we may need to set up a signal system to save the camera state
-    TODO: For instance when the user changes the camera position:
-    TODO: → fires signal 
-    TODO: → signal saves the camera state + starts debouncing the saving 
-    TODO: → stop moving the camera 
-    TODO: → signal saves the camera state and ends debouncing    
-    */
     if (!controls) return () => {};
 
     const savedCameraState = WebStorage.getKey<CameraState>(
