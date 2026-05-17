@@ -1,4 +1,4 @@
-import Sizes from "./utils/Sizes/Sizes";
+import Sizes from "./utils/Sizes";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>

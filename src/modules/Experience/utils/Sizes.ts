@@ -1,4 +1,4 @@
-import EventEmitter from "../EventEmitter/EventEmitter";
+import EventEmitter from "./EventEmitter";
 
 class Sizes extends EventEmitter {
   width: number = 0;
