@@ -11,7 +11,7 @@ type Listener<T = unknown[]> = {
   once: boolean;
 };
 
-class EventEmitter {
+abstract class EventEmitter {
   private readonly events: Map<string, Listener[]>;
   private readonly DEBUG_MODE = false; // Set to true for logging
 
