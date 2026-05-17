@@ -1,4 +1,5 @@
 import Camera from "./three/Camera";
+import Renderer from "./three/Renderer";
 import Sizes from "./utils/Sizes";
 import Time from "./utils/Time";
 
@@ -25,6 +26,7 @@ class Experience {
   public scene: THREE.Scene<THREE.Object3DEventMap>;
 
   public camera: Camera;
+  public renderer: Renderer;
 
   constructor({ canvas, debugMode = false }: ExperienceConstructor) {
     if (Experience.instance) {
@@ -42,15 +44,11 @@ class Experience {
     // * Sizes
     this.sizes = new Sizes(this.canvas.width, this.canvas.height);
     this.sizes.beginObserve(this.canvas);
-    this.sizes.on("resize", () => {
-      this.resize();
-    });
+    this.sizes.on("resize", this.resize);
 
     // * Time
     this.time = new Time();
-    this.time.on("tick", () => {
-      this.update();
-    });
+    this.time.on("tick", this.update);
 
     // * THREE stuff (⚠ ORDER MATTERS)
     // ? Scene
@@ -58,18 +56,23 @@ class Experience {
 
     // ? Camera
     this.camera = new Camera();
+
+    // ? Render
+    this.renderer = new Renderer();
   }
 
-  resize = () => {
+  public resize = () => {
     console.log("RESIZING");
 
     // * In order to avoid race conditions OR order of operations issues
     this.camera.resize();
+    this.renderer.resize();
   };
 
-  update = () => {
+  public update = () => {
     // console.log("TICKING");
     this.camera.update();
+    this.renderer.update();
   };
 
   /**
@@ -120,7 +123,7 @@ class Experience {
     return this;
   };
 
-  destroy = () => {
+  public destroy = () => {
     this.sizes.destroy();
 
     this.time.destroy();
