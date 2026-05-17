@@ -13,7 +13,6 @@ type Listener<T = unknown[]> = {
 
 class EventEmitter {
   private readonly events: Map<string, Listener[]>;
-  private readonly CUSTOM_EVENT_PREFIX = "custom:";
   private readonly DEBUG_MODE = false; // Set to true for logging
 
   constructor() {
@@ -31,16 +30,6 @@ class EventEmitter {
   };
 
   /**
-   * Adds a prefix to the event name if it doesn't already have one
-   */
-  private normalizeEvent = (event: string): string => {
-    if (event.startsWith(this.CUSTOM_EVENT_PREFIX)) {
-      return event;
-    }
-    return `${this.CUSTOM_EVENT_PREFIX}${event}`;
-  };
-
-  /**
    * Registers an event listener
    * @param event - Event name
    * @param callback - Function to execute when event is emitted
@@ -52,20 +41,18 @@ class EventEmitter {
     callback: EventCallback<T>,
     options: EventOptions = {},
   ): this => {
-    const normalizedEvent = this.normalizeEvent(event);
-
     // * Create an empty array if the event doesn't exist
-    if (!this.events.has(normalizedEvent)) {
-      this.events.set(normalizedEvent, []);
+    if (!this.events.has(event)) {
+      this.events.set(event, []);
     }
 
     // * Add the listener
-    this.events.get(normalizedEvent)!.push({
+    this.events.get(event)!.push({
       callback: callback as EventCallback,
       once: options.once || false,
     });
 
-    this.log(`[EventEmitter] Listener added for "${normalizedEvent}"`);
+    this.log(`[EventEmitter] Listener added for "${event}"`);
 
     return this;
   };
@@ -90,12 +77,11 @@ class EventEmitter {
     event: string,
     ...args: T extends unknown[] ? T : never
   ): boolean => {
-    const normalizedEvent = this.normalizeEvent(event);
-    const listeners = this.events.get(normalizedEvent);
+    const listeners = this.events.get(event);
 
     if (!listeners || listeners.length === 0) {
       if (this.DEBUG_MODE) {
-        console.warn(`[EventEmitter] No listeners for "${normalizedEvent}"`);
+        console.warn(`[EventEmitter] No listeners for "${event}"`);
       }
       return false;
     }
@@ -113,7 +99,7 @@ class EventEmitter {
         }
       } catch (error) {
         console.error(
-          `[EventEmitter] Error in listener for "${normalizedEvent}":`,
+          `[EventEmitter] Error in listener for "${event}":`,
           error,
         );
       }
@@ -126,14 +112,14 @@ class EventEmitter {
       );
 
       if (remainingListeners.length === 0) {
-        this.events.delete(normalizedEvent);
+        this.events.delete(event);
       } else {
-        this.events.set(normalizedEvent, remainingListeners);
+        this.events.set(event, remainingListeners);
       }
     }
 
     this.log(
-      `[EventEmitter] Emitted "${normalizedEvent}" to ${listenersToExecute.length} listener(s)`,
+      `[EventEmitter] Emitted "${event}" to ${listenersToExecute.length} listener(s)`,
     );
 
     return true;
@@ -147,8 +133,7 @@ class EventEmitter {
     event: string,
     callback: EventCallback<T>,
   ): boolean => {
-    const normalizedEvent = this.normalizeEvent(event);
-    const listeners = this.events.get(normalizedEvent);
+    const listeners = this.events.get(event);
 
     if (!listeners) {
       return false;
@@ -160,14 +145,14 @@ class EventEmitter {
     );
 
     if (filteredListeners.length === 0) {
-      this.events.delete(normalizedEvent);
+      this.events.delete(event);
     } else if (filteredListeners.length < initialLength) {
-      this.events.set(normalizedEvent, filteredListeners);
+      this.events.set(event, filteredListeners);
     } else {
       return false; // Callback not found
     }
 
-    this.log(`[EventEmitter] Removed listener for "${normalizedEvent}"`);
+    this.log(`[EventEmitter] Removed listener for "${event}"`);
 
     return true;
   };
@@ -178,10 +163,9 @@ class EventEmitter {
    */
   public removeAllListeners = (event?: string): this => {
     if (event) {
-      const normalizedEvent = this.normalizeEvent(event);
-      this.events.delete(normalizedEvent);
+      this.events.delete(event);
 
-      this.log(`[EventEmitter] Removed all listeners for "${normalizedEvent}"`);
+      this.log(`[EventEmitter] Removed all listeners for "${event}"`);
     } else {
       this.events.clear();
 
@@ -194,8 +178,7 @@ class EventEmitter {
    * Gets the number of listeners for a specific event
    */
   public listenerCount = (event: string): number => {
-    const normalizedEvent = this.normalizeEvent(event);
-    return this.events.get(normalizedEvent)?.length || 0;
+    return this.events.get(event)?.length || 0;
   };
 
   /**
