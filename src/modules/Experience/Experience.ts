@@ -15,6 +15,8 @@ type ExperienceConstructor = {
 };
 
 class Experience {
+  public static instance: Experience | null = null;
+
   public canvas: HTMLCanvasElement;
   private debugMode: boolean;
 
@@ -22,8 +24,7 @@ class Experience {
   public time: Time;
   public scene: THREE.Scene<THREE.Object3DEventMap>;
 
-  public static instance: Experience;
-  camera: Camera;
+  public camera: Camera;
 
   constructor({ canvas, debugMode = false }: ExperienceConstructor) {
     if (Experience.instance) {
@@ -38,31 +39,37 @@ class Experience {
     this.initCanvas(canvas);
     this.setDebugMode(debugMode);
 
-    // * THREE stuff
-    // ? Scene
-    this.scene = new THREE.Scene();
-
-    // ? Camera
-    this.camera = new Camera();
-
     // * Sizes
     this.sizes = new Sizes(this.canvas.width, this.canvas.height);
     this.sizes.beginObserve(this.canvas);
-    this.sizes.on("resize", this.resize);
+    this.sizes.on("resize", () => {
+      this.resize();
+    });
 
     // * Time
     this.time = new Time();
     this.time.on("tick", () => {
       this.update();
     });
+
+    // * THREE stuff (⚠ ORDER MATTERS)
+    // ? Scene
+    this.scene = new THREE.Scene();
+
+    // ? Camera
+    this.camera = new Camera();
   }
 
-  resize = ({ width, height }) => {
+  resize = () => {
     console.log("RESIZING");
+
+    // * In order to avoid race conditions OR order of operations issues
+    this.camera.resize();
   };
 
   update = () => {
     // console.log("TICKING");
+    this.camera.update();
   };
 
   /**
@@ -97,7 +104,7 @@ class Experience {
     this.canvas = canvas.current;
   };
 
-  setDebugMode = (debugMode: boolean): this => {
+  public setDebugMode = (debugMode: boolean): this => {
     this.debugMode = debugMode;
 
     const keyName = "DEBUG_EXPERIENCE" as const;
@@ -117,6 +124,8 @@ class Experience {
     this.sizes.destroy();
 
     this.time.destroy();
+
+    Experience.instance = null;
   };
 }
 
