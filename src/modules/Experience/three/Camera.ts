@@ -3,6 +3,15 @@ import { OrbitControls } from "three/examples/jsm/Addons.js";
 
 import Experience from "@modules/Experience/Experience";
 
+import { WebStorage } from "@lephenix47/webstorage-utility";
+
+const CAMERA_STATE_KEY = "three-camera-state";
+
+type CameraState = {
+  position: THREE.Vector3Like;
+  target: THREE.Vector3Like;
+};
+
 class Camera {
   public readonly camera: THREE.PerspectiveCamera;
   public readonly controls: OrbitControls;
