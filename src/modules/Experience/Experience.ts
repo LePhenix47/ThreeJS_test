@@ -31,7 +31,9 @@ class Experience {
 
     // * Time
     this.time = new Time();
-    this.time.on("tick", this.update);
+    this.time.on("tick", () => {
+      this.update();
+    });
   }
 
   resize = ({ width, height }) => {
