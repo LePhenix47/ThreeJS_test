@@ -13,7 +13,7 @@ type CameraState = {
 };
 
 class Camera {
-  public readonly camera: THREE.PerspectiveCamera;
+  public readonly instance: THREE.PerspectiveCamera;
   public readonly controls: OrbitControls;
   private readonly experience: Experience;
 
@@ -23,7 +23,7 @@ class Camera {
     }
     this.experience = Experience.instance;
 
-    this.camera = this.initCamera();
+    this.instance = this.initCamera();
     this.controls = this.initControls();
   }
 
@@ -39,15 +39,15 @@ class Camera {
   };
 
   private initControls = () => {
-    const controls = new OrbitControls(this.camera, this.experience.canvas);
+    const controls = new OrbitControls(this.instance, this.experience.canvas);
     controls.enableDamping = true;
 
     return controls;
   };
 
   public resize = () => {
-    this.camera.aspect = this.experience.sizes.aspectRatio;
-    this.camera.updateProjectionMatrix();
+    this.instance.aspect = this.experience.sizes.aspectRatio;
+    this.instance.updateProjectionMatrix();
   };
 
   public update = () => {
@@ -55,10 +55,8 @@ class Camera {
   };
 
   /*
-   setupCameraStatePersistence(
-    camera: THREE.PerspectiveCamera,
-    controls: OrbitControls | null,
-  ): () => void {
+   setupCameraStatePersistence = (
+  ): () => void => {
     if (!controls) return () => {};
 
     const savedCameraState = WebStorage.getKey<CameraState>(
