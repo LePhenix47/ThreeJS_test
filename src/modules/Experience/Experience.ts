@@ -1,4 +1,5 @@
 import Sizes from "./utils/Sizes";
+import Time from "./utils/Time";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>
@@ -15,6 +16,7 @@ class Experience {
   private debugMode: boolean;
 
   private sizes: Sizes;
+  private time: Time;
 
   constructor({ canvas, debugMode = false }: ExperienceConstructor) {
     console.log("Let us commence fourth");
@@ -22,15 +24,22 @@ class Experience {
 
     this.setDebugMode(debugMode);
 
+    // * Sizes
     this.sizes = new Sizes(this.canvas.width, this.canvas.height);
-
     this.sizes.beginObserve(this.canvas);
-
     this.sizes.on("resize", this.resize);
+
+    // * Time
+    this.time = new Time();
+    this.time.on("tick", this.update);
   }
 
   resize = ({ width, height }) => {
     console.log("RESIZING");
+  };
+
+  update = () => {
+    // console.log("TICKING");
   };
 
   /**
@@ -83,6 +92,8 @@ class Experience {
 
   destroy = () => {
     this.sizes.destroy();
+
+    this.time.destroy();
   };
 }
 
