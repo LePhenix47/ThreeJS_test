@@ -56,6 +56,8 @@ class Time extends EventEmitter {
 
   public destroy = () => {
     cancelAnimationFrame(this.animationFrameId);
+
+    this.removeAllListeners();
   };
 }
 
