@@ -72,7 +72,6 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     // ? Camera
     this.camera = new Camera();
-    this.camera.setupCameraStatePersistence();
 
     // ? Render
     this.renderer = new Renderer();
@@ -90,9 +89,14 @@ class Experience implements Resizable, Updatable, Destroyable {
   };
 
   public update = () => {
-    // console.log("TICKING");
-    this.camera.update();
-    this.renderer.update();
+    try {
+      // console.log("TICKING");
+      this.camera.update();
+      this.renderer.update();
+    } catch (error) {
+      console.error(error);
+      this.time.off("tick", this.update);
+    }
   };
 
   /**
