@@ -1,7 +1,11 @@
 import * as THREE from "three";
-import Experience from "@modules/Experience/Experience";
+import Experience, {
+  Destroyable,
+  Resizable,
+  Updatable,
+} from "@modules/Experience/Experience";
 
-class Renderer {
+class Renderer implements Resizable, Updatable, Destroyable {
   public instance: THREE.WebGLRenderer;
   private readonly experience: Experience;
   constructor() {

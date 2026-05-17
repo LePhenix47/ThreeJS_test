@@ -1,7 +1,11 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 
-import Experience from "@modules/Experience/Experience";
+import Experience, {
+  Destroyable,
+  Resizable,
+  Updatable,
+} from "@modules/Experience/Experience";
 
 import { WebStorage } from "@lephenix47/webstorage-utility";
 
@@ -12,7 +16,7 @@ type CameraState = {
   target: THREE.Vector3Like;
 };
 
-class Camera {
+class Camera implements Resizable, Updatable, Destroyable {
   public readonly instance: THREE.PerspectiveCamera;
   public readonly controls: OrbitControls;
   private readonly experience: Experience;

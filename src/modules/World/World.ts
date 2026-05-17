@@ -1,7 +1,10 @@
-import Experience from "@modules/Experience/Experience";
+import Experience, {
+  Destroyable,
+  Updatable,
+} from "@modules/Experience/Experience";
 import * as THREE from "three";
 
-class World {
+class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   constructor() {
     console.log("World");
@@ -11,6 +14,10 @@ class World {
 
     this.test();
   }
+
+  public update = () => {};
+
+  public destroy = () => {};
 
   test = () => {
     const testGeometry = new THREE.BoxGeometry(1, 1, 1);

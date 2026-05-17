@@ -16,7 +16,11 @@ type ExperienceConstructor = {
   debugMode?: boolean;
 };
 
-class Experience {
+export interface Resizable  { resize(): void; }
+export interface Updatable  { update(): void; }
+export interface Destroyable { destroy(): void; }
+
+class Experience implements Resizable, Updatable, Destroyable {
   public static instance: Experience | null = null;
 
   public canvas: HTMLCanvasElement;
