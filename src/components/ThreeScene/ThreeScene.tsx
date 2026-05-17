@@ -15,6 +15,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
+import Experience from "@/modules/Experience/Experience";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
@@ -298,6 +299,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const abortController = new AbortController();
 
+      const experience = new Experience({ canvas, debugMode: true });
+      // experience.setDebugMode(true);
+
       function animate() {
         controls.update();
         renderer.render(scene, camera);
@@ -326,6 +330,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         controls.dispose();
         abortController.abort();
         renderer.dispose();
+        experience.destroy();
       };
     },
     [canvasRef],
