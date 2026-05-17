@@ -48,6 +48,10 @@ class Renderer {
       this.experience.camera.instance,
     );
   };
+
+  public destroy = () => {
+    this.instance.dispose();
+  };
 }
 
 export default Renderer;

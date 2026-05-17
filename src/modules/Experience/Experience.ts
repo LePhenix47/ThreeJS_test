@@ -134,8 +134,9 @@ class Experience {
 
   public destroy = () => {
     this.sizes.destroy();
-
     this.time.destroy();
+    this.camera.destroy();
+    this.renderer.destroy();
 
     Experience.instance = null;
   };

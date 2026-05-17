@@ -54,6 +54,10 @@ class Camera {
     this.controls.update();
   };
 
+  public destroy = () => {
+    this.controls.dispose();
+  };
+
   /*
    setupCameraStatePersistence = (
   ): () => void => {
