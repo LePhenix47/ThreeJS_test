@@ -3,9 +3,11 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import * as THREE from "three";
+import Environment from "./Environment";
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
+  public readonly environment: Environment;
   constructor() {
     console.log("World");
 
@@ -13,17 +15,14 @@ class World implements Updatable, Destroyable {
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.test();
+
+    this.environment = new Environment();
   }
-
-  public update = () => {};
-
-  public destroy = () => {};
 
   test = () => {
     const testGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const testMaterial = new THREE.MeshBasicMaterial({
+    const testMaterial = new THREE.MeshStandardMaterial({
       color: "white",
-      wireframe: true,
     });
 
     const testMesh = new THREE.Mesh(testGeometry, testMaterial);
@@ -33,6 +32,10 @@ class World implements Updatable, Destroyable {
 
     scene.add(testMesh);
   };
+
+  public update = () => {};
+
+  public destroy = () => {};
 }
 
 export default World;
