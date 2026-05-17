@@ -1,4 +1,6 @@
-class Sizes {
+import EventEmitter from "../EventEmitter/EventEmitter";
+
+class Sizes extends EventEmitter {
   width: number = 0;
   height: number = 0;
   pixelRatio: number = 1;
@@ -6,6 +8,8 @@ class Sizes {
   private readonly resizeObserver: ResizeObserver;
 
   constructor(width: number, height: number) {
+    super();
+
     this.setSize(width, height);
 
     this.resizeObserver = new ResizeObserver(this.onResize);
@@ -16,8 +20,8 @@ class Sizes {
   }
 
   setSize = (width: number, height: number) => {
-    this.width = width || NaN;
-    this.height = height || NaN;
+    this.width = width;
+    this.height = height;
 
     this.pixelRatio = Math.min(window.devicePixelRatio, 2);
   };
@@ -28,6 +32,8 @@ class Sizes {
       const { width, height } = entry.contentRect;
 
       this.setSize(width, height);
+
+      this.emit("resize", { width, height });
     }
   };
 
@@ -41,6 +47,8 @@ class Sizes {
 
   destroy = () => {
     this.resizeObserver.disconnect();
+
+    this.removeAllListeners();
   };
 }
 
