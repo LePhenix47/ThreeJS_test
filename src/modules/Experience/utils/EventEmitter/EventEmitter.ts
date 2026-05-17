@@ -2,9 +2,9 @@ type EventCallback<T = unknown[]> = (
   ...args: T extends unknown[] ? T : never
 ) => void;
 
-type EventOptions = {
-  once?: boolean;
-};
+type EventOptions = Partial<{
+  once: boolean;
+}>;
 
 type Listener<T = unknown[]> = {
   callback: EventCallback<T>;
