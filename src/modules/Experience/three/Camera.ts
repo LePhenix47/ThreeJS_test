@@ -8,6 +8,7 @@ import Experience, {
 } from "@modules/Experience/Experience";
 
 import { WebStorage } from "@lephenix47/webstorage-utility";
+import Debounce from "@/utils/classes/debounce";
 
 const CAMERA_STATE_KEY = "three-camera-state";
 
@@ -65,11 +66,7 @@ class Camera implements Resizable, Updatable, Destroyable {
     this.controls.dispose();
   };
 
-  /*
-   setupCameraStatePersistence = (
-  ): () => void => {
-    if (!controls) return () => {};
-
+  public setupCameraStatePersistence = (): (() => void) => {
     const savedCameraState = WebStorage.getKey<CameraState>(
       CAMERA_STATE_KEY,
       true,
@@ -77,22 +74,19 @@ class Camera implements Resizable, Updatable, Destroyable {
 
     if (savedCameraState) {
       const { position, target } = savedCameraState;
-      camera.position.set(position.x, position.y, position.z);
+      this.instance.position.set(position.x, position.y, position.z);
       if (target) {
-        controls.target.set(target.x, target.y, target.z);
+        this.controls.target.set(target.x, target.y, target.z);
       }
-
-      controls.update();
+      this.controls.update();
     }
 
-    let saveDebounceTimer: ReturnType<typeof setTimeout>;
-    function saveCameraState() {
-      if (!controls) return;
+    const debounce = new Debounce();
 
-      clearTimeout(saveDebounceTimer);
-      saveDebounceTimer = setTimeout(() => {
-        const { x: px, y: py, z: pz } = camera.position;
-        const { x: tx, y: ty, z: tz } = controls.target;
+    const saveCameraState = () => {
+      debounce.call(() => {
+        const { x: px, y: py, z: pz } = this.instance.position;
+        const { x: tx, y: ty, z: tz } = this.controls.target;
         WebStorage.setKey(
           CAMERA_STATE_KEY,
           {
@@ -102,15 +96,15 @@ class Camera implements Resizable, Updatable, Destroyable {
           true,
         );
       }, 150);
-    }
-    controls.addEventListener("change", saveCameraState);
+    };
+
+    this.controls.addEventListener("change", saveCameraState);
 
     return () => {
-      clearTimeout(saveDebounceTimer);
-      controls.removeEventListener("change", saveCameraState);
+      debounce.cancel();
+      this.controls.removeEventListener("change", saveCameraState);
     };
-  }
-  */
+  };
 }
 
 export default Camera;

@@ -16,9 +16,15 @@ type ExperienceConstructor = {
   debugMode?: boolean;
 };
 
-export interface Resizable  { resize(): void; }
-export interface Updatable  { update(): void; }
-export interface Destroyable { destroy(): void; }
+export interface Resizable {
+  resize(): void;
+}
+export interface Updatable {
+  update(): void;
+}
+export interface Destroyable {
+  destroy(): void;
+}
 
 class Experience implements Resizable, Updatable, Destroyable {
   public static instance: Experience | null = null;
@@ -66,6 +72,7 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     // ? Camera
     this.camera = new Camera();
+    this.camera.setupCameraStatePersistence();
 
     // ? Render
     this.renderer = new Renderer();
