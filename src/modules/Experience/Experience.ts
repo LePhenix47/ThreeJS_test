@@ -1,3 +1,4 @@
+import World from "@modules/World/World";
 import Camera from "./three/Camera";
 import Renderer from "./three/Renderer";
 import Sizes from "./utils/Sizes";
@@ -27,6 +28,7 @@ class Experience {
 
   public camera: Camera;
   public renderer: Renderer;
+  public world: World;
 
   constructor({ canvas, debugMode = false }: ExperienceConstructor) {
     if (Experience.instance) {
@@ -41,6 +43,8 @@ class Experience {
     this.initCanvas(canvas);
     this.setDebugMode(debugMode);
 
+    // *  ⚠ ORDER MATTERS, CALLS MUST BE MADE IN THE CORRECT ORDER
+
     // * Sizes
     const parent: HTMLElement | null = this.canvas.parentElement;
     if (!parent) throw new Error("Canvas has no parent element");
@@ -52,7 +56,7 @@ class Experience {
     this.time = new Time();
     this.time.on("tick", this.update);
 
-    // * THREE stuff (⚠ ORDER MATTERS)
+    // * THREE stuff
     // ? Scene
     this.scene = new THREE.Scene();
 
@@ -61,6 +65,9 @@ class Experience {
 
     // ? Render
     this.renderer = new Renderer();
+
+    // ? World
+    this.world = new World();
   }
 
   public resize = () => {
