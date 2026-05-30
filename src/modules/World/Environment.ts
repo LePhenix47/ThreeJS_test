@@ -23,7 +23,7 @@ class Environment {
   }
 
   private initSunLight = () => {
-    const sunLight = new THREE.DirectionalLight("red", 4);
+    const sunLight = new THREE.DirectionalLight("white", 4);
 
     const mapSize = 2 ** 10;
     sunLight.castShadow = true;
