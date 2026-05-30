@@ -2,13 +2,14 @@ import * as THREE from "three";
 import EventEmitter from "./EventEmitter";
 import { DRACOLoader, GLTFLoader } from "three/examples/jsm/Addons.js";
 
+type EnvMapType = "cubeTexture" | "ldrTexture" | "hdrTexture";
+type TextureType = EnvMapType | "texture" | "gltf";
+
 type TextureSource = {
   name: string;
-  type: "texture";
+  type: TextureType;
   path: Record<string, string>;
 };
-
-type EnvMapType = "cubeTexture" | "ldrTexture" | "hdrTexture";
 
 type CubeTextureSource = {
   name: string;
@@ -67,7 +68,21 @@ class Resources extends EventEmitter {
     // }
   };
 
-  public loadResources = () => {};
+  public loadResources = () => {
+    for (const source of this.sources) {
+      switch (source.type) {
+        case "texture":
+        case "cubeTexture":
+        case "gltf":
+        case "ldrTexture":
+        case "hdrTexture":
+          break;
+
+        default:
+          break;
+      }
+    }
+  };
 }
 
 export default Resources;
