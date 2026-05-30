@@ -5,6 +5,7 @@ import Sizes from "./utils/Sizes";
 import Time from "./utils/Time";
 
 import * as THREE from "three";
+import Resources from "./utils/Resources";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>
@@ -36,6 +37,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public time: Time;
   public scene: THREE.Scene<THREE.Object3DEventMap>;
 
+  public resources: Resources;
   public camera: Camera;
   public renderer: Renderer;
   public world: World;
@@ -65,6 +67,9 @@ class Experience implements Resizable, Updatable, Destroyable {
     // * Time
     this.time = new Time();
     this.time.on("tick", this.update);
+
+    // * Resources (texture loading)
+    this.resources = new Resources();
 
     // * THREE stuff
     // ? Scene
