@@ -62,21 +62,24 @@ class Resources extends EventEmitter {
     hdr: HDRLoader;
   };
 
-  get toLoadCount(): number {
-    return this.sources.length - this.loadedCount;
-  }
-  get loadedCount() {
-    return Object.keys(this.items).length;
-  }
+  private loaded = 0;
+  private totalToLoad = 0;
 
   get hasLoadedAllResources() {
-    return this.toLoadCount === 0;
+    return this.totalToLoad > 0 && this.loaded >= this.totalToLoad;
   }
 
   constructor(rawSources: Source[] = [], options?: ResourceOptions) {
     super();
 
     this.sources = rawSources;
+    this.totalToLoad = this.sources.reduce((acc, source) => {
+      if (source.type === "texture" || source.type === "ldrEnvTexture") {
+        return acc + Object.keys(source.paths).length;
+      }
+      return acc + 1;
+    }, 0);
+
     this.setLoaders({
       dracoDecoderPath: options?.dracoDecoderPath,
     });
@@ -159,6 +162,7 @@ class Resources extends EventEmitter {
     file: GLTF | THREE.CubeTexture | THREE.DataTexture | THREE.Texture<unknown>,
   ) => {
     this.items[source.name] = file;
+    this.loaded++;
 
     if (this.hasLoadedAllResources) {
       console.log("All resources have been loaded !!!");
