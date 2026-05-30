@@ -114,19 +114,16 @@ class Resources extends EventEmitter {
         case "texture":
         case "ldrEnvTexture": {
           for (const [key, path] of Object.entries(source.paths)) {
-            this.loaders.texture.load(
-              path,
-              (textureLoaded: THREE.Texture<HTMLImageElement>) => {
-                this.items[source.name] = textureLoaded;
-              },
-            );
+            this.loaders.texture.load(path, (textureLoaded) => {
+              this.sourceLoaded(source, textureLoaded);
+            });
           }
           break;
         }
 
         case "gltf": {
-          this.loaders.gltf.load(source.path, (gltfLoaded: GLTF) => {
-            this.items[source.name] = gltfLoaded;
+          this.loaders.gltf.load(source.path, (gltfLoaded) => {
+            this.sourceLoaded(source, gltfLoaded);
           });
           break;
         }
@@ -135,20 +132,17 @@ class Resources extends EventEmitter {
           const { px, nx, py, ny, pz, nz } = source.paths;
           this.loaders.cubeTexture.load(
             [px, nx, py, ny, pz, nz],
-            (textureLoaded: THREE.CubeTexture) => {
-              this.items[source.name] = textureLoaded;
+            (textureLoaded) => {
+              this.sourceLoaded(source, textureLoaded);
             },
           );
           break;
         }
 
         case "hdrEnvTexture": {
-          this.loaders.hdr.load(
-            source.path,
-            (dataTextureLoaded: THREE.DataTexture) => {
-              this.items[source.name] = dataTextureLoaded;
-            },
-          );
+          this.loaders.hdr.load(source.path, (dataTextureLoaded) => {
+            this.sourceLoaded(source, dataTextureLoaded);
+          });
           break;
         }
 
@@ -160,7 +154,10 @@ class Resources extends EventEmitter {
     }
   };
 
-  private sourceLoaded = (source: Source, file: any) => {
+  private sourceLoaded = (
+    source: Source,
+    file: GLTF | THREE.CubeTexture | THREE.DataTexture | THREE.Texture<unknown>,
+  ) => {
     this.items[source.name] = file;
 
     if (this.hasLoadedAllResources) {
