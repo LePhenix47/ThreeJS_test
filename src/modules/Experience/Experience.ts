@@ -95,6 +95,7 @@ class Experience implements Resizable, Updatable, Destroyable {
       this.renderer.update();
     } catch (error) {
       console.error(error);
+      console.error("Tick has been stopped due to an error");
       this.time.off("tick", this.update);
     }
   };

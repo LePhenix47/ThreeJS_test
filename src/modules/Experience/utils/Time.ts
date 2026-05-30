@@ -28,9 +28,15 @@ class Time extends EventEmitter {
   };
 
   public tick = () => {
-    this.updateTime();
-    this.emitTickEvent();
-    this.animationFrameId = requestAnimationFrame(() => this.tick());
+    try {
+      this.updateTime();
+      this.emitTickEvent();
+      this.animationFrameId = requestAnimationFrame(() => this.tick());
+    } catch (error) {
+      console.error(error);
+      console.error("Error in tick(), stopping animation loop");
+      this.cancelAnimationLoop();
+    }
   };
 
   private emitTickEvent = () => {
@@ -54,8 +60,11 @@ class Time extends EventEmitter {
     this.current = currentTick;
   };
 
-  public destroy = () => {
+  public cancelAnimationLoop = () =>
     cancelAnimationFrame(this.animationFrameId);
+
+  public destroy = () => {
+    this.cancelAnimationLoop();
 
     this.removeAllListeners();
   };
