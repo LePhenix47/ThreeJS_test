@@ -1,8 +1,9 @@
 import GUI from "lil-gui";
+import { Destroyable } from "../Experience";
 
 type DebuggingConstructor = { isActive: boolean; title?: string };
 
-class Debug {
+class Debug implements Destroyable {
   public gui: GUI;
   public isActive: boolean;
 
@@ -14,6 +15,10 @@ class Debug {
 
     console.log("Debug instantiated");
   }
+
+  destroy = () => {
+    this.gui.destroy();
+  };
 }
 
 export default Debug;
