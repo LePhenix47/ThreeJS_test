@@ -7,16 +7,19 @@ import Environment from "./Environment";
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
-  public readonly environment: Environment;
+  public environment: Environment;
   constructor() {
     console.log("World");
 
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.test();
+    this.experience.resources.on("textures-loaded", () => {
+      console.log("Resources are ready to be used in the world");
+      this.environment = new Environment();
+    });
 
-    this.environment = new Environment();
+    this.test();
   }
 
   test = () => {

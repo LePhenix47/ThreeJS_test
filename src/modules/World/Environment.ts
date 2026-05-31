@@ -7,6 +7,14 @@ import * as THREE from "three";
 class Environment {
   private readonly experience: Experience | null;
 
+  private get scene() {
+    return this.experience!.scene;
+  }
+
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   private sunLight: THREE.DirectionalLight;
   constructor() {
     console.log("World");
@@ -14,15 +22,15 @@ class Environment {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.sunLight = this.initSunLight();
+    // * Env mpa
+    this.setEnvMap();
 
-    this.experience!.scene.add(this.sunLight);
-
-    const helper = new THREE.DirectionalLightHelper(this.sunLight, 5);
-    this.experience!.scene.add(helper);
+    // * Sunlight
+    this.sunLight = this.initSunLight(true);
+    this.scene.add(this.sunLight);
   }
 
-  private initSunLight = () => {
+  private initSunLight = (helper?: boolean) => {
     const sunLight = new THREE.DirectionalLight("white", 4);
 
     const mapSize = 2 ** 10;
@@ -33,7 +41,16 @@ class Environment {
 
     sunLight.position.set(3, 3, -2.25);
 
+    if (helper) {
+      const helper = new THREE.DirectionalLightHelper(sunLight, 5);
+      this.scene.add(helper);
+    }
+
     return sunLight;
+  };
+
+  private setEnvMap = () => {
+    console.log(this.resources.items.environmentMapTexture);
   };
 }
 
