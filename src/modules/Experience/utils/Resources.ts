@@ -16,10 +16,62 @@ type CubeFaces = {
   nz: string;
 };
 
+type TexturePaths = {
+  color: string;
+  normal: string;
+  roughness: string;
+  ao: string;
+  height: string;
+  metalness: string;
+  alpha: string;
+  emissive: string;
+
+  // physical material extras
+  clearcoat: string;
+  clearcoatNormal: string;
+  clearcoatRoughness: string;
+
+  transmission: string;
+  thickness: string;
+
+  sheenColor: string;
+  sheenRoughness: string;
+
+  iridescence: string;
+  iridescenceThickness: string;
+};
+
+type TextureName = keyof TexturePaths;
+type MaterialMapName = {
+  [K in keyof THREE.MaterialJSON]: K extends `${string}Map` | "map" ? K : never;
+}[keyof THREE.MaterialJSON];
+
+const texturePropertyObject = {
+  color: "map",
+  normal: "normalMap",
+  roughness: "roughnessMap",
+  ao: "aoMap",
+  height: "displacementMap",
+  metalness: "metalnessMap",
+  alpha: "alphaMap",
+  emissive: "emissiveMap",
+} as const satisfies Partial<Record<TextureName, MaterialMapName>>;
+
+const texturePropertyMap = new Map<TextureName, MaterialMapName>(
+  Object.entries(texturePropertyObject) as Array<
+    [keyof typeof texturePropertyObject, MaterialMapName]
+  >,
+);
+
+const a = texturePropertyMap.get("ao");
+// ^?
+/*
+ */
+
 type TextureSource = {
   name: string;
   type: "texture" | "ldrEnvTexture";
-  paths: Record<string, string>;
+  paths: Partial<TexturePaths>;
 };
 
 type CubeTextureSource = {
@@ -44,8 +96,7 @@ export type Source = TextureSource | CubeTextureSource | GltfSource | HdrSource;
 
 type ResourceOptions = Partial<{
   dracoDecoderPath: string;
-  onProgress: (loaded: number, total: number) => void;
-  onLoad: () => void;
+  loadingManager: THREE.LoadingManager;
 }>;
 
 class Resources extends EventEmitter {
@@ -62,38 +113,43 @@ class Resources extends EventEmitter {
     hdr: HDRLoader;
   };
 
-  private loaded = 0;
-  private totalToLoad = 0;
+  private allLoaded = false;
+  private loadingManager: THREE.LoadingManager;
 
   get hasLoadedAllResources() {
-    return this.totalToLoad > 0 && this.loaded >= this.totalToLoad;
+    return this.allLoaded;
   }
 
   constructor(rawSources: Source[] = [], options?: ResourceOptions) {
     super();
 
     this.sources = rawSources;
-    this.totalToLoad = this.sources.reduce((acc, source) => {
-      if (source.type === "texture" || source.type === "ldrEnvTexture") {
-        return acc + Object.keys(source.paths).length;
-      }
-      return acc + 1;
-    }, 0);
+    this.loadingManager = options?.loadingManager ?? new THREE.LoadingManager();
+    this.handleLoadingManager();
 
     this.setLoaders({
       dracoDecoderPath: options?.dracoDecoderPath,
     });
   }
 
+  private handleLoadingManager = () => {
+    this.loadingManager.onLoad = () => {
+      this.allLoaded = true;
+      this.emit("textures-loaded");
+    };
+  };
+
   private setLoaders = (
     opt?: Pick<ResourceOptions, "dracoDecoderPath">,
   ): void => {
-    const cubeTextureLoader = new THREE.CubeTextureLoader();
-    const textureLoader = new THREE.TextureLoader();
-    const gltfLoader = new GLTFLoader();
-    const dracoLoader = new DRACOLoader();
+    const loadingManager = this.loadingManager;
 
-    const hdrLoader = new HDRLoader();
+    const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
+    const textureLoader = new THREE.TextureLoader(loadingManager);
+    const gltfLoader = new GLTFLoader(loadingManager);
+    const dracoLoader = new DRACOLoader(loadingManager);
+
+    const hdrLoader = new HDRLoader(loadingManager);
 
     if (opt?.dracoDecoderPath) {
       dracoLoader.setDecoderPath(opt.dracoDecoderPath);
@@ -159,16 +215,9 @@ class Resources extends EventEmitter {
 
   private sourceLoaded = (
     source: Source,
-    file: GLTF | THREE.CubeTexture | THREE.DataTexture | THREE.Texture<unknown>,
+    file: THREE.Texture<unknown> | GLTF | THREE.CubeTexture | THREE.DataTexture,
   ) => {
     this.items[source.name] = file;
-    this.loaded++;
-
-    if (this.hasLoadedAllResources) {
-      console.log("All resources have been loaded !!!");
-
-      this.emit("loaded");
-    }
   };
 }
 
