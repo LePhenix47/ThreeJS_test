@@ -73,7 +73,7 @@ abstract class EventEmitter {
    * @param args - Arguments to pass to the callbacks
    * @returns True if the event had listeners, false otherwise
    */
-  public emit = <T = unknown[]>(
+  protected emit = <T = unknown[]>(
     event: string,
     ...args: T extends unknown[] ? T : never
   ): boolean => {

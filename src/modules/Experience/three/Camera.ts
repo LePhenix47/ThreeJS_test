@@ -39,6 +39,8 @@ class Camera implements Resizable, Updatable, Destroyable {
     if (persistence) {
       this.cleanupPersistence = this.setupCameraStatePersistence();
     }
+
+    console.log(`Camera instantiated ${persistence ? "with persistence" : ""}`);
   }
 
   private initCamera = () => {

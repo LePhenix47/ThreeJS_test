@@ -13,6 +13,8 @@ class Sizes extends EventEmitter {
     this.setSize(width, height);
 
     this.resizeObserver = new ResizeObserver(this.onResize);
+
+    console.log("Sizes instantiated");
   }
 
   get aspectRatio() {

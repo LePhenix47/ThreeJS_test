@@ -40,6 +40,8 @@ class Resources extends EventEmitter {
     super();
 
     this.sources = rawSources;
+    console.log(this.sources);
+
     this.loadingManager = options?.loadingManager ?? new THREE.LoadingManager();
     this.handleLoadingManager();
 
