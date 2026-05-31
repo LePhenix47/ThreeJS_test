@@ -4,6 +4,7 @@ import * as THREE from "three";
 type EnvironmentMap = {
   texture: THREE.CubeTexture | null;
   intensity: number;
+  updateMaterial: () => void;
 };
 
 class Environment {
@@ -33,12 +34,18 @@ class Environment {
     this.scene.add(this.sunLight);
 
     this.scene.environment = this.envMap.texture;
+    this.scene.background = this.envMap.texture;
   }
 
   private setEnvMap = (): EnvironmentMap => {
+    /*
+     * updateMaterial lives on the data bag so GUI debug controls can call it directly
+     * when intensity/texture changes — no need to pass a separate callback reference
+     *  */
     const initEnvMap: EnvironmentMap = {
       intensity: 0.4,
       texture: null,
+      updateMaterial: this.updateMaterial,
     };
 
     const texture = this.resources.getCubeTexture("environmentMapTexture");
@@ -67,6 +74,19 @@ class Environment {
 
     return sunLight;
   };
+
+  private updateMaterial = () => {
+    this.scene.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+
+      child.material.envMap = this.envMap.texture;
+      child.material.envMapIntensity = this.envMap.intensity;
+      child.material.needsUpdate = true;
+    });
+  };
+  /*
+
+  */
 }
 
 export default Environment;
