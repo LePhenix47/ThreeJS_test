@@ -2,13 +2,16 @@ import { GLTF } from "three/examples/jsm/Addons.js";
 import Experience, { Destroyable, Updatable } from "../Experience/Experience";
 import * as THREE from "three";
 
+type AnimationBuilders = {
+  mixer: THREE.AnimationMixer;
+  action: THREE.AnimationAction;
+};
+
 class Fox implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private model: GLTF["scene"];
-  private animations: {
-    mixer: THREE.AnimationMixer;
-    action: THREE.AnimationAction;
-  };
+  private animationClips: THREE.AnimationClip[];
+  private animationBuilders: AnimationBuilders;
 
   private get scene() {
     return this.experience!.scene;
@@ -41,10 +44,10 @@ class Fox implements Updatable, Destroyable {
     const foxGltf: GLTF = this.resources.getGltf("fox");
 
     const fox = foxGltf.scene;
-
     fox.scale.setScalar(0.02);
 
     this.model = fox;
+    this.animationClips = foxGltf.animations; // ? ≠ foxGltf.scene.animations ⚠
   };
 
   private castModelShadows = () => {
@@ -59,24 +62,22 @@ class Fox implements Updatable, Destroyable {
     const mixer = new THREE.AnimationMixer(this.model);
     mixer.stopAllAction();
 
-    const [guardAnimation, walkAnimation, runAnimation] = this.model.animations;
-
-    console.log(this.model.animations);
-
-    return;
+    const [guardAnimation, walkAnimation, runAnimation] = this.animationClips;
 
     const action: THREE.AnimationAction = mixer.clipAction(guardAnimation);
 
-    this.animations = {
+    this.animationBuilders = {
       mixer,
       action,
     };
 
-    // this.animations.action.play();
+    this.animationBuilders.action.play();
   };
 
   public update = () => {
-    // this.animations.mixer.update(this.time.delta);
+    const deltaTimeSeconds: number = this.time.delta / 1_000;
+
+    this.animationBuilders.mixer.update(deltaTimeSeconds);
   };
 
   public destroy = () => {};
