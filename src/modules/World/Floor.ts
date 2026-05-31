@@ -51,7 +51,6 @@ class Floor {
   };
 
   public setTextures = () => {
-    //
     const color = this.resources.getTexture("floorTextures", "color");
 
     color.repeat.set(1.5, 1.5);
