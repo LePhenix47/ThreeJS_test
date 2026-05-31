@@ -165,48 +165,72 @@ class Resources extends EventEmitter {
     }
   };
 
-  private logAvailableItems = (requestedName: string): void => {
-    const available = Object.keys(this.items).join(", ") || "none";
+  private readonly typeFilters: Record<
+    string,
+    (item: (typeof this.items)[string]) => boolean
+  > = {
+    texture: (i) =>
+      i instanceof THREE.Texture &&
+      !(i instanceof THREE.CubeTexture) &&
+      !(i instanceof THREE.DataTexture),
+    cubeTexture: (i) => i instanceof THREE.CubeTexture,
+    gltf: (i) => typeof i === "object" && "scene" in i,
+    dataTexture: (i) => i instanceof THREE.DataTexture,
+  };
+
+  /** Logs loaded item names of a given type to the console — called before throwing on a failed lookup. */
+  private logAvailableItems = (
+    requestedName: string,
+    type: keyof typeof this.typeFilters,
+  ): void => {
+    const available = Object.entries(this.items)
+      .filter(([, item]) => this.typeFilters[type](item))
+      .map(([key]) => key);
     console.error(
-      `[Resources] "${requestedName}" not found. Available: ${available}`,
+      `[Resources] "${requestedName}" not found. Available ${type}s:`,
+      available.length ? available : "none",
     );
   };
 
+  /** Returns a loaded `THREE.Texture` by name. Throws if not found or wrong type. */
   public getTexture = (name: string): THREE.Texture => {
     const item = this.items[name];
-    if (!(item instanceof THREE.Texture)) {
-      this.logAvailableItems(name);
+    if (
+      !(item instanceof THREE.Texture) ||
+      item instanceof THREE.CubeTexture ||
+      item instanceof THREE.DataTexture
+    ) {
+      this.logAvailableItems(name, "texture");
       throw new Error(`[Resources] "${name}" is not a Texture`);
     }
     return item;
   };
 
+  /** Returns a loaded `THREE.CubeTexture` by name. Throws if not found or wrong type. */
   public getCubeTexture = (name: string): THREE.CubeTexture => {
     const item = this.items[name];
     if (!(item instanceof THREE.CubeTexture)) {
-      this.logAvailableItems(name);
+      this.logAvailableItems(name, "cubeTexture");
       throw new Error(`[Resources] "${name}" is not a CubeTexture`);
     }
     return item;
   };
 
+  /** Returns a loaded `GLTF` model by name. Throws if not found or wrong type. */
   public getGltf = (name: string): GLTF => {
     const item = this.items[name];
-    if (
-      !item ||
-      typeof item !== "object" ||
-      !("scene" in item)
-    ) {
-      this.logAvailableItems(name);
+    if (!item || typeof item !== "object" || !("scene" in item)) {
+      this.logAvailableItems(name, "gltf");
       throw new Error(`[Resources] "${name}" is not a GLTF`);
     }
     return item as GLTF;
   };
 
+  /** Returns a loaded `THREE.DataTexture` by name. Throws if not found or wrong type. */
   public getDataTexture = (name: string): THREE.DataTexture => {
     const item = this.items[name];
     if (!(item instanceof THREE.DataTexture)) {
-      this.logAvailableItems(name);
+      this.logAvailableItems(name, "dataTexture");
       throw new Error(`[Resources] "${name}" is not a DataTexture`);
     }
     return item;

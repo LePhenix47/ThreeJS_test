@@ -54,6 +54,7 @@ class Environment {
     const loadedEnvMapTexture = this.resources.getCubeTexture(
       "environmentMapTexture",
     );
+
     return loadedEnvMapTexture;
   };
 }
