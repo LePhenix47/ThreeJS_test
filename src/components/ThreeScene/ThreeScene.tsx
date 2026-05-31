@@ -8,6 +8,7 @@ import "./ThreeScene.scss";
 import Experience from "@/modules/Experience/Experience";
 
 import textures from "@/modules/Experience/sources/textures";
+import models from "@/modules/Experience/sources/models";
 
 type ThreeSceneProps = {
   className?: string;
@@ -51,7 +52,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
       canvas,
       debugMode: true,
       loadingManager,
-      sources: textures,
+      sources: [...textures, ...models],
     });
 
     return () => {
