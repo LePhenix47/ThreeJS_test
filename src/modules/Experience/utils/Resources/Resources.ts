@@ -64,10 +64,14 @@ class Resources extends EventEmitter {
   }
 
   private handleLoadingManager = () => {
+    // * store existing onLoad to avoid overriding it
+    const existingOnLoad = this.loadingManager.onLoad;
+
     this.loadingManager.onLoad = () => {
       this.allLoaded = true;
       this.emit("textures-loaded");
       console.log("Textures loaded");
+      existingOnLoad?.();
     };
   };
 

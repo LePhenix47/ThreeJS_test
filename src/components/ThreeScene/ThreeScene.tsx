@@ -47,10 +47,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   const setupThreeScene = useCallback((canvas: HTMLCanvasElement) => {
+    const loadingManager = createLoadingManager();
+
     const experience = new Experience({
       canvas,
       debugMode: true,
-      loadingManager: createLoadingManager(),
+      loadingManager,
       sources: [textures.dirtTextures, textures.envMapTexture],
     });
 
