@@ -223,7 +223,7 @@ class Resources extends EventEmitter {
       this.logAvailableItems(name, "gltf");
       throw new Error(`[Resources] "${name}" is not a GLTF`);
     }
-    return item as GLTF;
+    return item;
   };
 
   /** Returns a loaded `THREE.DataTexture` by name. Throws if not found or wrong type. */
