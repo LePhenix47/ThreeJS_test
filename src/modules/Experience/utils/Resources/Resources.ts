@@ -13,6 +13,7 @@ import {
   ResourceOptions,
   SourceArraySchema,
 } from "./types";
+import { NoUnderscore } from "@/utils/types/string.type";
 
 export const texturePropertyObject = {
   color: "map",
@@ -192,16 +193,20 @@ class Resources extends EventEmitter {
     );
   };
 
-  /** Returns a loaded `THREE.Texture` by name. Throws if not found or wrong type. */
-  public getTexture = (name: string): THREE.Texture => {
-    const item = this.items[name];
+  /** Returns a loaded `THREE.Texture` by name. Pass `mapKey` for multi-map sources (e.g. `"dirtTexture", "color"`). Throws if not found or wrong type. */
+  public getTexture = <K extends string>(
+    name: NoUnderscore<K>,
+    mapKey?: TextureName,
+  ): THREE.Texture => {
+    const itemKey = mapKey ? `${name}_${mapKey}` : name;
+    const item = this.items[itemKey];
     if (
       !(item instanceof THREE.Texture) ||
       item instanceof THREE.CubeTexture ||
       item instanceof THREE.DataTexture
     ) {
-      this.logAvailableItems(name, "texture");
-      throw new Error(`[Resources] "${name}" is not a Texture`);
+      this.logAvailableItems(itemKey, "texture");
+      throw new Error(`[Resources] "${itemKey}" is not a Texture`);
     }
     return item;
   };
