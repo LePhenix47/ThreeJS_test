@@ -2,12 +2,20 @@ import { GLTF } from "three/examples/jsm/Addons.js";
 import Experience, { Destroyable, Updatable } from "../Experience/Experience";
 import * as THREE from "three";
 
+type AnimationName = "guard" | "walk" | "run";
+
+type AnimationState = {
+  mixer: THREE.AnimationMixer;
+  actions: Record<AnimationName, THREE.AnimationAction> & {
+    current: THREE.AnimationAction;
+  };
+  play: (name: AnimationName) => void;
+};
+
 class Fox implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private model: GLTF["scene"];
-  private animationClips: { [key: string]: THREE.AnimationClip };
-  private mixer: THREE.AnimationMixer;
-  private currentAnimation: THREE.AnimationAction;
+  private animation: AnimationState;
 
   private get scene() {
     return this.experience!.scene;
@@ -30,11 +38,8 @@ class Fox implements Updatable, Destroyable {
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.initGltfModel();
-
     this.scene.add(this.model);
-
     this.castModelShadows();
-
     this.setAnimations();
 
     if (this.debug.isActive) {
@@ -44,10 +49,6 @@ class Fox implements Updatable, Destroyable {
     console.log("Fox");
   }
 
-  private addDebugFolders = () => {
-    const debugFolder = this.debug.gui.addFolder("Fox");
-  };
-
   private initGltfModel = () => {
     const foxGltf: GLTF = this.resources.getGltf("fox");
 
@@ -55,39 +56,63 @@ class Fox implements Updatable, Destroyable {
     fox.scale.setScalar(0.02);
 
     this.model = fox;
-    this.animationClips = {
-      guardAnimation: foxGltf.animations[0],
-      walkAnimation: foxGltf.animations[1],
-      runAnimation: foxGltf.animations[2],
-    }; // ? ≠ foxGltf.scene.animations ⚠
+    this.model.animations = foxGltf.animations; // ? ≠ foxGltf.scene.animations ⚠
   };
 
   private castModelShadows = () => {
     this.model.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
-
       child.castShadow = true;
     });
   };
 
   private setAnimations = () => {
+    // * We put properties in an object to make them available in the debug GUI
     const mixer = new THREE.AnimationMixer(this.model);
-    mixer.stopAllAction();
+    const [guardClip, walkClip, runClip] = this.model.animations;
 
-    const { guardAnimation, walkAnimation, runAnimation } = this.animationClips;
+    const actions = {
+      guard: mixer.clipAction(guardClip),
+      walk: mixer.clipAction(walkClip),
+      run: mixer.clipAction(runClip),
+      current: mixer.clipAction(guardClip),
+    };
 
-    const action: THREE.AnimationAction = mixer.clipAction(guardAnimation);
+    const play = (name: AnimationName) => {
+      const next = this.animation.actions[name];
 
-    this.mixer = mixer;
+      const prev = this.animation.actions.current;
 
-    this.currentAnimation = action;
-    this.currentAnimation.play();
+      /**
+       * We reset the previous animation before playing the new one
+       * and we cross fade to smoothly transition between animations
+       * @see https://threejs.org/docs/#api/en/core/AnimationAction
+       */
+      next.reset().play().crossFadeFrom(prev, 1);
+
+      this.animation.actions.current = next;
+    };
+
+    this.animation = { mixer, actions, play };
+    this.animation.actions.current.play();
+  };
+
+  private addDebugFolders = () => {
+    const debugFolder = this.debug.gui.addFolder("Fox");
+
+    debugFolder
+      .add({ animation: "guard" }, "animation", [
+        "guard",
+        "walk",
+        "run",
+      ] satisfies AnimationName[])
+      .name("Animation")
+      .onChange((name: AnimationName) => this.animation.play(name));
   };
 
   public update = () => {
-    const deltaTimeSeconds: number = this.time.delta / 1_000;
-
-    this.mixer.update(deltaTimeSeconds);
+    const deltaSeconds = this.time.delta / 1_000;
+    this.animation.mixer.update(deltaSeconds);
   };
 
   public destroy = () => {};
