@@ -1,4 +1,4 @@
-import dirtTextures from "./dirt/dirt";
+import floorTextures from "./floor/floor";
 import envMapTexture from "./environment-maps/map";
 
-export default [dirtTextures, envMapTexture];
+export default [floorTextures, envMapTexture];

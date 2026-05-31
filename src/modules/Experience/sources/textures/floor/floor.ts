@@ -3,8 +3,8 @@ import { Source } from "@/modules/Experience/utils/Resources/types";
 import color from "@public/textures/dirt/color.jpg";
 import normal from "@public/textures/dirt/normal.jpg";
 
-const dirtTextures = {
-  name: "dirtTexture",
+const floorTextures = {
+  name: "floorTextures",
   type: "texture",
   paths: {
     color,
@@ -12,4 +12,4 @@ const dirtTextures = {
   },
 } satisfies Source;
 
-export default dirtTextures;
+export default floorTextures;
