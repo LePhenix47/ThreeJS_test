@@ -29,11 +29,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     loadingManager.onProgress = (url, loaded, total) => {
       const progress = (loaded / total) * 100;
       setProgress(progress);
-      console.log(`Loading: ${loaded}/${total} (${progress.toFixed(0)}%)`);
     };
 
     loadingManager.onLoad = () => {
-      console.log("Textures loaded");
       setLoading(false);
       setProgress(100);
     };
