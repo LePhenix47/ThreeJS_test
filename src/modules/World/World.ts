@@ -27,23 +27,7 @@ class World implements Updatable, Destroyable {
       this.floor = new Floor();
       this.environment = new Environment();
     });
-
-    this.test();
   }
-
-  test = () => {
-    const testGeometry = new THREE.BoxGeometry(1, 1, 1);
-    const testMaterial = new THREE.MeshStandardMaterial({
-      color: "white",
-    });
-
-    const testMesh = new THREE.Mesh(testGeometry, testMaterial);
-
-    const scene = this.experience?.scene;
-    if (!scene) throw new Error("Scene not found");
-
-    scene.add(testMesh);
-  };
 
   public update = () => {};
 
