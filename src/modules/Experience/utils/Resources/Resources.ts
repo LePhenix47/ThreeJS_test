@@ -126,7 +126,7 @@ class Resources extends EventEmitter {
         case "ldrEnvTexture": {
           for (const [key, path] of Object.entries(source.paths)) {
             this.loaders.texture.load(path, (textureLoaded) => {
-              this.sourceLoaded(source, textureLoaded);
+              this.sourceLoaded(source, textureLoaded, key);
             });
           }
           break;
@@ -239,9 +239,11 @@ class Resources extends EventEmitter {
   private sourceLoaded = (
     source: Source,
     file: THREE.Texture<unknown> | GLTF | THREE.CubeTexture | THREE.DataTexture,
+    key?: string,
   ) => {
-    this.items[source.name] = file;
-    console.log(`${source.name} loaded`);
+    const itemKey = key ? `${source.name}_${key}` : source.name;
+    this.items[itemKey] = file;
+    console.log(`${itemKey} loaded`);
   };
 }
 
