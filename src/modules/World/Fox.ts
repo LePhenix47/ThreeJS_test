@@ -2,16 +2,12 @@ import { GLTF } from "three/examples/jsm/Addons.js";
 import Experience, { Destroyable, Updatable } from "../Experience/Experience";
 import * as THREE from "three";
 
-type AnimationBuilders = {
-  mixer: THREE.AnimationMixer;
-  action: THREE.AnimationAction;
-};
-
 class Fox implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private model: GLTF["scene"];
-  private animationClips: THREE.AnimationClip[];
-  private animationBuilders: AnimationBuilders;
+  private animationClips: { [key: string]: THREE.AnimationClip };
+  private mixer: THREE.AnimationMixer;
+  private currentAnimation: THREE.AnimationAction;
 
   private get scene() {
     return this.experience!.scene;
@@ -23,6 +19,10 @@ class Fox implements Updatable, Destroyable {
 
   private get time() {
     return this.experience!.time;
+  }
+
+  private get debug() {
+    return this.experience!.debug;
   }
 
   constructor() {
@@ -37,8 +37,16 @@ class Fox implements Updatable, Destroyable {
 
     this.setAnimations();
 
+    if (this.debug.isActive) {
+      this.addDebugFolders();
+    }
+
     console.log("Fox");
   }
+
+  private addDebugFolders = () => {
+    const debugFolder = this.debug.gui.addFolder("Fox");
+  };
 
   private initGltfModel = () => {
     const foxGltf: GLTF = this.resources.getGltf("fox");
@@ -47,7 +55,11 @@ class Fox implements Updatable, Destroyable {
     fox.scale.setScalar(0.02);
 
     this.model = fox;
-    this.animationClips = foxGltf.animations; // ? ≠ foxGltf.scene.animations ⚠
+    this.animationClips = {
+      guardAnimation: foxGltf.animations[0],
+      walkAnimation: foxGltf.animations[1],
+      runAnimation: foxGltf.animations[2],
+    }; // ? ≠ foxGltf.scene.animations ⚠
   };
 
   private castModelShadows = () => {
@@ -62,22 +74,20 @@ class Fox implements Updatable, Destroyable {
     const mixer = new THREE.AnimationMixer(this.model);
     mixer.stopAllAction();
 
-    const [guardAnimation, walkAnimation, runAnimation] = this.animationClips;
+    const { guardAnimation, walkAnimation, runAnimation } = this.animationClips;
 
     const action: THREE.AnimationAction = mixer.clipAction(guardAnimation);
 
-    this.animationBuilders = {
-      mixer,
-      action,
-    };
+    this.mixer = mixer;
 
-    this.animationBuilders.action.play();
+    this.currentAnimation = action;
+    this.currentAnimation.play();
   };
 
   public update = () => {
     const deltaTimeSeconds: number = this.time.delta / 1_000;
 
-    this.animationBuilders.mixer.update(deltaTimeSeconds);
+    this.mixer.update(deltaTimeSeconds);
   };
 
   public destroy = () => {};
