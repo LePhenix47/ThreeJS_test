@@ -7,6 +7,8 @@ import { useLoadingStore } from "@/stores/useLoadingStore";
 import "./ThreeScene.scss";
 import Experience from "@/modules/Experience/Experience";
 
+import * as textures from "@/modules/Experience/sources/textures";
+
 type ThreeSceneProps = {
   className?: string;
 };
@@ -45,7 +47,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   const setupThreeScene = useCallback((canvas: HTMLCanvasElement) => {
-    const experience = new Experience({ canvas, debugMode: true });
+    const experience = new Experience({
+      canvas,
+      debugMode: true,
+      loadingManager: createLoadingManager(),
+      sources: [textures.dirtTextures, textures.envMapTexture],
+    });
 
     return () => {
       experience.destroy();

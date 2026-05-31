@@ -6,6 +6,7 @@ import Time from "./utils/Time";
 
 import * as THREE from "three";
 import Resources from "./utils/Resources/Resources";
+import { Source } from "./utils/Resources/types";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>
@@ -15,6 +16,8 @@ type InputCanvas =
 type ExperienceConstructor = {
   canvas: InputCanvas;
   debugMode?: boolean;
+  loadingManager: THREE.LoadingManager;
+  sources?: Source[];
 };
 
 export interface Resizable {
@@ -42,7 +45,12 @@ class Experience implements Resizable, Updatable, Destroyable {
   public renderer: Renderer;
   public world: World;
 
-  constructor({ canvas, debugMode = false }: ExperienceConstructor) {
+  constructor({
+    canvas,
+    debugMode = false,
+    loadingManager,
+    sources = [],
+  }: ExperienceConstructor) {
     if (Experience.instance) {
       console.warn(
         "Experience instance already exists, returning existing instance",
@@ -69,14 +77,17 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.time.on("tick", this.update);
 
     // * Resources (texture loading)
-    this.resources = new Resources();
+    this.resources = new Resources(sources, { loadingManager });
+    this.resources.on("textures-loaded", () =>
+      console.log("ALL TEXTURES LOADED !!!", this.resources.items),
+    );
 
     // * THREE stuff
     // ? Scene
     this.scene = new THREE.Scene();
 
     // ? Camera
-    this.camera = new Camera();
+    this.camera = new Camera({ persistence: true });
 
     // ? Render
     this.renderer = new Renderer();
