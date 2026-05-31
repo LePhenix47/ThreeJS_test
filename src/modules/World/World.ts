@@ -5,11 +5,13 @@ import Experience, {
 import * as THREE from "three";
 import Environment from "./Environment";
 import Floor from "./Floor";
+import Fox from "./Fox";
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment: Environment;
   public floor: Floor;
+  public fox: Fox;
 
   private get resources() {
     return this.experience!.resources;
@@ -25,11 +27,14 @@ class World implements Updatable, Destroyable {
       console.log("Resources are ready to be used in the world");
       // * ⚠ ORDER MATTERS, the environment is the one that applies the map intensity, otherwise won't add it to the floor
       this.floor = new Floor();
+      this.fox = new Fox();
       this.environment = new Environment();
     });
   }
 
-  public update = () => {};
+  public update = () => {
+    // this.fox?.update?.();
+  };
 
   public destroy = () => {};
 }
