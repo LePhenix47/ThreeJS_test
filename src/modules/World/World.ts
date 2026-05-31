@@ -36,7 +36,9 @@ class World implements Updatable, Destroyable {
     this.fox?.update();
   };
 
-  public destroy = () => {};
+  public destroy = () => {
+    this.fox?.destroy();
+  };
 }
 
 export default World;
