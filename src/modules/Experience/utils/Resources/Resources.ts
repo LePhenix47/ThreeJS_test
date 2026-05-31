@@ -50,7 +50,6 @@ class Resources extends EventEmitter {
       throw new Error(`Invalid sources: ${parsed.error.message}`);
     }
     this.sources = parsed.data;
-    console.log(this.sources);
 
     this.loadingManager = options?.loadingManager ?? new THREE.LoadingManager();
     this.handleLoadingManager();
@@ -60,6 +59,8 @@ class Resources extends EventEmitter {
     });
 
     console.log("Resources instantiated");
+
+    this.loadResources();
   }
 
   private handleLoadingManager = () => {
@@ -149,6 +150,7 @@ class Resources extends EventEmitter {
     file: THREE.Texture<unknown> | GLTF | THREE.CubeTexture | THREE.DataTexture,
   ) => {
     this.items[source.name] = file;
+    console.log(`${source.name} loaded`);
   };
 }
 
