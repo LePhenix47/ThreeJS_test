@@ -1,4 +1,4 @@
-import { Source } from "@/modules/Experience/utils/Resources";
+import { Source } from "@/modules/Experience/utils/Resources/types";
 
 import px from "@public/textures/environmentMap/px.jpg";
 import nx from "@public/textures/environmentMap/nx.jpg";

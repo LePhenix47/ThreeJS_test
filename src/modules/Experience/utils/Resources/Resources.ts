@@ -1,50 +1,12 @@
 import * as THREE from "three";
-import EventEmitter from "./EventEmitter";
+import EventEmitter from "../EventEmitter";
 import {
   DRACOLoader,
   GLTF,
   GLTFLoader,
   HDRLoader,
 } from "three/examples/jsm/Addons.js";
-
-type CubeFaces = {
-  px: string;
-  nx: string;
-  py: string;
-  ny: string;
-  pz: string;
-  nz: string;
-};
-
-type TexturePaths = {
-  color: string;
-  normal: string;
-  roughness: string;
-  ao: string;
-  height: string;
-  metalness: string;
-  alpha: string;
-  emissive: string;
-
-  // physical material extras
-  clearcoat: string;
-  clearcoatNormal: string;
-  clearcoatRoughness: string;
-
-  transmission: string;
-  thickness: string;
-
-  sheenColor: string;
-  sheenRoughness: string;
-
-  iridescence: string;
-  iridescenceThickness: string;
-};
-
-type TextureName = keyof TexturePaths;
-type MaterialMapName = {
-  [K in keyof THREE.MaterialJSON]: K extends `${string}Map` | "map" ? K : never;
-}[keyof THREE.MaterialJSON];
+import { MaterialMapName, Source, TextureName, ResourceOptions } from "./types";
 
 export const texturePropertyObject = {
   color: "map",
@@ -56,37 +18,6 @@ export const texturePropertyObject = {
   alpha: "alphaMap",
   emissive: "emissiveMap",
 } as const satisfies Partial<Record<TextureName, MaterialMapName>>;
-
-type TextureSource = {
-  name: string;
-  type: "texture" | "ldrEnvTexture";
-  paths: Partial<TexturePaths>;
-};
-
-type CubeTextureSource = {
-  name: string;
-  type: "cubeEnvTexture";
-  paths: CubeFaces;
-};
-
-type GltfSource = {
-  name: string;
-  type: "gltf";
-  path: string;
-};
-
-type HdrSource = {
-  name: string;
-  type: "hdrEnvTexture";
-  path: string;
-};
-
-export type Source = TextureSource | CubeTextureSource | GltfSource | HdrSource;
-
-type ResourceOptions = Partial<{
-  dracoDecoderPath: string;
-  loadingManager: THREE.LoadingManager;
-}>;
 
 class Resources extends EventEmitter {
   public sources: Source[];

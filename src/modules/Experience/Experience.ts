@@ -5,7 +5,7 @@ import Sizes from "./utils/Sizes";
 import Time from "./utils/Time";
 
 import * as THREE from "three";
-import Resources from "./utils/Resources";
+import Resources from "./utils/Resources/Resources";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>
