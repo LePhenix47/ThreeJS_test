@@ -41,8 +41,12 @@ class Resources extends EventEmitter {
 
   public allLoaded = false;
   private loadingManager: THREE.LoadingManager;
+  private originalOnLoad: THREE.LoadingManager["onLoad"] | undefined;
+  private originalOnProgress: THREE.LoadingManager["onProgress"] | undefined;
+  private originalOnStart: THREE.LoadingManager["onStart"] | undefined;
+  private originalOnError: THREE.LoadingManager["onError"] | undefined;
 
-  constructor(rawSources: Source[] = [], options?: ResourceOptions) {
+  constructor(rawSources: Source[] = [], options: ResourceOptions = {}) {
     super();
 
     const parsed = SourceArraySchema.safeParse(rawSources);
@@ -51,11 +55,16 @@ class Resources extends EventEmitter {
     }
     this.sources = parsed.data;
 
-    this.loadingManager = options?.loadingManager ?? new THREE.LoadingManager();
+    const { loadingManager, dracoDecoderPath } = options;
+    this.loadingManager = loadingManager ?? new THREE.LoadingManager();
+    if (loadingManager) {
+      this.storeOriginalCallbacks();
+    }
+
     this.handleLoadingManager();
 
     this.setLoaders({
-      dracoDecoderPath: options?.dracoDecoderPath,
+      dracoDecoderPath: dracoDecoderPath,
     });
 
     console.log("Resources instantiated");
@@ -63,15 +72,22 @@ class Resources extends EventEmitter {
     this.loadResources();
   }
 
-  private handleLoadingManager = () => {
-    // * store existing onLoad to avoid overriding it
-    const existingOnLoad = this.loadingManager.onLoad;
+  private storeOriginalCallbacks = () => {
+    // * Since we overwrite the loadingManager (ex: handleLoadingManager method), we need to store the original callbacks
+    this.originalOnStart = this.loadingManager.onStart;
+    this.originalOnProgress = this.loadingManager.onProgress;
+    this.originalOnLoad = this.loadingManager.onLoad;
 
+    this.originalOnError = this.loadingManager.onError;
+  };
+
+  private handleLoadingManager = () => {
     this.loadingManager.onLoad = () => {
       this.allLoaded = true;
       this.emit("textures-loaded");
       console.log("Textures loaded");
-      existingOnLoad?.();
+
+      this.originalOnLoad?.();
     };
   };
 
