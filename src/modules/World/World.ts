@@ -4,10 +4,12 @@ import Experience, {
 } from "@modules/Experience/Experience";
 import * as THREE from "three";
 import Environment from "./Environment";
+import Floor from "./Floor";
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment: Environment;
+  public floor: Floor;
 
   private get resources() {
     return this.experience!.resources;
@@ -21,6 +23,8 @@ class World implements Updatable, Destroyable {
 
     this.resources.on("textures-loaded", () => {
       console.log("Resources are ready to be used in the world");
+      // * ⚠ ORDER MATTERS, the environment is the one that applies the map intensity, otherwise won't add it to the floor
+      this.floor = new Floor();
       this.environment = new Environment();
     });
 
