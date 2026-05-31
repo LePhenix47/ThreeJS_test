@@ -33,12 +33,8 @@ class Resources extends EventEmitter {
     hdr: HDRLoader;
   };
 
-  private allLoaded = false;
+  public allLoaded = false;
   private loadingManager: THREE.LoadingManager;
-
-  get hasLoadedAllResources() {
-    return this.allLoaded;
-  }
 
   constructor(rawSources: Source[] = [], options?: ResourceOptions) {
     super();
@@ -50,12 +46,15 @@ class Resources extends EventEmitter {
     this.setLoaders({
       dracoDecoderPath: options?.dracoDecoderPath,
     });
+
+    console.log("Resources instantiated");
   }
 
   private handleLoadingManager = () => {
     this.loadingManager.onLoad = () => {
       this.allLoaded = true;
       this.emit("textures-loaded");
+      console.log("Textures loaded");
     };
   };
 
