@@ -1,6 +1,7 @@
 import { GLTF } from "three/examples/jsm/Addons.js";
 import Experience, { Destroyable, Updatable } from "../Experience/Experience";
 import * as THREE from "three";
+import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 type AnimationName = "guard" | "walk" | "run";
 
@@ -16,6 +17,7 @@ class Fox implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private model: GLTF["scene"];
   private animation: AnimationState;
+  private guiRegistry: GUIStateRegistry<{ animation: string }> | null = null;
 
   private get scene() {
     return this.experience!.scene;
@@ -98,16 +100,25 @@ class Fox implements Updatable, Destroyable {
   };
 
   private addDebugFolders = () => {
+    const registry = new GUIStateRegistry("fox-gui-state", {
+      animation: "guard",
+    });
+
+    registry.bind("animation", (name) =>
+      this.animation.play(name as AnimationName),
+    );
+
+    this.guiRegistry = registry;
+
     const debugFolder = this.debug.gui.addFolder("Fox");
 
     debugFolder
-      .add({ animation: "guard" }, "animation", [
+      .add(registry.state, "animation", [
         "guard",
         "walk",
         "run",
       ] satisfies AnimationName[])
-      .name("Animation")
-      .onChange((name: AnimationName) => this.animation.play(name));
+      .name("Animation");
   };
 
   public update = () => {
@@ -115,7 +126,9 @@ class Fox implements Updatable, Destroyable {
     this.animation.mixer.update(deltaSeconds);
   };
 
-  public destroy = () => {};
+  public destroy = () => {
+    this.guiRegistry?.dispose();
+  };
 }
 
 export default Fox;
