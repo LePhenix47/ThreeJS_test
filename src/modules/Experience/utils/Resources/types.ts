@@ -1,71 +1,84 @@
 import * as THREE from "three";
+import { z } from "zod";
 
-export type ResourceOptions = Partial<{
-  dracoDecoderPath: string;
-  loadingManager: THREE.LoadingManager;
-}>;
+// * Runtime validation schemas
 
-export type CubeFaces = {
-  px: string;
-  nx: string;
-  py: string;
-  ny: string;
-  pz: string;
-  nz: string;
-};
+const CubeFacesSchema = z.object({
+  px: z.string(),
+  nx: z.string(),
+  py: z.string(),
+  ny: z.string(),
+  pz: z.string(),
+  nz: z.string(),
+});
 
-export type TexturePaths = {
-  color: string;
-  normal: string;
-  roughness: string;
-  ao: string;
-  height: string;
-  metalness: string;
-  alpha: string;
-  emissive: string;
+const TexturePathsSchema = z.object({
+  color: z.string(),
+  normal: z.string(),
+  roughness: z.string(),
+  ao: z.string(),
+  height: z.string(),
+  metalness: z.string(),
+  alpha: z.string(),
+  emissive: z.string(),
+  clearcoat: z.string(),
+  clearcoatNormal: z.string(),
+  clearcoatRoughness: z.string(),
+  transmission: z.string(),
+  thickness: z.string(),
+  sheenColor: z.string(),
+  sheenRoughness: z.string(),
+  iridescence: z.string(),
+  iridescenceThickness: z.string(),
+});
 
-  // physical material extras
-  clearcoat: string;
-  clearcoatNormal: string;
-  clearcoatRoughness: string;
+const TextureSourceSchema = z.object({
+  name: z.string(),
+  type: z.enum(["texture", "ldrEnvTexture"]),
+  paths: TexturePathsSchema.partial(),
+});
 
-  transmission: string;
-  thickness: string;
+const CubeTextureSourceSchema = z.object({
+  name: z.string(),
+  type: z.literal("cubeEnvTexture"),
+  paths: CubeFacesSchema,
+});
 
-  sheenColor: string;
-  sheenRoughness: string;
+const GltfSourceSchema = z.object({
+  name: z.string(),
+  type: z.literal("gltf"),
+  path: z.string(),
+});
 
-  iridescence: string;
-  iridescenceThickness: string;
-};
+const HdrSourceSchema = z.object({
+  name: z.string(),
+  type: z.literal("hdrEnvTexture"),
+  path: z.string(),
+});
 
+export const SourceSchema = z.discriminatedUnion("type", [
+  TextureSourceSchema,
+  CubeTextureSourceSchema,
+  GltfSourceSchema,
+  HdrSourceSchema,
+]);
+
+export const SourceArraySchema = z.array(SourceSchema);
+
+// * TypeScript types inferred from schemas
+
+export type CubeFaces = z.infer<typeof CubeFacesSchema>;
+export type TexturePaths = z.infer<typeof TexturePathsSchema>;
 export type TextureName = keyof TexturePaths;
+export type Source = z.infer<typeof SourceSchema>;
+
+// * Derived from THREE — can't be Zod-inferred
 export type MaterialMapName = {
   [K in keyof THREE.MaterialJSON]: K extends `${string}Map` | "map" ? K : never;
 }[keyof THREE.MaterialJSON];
 
-type TextureSource = {
-  name: string;
-  type: "texture" | "ldrEnvTexture";
-  paths: Partial<TexturePaths>;
-};
-
-type CubeTextureSource = {
-  name: string;
-  type: "cubeEnvTexture";
-  paths: CubeFaces;
-};
-
-type GltfSource = {
-  name: string;
-  type: "gltf";
-  path: string;
-};
-
-type HdrSource = {
-  name: string;
-  type: "hdrEnvTexture";
-  path: string;
-};
-
-export type Source = TextureSource | CubeTextureSource | GltfSource | HdrSource;
+// * Not Zod-validated (contains class instance)
+export type ResourceOptions = Partial<{
+  dracoDecoderPath: string;
+  loadingManager: THREE.LoadingManager;
+}>;

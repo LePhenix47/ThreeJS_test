@@ -6,7 +6,13 @@ import {
   GLTFLoader,
   HDRLoader,
 } from "three/examples/jsm/Addons.js";
-import { MaterialMapName, Source, TextureName, ResourceOptions } from "./types";
+import {
+  MaterialMapName,
+  Source,
+  TextureName,
+  ResourceOptions,
+  SourceArraySchema,
+} from "./types";
 
 export const texturePropertyObject = {
   color: "map",
@@ -39,7 +45,11 @@ class Resources extends EventEmitter {
   constructor(rawSources: Source[] = [], options?: ResourceOptions) {
     super();
 
-    this.sources = rawSources;
+    const parsed = SourceArraySchema.safeParse(rawSources);
+    if (!parsed.success) {
+      throw new Error(`Invalid sources: ${parsed.error.message}`);
+    }
+    this.sources = parsed.data;
     console.log(this.sources);
 
     this.loadingManager = options?.loadingManager ?? new THREE.LoadingManager();
