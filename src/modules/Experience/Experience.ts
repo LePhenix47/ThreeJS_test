@@ -173,6 +173,27 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.renderer.destroy();
     this.world.destroy();
 
+    /**
+     *
+     * Read @link {https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects}
+     */
+    this.scene.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+
+      child.geometry.dispose();
+
+      for (const key in child.material) {
+        const value = child.material[key];
+        if (!value || typeof value.dispose !== "function") continue;
+
+        value.dispose();
+      }
+    });
+
+    if (this.debug.isActive) {
+      this.debug.destroy();
+    }
+
     Experience.instance = null;
   };
 }
