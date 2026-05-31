@@ -27,6 +27,14 @@ class Camera implements Resizable, Updatable, Destroyable {
   private readonly experience: Experience;
   private cleanupPersistence: (() => void) | null = null;
 
+  private get sizes() {
+    return this.experience.sizes;
+  }
+
+  private get canvas() {
+    return this.experience.canvas;
+  }
+
   constructor({ persistence }: CameraConstructor = {}) {
     if (!Experience.instance) {
       throw new Error("Experience instance not found");
@@ -46,7 +54,7 @@ class Camera implements Resizable, Updatable, Destroyable {
   private initCamera = () => {
     const perspectiveCamera = new THREE.PerspectiveCamera(
       75,
-      this.experience.sizes.aspectRatio,
+      this.sizes.aspectRatio,
       0.1,
       100,
     );
@@ -58,14 +66,14 @@ class Camera implements Resizable, Updatable, Destroyable {
   };
 
   private initControls = () => {
-    const controls = new OrbitControls(this.instance, this.experience.canvas);
+    const controls = new OrbitControls(this.instance, this.canvas);
     controls.enableDamping = true;
 
     return controls;
   };
 
   public resize = () => {
-    this.instance.aspect = this.experience.sizes.aspectRatio;
+    this.instance.aspect = this.sizes.aspectRatio;
     this.instance.updateProjectionMatrix();
   };
 

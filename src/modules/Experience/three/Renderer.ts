@@ -8,6 +8,19 @@ import Experience, {
 class Renderer implements Resizable, Updatable, Destroyable {
   public instance: THREE.WebGLRenderer;
   private readonly experience: Experience;
+
+  private get sizes() {
+    return this.experience.sizes;
+  }
+
+  private get camera() {
+    return this.experience.camera;
+  }
+
+  private get scene() {
+    return this.experience.scene;
+  }
+
   constructor() {
     if (!Experience.instance) {
       throw new Error("Experience instance not found");
@@ -30,27 +43,21 @@ class Renderer implements Resizable, Updatable, Destroyable {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    renderer.setSize(this.experience.sizes.width, this.experience.sizes.height);
+    renderer.setSize(this.sizes.width, this.sizes.height);
 
-    renderer.setPixelRatio(this.experience.sizes.pixelRatio);
+    renderer.setPixelRatio(this.sizes.pixelRatio);
 
     return renderer;
   };
 
   public resize = () => {
-    this.instance.setSize(
-      this.experience.sizes.width,
-      this.experience.sizes.height,
-    );
+    this.instance.setSize(this.sizes.width, this.sizes.height);
 
-    this.instance.setPixelRatio(this.experience.sizes.pixelRatio);
+    this.instance.setPixelRatio(this.sizes.pixelRatio);
   };
 
   public update = () => {
-    this.instance.render(
-      this.experience.scene,
-      this.experience.camera.instance,
-    );
+    this.instance.render(this.scene, this.camera.instance);
   };
 
   public destroy = () => {
