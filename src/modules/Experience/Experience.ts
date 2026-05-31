@@ -109,6 +109,7 @@ class Experience implements Resizable, Updatable, Destroyable {
       // console.log("TICKING");
       this.camera.update();
       this.renderer.update();
+      this.world.update();
     } catch (error) {
       console.error(error);
       console.error("Tick has been stopped due to an error");
@@ -169,6 +170,7 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.time.destroy();
     this.camera.destroy();
     this.renderer.destroy();
+    this.world.destroy();
 
     Experience.instance = null;
   };
