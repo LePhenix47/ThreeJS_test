@@ -1,13 +1,15 @@
-import Experience, {
-  Destroyable,
-  Updatable,
-} from "@modules/Experience/Experience";
+import Experience from "@modules/Experience/Experience";
 import * as THREE from "three";
+
+type EnvironmentMap = {
+  texture: THREE.CubeTexture | null;
+  intensity: number;
+};
 
 class Environment {
   private readonly experience: Experience | null;
   private sunLight: THREE.DirectionalLight;
-  private envMap: THREE.CubeTexture;
+  private envMap: EnvironmentMap;
 
   private get scene() {
     return this.experience!.scene;
@@ -23,13 +25,29 @@ class Environment {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    // * Env mpa
+    // * Env map
     this.envMap = this.setEnvMap();
 
     // * Sunlight
     this.sunLight = this.initSunLight(true);
     this.scene.add(this.sunLight);
+
+    this.scene.environment = this.envMap.texture;
   }
+
+  private setEnvMap = (): EnvironmentMap => {
+    const initEnvMap: EnvironmentMap = {
+      intensity: 0.4,
+      texture: null,
+    };
+
+    const texture = this.resources.getCubeTexture("environmentMapTexture");
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    initEnvMap.texture = texture;
+
+    return initEnvMap;
+  };
 
   private initSunLight = (helper?: boolean) => {
     const sunLight = new THREE.DirectionalLight("white", 4);
@@ -48,14 +66,6 @@ class Environment {
     }
 
     return sunLight;
-  };
-
-  private setEnvMap = (): THREE.CubeTexture => {
-    const loadedEnvMapTexture = this.resources.getCubeTexture(
-      "environmentMapTexture",
-    );
-
-    return loadedEnvMapTexture;
   };
 }
 
