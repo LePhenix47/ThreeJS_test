@@ -46,7 +46,7 @@ type MaterialMapName = {
   [K in keyof THREE.MaterialJSON]: K extends `${string}Map` | "map" ? K : never;
 }[keyof THREE.MaterialJSON];
 
-const texturePropertyObject = {
+export const texturePropertyObject = {
   color: "map",
   normal: "normalMap",
   roughness: "roughnessMap",
@@ -56,17 +56,6 @@ const texturePropertyObject = {
   alpha: "alphaMap",
   emissive: "emissiveMap",
 } as const satisfies Partial<Record<TextureName, MaterialMapName>>;
-
-const texturePropertyMap = new Map<TextureName, MaterialMapName>(
-  Object.entries(texturePropertyObject) as Array<
-    [keyof typeof texturePropertyObject, MaterialMapName]
-  >,
-);
-
-const a = texturePropertyMap.get("ao");
-// ^?
-/*
- */
 
 type TextureSource = {
   name: string;
