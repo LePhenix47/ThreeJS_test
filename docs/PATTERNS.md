@@ -63,6 +63,24 @@ interface Destroyable { destroy(): void; }
 
 ---
 
+## Update Method
+
+Tied to the lifecycle interfaces, each sub-module exposes `update()`, `resize()`, and `destroy()` — the orchestrator calls them on every relevant event. Same contract, same call site.
+
+```ts
+// Experience drives all sub-modules:
+public update = () => {
+  this.camera.update();
+  this.renderer.update();
+};
+```
+
+The `Resizable`, `Updatable`, `Destroyable` interfaces enforce the contract at compile time.
+
+**Why:** each module owns its own per-frame logic. The orchestrator doesn't care what `camera.update()` does internally — just that it exists. Classic game loop pattern ("Update Method patter" by Robert Nystrom — *Game Programming Patterns*).
+
+---
+
 ## EventEmitter Base Class
 
 `Sizes` and `Time` extend `EventEmitter` (custom implementation, not Node's). Enables decoupled communication — `Experience` subscribes to `"resize"` and `"tick"` without either class knowing about the other.
