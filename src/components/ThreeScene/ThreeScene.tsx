@@ -48,9 +48,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const setupThreeScene = useCallback((canvas: HTMLCanvasElement) => {
     const loadingManager = createLoadingManager();
 
+    const url = new URL(location.href);
+    const hasDebugUrlParamEnabled: boolean =
+      url.searchParams.get("debug") === "true"; // ? debug=true
+
     const experience = new Experience({
       canvas,
-      debugMode: true,
+      debugMode: hasDebugUrlParamEnabled,
       loadingManager,
       sources: [...textures, ...models],
     });

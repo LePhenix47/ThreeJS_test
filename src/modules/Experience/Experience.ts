@@ -4,9 +4,11 @@ import Renderer from "./three/Renderer";
 import Sizes from "./utils/Sizes";
 import Time from "./utils/Time";
 
+import GUI from "lil-gui";
 import * as THREE from "three";
 import Resources from "./utils/Resources/Resources";
 import { Source } from "./utils/Resources/types";
+import Debug from "./utils/Debug";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>
@@ -34,7 +36,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public static instance: Experience | null = null;
 
   public canvas: HTMLCanvasElement;
-  private debugMode: boolean;
+  public debug: Debug;
 
   public sizes: Sizes;
   public time: Time;
@@ -150,13 +152,12 @@ class Experience implements Resizable, Updatable, Destroyable {
   };
 
   public setDebugMode = (debugMode: boolean): this => {
-    this.debugMode = debugMode;
-
     const keyName = "DEBUG_EXPERIENCE" as const;
 
-    if (this.debugMode) {
+    if (debugMode) {
       console.log("Debug mode enabled");
       Reflect.set(window, keyName, this);
+      this.debug = new Debug({ title: "Experience debug", isActive: true });
     } else {
       console.log("Debug mode disabled");
       Reflect.deleteProperty(window, keyName);
