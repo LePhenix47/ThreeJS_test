@@ -6,6 +6,8 @@ import * as THREE from "three";
 
 class Environment {
   private readonly experience: Experience | null;
+  private sunLight: THREE.DirectionalLight;
+  private envMap: THREE.CubeTexture;
 
   private get scene() {
     return this.experience!.scene;
@@ -15,7 +17,6 @@ class Environment {
     return this.experience!.resources;
   }
 
-  private sunLight: THREE.DirectionalLight;
   constructor() {
     console.log("World");
 
@@ -23,7 +24,7 @@ class Environment {
     if (!this.experience) throw new Error("Experience instance not found");
 
     // * Env mpa
-    this.setEnvMap();
+    this.envMap = this.setEnvMap();
 
     // * Sunlight
     this.sunLight = this.initSunLight(true);
@@ -49,8 +50,11 @@ class Environment {
     return sunLight;
   };
 
-  private setEnvMap = () => {
-    console.log(this.resources.items.environmentMapTexture);
+  private setEnvMap = (): THREE.CubeTexture => {
+    const loadedEnvMapTexture = this.resources.getCubeTexture(
+      "environmentMapTexture",
+    );
+    return loadedEnvMapTexture;
   };
 }
 

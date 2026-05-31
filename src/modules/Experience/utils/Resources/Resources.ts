@@ -165,6 +165,53 @@ class Resources extends EventEmitter {
     }
   };
 
+  private logAvailableItems = (requestedName: string): void => {
+    const available = Object.keys(this.items).join(", ") || "none";
+    console.error(
+      `[Resources] "${requestedName}" not found. Available: ${available}`,
+    );
+  };
+
+  public getTexture = (name: string): THREE.Texture => {
+    const item = this.items[name];
+    if (!(item instanceof THREE.Texture)) {
+      this.logAvailableItems(name);
+      throw new Error(`[Resources] "${name}" is not a Texture`);
+    }
+    return item;
+  };
+
+  public getCubeTexture = (name: string): THREE.CubeTexture => {
+    const item = this.items[name];
+    if (!(item instanceof THREE.CubeTexture)) {
+      this.logAvailableItems(name);
+      throw new Error(`[Resources] "${name}" is not a CubeTexture`);
+    }
+    return item;
+  };
+
+  public getGltf = (name: string): GLTF => {
+    const item = this.items[name];
+    if (
+      !item ||
+      typeof item !== "object" ||
+      !("scene" in item)
+    ) {
+      this.logAvailableItems(name);
+      throw new Error(`[Resources] "${name}" is not a GLTF`);
+    }
+    return item as GLTF;
+  };
+
+  public getDataTexture = (name: string): THREE.DataTexture => {
+    const item = this.items[name];
+    if (!(item instanceof THREE.DataTexture)) {
+      this.logAvailableItems(name);
+      throw new Error(`[Resources] "${name}" is not a DataTexture`);
+    }
+    return item;
+  };
+
   private sourceLoaded = (
     source: Source,
     file: THREE.Texture<unknown> | GLTF | THREE.CubeTexture | THREE.DataTexture,
