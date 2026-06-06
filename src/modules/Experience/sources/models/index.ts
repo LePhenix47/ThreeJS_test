@@ -1,6 +1,4 @@
-import fox from "./fox/fox";
-
-const models = [fox] as const;
+const models = [] as const;
 export type ModelNames = (typeof models)[number]["name"];
 
 export default models;

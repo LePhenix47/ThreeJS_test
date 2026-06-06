@@ -1,10 +1,5 @@
-import floorTextures from "./floor/floor";
-import envMapTexture from "./environment-maps/map";
-
 // prettier-ignore
 const textures = [
-    floorTextures, 
-    envMapTexture
 ] as const;
 
 type RawTextures = typeof textures;

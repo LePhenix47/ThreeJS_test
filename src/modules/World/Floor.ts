@@ -50,27 +50,7 @@ class Floor {
     });
   };
 
-  public setTextures = () => {
-    const color = this.resources.getTexture("floorTextures", "color");
-
-    color.repeat.set(1.5, 1.5);
-    color.wrapS = THREE.RepeatWrapping;
-    color.wrapT = THREE.RepeatWrapping;
-    color.colorSpace = THREE.SRGBColorSpace;
-
-    const normal = this.resources.getTexture("floorTextures", "normal");
-
-    normal.repeat.set(1.5, 1.5);
-    normal.wrapS = THREE.RepeatWrapping;
-    normal.wrapT = THREE.RepeatWrapping;
-
-    this.textures = {
-      color,
-      normal,
-    };
-
-    console.log(this.textures);
-  };
+  public setTextures = () => {};
 
   public setMesh = () => {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
