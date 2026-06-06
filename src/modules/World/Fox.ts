@@ -6,9 +6,9 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 type AnimationName = "guard" | "walk" | "run";
 
-type AnimationState = {
+type AnimationState<TAnimations extends string> = {
   mixer: THREE.AnimationMixer;
-  actions: Record<AnimationName, THREE.AnimationAction> & {
+  actions: Record<TAnimations, THREE.AnimationAction> & {
     current: THREE.AnimationAction;
   };
   play: (name: AnimationName) => void;
@@ -17,7 +17,7 @@ type AnimationState = {
 class Fox extends GltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   protected model: THREE.Group;
-  private animation: AnimationState;
+  private animation: AnimationState<AnimationName>;
   private guiRegistry: GUIStateRegistry<{ animation: string }> | null = null;
 
   private get scene() {
@@ -80,7 +80,7 @@ class Fox extends GltfEntity implements Updatable, Destroyable {
       walk: mixer.clipAction(walkClip),
       run: mixer.clipAction(runClip),
       current: mixer.clipAction(guardClip),
-    };
+    } satisfies AnimationState<AnimationName>["actions"];
 
     const play = (name: AnimationName) => {
       const next = this.animation.actions[name];
