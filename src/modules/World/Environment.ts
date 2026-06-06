@@ -20,6 +20,10 @@ class Environment implements Destroyable {
     return this.experience!.scene;
   }
 
+  private get camera() {
+    return this.experience!.camera;
+  }
+
   private get debug() {
     return this.experience!.debug;
   }
@@ -98,6 +102,20 @@ class Environment implements Destroyable {
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
     helpersFolder.add(state, "lightHelper").name("Light Helper");
     helpersFolder.add(state, "gridHelper").name("Grid Helper");
+    helpersFolder
+      .add(
+        {
+          resetPivot: () => {
+            const { controls } = this.camera;
+            controls.target.set(0, 0, 0);
+            controls.update();
+
+            console.log("click");
+          },
+        },
+        "resetPivot",
+      )
+      .name("Reset Camera Pivot");
   };
 
   public destroy = () => {
