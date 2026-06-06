@@ -506,28 +506,22 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         currentSkybox = createGroundSkyBox(envMaps.hdr);
         scene.add(currentSkybox);
       })
-      .bindBidirectional(
-        "bindIntensity",
-        "environmentMapIntensity",
-        (v) => {
+      .bindLinked("bindIntensity", {
+        environmentMapIntensity: (v) => {
           scene.environmentIntensity = v;
         },
-        "backgroundIntensity",
-        (v) => {
+        backgroundIntensity: (v) => {
           scene.backgroundIntensity = v;
         },
-      )
-      .bindBidirectional(
-        "bindRotation",
-        "environmentMapRotationY",
-        (v) => {
+      })
+      .bindLinked("bindRotation", {
+        environmentMapRotationY: (v) => {
           scene.environmentRotation.y = THREE.MathUtils.degToRad(v);
         },
-        "backgroundRotationY",
-        (v) => {
+        backgroundRotationY: (v) => {
           scene.backgroundRotation.y = THREE.MathUtils.degToRad(v);
         },
-      );
+      });
 
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
