@@ -25,9 +25,19 @@ export abstract class TexturedMeshEntity extends MeshEntity {
   protected abstract setTextures(): void;
 }
 
-/** Contract for any entity driven by a loaded GLTF scene graph. */
+/** Generic animation state bag for GLTF entities with named clips. */
+export type AnimationState<TAnimations extends string> = {
+  mixer: THREE.AnimationMixer;
+  actions: Record<TAnimations, THREE.AnimationAction> & {
+    current: THREE.AnimationAction;
+  };
+  play: (name: TAnimations) => void;
+};
+
+/** Contract for any entity driven by a loaded GLTF scene graph. Provide `TAnimations` when the entity has named animation clips. */
 export abstract class GltfEntity {
   protected abstract model: GLTF["scene"];
   /** Loads the GLTF asset and assigns the scene root to `model`. */
   protected abstract setModel(): void;
+  protected animation?: AnimationState<string>;
 }

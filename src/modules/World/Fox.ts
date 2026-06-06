@@ -1,23 +1,15 @@
 import { GLTF } from "three/examples/jsm/Addons.js";
 import Experience, { Destroyable, Updatable } from "../Experience/Experience";
-import { GltfEntity } from "./types/entity";
+import { GltfEntity, AnimationState } from "./types/entity";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 type AnimationName = "guard" | "walk" | "run";
 
-type AnimationState<TAnimations extends string> = {
-  mixer: THREE.AnimationMixer;
-  actions: Record<TAnimations, THREE.AnimationAction> & {
-    current: THREE.AnimationAction;
-  };
-  play: (name: AnimationName) => void;
-};
-
 class Fox extends GltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   protected model: THREE.Group;
-  private animation: AnimationState<AnimationName>;
+  declare protected animation: AnimationState<AnimationName>;
   private guiRegistry: GUIStateRegistry<{ animation: string }> | null = null;
 
   private get scene() {
