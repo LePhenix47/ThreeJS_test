@@ -54,19 +54,19 @@ class Resources extends EventEmitter {
   private originalOnStart: THREE.LoadingManager["onStart"] | undefined;
   private originalOnError: THREE.LoadingManager["onError"] | undefined;
 
-  private readonly typeFilters: Record<
-    string,
-    (item: (typeof this.items)[string]) => boolean
-  > = {
-    texture: (i): i is THREE.Texture => {
+  private readonly typeFilters = {
+    texture: (i: unknown): i is THREE.Texture => {
       return (
         i instanceof THREE.Texture &&
         [THREE.CubeTexture, THREE.DataTexture].every((t) => !(i instanceof t))
       );
     },
-    cubeTexture: (i): i is THREE.CubeTexture => i instanceof THREE.CubeTexture,
-    gltf: (i): i is GLTF => typeof i === "object" && "scene" in i,
-    dataTexture: (i): i is THREE.DataTexture => i instanceof THREE.DataTexture,
+    cubeTexture: (i: unknown): i is THREE.CubeTexture =>
+      i instanceof THREE.CubeTexture,
+    gltf: (i: unknown): i is GLTF =>
+      i !== null && typeof i === "object" && "scene" in i,
+    dataTexture: (i: unknown): i is THREE.DataTexture =>
+      i instanceof THREE.DataTexture,
   };
 
   constructor(rawSources: Source[] = [], options: ResourceOptions = {}) {
@@ -209,21 +209,22 @@ class Resources extends EventEmitter {
   ): THREE.Texture => {
     const itemKey = mapKey ? `${name}_${mapKey}` : name;
     const item = this.items[itemKey];
-    if (
-      !(item instanceof THREE.Texture) ||
-      item instanceof THREE.CubeTexture ||
-      item instanceof THREE.DataTexture
-    ) {
+
+    const isTexture = this.typeFilters.texture(item);
+    if (!isTexture) {
       this.logAvailableItems(itemKey, "texture");
       throw new Error(`[Resources] "${itemKey}" is not a Texture`);
     }
+
     return item;
   };
 
   /** Returns a loaded `THREE.CubeTexture` by name. Throws if not found or wrong type. */
   public getCubeTexture = (name: CubeTextureNames): THREE.CubeTexture => {
     const item = this.items[name];
-    if (!(item instanceof THREE.CubeTexture)) {
+
+    const isCubeTexture = this.typeFilters.cubeTexture(item);
+    if (!isCubeTexture) {
       this.logAvailableItems(name, "cubeTexture");
       throw new Error(`[Resources] "${name}" is not a CubeTexture`);
     }
@@ -233,20 +234,26 @@ class Resources extends EventEmitter {
   /** Returns a loaded `GLTF` model by name. Throws if not found or wrong type. */
   public getGltf = (name: ModelNames): GLTF => {
     const item = this.items[name];
-    if (!item || typeof item !== "object" || !("scene" in item)) {
+
+    const isGltf = this.typeFilters.gltf(item);
+    if (!isGltf) {
       this.logAvailableItems(name, "gltf");
       throw new Error(`[Resources] "${name}" is not a GLTF`);
     }
+
     return item;
   };
 
   /** Returns a loaded `THREE.DataTexture` by name. Throws if not found or wrong type. */
   public getDataTexture = (name: HdrTextureNames): THREE.DataTexture => {
     const item = this.items[name];
-    if (!(item instanceof THREE.DataTexture)) {
+
+    const isDataTexture = this.typeFilters.dataTexture(item);
+    if (!isDataTexture) {
       this.logAvailableItems(name, "dataTexture");
       throw new Error(`[Resources] "${name}" is not a DataTexture`);
     }
+
     return item;
   };
 
