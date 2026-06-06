@@ -1,5 +1,6 @@
 import { GLTF } from "three/examples/jsm/Addons.js";
 import Experience, { Destroyable, Updatable } from "../Experience/Experience";
+import { GltfEntity } from "./types/entity";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -13,9 +14,9 @@ type AnimationState = {
   play: (name: AnimationName) => void;
 };
 
-class Fox implements Updatable, Destroyable {
+class Fox extends GltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
-  private model: GLTF["scene"];
+  protected model: THREE.Group;
   private animation: AnimationState;
   private guiRegistry: GUIStateRegistry<{ animation: string }> | null = null;
 
@@ -36,10 +37,11 @@ class Fox implements Updatable, Destroyable {
   }
 
   constructor() {
+    super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.initGltfModel();
+    this.setModel();
     this.scene.add(this.model);
     this.castModelShadows();
     this.setAnimations();
@@ -51,7 +53,7 @@ class Fox implements Updatable, Destroyable {
     console.log("Fox");
   }
 
-  private initGltfModel = () => {
+  protected setModel = () => {
     const foxGltf: GLTF = this.resources.getGltf("fox");
 
     const fox = foxGltf.scene;

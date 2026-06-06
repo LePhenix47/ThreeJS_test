@@ -1,16 +1,13 @@
 import Experience from "../Experience/Experience";
 import * as THREE from "three";
+import { TexturedMeshEntity, EntityTexture } from "./types/entity";
 
-class Floor {
+class Floor extends TexturedMeshEntity {
   private readonly experience: Experience | null;
-  private geometry: THREE.BufferGeometry;
-  private material: THREE.Material;
-  private textures: {
-    color: THREE.Texture;
-    normal: THREE.Texture;
-  };
-
-  private mesh: THREE.Mesh;
+  protected geometry: THREE.BufferGeometry;
+  protected material: THREE.Material;
+  protected textures: Pick<EntityTexture, "color" | "normal">;
+  protected mesh: THREE.Mesh;
 
   private get scene() {
     return this.experience!.scene;
@@ -20,6 +17,7 @@ class Floor {
     return this.experience!.resources;
   }
   constructor() {
+    super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
@@ -38,19 +36,19 @@ class Floor {
     this.setMesh();
   };
 
-  public setGeometry = () => {
+  protected setGeometry = () => {
     //
     this.geometry = new THREE.CircleGeometry(5, 64);
   };
 
-  public setMaterial = () => {
+  protected setMaterial = () => {
     this.material = new THREE.MeshStandardMaterial({
       map: this.textures.color,
       normalMap: this.textures.normal,
     });
   };
 
-  public setTextures = () => {
+  protected setTextures = () => {
     const color = this.resources.getTexture("floorTextures", "color");
 
     color.repeat.set(1.5, 1.5);
@@ -72,7 +70,7 @@ class Floor {
     console.log(this.textures);
   };
 
-  public setMesh = () => {
+  protected setMesh = () => {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.rotation.x = THREE.MathUtils.degToRad(-90);
 
