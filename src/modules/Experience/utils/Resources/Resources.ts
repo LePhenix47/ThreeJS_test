@@ -47,6 +47,21 @@ class Resources extends EventEmitter {
   private originalOnStart: THREE.LoadingManager["onStart"] | undefined;
   private originalOnError: THREE.LoadingManager["onError"] | undefined;
 
+  private readonly typeFilters: Record<
+    string,
+    (item: (typeof this.items)[string]) => boolean
+  > = {
+    texture: (i) => {
+      return (
+        i instanceof THREE.Texture &&
+        [THREE.CubeTexture, THREE.DataTexture].every((t) => !(i instanceof t))
+      );
+    },
+    cubeTexture: (i) => i instanceof THREE.CubeTexture,
+    gltf: (i) => typeof i === "object" && "scene" in i,
+    dataTexture: (i) => i instanceof THREE.DataTexture,
+  };
+
   constructor(rawSources: Source[] = [], options: ResourceOptions = {}) {
     super();
 
@@ -164,19 +179,6 @@ class Resources extends EventEmitter {
         }
       }
     }
-  };
-
-  private readonly typeFilters: Record<
-    string,
-    (item: (typeof this.items)[string]) => boolean
-  > = {
-    texture: (i) =>
-      i instanceof THREE.Texture &&
-      !(i instanceof THREE.CubeTexture) &&
-      !(i instanceof THREE.DataTexture),
-    cubeTexture: (i) => i instanceof THREE.CubeTexture,
-    gltf: (i) => typeof i === "object" && "scene" in i,
-    dataTexture: (i) => i instanceof THREE.DataTexture,
   };
 
   /** Logs loaded item names of a given type to the console — called before throwing on a failed lookup. */
