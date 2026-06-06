@@ -13,7 +13,14 @@ import {
   ResourceOptions,
   SourceArraySchema,
 } from "./types";
-import { NoUnderscore } from "@/utils/types/string.type";
+import {
+  RegularTextureNames,
+  LdrTextureNames,
+  CubeTextureNames,
+  HdrTextureNames,
+} from "@modules/Experience/sources/textures";
+
+import { ModelNames } from "@modules/Experience/sources/models";
 
 export const texturePropertyObject = {
   color: "map",
@@ -196,8 +203,8 @@ class Resources extends EventEmitter {
   };
 
   /** Returns a loaded `THREE.Texture` by name. Pass `mapKey` for multi-map sources (e.g. `"dirtTexture", "color"`). Throws if not found or wrong type. */
-  public getTexture = <K extends string>(
-    name: NoUnderscore<K>,
+  public getTexture = (
+    name: RegularTextureNames | LdrTextureNames,
     mapKey?: TextureName,
   ): THREE.Texture => {
     const itemKey = mapKey ? `${name}_${mapKey}` : name;
@@ -214,7 +221,7 @@ class Resources extends EventEmitter {
   };
 
   /** Returns a loaded `THREE.CubeTexture` by name. Throws if not found or wrong type. */
-  public getCubeTexture = (name: string): THREE.CubeTexture => {
+  public getCubeTexture = (name: CubeTextureNames): THREE.CubeTexture => {
     const item = this.items[name];
     if (!(item instanceof THREE.CubeTexture)) {
       this.logAvailableItems(name, "cubeTexture");
@@ -224,7 +231,7 @@ class Resources extends EventEmitter {
   };
 
   /** Returns a loaded `GLTF` model by name. Throws if not found or wrong type. */
-  public getGltf = (name: string): GLTF => {
+  public getGltf = (name: ModelNames): GLTF => {
     const item = this.items[name];
     if (!item || typeof item !== "object" || !("scene" in item)) {
       this.logAvailableItems(name, "gltf");
@@ -234,7 +241,7 @@ class Resources extends EventEmitter {
   };
 
   /** Returns a loaded `THREE.DataTexture` by name. Throws if not found or wrong type. */
-  public getDataTexture = (name: string): THREE.DataTexture => {
+  public getDataTexture = (name: HdrTextureNames): THREE.DataTexture => {
     const item = this.items[name];
     if (!(item instanceof THREE.DataTexture)) {
       this.logAvailableItems(name, "dataTexture");
