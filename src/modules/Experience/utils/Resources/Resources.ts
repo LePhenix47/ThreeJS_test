@@ -58,15 +58,15 @@ class Resources extends EventEmitter {
     string,
     (item: (typeof this.items)[string]) => boolean
   > = {
-    texture: (i) => {
+    texture: (i): i is THREE.Texture => {
       return (
         i instanceof THREE.Texture &&
         [THREE.CubeTexture, THREE.DataTexture].every((t) => !(i instanceof t))
       );
     },
-    cubeTexture: (i) => i instanceof THREE.CubeTexture,
-    gltf: (i) => typeof i === "object" && "scene" in i,
-    dataTexture: (i) => i instanceof THREE.DataTexture,
+    cubeTexture: (i): i is THREE.CubeTexture => i instanceof THREE.CubeTexture,
+    gltf: (i): i is GLTF => typeof i === "object" && "scene" in i,
+    dataTexture: (i): i is THREE.DataTexture => i instanceof THREE.DataTexture,
   };
 
   constructor(rawSources: Source[] = [], options: ResourceOptions = {}) {
