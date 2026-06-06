@@ -190,7 +190,7 @@ class Experience implements Resizable, Updatable, Destroyable {
       }
     });
 
-    if (this.debug.isActive) {
+    if (this.debug?.isActive) {
       this.debug.destroy();
     }
 

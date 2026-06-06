@@ -44,7 +44,7 @@ class Fox implements Updatable, Destroyable {
     this.castModelShadows();
     this.setAnimations();
 
-    if (this.debug.isActive) {
+    if (this.debug?.isActive) {
       this.addDebugFolders();
     }
 
