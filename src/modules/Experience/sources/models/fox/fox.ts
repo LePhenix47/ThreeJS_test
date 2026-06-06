@@ -5,6 +5,6 @@ const fox = {
   name: "fox",
   type: "gltf",
   path: foxModel,
-} satisfies Source;
+} as const satisfies Source;
 
 export default fox;

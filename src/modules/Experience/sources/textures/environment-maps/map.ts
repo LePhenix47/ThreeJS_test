@@ -11,6 +11,6 @@ const envMapTexture = {
   name: "environmentMapTexture",
   type: "cubeEnvTexture",
   paths: { px, nx, py, ny, pz, nz },
-} satisfies Source;
+} as const satisfies Source;
 
 export default envMapTexture;

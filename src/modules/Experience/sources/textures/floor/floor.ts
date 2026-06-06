@@ -10,6 +10,6 @@ const floorTextures = {
     color,
     normal,
   },
-} satisfies Source;
+} as const satisfies Source;
 
 export default floorTextures;
