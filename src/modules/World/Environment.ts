@@ -11,6 +11,7 @@ type EnvironmentMap = {
 class Environment implements Destroyable {
   private readonly experience: Experience | null;
   private sunLight: THREE.DirectionalLight;
+  private sunLightHelper: THREE.DirectionalLightHelper | null = null;
   private envMap: EnvironmentMap;
   private guiRegistry: GUIStateRegistry<{
     envMapIntensity: number;
@@ -37,11 +38,13 @@ class Environment implements Destroyable {
 
     this.envMap = this.setEnvMap();
     this.sunLight = this.initSunLight(true);
+
     this.scene.add(this.sunLight);
+
     this.scene.environment = this.envMap.texture;
     this.scene.background = this.envMap.texture;
 
-    if (this.debug.isActive) {
+    if (this.debug?.isActive) {
       this.addDebugFolders();
     }
   }
@@ -65,7 +68,7 @@ class Environment implements Destroyable {
     return initEnvMap;
   };
 
-  private initSunLight = (helper?: boolean) => {
+  private initSunLight = (showHelper?: boolean) => {
     const sunLight = new THREE.DirectionalLight("white", 4);
 
     const mapSize = 2 ** 10;
@@ -76,9 +79,9 @@ class Environment implements Destroyable {
 
     sunLight.position.set(3, 3, -2.25);
 
-    if (helper) {
-      const helper = new THREE.DirectionalLightHelper(sunLight, 5);
-      this.scene.add(helper);
+    if (showHelper) {
+      this.sunLightHelper = new THREE.DirectionalLightHelper(sunLight, 5);
+      this.scene.add(this.sunLightHelper);
     }
 
     return sunLight;
@@ -93,10 +96,12 @@ class Environment implements Destroyable {
       child.material.needsUpdate = true;
     });
   };
+
   private addDebugFolders = () => {
     const registry = new GUIStateRegistry("environment-gui-state", {
       envMapIntensity: this.envMap.intensity,
       sunLightIntensity: this.sunLight.intensity,
+      sunLightHelper: false,
     });
 
     registry
@@ -106,17 +111,31 @@ class Environment implements Destroyable {
       })
       .bind("sunLightIntensity", (v) => {
         this.sunLight.intensity = v;
+      })
+      .bind("sunLightHelper", (v) => {
+        if (!this.sunLightHelper) return;
+
+        this.sunLightHelper.visible = v;
       });
 
     this.guiRegistry = registry;
 
     const folder = this.debug.gui.addFolder("Environment");
     folder
-      .add(registry.state, "envMapIntensity", 0, 4, 0.001)
+      .add(registry.state, "envMapIntensity")
+      .min(0)
+      .max(4)
+      .step(0.001)
       .name("Env Map Intensity");
+
     folder
-      .add(registry.state, "sunLightIntensity", 0, 10, 0.001)
+      .add(registry.state, "sunLightIntensity")
+      .min(0)
+      .max(10)
+      .step(0.001)
       .name("Sun Light Intensity");
+
+    folder.add(registry.state, "sunLightHelper").name("Show Sun Light Helper");
   };
 
   public destroy = () => {
