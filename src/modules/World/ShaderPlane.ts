@@ -16,6 +16,8 @@ type ShaderUniforms = {
 type ShaderPlaneState = {
   wireframe: boolean;
   side: "front" | "back" | "double";
+  uFrequencyValueX: number;
+  uFrequencyValueY: number;
 };
 
 const sideMap = new Map<ShaderPlaneState["side"], THREE.Side>([
@@ -82,16 +84,15 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = () => {
-    const uniforms: ShaderUniforms = {
-      uTime: { value: 0 },
-    };
-
     this.material = new THREE.RawShaderMaterial({
       vertexShader: testVertexShader,
       fragmentShader: testFragmentShader,
-      uniforms,
       transparent: true,
     });
+
+    this.material.uniforms = {
+      uFrequency: { value: new THREE.Vector2(10, 2) },
+    };
   };
 
   protected setMesh = () => {
@@ -104,6 +105,8 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
       {
         wireframe: false,
         side: "front",
+        uFrequencyValueX: 10,
+        uFrequencyValueY: 5,
       },
     );
 
@@ -115,6 +118,12 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
         const threeSide: THREE.Side = sideMap.get(v)!;
 
         this.material.side = threeSide;
+      })
+      .bind("uFrequencyValueX", (v) => {
+        this.material.uniforms.uFrequency.value.x = v;
+      })
+      .bind("uFrequencyValueY", (v) => {
+        this.material.uniforms.uFrequency.value.y = v;
       });
 
     this.guiRegistry = registry;
@@ -128,11 +137,24 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
     shaderPlaneFolder
       .add(state, "side", ["front", "back", "double"])
       .name("Side");
+
+    shaderPlaneFolder
+      .add(state, "uFrequencyValueX")
+      .min(0)
+      .max(20)
+      .step(0.01)
+      .name("Frequency X");
+
+    shaderPlaneFolder
+      .add(state, "uFrequencyValueY")
+      .min(0)
+      .max(20)
+      .step(0.01)
+      .name("Frequency Y");
   };
 
   public update = () => {
     const { uniforms } = this.material;
-    uniforms.uTime.value = this.time.elapsedSeconds;
   };
 
   public destroy = () => {
