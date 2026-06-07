@@ -119,6 +119,8 @@ class ShaderPlane extends TexturedMeshEntity implements Updatable, Destroyable {
 
   protected setMesh = () => {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
+
+    this.mesh.scale.y = 2 / 3;
   };
 
   private addDebugFolders = () => {
