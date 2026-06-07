@@ -69,6 +69,9 @@
     "strict": false,
     "strictNullChecks": true,
     "target": "ESNext",
+    "types": [
+      "vite-plugin-glsl/ext"
+    ],
     "useDefineForClassFields": true
   },
   "include": [
