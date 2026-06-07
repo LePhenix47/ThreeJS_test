@@ -2,10 +2,18 @@ import EventEmitter from "./EventEmitter";
 // * Note: We're not using ThreeJS's clock because it's not as performant + we don't need all its features + we want more control
 
 class Time extends EventEmitter {
-  start: number;
-  current: number;
-  elapsed: number;
-  delta: number; // ? 60fps, avoids
+  public start: number;
+  public current: number;
+  public elapsed: number;
+  public deltaMs: number;
+
+  get deltaSeconds() {
+    return this.deltaMs / 1_000;
+  }
+
+  get fps() {
+    return Math.floor(1_000 / this.deltaMs);
+  }
 
   private animationFrameId: number;
 
@@ -24,7 +32,7 @@ class Time extends EventEmitter {
     this.current = this.start;
 
     this.elapsed = 0;
-    this.delta = Math.floor(1_000 / 60); // ? Avoids potential 1st frame bugs
+    this.deltaMs = Math.floor(1_000 / 60); // ? Avoids potential 1st frame bugs
   };
 
   public tick = () => {
@@ -43,7 +51,7 @@ class Time extends EventEmitter {
     const tickData = {
       current: this.current,
       elapsed: this.elapsed,
-      delta: this.delta,
+      deltaMs: this.deltaMs,
     } as const;
 
     this.emit("tick", tickData);
@@ -53,7 +61,7 @@ class Time extends EventEmitter {
     const currentTick: number = performance.now();
     const previousTick: number = this.current;
 
-    this.delta = currentTick - previousTick;
+    this.deltaMs = currentTick - previousTick;
 
     this.elapsed = currentTick - this.start;
 
