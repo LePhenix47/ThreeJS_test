@@ -5,8 +5,8 @@ import Experience, {
 import { MeshEntity } from "./types/entity";
 import * as THREE from "three";
 
-import vertexShader from "@shaders/test/vertex.glsl";
-import fragmentShader from "@shaders/test/fragment.glsl";
+import testVertexShader from "@shaders/test/vertex.glsl";
+import testFragmentShader from "@shaders/test/fragment.glsl";
 
 type ShaderUniforms = {
   uTime: THREE.IUniform<number>;
@@ -50,8 +50,8 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
     };
 
     this.material = new THREE.RawShaderMaterial({
-      vertexShader,
-      fragmentShader,
+      vertexShader: testVertexShader,
+      fragmentShader: testFragmentShader,
       uniforms,
     });
   };
