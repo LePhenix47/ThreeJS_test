@@ -3,6 +3,7 @@ uniform mat4 modelViewMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform vec2 uFrequency;
+uniform float uTime;
 
 attribute float aRandom;
 
@@ -14,8 +15,8 @@ void main() {
     // Option A — Three.js built-in (modelViewMatrix = viewMatrix * modelMatrix)
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
-    modelPosition.z += sin(modelPosition.x * uFrequency.x) * 0.1;
-    modelPosition.z += sin(modelPosition.y * uFrequency.y) * 0.1;
+    modelPosition.z += sin(modelPosition.x * uFrequency.x + uTime) * 0.1;
+    modelPosition.z += sin(modelPosition.y * uFrequency.y + uTime) * 0.1;
 
     vec4 viewPosition = viewMatrix * modelPosition;
     vec4 projectedPosition = projectionMatrix * viewPosition;

@@ -9,10 +9,6 @@ import testVertexShader from "@shaders/test/vertex.glsl";
 import testFragmentShader from "@shaders/test/fragment.glsl";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
-type ShaderUniforms = {
-  uTime: THREE.IUniform<number>;
-};
-
 type ShaderPlaneState = {
   wireframe: boolean;
   side: "front" | "back" | "double";
@@ -88,11 +84,16 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
       vertexShader: testVertexShader,
       fragmentShader: testFragmentShader,
       transparent: true,
+      uniforms: {
+        uFrequency: { value: new THREE.Vector2(10, 2) },
+        uTime: {
+          value: 0,
+        },
+        uColor: {
+          value: new THREE.Color("orange"),
+        },
+      },
     });
-
-    this.material.uniforms = {
-      uFrequency: { value: new THREE.Vector2(10, 2) },
-    };
   };
 
   protected setMesh = () => {
@@ -155,6 +156,8 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
 
   public update = () => {
     const { uniforms } = this.material;
+
+    uniforms.uTime.value = this.time.elapsedSeconds;
   };
 
   public destroy = () => {
