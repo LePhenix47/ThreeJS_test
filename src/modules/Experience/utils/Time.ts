@@ -2,13 +2,25 @@ import EventEmitter from "./EventEmitter";
 // * Note: We're not using ThreeJS's clock because it's not as performant + we don't need all its features + we want more control
 
 class Time extends EventEmitter {
-  public start: number;
-  public current: number;
-  public elapsed: number;
+  public startMs: number;
+  public currentMs: number;
+  public elapsedMs: number;
   public deltaMs: number;
 
   get deltaSeconds() {
     return this.deltaMs / 1_000;
+  }
+
+  get elapsedSeconds() {
+    return this.elapsedMs / 1_000;
+  }
+
+  get currentSeconds() {
+    return this.currentMs / 1_000;
+  }
+
+  get startSeconds() {
+    return this.startMs / 1_000;
   }
 
   get fps() {
@@ -28,10 +40,10 @@ class Time extends EventEmitter {
   }
 
   private init = () => {
-    this.start = performance.now();
-    this.current = this.start;
+    this.startMs = performance.now();
+    this.currentMs = this.startMs;
 
-    this.elapsed = 0;
+    this.elapsedMs = 0;
     this.deltaMs = Math.floor(1_000 / 60); // ? Avoids potential 1st frame bugs
   };
 
@@ -39,18 +51,20 @@ class Time extends EventEmitter {
     try {
       this.updateTime();
       this.emitTickEvent();
+
       this.animationFrameId = requestAnimationFrame(() => this.tick());
     } catch (error) {
       console.error(error);
       console.error("Error in tick(), stopping animation loop");
+
       this.cancelAnimationLoop();
     }
   };
 
   private emitTickEvent = () => {
     const tickData = {
-      current: this.current,
-      elapsed: this.elapsed,
+      currentMs: this.currentMs,
+      elapsedMs: this.elapsedMs,
       deltaMs: this.deltaMs,
     } as const;
 
@@ -58,14 +72,14 @@ class Time extends EventEmitter {
   };
 
   private updateTime = () => {
-    const currentTick: number = performance.now();
-    const previousTick: number = this.current;
+    const currentMsTick: number = performance.now();
+    const previousTick: number = this.currentMs;
 
-    this.deltaMs = currentTick - previousTick;
+    this.deltaMs = currentMsTick - previousTick;
 
-    this.elapsed = currentTick - this.start;
+    this.elapsedMs = currentMsTick - this.startMs;
 
-    this.current = currentTick;
+    this.currentMs = currentMsTick;
   };
 
   public cancelAnimationLoop = () =>
