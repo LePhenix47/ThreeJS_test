@@ -38,6 +38,9 @@
       "@modules/*": [
         "./src/modules/*"
       ],
+      "@shaders/*": [
+        "./src/shaders/*"
+      ],
       "@pages/*": [
         "./src/pages/*"
       ],
