@@ -1,17 +1,17 @@
-type EventCallback<T = unknown[]> = (
-  ...args: T extends unknown[] ? T : never
-) => void;
+type EventMap = Record<string, unknown[]>;
+
+type EventCallback<T extends unknown[]> = (...args: T) => void;
 
 type EventOptions = Partial<{
   once: boolean;
 }>;
 
-type Listener<T = unknown[]> = {
+type Listener<T extends unknown[] = unknown[]> = {
   callback: EventCallback<T>;
   once: boolean;
 };
 
-abstract class EventEmitter {
+abstract class EventEmitter<TEvents extends EventMap> {
   private readonly events: Map<string, Listener[]>;
   private readonly DEBUG_MODE = false; // Set to true for logging
 
@@ -31,24 +31,22 @@ abstract class EventEmitter {
 
   /**
    * Registers an event listener
-   * @param event - Event name
-   * @param callback - Function to execute when event is emitted
+   * @param event - Event name (autocompleted from TEvents)
+   * @param callback - Typed callback matching the event's arg tuple
    * @param options - Configuration options (e.g., once: true for single execution)
    * @returns This EventEmitter instance for chaining
    */
-  public on = <T = unknown[]>(
-    event: string,
-    callback: EventCallback<T>,
+  public on = <K extends keyof TEvents & string>(
+    event: K,
+    callback: EventCallback<TEvents[K]>,
     options: EventOptions = {},
   ): this => {
-    // * Create an empty array if the event doesn't exist
     if (!this.events.has(event)) {
       this.events.set(event, []);
     }
 
-    // * Add the listener
     this.events.get(event)!.push({
-      callback: callback as EventCallback,
+      callback: callback as EventCallback<unknown[]>,
       once: options.once || false,
     });
 
@@ -60,22 +58,20 @@ abstract class EventEmitter {
   /**
    * Registers a one-time event listener (automatically removed after first execution)
    */
-  public once = <T = unknown[]>(
-    event: string,
-    callback: EventCallback<T>,
+  public once = <K extends keyof TEvents & string>(
+    event: K,
+    callback: EventCallback<TEvents[K]>,
   ): this => {
     return this.on(event, callback, { once: true });
   };
 
   /**
-   * Emits an event with optional arguments
-   * @param event - Event name
-   * @param args - Arguments to pass to the callbacks
+   * Emits an event, spreading all args to every listener.
    * @returns True if the event had listeners, false otherwise
    */
-  protected emit = <T = unknown[]>(
-    event: string,
-    ...args: T extends unknown[] ? T : never
+  protected emit = <K extends keyof TEvents & string>(
+    event: K,
+    ...args: TEvents[K]
   ): boolean => {
     const listeners = this.events.get(event);
 
@@ -86,7 +82,6 @@ abstract class EventEmitter {
       return false;
     }
 
-    // * Create a copy to avoid mutation issues if callbacks modify the listeners array
     const listenersToExecute = [...listeners];
     const onceListeners: Listener[] = [];
 
@@ -105,7 +100,6 @@ abstract class EventEmitter {
       }
     }
 
-    // Remove once listeners after execution
     if (onceListeners.length > 0) {
       const remainingListeners = listeners.filter(
         (listener) => !onceListeners.includes(listener),
@@ -129,9 +123,9 @@ abstract class EventEmitter {
    * Removes a specific event listener
    * @returns True if the listener was removed, false if not found
    */
-  public off = <T = unknown[]>(
-    event: string,
-    callback: EventCallback<T>,
+  public off = <K extends keyof TEvents & string>(
+    event: K,
+    callback: EventCallback<TEvents[K]>,
   ): boolean => {
     const listeners = this.events.get(event);
 
@@ -149,7 +143,7 @@ abstract class EventEmitter {
     } else if (filteredListeners.length < initialLength) {
       this.events.set(event, filteredListeners);
     } else {
-      return false; // Callback not found
+      return false;
     }
 
     this.log(`[EventEmitter] Removed listener for "${event}"`);
@@ -161,14 +155,12 @@ abstract class EventEmitter {
    * Removes all listeners for a specific event or all events
    * @param event - Optional event name. If not provided, removes all listeners
    */
-  public removeAllListeners = (event?: string): this => {
+  public removeAllListeners = (event?: keyof TEvents & string): this => {
     if (event) {
       this.events.delete(event);
-
       this.log(`[EventEmitter] Removed all listeners for "${event}"`);
     } else {
       this.events.clear();
-
       this.log(`[EventEmitter] Removed all listeners`);
     }
     return this;
@@ -177,15 +169,15 @@ abstract class EventEmitter {
   /**
    * Gets the number of listeners for a specific event
    */
-  public listenerCount = (event: string): number => {
+  public listenerCount = (event: keyof TEvents & string): number => {
     return this.events.get(event)?.length || 0;
   };
 
   /**
    * Gets all registered event names
    */
-  public get eventNames(): string[] {
-    return Array.from(this.events.keys());
+  public get eventNames(): (keyof TEvents & string)[] {
+    return Array.from(this.events.keys()) as (keyof TEvents & string)[];
   }
 }
 
