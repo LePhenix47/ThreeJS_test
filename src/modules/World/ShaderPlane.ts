@@ -62,7 +62,23 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setGeometry = () => {
-    this.geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
+    const geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
+
+    const attributePosCount = geometry.attributes.position.count;
+
+    const randomFloats = new Float32Array(geometry.attributes.position.count);
+
+    for (let i = 0; i < attributePosCount; i++) {
+      randomFloats[i] = Math.random();
+    }
+
+    geometry.setAttribute(
+      "aRandom",
+      new THREE.BufferAttribute(randomFloats, 1),
+    );
+    console.log(geometry.attributes);
+
+    this.geometry = geometry;
   };
 
   protected setMaterial = () => {
