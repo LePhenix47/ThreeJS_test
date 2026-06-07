@@ -9,9 +9,9 @@ import Fox from "./Fox";
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
-  public environment: Environment;
-  public floor: Floor;
-  public fox: Fox;
+  public environment?: Environment;
+  public floor?: Floor;
+  public fox?: Fox;
 
   private get resources() {
     return this.experience!.resources;
