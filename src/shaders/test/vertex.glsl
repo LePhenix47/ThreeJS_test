@@ -1,13 +1,7 @@
-uniform mat4 projectionMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 modelMatrix;
-uniform mat4 viewMatrix;
 uniform vec2 uFrequency;
 uniform float uTime;
 
 attribute float aRandom;
-attribute vec3 position;
-attribute vec2 uv;
 
 // * Varying from THREE
 varying float vRandom;
@@ -31,7 +25,7 @@ void main() {
 
     gl_Position = projectedPosition;
 
-// ? Varying value instantiation
+// ? Varying value declaration
     vRandom = aRandom;
     vUv = uv;
     vElevation = elevation;

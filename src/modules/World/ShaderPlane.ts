@@ -98,7 +98,7 @@ class ShaderPlane extends TexturedMeshEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = () => {
-    this.material = new THREE.RawShaderMaterial({
+    this.material = new THREE.ShaderMaterial({
       vertexShader: testVertexShader,
       fragmentShader: testFragmentShader,
       transparent: true,
