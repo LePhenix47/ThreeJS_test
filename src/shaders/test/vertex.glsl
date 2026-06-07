@@ -6,15 +6,16 @@ uniform vec2 uFrequency;
 uniform float uTime;
 
 attribute float aRandom;
+attribute vec3 position;
+attribute vec2 uv;
 
 varying float vRandom;
-
-attribute vec3 position;
+varying vec2 vUv;
 
 void main() {
-    // Option A — Three.js built-in (modelViewMatrix = viewMatrix * modelMatrix)
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
+    // * Creates wave effect for the flag
     modelPosition.z += sin(modelPosition.x * uFrequency.x + uTime) * 0.1;
     modelPosition.z += sin(modelPosition.y * uFrequency.y + uTime) * 0.1;
 
@@ -25,6 +26,5 @@ void main() {
 
     vRandom = aRandom;
 
-    // Option B — explicit split (same result, modelViewMatrix NOT used)
-    // gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+    vUv = uv;
 }

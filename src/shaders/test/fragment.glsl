@@ -1,9 +1,13 @@
 precision mediump float; // ? Medium precision float (~10-bit mantissa, minimum range ±2^14)
 
 uniform vec3 uColor;
+uniform sampler2D uTexture; // * We need sampler2D type for imported THREE.js textures
 
 varying float vRandom;
+varying vec2 vUv;
 
 void main() {
-    gl_FragColor = vec4(uColor, 1.0);
+    vec4 textureColor = texture2D(uTexture, vUv);
+
+    gl_FragColor = textureColor;
 }

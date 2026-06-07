@@ -110,6 +110,9 @@ class ShaderPlane extends TexturedMeshEntity implements Updatable, Destroyable {
         uColor: {
           value: new THREE.Color("orange"),
         },
+        uTexture: {
+          value: this.textures.color,
+        },
       },
     });
   };
