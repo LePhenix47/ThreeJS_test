@@ -1,6 +1,10 @@
 import EventEmitter from "./EventEmitter";
 
-class Sizes extends EventEmitter {
+type SizesEvents = {
+  resize: [{ width: number; height: number }];
+};
+
+class Sizes extends EventEmitter<SizesEvents> {
   width: number = 0;
   height: number = 0;
   pixelRatio: number = 1;

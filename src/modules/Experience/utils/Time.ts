@@ -1,7 +1,17 @@
 import EventEmitter from "./EventEmitter";
 // * Note: We're not using ThreeJS's clock because it's not as performant + we don't need all its features + we want more control
 
-class Time extends EventEmitter {
+type TickData = {
+  currentMs: number;
+  elapsedMs: number;
+  deltaMs: number;
+};
+
+type TimeEvents = {
+  tick: [TickData];
+};
+
+class Time extends EventEmitter<TimeEvents> {
   public startMs: number;
   public currentMs: number;
   public elapsedMs: number;

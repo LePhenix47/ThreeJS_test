@@ -33,7 +33,11 @@ export const texturePropertyObject = {
   emissive: "emissiveMap",
 } as const satisfies Partial<Record<TextureName, MaterialMapName>>;
 
-class Resources extends EventEmitter {
+type ResourcesEvents = {
+  "textures-loaded": [];
+};
+
+class Resources extends EventEmitter<ResourcesEvents> {
   public sources: Source[];
   public items: {
     [key: string]: THREE.Texture | THREE.CubeTexture | GLTF | THREE.DataTexture;
