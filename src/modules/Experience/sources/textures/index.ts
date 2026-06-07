@@ -1,6 +1,7 @@
+import flag from "./flag";
+
 // prettier-ignore
-const textures = [
-] as const;
+const textures = [flag] as const;
 
 type RawTextures = typeof textures;
 

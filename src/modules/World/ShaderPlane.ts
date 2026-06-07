@@ -2,7 +2,7 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import { MeshEntity } from "./types/entity";
+import { EntityTexture, MeshEntity, TexturedMeshEntity } from "./types/entity";
 import * as THREE from "three";
 
 import testVertexShader from "@shaders/test/vertex.glsl";
@@ -23,11 +23,12 @@ enum sideMap {
   "double",
 }
 
-class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
+class ShaderPlane extends TexturedMeshEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   protected geometry: THREE.PlaneGeometry;
   protected material: THREE.ShaderMaterial;
   protected mesh: THREE.Mesh;
+  protected textures: Pick<EntityTexture, "color">;
   private guiRegistry: GUIStateRegistry<ShaderPlaneState> | null = null;
 
   private get scene() {
@@ -42,10 +43,16 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
     return this.experience!.debug;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
+
+    this.setTextures();
 
     this.setGeometry();
     this.setMaterial();
@@ -59,6 +66,16 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
 
     console.log("ShaderPlane");
   }
+
+  protected setTextures = (): void => {
+    const flagColorTexture = this.resources.getTexture("flag", "color");
+
+    const textures = {
+      color: flagColorTexture,
+    } as const;
+
+    this.textures = textures;
+  };
 
   protected setGeometry = () => {
     const geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
