@@ -18,6 +18,12 @@ type ShaderPlaneState = {
   side: "front" | "back" | "double";
 };
 
+const sideMap = new Map<ShaderPlaneState["side"], THREE.Side>([
+  ["front", THREE.FrontSide],
+  ["back", THREE.BackSide],
+  ["double", THREE.DoubleSide],
+]);
+
 class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   protected geometry: THREE.PlaneGeometry;
@@ -68,8 +74,6 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
       vertexShader: testVertexShader,
       fragmentShader: testFragmentShader,
       uniforms,
-      wireframe: true,
-      side: THREE.DoubleSide,
     });
   };
 
@@ -86,16 +90,27 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
       },
     );
 
-    registry.bind("wireframe", (v) => {
-      this.material.wireframe = v;
-    });
+    registry
+      .bind("wireframe", (v) => {
+        this.material.wireframe = v;
+      })
+      .bind("side", (v) => {
+        const threeSide: THREE.Side = sideMap.get(v)!;
+
+        this.material.side = threeSide;
+      });
+
     this.guiRegistry = registry;
 
     const { state } = registry;
     const { gui } = this.debug;
 
     const shaderPlaneFolder = gui.addFolder("ShaderPlane Helpers");
-    shaderPlaneFolder.add(state, "wireframe");
+    shaderPlaneFolder.add(state, "wireframe").name("Wireframe");
+
+    shaderPlaneFolder
+      .add(state, "side", ["front", "back", "double"])
+      .name("Side");
   };
 
   public update = () => {
@@ -107,6 +122,8 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
     this.scene.remove(this.mesh);
     this.geometry.dispose();
     this.material.dispose();
+
+    this.guiRegistry?.dispose();
   };
 }
 
