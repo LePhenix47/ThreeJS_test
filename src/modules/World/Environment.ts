@@ -4,16 +4,12 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 type EnvironmentState = {
   axisHelper: boolean;
-  lightHelper: boolean;
-  gridHelper: boolean;
 };
 
 class Environment implements Destroyable {
   private readonly experience: Experience | null;
   private sunLight: THREE.DirectionalLight;
   private axisHelper: THREE.AxesHelper;
-  private lightHelper: THREE.DirectionalLightHelper;
-  private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
   private get scene() {
@@ -66,10 +62,7 @@ class Environment implements Destroyable {
 
   private setHelpers = () => {
     this.axisHelper = new THREE.AxesHelper(3);
-    this.lightHelper = new THREE.DirectionalLightHelper(this.sunLight);
-    this.gridHelper = new THREE.GridHelper(10, 10);
-
-    this.scene.add(this.axisHelper, this.lightHelper, this.gridHelper);
+    this.scene.add(this.axisHelper);
   };
 
   private addDebugFolders = () => {
@@ -77,21 +70,12 @@ class Environment implements Destroyable {
       "environment-gui-state",
       {
         axisHelper: true,
-        lightHelper: true,
-        gridHelper: true,
       },
     );
 
-    registry
-      .bind("axisHelper", (v) => {
-        this.axisHelper.visible = v;
-      })
-      .bind("lightHelper", (v) => {
-        this.lightHelper.visible = v;
-      })
-      .bind("gridHelper", (v) => {
-        this.gridHelper.visible = v;
-      });
+    registry.bind("axisHelper", (v) => {
+      this.axisHelper.visible = v;
+    });
 
     this.guiRegistry = registry;
 
@@ -100,8 +84,6 @@ class Environment implements Destroyable {
 
     const helpersFolder = gui.addFolder("Helpers");
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
-    helpersFolder.add(state, "lightHelper").name("Light Helper");
-    helpersFolder.add(state, "gridHelper").name("Grid Helper");
     helpersFolder
       .add(
         {
@@ -109,8 +91,6 @@ class Environment implements Destroyable {
             const { controls } = this.camera;
             controls.target.set(0, 0, 0);
             controls.update();
-
-            console.log("click");
           },
         },
         "resetPivot",
@@ -119,16 +99,9 @@ class Environment implements Destroyable {
   };
 
   public destroy = () => {
-    this.scene.remove(
-      this.sunLight,
-      this.axisHelper,
-      this.lightHelper,
-      this.gridHelper,
-    );
+    this.scene.remove(this.sunLight, this.axisHelper);
     this.sunLight.dispose();
     this.axisHelper.dispose();
-    this.lightHelper.dispose();
-    this.gridHelper.dispose();
     this.guiRegistry?.dispose();
   };
 }
