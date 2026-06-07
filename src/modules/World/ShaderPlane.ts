@@ -100,7 +100,7 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
 
   public update = () => {
     const { uniforms } = this.material;
-    uniforms.uTime.value = this.time.elapsed / 1_000;
+    uniforms.uTime.value = this.time.elapsedSeconds;
   };
 
   public destroy = () => {
