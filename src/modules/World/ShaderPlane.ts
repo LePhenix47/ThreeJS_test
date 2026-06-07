@@ -74,6 +74,7 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
       vertexShader: testVertexShader,
       fragmentShader: testFragmentShader,
       uniforms,
+      transparent: true,
     });
   };
 
