@@ -116,7 +116,7 @@ class Fox extends GltfEntity implements Updatable, Destroyable {
   };
 
   public update = () => {
-    const deltaSeconds = this.time.delta / 1_000;
+    const deltaSeconds = this.time.deltaSeconds;
     this.animation.mixer.update(deltaSeconds);
   };
 
