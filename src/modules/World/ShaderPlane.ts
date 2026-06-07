@@ -17,11 +17,11 @@ type ShaderPlaneState = {
   uColor: string;
 };
 
-const sideMap = new Map<ShaderPlaneState["side"], THREE.Side>([
-  ["front", THREE.FrontSide],
-  ["back", THREE.BackSide],
-  ["double", THREE.DoubleSide],
-]);
+enum sideMap {
+  "front",
+  "back",
+  "double",
+}
 
 class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
@@ -118,7 +118,7 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
         this.material.wireframe = v;
       })
       .bind("side", (v) => {
-        const threeSide: THREE.Side = sideMap.get(v)!;
+        const threeSide: THREE.Side = sideMap[v];
 
         this.material.side = threeSide;
       })
