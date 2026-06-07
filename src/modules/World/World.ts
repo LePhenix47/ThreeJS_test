@@ -8,8 +8,8 @@ import * as THREE from "three";
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
-  public environment: Environment;
-  public floor: Floor;
+  public environment?: Environment;
+  public floor?: Floor;
 
   constructor() {
     this.experience = Experience.instance;
@@ -24,8 +24,8 @@ class World implements Updatable, Destroyable {
   public update = () => {};
 
   public destroy = () => {
-    this.floor.destroy();
-    this.environment.destroy();
+    this.floor?.destroy();
+    this.environment?.destroy();
   };
 }
 
