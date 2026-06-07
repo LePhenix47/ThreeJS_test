@@ -14,6 +14,7 @@ type ShaderPlaneState = {
   side: "front" | "back" | "double";
   uFrequencyValueX: number;
   uFrequencyValueY: number;
+  uColor: string;
 };
 
 const sideMap = new Map<ShaderPlaneState["side"], THREE.Side>([
@@ -108,6 +109,7 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
         side: "front",
         uFrequencyValueX: 10,
         uFrequencyValueY: 5,
+        uColor: "#ff6000",
       },
     );
 
@@ -125,6 +127,9 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
       })
       .bind("uFrequencyValueY", (v) => {
         this.material.uniforms.uFrequency.value.y = v;
+      })
+      .bind("uColor", (v) => {
+        this.material.uniforms.uColor.value = new THREE.Color(v);
       });
 
     this.guiRegistry = registry;
@@ -152,6 +157,8 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
       .max(20)
       .step(0.01)
       .name("Frequency Y");
+
+    shaderPlaneFolder.addColor(state, "uColor").name("Color");
   };
 
   public update = () => {
