@@ -18,6 +18,7 @@ import {
   LdrTextureNames,
   CubeTextureNames,
   HdrTextureNames,
+  GetPathsFromName,
 } from "@modules/Experience/sources/textures";
 
 import { ModelNames } from "@modules/Experience/sources/models";
@@ -207,11 +208,11 @@ class Resources extends EventEmitter<ResourcesEvents> {
   };
 
   /** Returns a loaded `THREE.Texture` by name. Pass `mapKey` for multi-map sources (e.g. `"dirtTexture", "color"`). Throws if not found or wrong type. */
-  public getTexture = (
-    name: RegularTextureNames | LdrTextureNames,
-    mapKey?: TextureName,
+  public getTexture = <TName extends RegularTextureNames | LdrTextureNames>(
+    name: TName,
+    mapKey?: GetPathsFromName<TName>,
   ): THREE.Texture => {
-    const itemKey = mapKey ? `${name}_${mapKey}` : name;
+    const itemKey = mapKey ? `${name}_${String(mapKey)}` : name;
     const item = this.items[itemKey];
 
     const isTexture = this.typeFilters.texture(item);
