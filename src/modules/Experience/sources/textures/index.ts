@@ -1,31 +1,23 @@
+import { TextureSourceType } from "../../utils/Resources/types";
 import flag from "./flag";
 
 // prettier-ignore
-const textures = [flag] as const;
+const textures = [
+  flag
+] as const;
 
 type RawTextures = typeof textures;
-
 type TextureUnion = RawTextures[number];
 
-export type RegularTextureNames = Extract<
+type TextureNamesByType<T extends TextureSourceType> = Extract<
   TextureUnion,
-  { type: "texture" }
+  { type: T }
 >["name"];
 
-export type LdrTextureNames = Extract<
-  TextureUnion,
-  { type: "ldrEnvTexture" }
->["name"];
-
-export type CubeTextureNames = Extract<
-  TextureUnion,
-  { type: "cubeEnvTexture" }
->["name"];
-
-export type HdrTextureNames = Extract<
-  TextureUnion,
-  { type: "hdrEnvTexture" }
->["name"];
+export type RegularTextureNames = TextureNamesByType<"texture">;
+export type LdrTextureNames = TextureNamesByType<"ldrEnvTexture">; // never (no such texture)
+export type CubeTextureNames = TextureNamesByType<"cubeEnvTexture">; // never
+export type HdrTextureNames = TextureNamesByType<"hdrEnvTexture">; // never
 
 type TextureByName = {
   [T in TextureUnion as T["name"]]: T;
