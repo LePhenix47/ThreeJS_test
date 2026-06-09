@@ -70,7 +70,15 @@ export const SourceArraySchema = z.array(SourceSchema);
 export type CubeFaces = z.infer<typeof CubeFacesSchema>;
 export type TexturePaths = z.infer<typeof TexturePathsSchema>;
 export type TextureName = keyof TexturePaths;
+// After defining SourceSchema and inferring Source:
 export type Source = z.infer<typeof SourceSchema>;
+export type SourceType = Source["type"]; // "texture" | "ldrEnvTexture" | "cubeEnvTexture" | "gltf" | "hdrEnvTexture"
+
+// Texture‑only types (exclude "gltf")
+export type TextureSourceType = Exclude<SourceType, "gltf">; // "texture" | "ldrEnvTexture" | "cubeEnvTexture" | "hdrEnvTexture"
+
+// Texture‑only types (exclude "gltf")
+export type GltfSourceType = Extract<SourceType, "gltf">; // "texture" | "ldrEnvTexture" | "cubeEnvTexture" | "hdrEnvTexture"
 
 // * Derived from THREE — can't be Zod-inferred
 export type MaterialMapName = {
