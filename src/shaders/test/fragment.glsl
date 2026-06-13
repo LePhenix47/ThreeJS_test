@@ -8,7 +8,7 @@ void main() {
        mod() tiles 0->1 per band in both cases
         Naive: if/ternary for threshold: if(strength > 0.5) ... else  — causes GPU branching, all threads evaluate both branches
        Fix: step() same result, no branching */
-    float strength = mod(vUv.y * 10.0, 1.0);
+    float strength = mod(vUv.x * 10.0, 1.0);
 
     strength = step(0.8, strength);
 
