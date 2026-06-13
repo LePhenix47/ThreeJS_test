@@ -10,7 +10,7 @@ void main() {
        Fix: step() same result, no branching */
     float strength = mod(vUv.y * 10.0, 1.0);
 
-    strength = step(0.5, strength);
+    strength = step(0.8, strength);
 
     gl_FragColor = vec4(strength, strength, strength, 1.0);
 }
