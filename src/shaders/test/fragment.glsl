@@ -10,7 +10,7 @@ void main() {
     float strengthY = mod(vUv.y * 10.0, 1.0);
     strengthY = step(0.8, strengthY);
 
-    float strength = strengthX + strengthY;
+    float strength = strengthX * strengthY;
 
     gl_FragColor = vec4(strength, strength, strength, 1.0);
 }
