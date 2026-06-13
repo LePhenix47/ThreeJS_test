@@ -4,13 +4,13 @@ varying vec3 vPos;
 varying vec2 vUv;
 
 void main() {
-    /* Pattern: 10 hard-edged horizontal stripes alternating black/white
-       mod() tiles 0->1 per band in both cases
-        Naive: if/ternary for threshold: if(strength > 0.5) ... else  — causes GPU branching, all threads evaluate both branches
-       Fix: step() same result, no branching */
-    float strength = mod(vUv.x * 10.0, 1.0);
+    float strengthX = mod(vUv.x * 10.0, 1.0);
+    strengthX = step(0.8, strengthX);
 
-    strength = step(0.8, strength);
+    float strengthY = mod(vUv.y * 10.0, 1.0);
+    strengthY = step(0.8, strengthY);
+
+    float strength = strengthX + strengthY;
 
     gl_FragColor = vec4(strength, strength, strength, 1.0);
 }
