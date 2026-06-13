@@ -11,24 +11,13 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 type ShaderPlaneState = {
   wireframe: boolean;
-  side: "front" | "back" | "double";
-  uFrequencyValueX: number;
-  uFrequencyValueY: number;
-  uColor: string;
 };
 
-enum sideMap {
-  "front",
-  "back",
-  "double",
-}
-
-class ShaderPlane extends TexturedMeshEntity implements Updatable, Destroyable {
+class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   protected geometry: THREE.PlaneGeometry;
   protected material: THREE.ShaderMaterial;
   protected mesh: THREE.Mesh;
-  protected textures: Pick<EntityTexture, "color">;
   private guiRegistry: GUIStateRegistry<ShaderPlaneState> | null = null;
 
   private get scene() {
@@ -52,8 +41,6 @@ class ShaderPlane extends TexturedMeshEntity implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.setTextures();
-
     this.setGeometry();
     this.setMaterial();
     this.setMesh();
@@ -67,32 +54,8 @@ class ShaderPlane extends TexturedMeshEntity implements Updatable, Destroyable {
     console.log("ShaderPlane");
   }
 
-  protected setTextures = (): void => {
-    const flagColorTexture = this.resources.getTexture("flag", "color");
-
-    const textures = {
-      color: flagColorTexture,
-    } as const;
-
-    this.textures = textures;
-  };
-
   protected setGeometry = () => {
     const geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
-
-    const attributePosCount = geometry.attributes.position.count;
-
-    const randomFloats = new Float32Array(geometry.attributes.position.count);
-
-    for (let i = 0; i < attributePosCount; i++) {
-      randomFloats[i] = Math.random();
-    }
-
-    geometry.setAttribute(
-      "aRandom",
-      new THREE.BufferAttribute(randomFloats, 1),
-    );
-    console.log(geometry.attributes);
 
     this.geometry = geometry;
   };
@@ -102,25 +65,12 @@ class ShaderPlane extends TexturedMeshEntity implements Updatable, Destroyable {
       vertexShader: testVertexShader,
       fragmentShader: testFragmentShader,
       transparent: true,
-      uniforms: {
-        uFrequency: { value: new THREE.Vector2(10, 2) },
-        uTime: {
-          value: 0,
-        },
-        uColor: {
-          value: new THREE.Color("orange"),
-        },
-        uTexture: {
-          value: this.textures.color,
-        },
-      },
+      uniforms: {},
     });
   };
 
   protected setMesh = () => {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
-
-    this.mesh.scale.y = 2 / 3;
   };
 
   private addDebugFolders = () => {
@@ -128,66 +78,19 @@ class ShaderPlane extends TexturedMeshEntity implements Updatable, Destroyable {
       "shader-plane-gui-state",
       {
         wireframe: false,
-        side: "front",
-        uFrequencyValueX: 10,
-        uFrequencyValueY: 5,
-        uColor: "#ff6000",
       },
     );
 
-    registry
-      .bind("wireframe", (v) => {
-        this.material.wireframe = v;
-      })
-      .bind("side", (v) => {
-        const threeSide: THREE.Side = sideMap[v];
+    registry.bind("wireframe", (v) => {
+      this.material.wireframe = v;
+    });
 
-        this.material.side = threeSide;
-      })
-      .bind("uFrequencyValueX", (v) => {
-        this.material.uniforms.uFrequency.value.x = v;
-      })
-      .bind("uFrequencyValueY", (v) => {
-        this.material.uniforms.uFrequency.value.y = v;
-      })
-      .bind("uColor", (v) => {
-        this.material.uniforms.uColor.value = new THREE.Color(v);
-      });
+    const shaderFolder = this.debug.gui.addFolder("Shader plane");
 
-    this.guiRegistry = registry;
-
-    const { state } = registry;
-    const { gui } = this.debug;
-
-    const shaderPlaneFolder = gui.addFolder("ShaderPlane Helpers");
-    shaderPlaneFolder.add(state, "wireframe").name("Wireframe");
-
-    shaderPlaneFolder
-      .add(state, "side", ["front", "back", "double"])
-      .name("Side");
-
-    shaderPlaneFolder
-      .add(state, "uFrequencyValueX")
-      .min(0)
-      .max(20)
-      .step(0.01)
-      .name("Frequency X");
-
-    shaderPlaneFolder
-      .add(state, "uFrequencyValueY")
-      .min(0)
-      .max(20)
-      .step(0.01)
-      .name("Frequency Y");
-
-    shaderPlaneFolder.addColor(state, "uColor").name("Color");
+    shaderFolder.add(registry.state, "wireframe");
   };
 
-  public update = () => {
-    const { uniforms } = this.material;
-
-    uniforms.uTime.value = this.time.elapsedSeconds;
-  };
+  public update = () => {};
 
   public destroy = () => {
     this.scene.remove(this.mesh);

@@ -1,9 +1,7 @@
 import { TextureSourceType } from "../../utils/Resources/types";
-import flag from "./flag";
 
 // prettier-ignore
 const textures = [
-  flag
 ] as const;
 
 type RawTextures = typeof textures;
