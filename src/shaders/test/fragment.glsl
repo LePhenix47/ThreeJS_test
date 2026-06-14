@@ -7,81 +7,21 @@ varying vec2 vUv;
 
 #define PI 3.1415926535897932384626433832795
 
-vec2 rotationMatrix(vec2 coords, float angleDeg, vec2 origin) {
-    float angleRad = radians(angleDeg);
-
-    float cosAngle = cos(angleRad);
-    float sinAngle = sin(angleRad);
-
-    float dx = (coords.x - origin.x);
-    float dy = (coords.y - origin.y);
-
-    float rotationX = dx * cosAngle - dy * sinAngle + origin.x;
-    float rotationY = dy * cosAngle + dx * sinAngle + origin.y;
-
-    return vec2(rotationX, rotationY);
-}
-
-// Source - https://stackoverflow.com/a/4275343
-// Posted by appas, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-06-14, License - CC BY-SA 4.0
-
-float random(vec2 co) {
-    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
-// Classic 2D Perlin noise — Stefan Gustavson (stefan.gustavson@liu.se)
-// https://github.com/stegu/webgl-noise — MIT License
-
-vec4 permute(vec4 x) {
-    return mod(((x * 34.0) + 1.0) * x, 289.0);
-}
-
-vec2 fade(vec2 t) {
-    return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
-}
-
-float cnoise(vec2 P) {
-    vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
-    vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
-    Pi = mod(Pi, 289.0);
-    vec4 ix = Pi.xzxz;
-    vec4 iy = Pi.yyww;
-    vec4 fx = Pf.xzxz;
-    vec4 fy = Pf.yyww;
-    vec4 i = permute(permute(ix) + iy);
-    vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0;
-    vec4 gy = abs(gx) - 0.5;
-    vec4 tx = floor(gx + 0.5);
-    gx = gx - tx;
-    vec2 g00 = vec2(gx.x, gy.x);
-    vec2 g10 = vec2(gx.y, gy.y);
-    vec2 g01 = vec2(gx.z, gy.z);
-    vec2 g11 = vec2(gx.w, gy.w);
-    vec4 norm = 1.79284291400159 - 0.85373472095314 *
-        vec4(dot(g00, g00), dot(g10, g10), dot(g01, g01), dot(g11, g11));
-    g00 *= norm.x;
-    g10 *= norm.y;
-    g01 *= norm.z;
-    g11 *= norm.w;
-    float n00 = dot(g00, vec2(fx.x, fy.x));
-    float n10 = dot(g10, vec2(fx.y, fy.y));
-    float n01 = dot(g01, vec2(fx.z, fy.z));
-    float n11 = dot(g11, vec2(fx.w, fy.w));
-    vec2 fade_xy = fade(Pf.xy);
-    vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
-    float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
-    return 2.3 * n_xy;
-}
-
 void main() {
+    // Scale UV to centered coords so the pattern fills the plane
+    float x = (vUv.x - 0.5) * 10.0;
+    float y = (vUv.y - 0.5) * 10.0;
+    float t = uTime;
 
-    float strength = step(0.5, sin(cnoise(vUv * 10.0) * 20.0 + uTime * 2.0));
+    // xsin(θ) + ycos(θ) + sin(5x) = xcos(θ) - ysin(θ) + sin(5y)
+    float lhs = x * sin(t) + y * cos(t) + sin(5.0 * x);
+    float rhs = x * cos(t) - y * sin(t) + sin(5.0 * y);
+    float d = abs(lhs - rhs);
 
-    vec3 blackColor = vec3(0.0, 0.0, 0.0);
+    float strength = step(d, 0.3);
+
+    vec3 blackColor = vec3(0.0);
     vec3 uvColor = vec3(vUv, 1.0);
 
-    vec3 mixedColor = mix(blackColor, uvColor, strength);
-
-    gl_FragColor = vec4(mixedColor, 1.0);
+    gl_FragColor = vec4(mix(blackColor, uvColor, strength), 1.0);
 }
