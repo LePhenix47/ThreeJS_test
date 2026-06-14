@@ -65,7 +65,11 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
       vertexShader: testVertexShader,
       fragmentShader: testFragmentShader,
       transparent: true,
-      uniforms: {},
+      uniforms: {
+        uTime: {
+          value: 0.0,
+        },
+      },
     });
   };
 
@@ -90,7 +94,11 @@ class ShaderPlane extends MeshEntity implements Updatable, Destroyable {
     shaderFolder.add(registry.state, "wireframe");
   };
 
-  public update = () => {};
+  public update = () => {
+    const { uniforms } = this.material;
+
+    uniforms.uTime.value = this.time.elapsedSeconds;
+  };
 
   public destroy = () => {
     this.scene.remove(this.mesh);

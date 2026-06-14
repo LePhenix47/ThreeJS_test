@@ -1,5 +1,7 @@
 precision mediump float; // ? Medium precision float (~10-bit mantissa, minimum range ±2^14)
 
+uniform float uTime;
+
 varying vec3 vPos;
 varying vec2 vUv;
 
@@ -74,7 +76,7 @@ float cnoise(vec2 P) {
 
 void main() {
 
-    float strength = step(0.9, sin(cnoise(vUv * 10.0) * 20.0));
+    float strength = step(0.5, sin(cnoise(vUv * 10.0) * 20.0 + uTime * 2.0));
 
     vec3 blackColor = vec3(0.0, 0.0, 0.0);
     vec3 uvColor = vec3(vUv, 1.0);
