@@ -25,6 +25,8 @@ void main() {
 
     angle /= PI * 2.0;
     angle += 0.5;
+    angle *= 20.0;
+    angle = mod(angle, 1.0);
 
     float strength = angle;
 
