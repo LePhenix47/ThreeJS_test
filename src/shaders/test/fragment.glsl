@@ -20,7 +20,7 @@ vec2 rotationMatrix(vec2 coords, float angleDeg, vec2 origin) {
 
 void main() {
 
-    float strength = step(0.25, distance(vUv, vec2(0.5)));
+    float strength = abs(distance(vUv, vec2(0.5)) - 0.25);
 
     gl_FragColor = vec4(strength, strength, strength, 1.0);
 }
