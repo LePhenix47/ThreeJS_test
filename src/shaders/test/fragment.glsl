@@ -20,7 +20,7 @@ float floorFloat(float value, float maxFractionDigits) {
 
 void main() {
     float floorX = floorFloat(vUv.x, 1.0);
-    float floorY = floorFloat(vUv.y, 1.0);
+    float floorY = floorFloat((vUv.y + vUv.x), 1.0);
 
     vec2 gridUv = vec2(floorX, floorY);
     float strength = random(gridUv);
