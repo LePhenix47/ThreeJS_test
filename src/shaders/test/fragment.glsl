@@ -11,9 +11,19 @@ float random(vec2 co) {
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-void main() {
+float floorFloat(float value, float maxFractionDigits) {
 
-    float strength = random(vUv.xy);
+    float powerOfTen = pow(10.0, maxFractionDigits);
+    float flooredVal = floor(value * powerOfTen) / powerOfTen;
+    return flooredVal;
+}
+
+void main() {
+    float floorX = floorFloat(vUv.x, 1.0);
+    float floorY = floorFloat(vUv.y, 1.0);
+
+    vec2 gridUv = vec2(floorX, floorY);
+    float strength = random(gridUv);
 
     gl_FragColor = vec4(strength, strength, strength, 1.0);
 }
