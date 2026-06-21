@@ -1,31 +1,42 @@
 import GUI from "lil-gui";
-import { Destroyable } from "../../Experience";
+import { Destroyable } from "@modules/Experience/Experience";
 
 import LEVA_CSS from "./lil-gui-debug.css?inline";
 
 type DebuggingConstructor = { isActive: boolean; title?: string };
 
 class Debug implements Destroyable {
-  public gui: GUI;
+  public readonly gui: GUI;
   public isActive: boolean;
-  private styleEl: HTMLStyleElement | null = null;
+  private readonly sheet: CSSStyleSheet;
 
   constructor({ isActive, title = "Debug" }: DebuggingConstructor) {
     this.isActive = isActive;
     if (!isActive) return;
 
     this.gui = new GUI({ title, width: 300 });
+    this.sheet = new CSSStyleSheet();
 
-    this.styleEl = document.createElement("style");
-    this.styleEl.textContent = LEVA_CSS;
-    document.head.appendChild(this.styleEl);
+    this.initLilGuiStyleSheets();
 
     console.log("Debug instantiated");
   }
 
+  private initLilGuiStyleSheets = () => {
+    this.sheet.replaceSync(LEVA_CSS);
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.sheet];
+  };
+
+  private destroyLilGuiStyleSheets = () => {
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter(
+      (s) => s !== this.sheet,
+    );
+  };
+
   destroy = () => {
     this.gui.destroy();
-    this.styleEl?.remove();
+
+    this.destroyLilGuiStyleSheets();
   };
 }
 
