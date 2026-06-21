@@ -139,40 +139,13 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       this.debugDefaults,
     );
 
-    registry
-      .bind("wireframe", (v: boolean) => {
-        this.material.wireframe = v;
-      })
-      .bind("side", (v: ShaderPlaneState["side"]) => {
-        const threeSide: THREE.Side = SidesEnum[v];
-
-        this.material.side = threeSide;
-      })
-      .bind("surfaceColor", (v: string) => {
-        const threeSurfaceColor = new THREE.Color(v);
-
-        this.material.uniforms.uSurfaceColor.value = threeSurfaceColor;
-      })
-      .bind("depthColor", (v: string) => {
-        const threeDepthColor = new THREE.Color(v);
-
-        this.material.uniforms.uDepthColor.value = threeDepthColor;
-      })
-      .bind("playBackSpeed", (v: number) => {
-        this.material.uniforms.uTimePlayBackSpeed.value = v;
-      })
-      .bind("waveFrequencyX", (v: number) => {
-        this.material.uniforms.uWavesFrequency.value.x = v;
-      })
-      .bind("waveFrequencyY", (v: number) => {
-        this.material.uniforms.uWavesFrequency.value.y = v;
-      })
-      .bind("waveAmplitude", (v: number) => {
-        this.material.uniforms.uWavesElevation.value = v;
-      });
+    this.guiRegistry = registry;
 
     const shaderFolder = this.debug.gui.addFolder("Shader plane");
     shaderFolder.add(registry.state, "wireframe");
+    registry.bind("wireframe", (v: boolean) => {
+      this.material.wireframe = v;
+    });
 
     const sidesEnumValues = Object.values(SidesEnum);
 
@@ -186,6 +159,11 @@ class Water extends MeshEntity implements Updatable, Destroyable {
     ) as Array<ShaderPlaneState["side"]>;
 
     shaderFolder.add(registry.state, "side", sidesEnumKeys);
+    registry.bind("side", (v: ShaderPlaneState["side"]) => {
+      const threeSide: THREE.Side = SidesEnum[v];
+
+      this.material.side = threeSide;
+    });
 
     shaderFolder
       .add(registry.state, "playBackSpeed")
@@ -193,10 +171,23 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       .max(5.0)
       .step(0.001)
       .name("uTimePlayBackSpeed");
+    registry.bind("playBackSpeed", (v: number) => {
+      this.material.uniforms.uTimePlayBackSpeed.value = v;
+    });
 
     shaderFolder.addColor(registry.state, "surfaceColor").name("uSurfaceColor");
+    registry.bind("surfaceColor", (v: string) => {
+      const threeSurfaceColor = new THREE.Color(v);
+
+      this.material.uniforms.uSurfaceColor.value = threeSurfaceColor;
+    });
 
     shaderFolder.addColor(registry.state, "depthColor").name("uDepthColor");
+    registry.bind("depthColor", (v: string) => {
+      const threeDepthColor = new THREE.Color(v);
+
+      this.material.uniforms.uDepthColor.value = threeDepthColor;
+    });
 
     const waveFolder = shaderFolder.addFolder("Wave params");
     waveFolder
@@ -205,6 +196,9 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       .max(5)
       .step(0.001)
       .name("uWavesFrequency X");
+    registry.bind("waveFrequencyX", (v: number) => {
+      this.material.uniforms.uWavesFrequency.value.x = v;
+    });
 
     waveFolder
       .add(registry.state, "waveFrequencyY")
@@ -212,6 +206,9 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       .max(5)
       .step(0.001)
       .name("uWavesFrequency Y");
+    registry.bind("waveFrequencyY", (v: number) => {
+      this.material.uniforms.uWavesFrequency.value.y = v;
+    });
 
     waveFolder
       .add(registry.state, "waveAmplitude")
@@ -219,6 +216,9 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       .max(1)
       .step(0.001)
       .name("uWavesElevation");
+    registry.bind("waveAmplitude", (v: number) => {
+      this.material.uniforms.uWavesElevation.value = v;
+    });
   };
 
   public update = () => {
