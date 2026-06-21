@@ -10,11 +10,12 @@ uniform float uColorOffset;
 varying float vElevation;
 
 void main() {
-    float trigLikeStrength = uColorMultiplier * (vElevation + uColorOffset);
+    // * amplitude * (value + offset)
+    float mixFactor = uColorMultiplier * (vElevation + uColorOffset);
     /*
     * It's as if we were making a linear gradient 
     *and we chose the color based on the offset from the elevation
     */
-    vec3 color = mix(uDepthColor, uSurfaceColor, trigLikeStrength);
+    vec3 color = mix(uDepthColor, uSurfaceColor, mixFactor);
     gl_FragColor = vec4(color, 1.0);
 }
