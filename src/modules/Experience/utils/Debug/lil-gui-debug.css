@@ -64,6 +64,10 @@
   color: #000;
 }
 
+.lil-gui input[type="checkbox"]:focus {
+  box-shadow: none;
+}
+
 /* Single-input: full width */
 .lil-controller .lil-widget {
   display: grid;
