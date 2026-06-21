@@ -54,7 +54,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const experience = new Experience({
       canvas,
-      debugMode: hasDebugUrlParamEnabled,
+      debugMode: true,
       loadingManager,
       sources: [...textures, ...models],
     });

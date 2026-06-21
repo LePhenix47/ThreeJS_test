@@ -3,12 +3,12 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import Environment from "./Environment";
-import ShaderPlane from "./ShaderPlane";
+import Water from "./Water";
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment?: Environment;
-  public shaderPlane?: ShaderPlane;
+  public shaderPlane?: Water;
 
   private get resources() {
     return this.experience!.resources;
@@ -19,7 +19,7 @@ class World implements Updatable, Destroyable {
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.environment = new Environment();
-    this.shaderPlane = new ShaderPlane();
+    this.shaderPlane = new Water();
 
     // this.resources.on("textures-loaded", () => {});
 
