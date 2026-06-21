@@ -118,7 +118,6 @@ class Water extends MeshEntity implements Updatable, Destroyable {
     shaderFolder.add(registry.state, "wireframe");
 
     const sidesEnumValues = Object.values(SidesEnum);
-    console.log(sidesEnumValues);
 
     /*
      * Enums values have the keys then their index, ex: ["front","back","both",0,1,2]
