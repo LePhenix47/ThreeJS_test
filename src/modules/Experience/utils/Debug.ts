@@ -3,21 +3,121 @@ import { Destroyable } from "../Experience";
 
 type DebuggingConstructor = { isActive: boolean; title?: string };
 
+const LEVA_CSS = /*css */ `
+  .lil-gui {
+    --background-color: #1a1a1a;
+    --text-color: #ebebeb;
+    --title-background-color: #111111;
+    --title-text-color: #ebebeb;
+    --widget-color: #2a2a2a;
+    --hover-color: #303030;
+    --focus-color: #3a3a3a;
+    --number-color: #6f9af8;
+    --string-color: #a6e88a;
+    --font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    --font-size: 11px;
+    --input-font-size: 11px;
+    --padding: 6px;
+    --spacing: 4px;
+    --widget-height: 22px;
+    --name-width: 45%;
+    --slider-knob-width: 2px;
+    --line-height: 1.7em;
+    --folder-indent: 8px;
+    --widget-border-radius: 3px;
+    --checkbox-size: calc(0.75 * var(--widget-height));
+    --scrollbar-width: 5px;
+    border-radius: 6px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    border: 1px solid #2a2a2a;
+  }
+
+  .lil-gui button > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  }
+
+  .lil-gui .title {
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 10px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+
+  .lil-gui .controller {
+    border-top: 1px solid #222222;
+    padding: 3px 6px;
+  }
+
+  .lil-gui .controller:first-child {
+    border-top: none;
+  }
+
+  .lil-gui .controller.folder .title {
+    border-top: 1px solid #2a2a2a;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #aaaaaa;
+    padding: 6px 8px;
+  }
+
+  .lil-gui input[type=range] {
+    accent-color: #6f9af8;
+    height: 3px;
+    border-radius: 2px;
+  }
+
+  .lil-gui input[type=text],
+  .lil-gui input[type=number] {
+    border-radius: 3px;
+    border: 1px solid #333333;
+    background: #111111;
+    color: #6f9af8;
+    padding: 2px 5px;
+  }
+
+  .lil-gui input[type=color] {
+    border-radius: 3px;
+    border: 1px solid #333333;
+    height: 18px;
+  }
+
+  .lil-gui select {
+    border-radius: 3px;
+    border: 1px solid #333333;
+    background: #111111;
+    color: var(--text-color);
+  }
+
+  .lil-gui .children {
+    border-top: 1px solid #222222;
+  }
+`;
+
 class Debug implements Destroyable {
   public gui: GUI;
   public isActive: boolean;
+  private styleEl: HTMLStyleElement | null = null;
 
   constructor({ isActive, title = "Debug" }: DebuggingConstructor) {
     this.isActive = isActive;
     if (!isActive) return;
 
-    this.gui = new GUI({ title });
+    this.gui = new GUI({ title, width: 300 });
+
+    this.styleEl = document.createElement("style");
+    this.styleEl.textContent = LEVA_CSS;
+    document.head.appendChild(this.styleEl);
 
     console.log("Debug instantiated");
   }
 
   destroy = () => {
     this.gui.destroy();
+    this.styleEl?.remove();
   };
 }
 
