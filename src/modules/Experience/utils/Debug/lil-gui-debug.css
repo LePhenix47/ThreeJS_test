@@ -64,14 +64,26 @@
   color: #000;
 }
 
-/* Color controller: 22px swatch, rest goes to hex input */
+/* Single-input: full width */
+.lil-controller .lil-widget {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+/* 2+ children not the color switch nor select: 1fr + 38% */
+.lil-controller:not(.lil-color)
+  .lil-widget:has(> :nth-child(2)):not(:has(> select)) {
+  grid-template-columns: 2fr 1fr;
+}
+
+/* Color: 22px swatch + rest for hex input */
 .lil-controller.lil-color .lil-widget {
   grid-template-columns: 22px 1fr;
 }
 
 .lil-controller.lil-color .lil-display {
-  width: 22px;
-  height: 22px;
+  width: 100%;
+  height: var(--widget-height);
 }
 
 .lil-controller.lil-color input[type="text"] {
