@@ -64,6 +64,12 @@ const LEVA_CSS = /*css */ `
     padding: 6px 8px;
   }
 
+  .lil-controller.lil-color .lil-display {
+    aspect-ratio: 1/1;
+
+    width: 22px;
+  }
+
   .lil-gui input[type=range] {
     accent-color: #6f9af8;
     height: 3px;
@@ -77,6 +83,10 @@ const LEVA_CSS = /*css */ `
     background: #111111;
     color: #6f9af8;
     padding: 2px 5px;
+  }
+
+  .lil-controller.lil-color input[type="text"] {
+    
   }
 
   .lil-gui input[type=color] {
