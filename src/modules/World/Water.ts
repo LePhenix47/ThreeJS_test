@@ -62,7 +62,8 @@ class Water extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setGeometry = () => {
-    const geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
+    const size: number = 2 ** 7;
+    const geometry = new THREE.PlaneGeometry(2, 2, size, size);
 
     const angleRad: number = THREE.MathUtils.degToRad(-90);
 
