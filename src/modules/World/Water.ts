@@ -15,6 +15,7 @@ type ShaderPlaneState = {
   waveAmplitude: number;
   waveFrequencyX: number;
   waveFrequencyY: number;
+  playBackSpeed: number;
 };
 
 enum SidesEnum {
@@ -84,6 +85,9 @@ class Water extends MeshEntity implements Updatable, Destroyable {
         uTime: {
           value: 0.0,
         },
+        uTimePlayBackSpeed: {
+          value: 1.0,
+        },
         // * Trig logic: amplitude * sin(x * frequency + phase-offset)
         uWavesElevation: {
           value: 0.2,
@@ -108,6 +112,7 @@ class Water extends MeshEntity implements Updatable, Destroyable {
         waveFrequencyX: 4,
         waveFrequencyY: 1.5,
         waveAmplitude: 0.2,
+        playBackSpeed: 1,
       },
     );
 
@@ -128,6 +133,9 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       })
       .bind("waveAmplitude", (v: number) => {
         this.material.uniforms.uWavesElevation.value = v;
+      })
+      .bind("playBackSpeed", (v: number) => {
+        this.material.uniforms.uTimePlayBackSpeed.value = v;
       });
 
     const shaderFolder = this.debug.gui.addFolder("Shader plane");
@@ -145,6 +153,13 @@ class Water extends MeshEntity implements Updatable, Destroyable {
     ) as Array<ShaderPlaneState["side"]>;
 
     shaderFolder.add(registry.state, "side", sidesEnumKeys);
+
+    shaderFolder
+      .add(registry.state, "playBackSpeed")
+      .min(0)
+      .max(5.0)
+      .step(0.001)
+      .name("uTimePlayBackSpeed");
 
     const waveFolder = shaderFolder.addFolder("Wave params");
     waveFolder
