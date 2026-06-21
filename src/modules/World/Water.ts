@@ -12,6 +12,9 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 type ShaderPlaneState = {
   wireframe: boolean;
   side: keyof typeof SidesEnum;
+  waveAmplitude: number;
+  waveFrequencyX: number;
+  waveFrequencyY: number;
 };
 
 enum SidesEnum {
@@ -102,6 +105,9 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       {
         wireframe: false,
         side: "front",
+        waveFrequencyX: 4,
+        waveFrequencyY: 1.5,
+        waveAmplitude: 0.2,
       },
     );
 
@@ -113,6 +119,15 @@ class Water extends MeshEntity implements Updatable, Destroyable {
         const threeSide: THREE.Side = SidesEnum[v];
 
         this.material.side = threeSide;
+      })
+      .bind("waveFrequencyX", (v: number) => {
+        this.material.uniforms.uWavesFrequency.value.x = v;
+      })
+      .bind("waveFrequencyY", (v: number) => {
+        this.material.uniforms.uWavesFrequency.value.y = v;
+      })
+      .bind("waveAmplitude", (v: number) => {
+        this.material.uniforms.uWavesElevation.value = v;
       });
 
     const shaderFolder = this.debug.gui.addFolder("Shader plane");
@@ -130,6 +145,28 @@ class Water extends MeshEntity implements Updatable, Destroyable {
     ) as Array<ShaderPlaneState["side"]>;
 
     shaderFolder.add(registry.state, "side", sidesEnumKeys);
+
+    const waveFolder = shaderFolder.addFolder("Wave params");
+    waveFolder
+      .add(registry.state, "waveFrequencyX")
+      .min(-5)
+      .max(5)
+      .step(0.001)
+      .name("uWavesFrequency X");
+
+    waveFolder
+      .add(registry.state, "waveFrequencyY")
+      .min(-5)
+      .max(5)
+      .step(0.001)
+      .name("uWavesFrequency Y");
+
+    waveFolder
+      .add(registry.state, "waveAmplitude")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("uWavesElevation");
   };
 
   public update = () => {

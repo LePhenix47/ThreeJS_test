@@ -3,5 +3,5 @@ precision mediump float; // ? Medium precision float (~10-bit mantissa, minimum 
 // uniform float uTime;
 
 void main() {
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(0.5, 0.8, 1.0, 1.0);
 }
