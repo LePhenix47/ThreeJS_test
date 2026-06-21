@@ -1,7 +1,10 @@
 uniform float uTime;
-uniform float uTimePlayBackSpeed;
+uniform float uNoiseSpeed;
 uniform float uWavesElevation;
 uniform vec2 uWavesFrequency;
+uniform float uNoiseFreq;
+uniform float uNoiseAmp;
+uniform float uNoiseIterations;
 
 varying float vElevation;
 
@@ -89,12 +92,12 @@ float cnoise(vec3 P) {
 void main() {
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
-    float timePlayBack = uTime * uTimePlayBackSpeed;
-    float elevation = uWavesElevation * sin(modelPosition.x * uWavesFrequency.x + timePlayBack) * sin(modelPosition.z * uWavesFrequency.y + timePlayBack);
+    float elevation = uWavesElevation * sin(modelPosition.x * uWavesFrequency.x + uTime) * sin(modelPosition.z * uWavesFrequency.y + uTime);
 
-    float noise = 0.15 * cnoise(vec3(modelPosition.xz * 3.0, uTime));
-    elevation -= abs(noise);
-
+    for(float i = 1.0; i <= uNoiseIterations; i++) {
+        float noise = cnoise(vec3(modelPosition.xz * uNoiseFreq * i, uTime * uNoiseSpeed)) * uNoiseAmp / i;
+        elevation -= abs(noise);
+    }
     modelPosition.y += elevation;
 
     vec4 viewPosition = viewMatrix * modelPosition;

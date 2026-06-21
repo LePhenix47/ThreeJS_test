@@ -15,7 +15,10 @@ type ShaderPlaneState = {
   waveAmplitude: number;
   waveFrequencyX: number;
   waveFrequencyY: number;
-  playBackSpeed: number;
+  noiseSpeed: number;
+  noiseFreq: number;
+  noiseAmp: number;
+  noiseIterations: number;
   surfaceColor: string;
   depthColor: string;
   colorOffset: number;
@@ -41,7 +44,10 @@ class Water extends MeshEntity implements Updatable, Destroyable {
     waveFrequencyX: 4,
     waveFrequencyY: 1.5,
     waveAmplitude: 0.2,
-    playBackSpeed: 1,
+    noiseSpeed: 1,
+    noiseFreq: 3,
+    noiseAmp: 0.15,
+    noiseIterations: 5,
     depthColor: "#0000ff",
     surfaceColor: "#8888ff",
     colorMultiplier: 1.0,
@@ -83,7 +89,7 @@ class Water extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setGeometry = () => {
-    const size: number = 2 ** 7;
+    const size: number = 2 ** 9;
     const geometry = new THREE.PlaneGeometry(2, 2, size, size);
 
     const angleRad: number = THREE.MathUtils.degToRad(-90);
@@ -107,7 +113,10 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       waveAmplitude,
       waveFrequencyX,
       waveFrequencyY,
-      playBackSpeed,
+      noiseSpeed,
+      noiseFreq,
+      noiseAmp,
+      noiseIterations,
       colorMultiplier,
       colorOffset,
     } = this.debugDefaults;
@@ -128,8 +137,17 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       uColorOffset: {
         value: colorOffset,
       },
-      uTimePlayBackSpeed: {
-        value: playBackSpeed,
+      uNoiseSpeed: {
+        value: noiseSpeed,
+      },
+      uNoiseFreq: {
+        value: noiseFreq,
+      },
+      uNoiseAmp: {
+        value: noiseAmp,
+      },
+      uNoiseIterations: {
+        value: noiseIterations,
       },
       // * Trig logic: amplitude * sin(x * frequency + phase-offset)
       uWavesElevation: {
@@ -175,16 +193,6 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       const threeSide: THREE.Side = SidesEnum[v];
 
       this.material.side = threeSide;
-    });
-
-    shaderFolder
-      .add(registry.state, "playBackSpeed")
-      .min(0)
-      .max(5.0)
-      .step(0.001)
-      .name("uTimePlayBackSpeed");
-    registry.bind("playBackSpeed", (v: number) => {
-      this.material.uniforms.uTimePlayBackSpeed.value = v;
     });
 
     const colorFolder = shaderFolder.addFolder("Color");
@@ -251,6 +259,47 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       .name("uWavesElevation");
     registry.bind("waveAmplitude", (v: number) => {
       this.material.uniforms.uWavesElevation.value = v;
+    });
+
+    const noiseFolder = shaderFolder.addFolder("Noise params");
+    noiseFolder
+      .add(registry.state, "noiseSpeed")
+      .min(0)
+      .max(5.0)
+      .step(0.001)
+      .name("uNoiseSpeed");
+    registry.bind("noiseSpeed", (v: number) => {
+      this.material.uniforms.uNoiseSpeed.value = v;
+    });
+
+    noiseFolder
+      .add(registry.state, "noiseFreq")
+      .min(0)
+      .max(10)
+      .step(0.01)
+      .name("uNoiseFreq");
+    registry.bind("noiseFreq", (v: number) => {
+      this.material.uniforms.uNoiseFreq.value = v;
+    });
+
+    noiseFolder
+      .add(registry.state, "noiseAmp")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("uNoiseAmp");
+    registry.bind("noiseAmp", (v: number) => {
+      this.material.uniforms.uNoiseAmp.value = v;
+    });
+
+    noiseFolder
+      .add(registry.state, "noiseIterations")
+      .min(1)
+      .max(10)
+      .step(1)
+      .name("uNoiseIterations");
+    registry.bind("noiseIterations", (v: number) => {
+      this.material.uniforms.uNoiseIterations.value = v;
     });
   };
 
