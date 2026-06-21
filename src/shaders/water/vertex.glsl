@@ -7,6 +7,7 @@ uniform float uNoiseAmp;
 uniform float uNoiseIterations;
 
 varying float vElevation;
+varying float vFogDepth;
 
 // Classic Perlin 3D Noise 
 // by Stefan Gustavson
@@ -107,4 +108,5 @@ void main() {
 
     // * Setting varying values
     vElevation = elevation;
+    vFogDepth = -viewPosition.z;
 }

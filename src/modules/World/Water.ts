@@ -23,6 +23,9 @@ type ShaderPlaneState = {
   depthColor: string;
   colorOffset: number;
   colorMultiplier: number;
+  fogColor: string;
+  fogNear: number;
+  fogFar: number;
 };
 
 enum SidesEnum {
@@ -48,10 +51,13 @@ class Water extends MeshEntity implements Updatable, Destroyable {
     noiseFreq: 3,
     noiseAmp: 0.15,
     noiseIterations: 5,
-    depthColor: "#0000ff",
-    surfaceColor: "#8888ff",
+    depthColor: "#186691",
+    surfaceColor: "#9bd8ff",
     colorMultiplier: 1.0,
     colorOffset: 0.0,
+    fogColor: "#000000",
+    fogNear: 1.0,
+    fogFar: 3.0,
   };
 
   private get scene() {
@@ -89,8 +95,15 @@ class Water extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setGeometry = () => {
-    const size: number = 2 ** 9;
-    const geometry = new THREE.PlaneGeometry(2, 2, size, size);
+    const subdivisionCount: number = 2 ** 9;
+
+    const size: number = 20;
+    const geometry = new THREE.PlaneGeometry(
+      size,
+      size,
+      subdivisionCount,
+      subdivisionCount,
+    );
 
     const angleRad: number = THREE.MathUtils.degToRad(-90);
 
@@ -119,6 +132,9 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       noiseIterations,
       colorMultiplier,
       colorOffset,
+      fogColor,
+      fogNear,
+      fogFar,
     } = this.debugDefaults;
 
     this.material.uniforms = {
@@ -148,6 +164,15 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       },
       uNoiseIterations: {
         value: noiseIterations,
+      },
+      uFogColor: {
+        value: new THREE.Color(fogColor),
+      },
+      uFogNear: {
+        value: fogNear,
+      },
+      uFogFar: {
+        value: fogFar,
       },
       // * Trig logic: amplitude * sin(x * frequency + phase-offset)
       uWavesElevation: {
@@ -300,6 +325,32 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       .name("uNoiseIterations");
     registry.bind("noiseIterations", (v: number) => {
       this.material.uniforms.uNoiseIterations.value = v;
+    });
+
+    const fogFolder = shaderFolder.addFolder("Fog");
+    fogFolder.addColor(registry.state, "fogColor").name("uFogColor");
+    registry.bind("fogColor", (v: string) => {
+      this.material.uniforms.uFogColor.value = new THREE.Color(v);
+    });
+
+    fogFolder
+      .add(registry.state, "fogNear")
+      .min(0)
+      .max(10)
+      .step(0.01)
+      .name("uFogNear");
+    registry.bind("fogNear", (v: number) => {
+      this.material.uniforms.uFogNear.value = v;
+    });
+
+    fogFolder
+      .add(registry.state, "fogFar")
+      .min(0)
+      .max(20)
+      .step(0.01)
+      .name("uFogFar");
+    registry.bind("fogFar", (v: number) => {
+      this.material.uniforms.uFogFar.value = v;
     });
   };
 
