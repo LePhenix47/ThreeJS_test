@@ -1,3 +1,7 @@
+uniform float uTime;
+uniform float uWavesElevation;
+uniform vec2 uWavesFrequency;
+
 void main() {
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
