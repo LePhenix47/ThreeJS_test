@@ -16,6 +16,8 @@ type ShaderPlaneState = {
   waveFrequencyX: number;
   waveFrequencyY: number;
   playBackSpeed: number;
+  surfaceColor: string;
+  depthColor: string;
 };
 
 enum SidesEnum {
@@ -30,6 +32,17 @@ class Water extends MeshEntity implements Updatable, Destroyable {
   protected material: THREE.ShaderMaterial;
   protected mesh: THREE.Mesh;
   private guiRegistry: GUIStateRegistry<ShaderPlaneState> | null = null;
+
+  private readonly debugDefaults: ShaderPlaneState = {
+    wireframe: false,
+    side: "front",
+    waveFrequencyX: 4,
+    waveFrequencyY: 1.5,
+    waveAmplitude: 0.2,
+    playBackSpeed: 1,
+    depthColor: "#0000ff",
+    surfaceColor: "#8888ff",
+  };
 
   private get scene() {
     return this.experience!.scene;
@@ -81,22 +94,39 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       vertexShader: testVertexShader,
       fragmentShader: testFragmentShader,
       transparent: true,
-      uniforms: {
-        uTime: {
-          value: 0.0,
-        },
-        uTimePlayBackSpeed: {
-          value: 1.0,
-        },
-        // * Trig logic: amplitude * sin(x * frequency + phase-offset)
-        uWavesElevation: {
-          value: 0.2,
-        },
-        uWavesFrequency: {
-          value: new THREE.Vector2(4.0, 1.5),
-        },
-      },
     });
+
+    // * Defaults for the shader uniforms
+    const {
+      depthColor,
+      surfaceColor,
+      waveAmplitude,
+      waveFrequencyX,
+      waveFrequencyY,
+      playBackSpeed,
+    } = this.debugDefaults;
+
+    this.material.uniforms = {
+      uTime: {
+        value: 0.0,
+      },
+      uSurfaceColor: {
+        value: new THREE.Color(surfaceColor),
+      },
+      uDepthColor: {
+        value: new THREE.Color(depthColor),
+      },
+      uTimePlayBackSpeed: {
+        value: playBackSpeed,
+      },
+      // * Trig logic: amplitude * sin(x * frequency + phase-offset)
+      uWavesElevation: {
+        value: waveAmplitude,
+      },
+      uWavesFrequency: {
+        value: new THREE.Vector2(waveFrequencyX, waveFrequencyY),
+      },
+    };
   };
 
   protected setMesh = () => {
@@ -106,14 +136,7 @@ class Water extends MeshEntity implements Updatable, Destroyable {
   private addDebugFolders = () => {
     const registry = new GUIStateRegistry<ShaderPlaneState>(
       "shader-plane-gui-state",
-      {
-        wireframe: false,
-        side: "front",
-        waveFrequencyX: 4,
-        waveFrequencyY: 1.5,
-        waveAmplitude: 0.2,
-        playBackSpeed: 1,
-      },
+      this.debugDefaults,
     );
 
     registry
@@ -125,6 +148,19 @@ class Water extends MeshEntity implements Updatable, Destroyable {
 
         this.material.side = threeSide;
       })
+      .bind("surfaceColor", (v: string) => {
+        const threeSurfaceColor = new THREE.Color(v);
+
+        this.material.uniforms.uSurfaceColor.value = threeSurfaceColor;
+      })
+      .bind("depthColor", (v: string) => {
+        const threeDepthColor = new THREE.Color(v);
+
+        this.material.uniforms.uDepthColor.value = threeDepthColor;
+      })
+      .bind("playBackSpeed", (v: number) => {
+        this.material.uniforms.uTimePlayBackSpeed.value = v;
+      })
       .bind("waveFrequencyX", (v: number) => {
         this.material.uniforms.uWavesFrequency.value.x = v;
       })
@@ -133,9 +169,6 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       })
       .bind("waveAmplitude", (v: number) => {
         this.material.uniforms.uWavesElevation.value = v;
-      })
-      .bind("playBackSpeed", (v: number) => {
-        this.material.uniforms.uTimePlayBackSpeed.value = v;
       });
 
     const shaderFolder = this.debug.gui.addFolder("Shader plane");
@@ -160,6 +193,10 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       .max(5.0)
       .step(0.001)
       .name("uTimePlayBackSpeed");
+
+    shaderFolder.addColor(registry.state, "surfaceColor").name("uSurfaceColor");
+
+    shaderFolder.addColor(registry.state, "depthColor").name("uDepthColor");
 
     const waveFolder = shaderFolder.addFolder("Wave params");
     waveFolder
