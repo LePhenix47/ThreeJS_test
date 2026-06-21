@@ -8,7 +8,7 @@ import GUI from "lil-gui";
 import * as THREE from "three";
 import Resources from "./utils/Resources/Resources";
 import { Source } from "./utils/Resources/types";
-import Debug from "./utils/Debug";
+import Debug from "./utils/Debug/Debug";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>
