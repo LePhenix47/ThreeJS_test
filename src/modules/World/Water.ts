@@ -18,6 +18,8 @@ type ShaderPlaneState = {
   playBackSpeed: number;
   surfaceColor: string;
   depthColor: string;
+  colorOffset: number;
+  colorMultiplier: number;
 };
 
 enum SidesEnum {
@@ -42,6 +44,8 @@ class Water extends MeshEntity implements Updatable, Destroyable {
     playBackSpeed: 1,
     depthColor: "#0000ff",
     surfaceColor: "#8888ff",
+    colorMultiplier: 1.0,
+    colorOffset: 0.0,
   };
 
   private get scene() {
@@ -104,6 +108,8 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       waveFrequencyX,
       waveFrequencyY,
       playBackSpeed,
+      colorMultiplier,
+      colorOffset,
     } = this.debugDefaults;
 
     this.material.uniforms = {
@@ -115,6 +121,12 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       },
       uDepthColor: {
         value: new THREE.Color(depthColor),
+      },
+      uColorMultiplier: {
+        value: colorMultiplier,
+      },
+      uColorOffset: {
+        value: colorOffset,
       },
       uTimePlayBackSpeed: {
         value: playBackSpeed,
@@ -175,18 +187,39 @@ class Water extends MeshEntity implements Updatable, Destroyable {
       this.material.uniforms.uTimePlayBackSpeed.value = v;
     });
 
-    shaderFolder.addColor(registry.state, "surfaceColor").name("uSurfaceColor");
+    const colorFolder = shaderFolder.addFolder("Color");
+    colorFolder.addColor(registry.state, "surfaceColor").name("uSurfaceColor");
     registry.bind("surfaceColor", (v: string) => {
       const threeSurfaceColor = new THREE.Color(v);
 
       this.material.uniforms.uSurfaceColor.value = threeSurfaceColor;
     });
 
-    shaderFolder.addColor(registry.state, "depthColor").name("uDepthColor");
+    colorFolder.addColor(registry.state, "depthColor").name("uDepthColor");
     registry.bind("depthColor", (v: string) => {
       const threeDepthColor = new THREE.Color(v);
 
       this.material.uniforms.uDepthColor.value = threeDepthColor;
+    });
+
+    colorFolder
+      .add(registry.state, "colorMultiplier")
+      .min(0)
+      .max(10)
+      .step(0.001)
+      .name("uColorMultiplier");
+    registry.bind("colorMultiplier", (v: number) => {
+      this.material.uniforms.uColorMultiplier.value = v;
+    });
+
+    colorFolder
+      .add(registry.state, "colorOffset")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("uColorOffset");
+    registry.bind("colorOffset", (v: number) => {
+      this.material.uniforms.uColorOffset.value = v;
     });
 
     const waveFolder = shaderFolder.addFolder("Wave params");
