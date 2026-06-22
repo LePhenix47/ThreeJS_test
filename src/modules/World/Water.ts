@@ -9,7 +9,7 @@ import testVertexShader from "@shaders/water/vertex.glsl";
 import testFragmentShader from "@shaders/water/fragment.glsl";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
-type ShaderPlaneState = {
+type WaterState = {
   wireframe: boolean;
   side: keyof typeof SidesEnum;
   waveAmplitude: number;
@@ -39,9 +39,9 @@ class Water extends MeshEntity implements Updatable, Destroyable {
   protected geometry: THREE.PlaneGeometry;
   protected material: THREE.ShaderMaterial;
   protected mesh: THREE.Mesh;
-  private guiRegistry: GUIStateRegistry<ShaderPlaneState> | null = null;
+  private guiRegistry: GUIStateRegistry<WaterState> | null = null;
 
-  private readonly debugDefaults: ShaderPlaneState = {
+  private readonly debugDefaults: WaterState = {
     wireframe: false,
     side: "front",
     waveFrequencyX: 4,
@@ -189,7 +189,7 @@ class Water extends MeshEntity implements Updatable, Destroyable {
   };
 
   private addDebugFolders = () => {
-    const registry = new GUIStateRegistry<ShaderPlaneState>(
+    const registry = new GUIStateRegistry<WaterState>(
       "shader-plane-gui-state",
       this.debugDefaults,
     );
@@ -211,10 +211,10 @@ class Water extends MeshEntity implements Updatable, Destroyable {
     const sidesEnumKeys = sidesEnumValues.slice(
       0,
       sidesEnumValues.length / 2,
-    ) as Array<ShaderPlaneState["side"]>;
+    ) as Array<WaterState["side"]>;
 
     shaderFolder.add(registry.state, "side", sidesEnumKeys);
-    registry.bind("side", (v: ShaderPlaneState["side"]) => {
+    registry.bind("side", (v: WaterState["side"]) => {
       const threeSide: THREE.Side = SidesEnum[v];
 
       this.material.side = threeSide;
