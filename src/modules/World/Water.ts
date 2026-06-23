@@ -190,7 +190,7 @@ class Water extends MeshEntity implements Updatable, Destroyable {
 
   private addDebugFolders = () => {
     const registry = new GUIStateRegistry<WaterState>(
-      "shader-plane-gui-state",
+      "water-gui-state",
       this.debugDefaults,
     );
 
