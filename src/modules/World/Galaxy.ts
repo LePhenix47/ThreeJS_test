@@ -6,6 +6,7 @@ import Experience, {
 } from "@modules/Experience/Experience";
 import { MeshEntity } from "./types/entity";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import { generateSphericalRandomness } from "@/utils/placement/sphere-placement";
 
 type GalaxyState = {
   /** Total number of stars rendered in the galaxy. */
@@ -105,18 +106,48 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
     this.setMaterial();
     this.setMesh();
 
+    // ! We do not have a mesh
+    // this.scene.add(this.mesh)
+
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
 
-    console.log("Water");
+    console.log("Galaxy (bogos binted 👽)");
   }
+
+  /**
+   * Computes the base angular position of a star on its spiral arm.
+   *
+   * Divides the full `2π` revolution evenly among `branches`, assigning each star
+   * to an arm based on its index (e.g. `3 branches` → `0°`, `120`°, `240°` periodic).
+   *
+   * @param index - The star's position index in the buffer (not the byte offset).
+   * @returns The branch angle in radians.
+   */
+  private computeBranchAngle = (index: number) => {
+    const { branches } = this.debugDefaults;
+
+    const oneRevolution: number = 2 * Math.PI;
+    const indexOffset: number = index % branches;
+
+    return (indexOffset * oneRevolution) / branches;
+  };
 
   protected setGeometry = (): void => {
     const geometry = new THREE.BufferGeometry();
 
-    const { count, radius, edgeUniformityPower, insideColor, outsideColor } =
-      this.debugDefaults;
+    const {
+      count,
+      radius,
+      edgeUniformityPower,
+      insideColor,
+      outsideColor,
+      spin,
+      randomness,
+      randomnessPower,
+      squash,
+    } = this.debugDefaults;
 
     const itemSize: number = 3;
     const positions = new Float32Array(count * itemSize);
@@ -147,9 +178,13 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
        * Twist that increases with distance from the center, creating the spiral curve.
        * Stars farther from the center are rotated by a larger angle.
        */
-      const spinAngle: number = this.computeSpinAngle(randomRadius);
+      const spinAngle: number = randomRadius * spin;
 
-      const additionalRandomness = this.generateSphericalRandomness();
+      const additionalRandomness = generateSphericalRandomness({
+        randomness,
+        randomnessPower,
+        squash,
+      });
 
       /*
        * Convert polar coords to Cartesian on the XZ plane.
@@ -204,13 +239,33 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
       blending: THREE.AdditiveBlending,
       vertexColors: true,
     });
+
+    this.material = material;
   };
 
-  protected setPoints = (): void => {};
+  protected setPoints = (): void => {
+    const points = new THREE.Points(this.geometry, this.material);
+    points.name = "galaxy";
+  };
 
-  private addDebugFolders = () => {};
+  private addDebugFolders = () => {
+    const registry = new GUIStateRegistry<GalaxyState>(
+      "water-gui-state",
+      this.debugDefaults,
+    );
 
-  public update = (): void => {};
+    this.guiRegistry = registry;
 
-  public destroy = (): void => {};
+    const galaxyFolder = this.debug.gui.addFolder("Galaxy");
+  };
+
+  public update = (): void => {
+    // ! Uh how am I supposed to update the galaxy with lil-gui here ?
+    // ! I definitely not want to delete the whole galaxy geometry or materials every signle time
+  };
+
+  public destroy = (): void => {
+    this.geometry.dispose();
+    this.material.dispose();
+  };
 }
