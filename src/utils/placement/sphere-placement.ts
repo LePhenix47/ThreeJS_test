@@ -17,6 +17,15 @@ function getRandomRho(minRadius: number = 0, maxRadius: number = 10) {
   return randomRho;
 }
 
+/**
+ * Generates a random 3D scatter offset using uniform sphere sampling.
+ *
+ * Direction is sampled uniformly across the sphere (avoiding pole clustering),
+ * magnitude follows a power-law distribution controlled by `randomnessPower`,
+ * and the Y component is scaled down by `squash` to flatten the scatter into a disc.
+ *
+ * @returns A `{x, y, z}` offset to apply to a star's spiral arm position.
+ */
 export function getRandomUniformSpherePlacement(
   minRadius: number,
   maxRadius: number,
