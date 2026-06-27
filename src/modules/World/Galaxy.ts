@@ -4,7 +4,7 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import { MeshEntity } from "./types/entity";
+import { PointsEntity } from "./types/entity";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { generateSphericalRandomness } from "@/utils/placement/sphere-placement";
 
@@ -58,8 +58,7 @@ type GalaxyState = {
   squash: number;
 };
 
-// ! A galaxy is NOT a mesh, need to create new abstract class
-class Galaxy extends MeshEntity implements Updatable, Destroyable {
+class Galaxy extends PointsEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private guiRegistry: GUIStateRegistry<GalaxyState> | null = null;
 
@@ -78,15 +77,11 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
   };
 
   protected geometry: THREE.BufferGeometry;
-
   protected material: THREE.PointsMaterial;
+  protected points: THREE.Points;
 
   private get scene() {
     return this.experience!.scene;
-  }
-
-  private get time() {
-    return this.experience!.time;
   }
 
   private get debug() {
@@ -104,10 +99,9 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
 
     this.setGeometry();
     this.setMaterial();
-    this.setMesh();
+    this.setPoints();
 
-    // ! We do not have a mesh
-    // this.scene.add(this.mesh)
+    this.scene.add(this.points);
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -154,8 +148,6 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
     const colors = new Float32Array(count * itemSize);
 
     for (let i = 0; i < positions.length; i += itemSize) {
-      // * Positions
-
       /*
        * Math.pow(u, n) biases a uniform [0,1) value toward 0.
        * The higher edgeUniformityPower, the more stars cluster near the center.
@@ -188,14 +180,10 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
 
       /*
        * Convert polar coords to Cartesian on the XZ plane.
-
        * branchAngle + spinAngle gives the star's angular position on its spiral arm.
-       * 
        * Multiplying by randomRadius sets how far from the center the star sits.
-       * 
        * additionalRandomness scatters it off the arm for a natural, cloudy look.
        */
-      // ? x
       positions[i] =
         Math.cos(branchAngle + spinAngle) * randomRadius +
         additionalRandomness.x;
@@ -222,7 +210,6 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
       "position",
       new THREE.BufferAttribute(positions, itemSize),
     );
-
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, itemSize));
 
     this.geometry = geometry;
@@ -239,34 +226,131 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
       blending: THREE.AdditiveBlending,
       vertexColors: true,
     });
-
-    this.material = material;
   };
 
   protected setPoints = (): void => {
     const points = new THREE.Points(this.geometry, this.material);
     points.name = "galaxy";
+
+    this.points = points;
   };
 
-  private addDebugFolders = () => {
-    const registry = new GUIStateRegistry<GalaxyState>(
-      "water-gui-state",
-      this.debugDefaults,
-    );
-
-    this.guiRegistry = registry;
-
-    const galaxyFolder = this.debug.gui.addFolder("Galaxy");
-  };
-
-  public update = (): void => {
-    // ! Uh how am I supposed to update the galaxy with lil-gui here ?
-    // ! I definitely not want to delete the whole galaxy geometry or materials every signle time
-  };
-
-  public destroy = (): void => {
+  // ! Uh we really do not have a choice in the matter here ???
+  private regenerate = (): void => {
+    this.scene.remove(this.points);
     this.geometry.dispose();
     this.material.dispose();
+
+    this.setGeometry();
+    this.setMaterial();
+    this.setPoints();
+
+    this.scene.add(this.points);
+  };
+
+  private addDebugFolders = (): void => {
+    const registry = new GUIStateRegistry<GalaxyState>(
+      "galaxy-gui-state",
+      this.debugDefaults,
+    );
+    this.guiRegistry = registry;
+
+    /* Apply any sessionStorage-restored values immediately. */
+    this.regenerate();
+
+    const { state } = registry;
+    const galaxyFolder = this.debug.gui.addFolder("Galaxy");
+
+    galaxyFolder
+      .add(state, "count")
+      .name("Star count")
+      .min(1e3) // ? 1k
+      .max(200e3) // ? 200k
+      .step(1e3)
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "size")
+      .name("Star size")
+      .min(0.001)
+      .max(0.1)
+      .step(0.001)
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "radius")
+      .name("Radius")
+      .min(0.01)
+      .max(20)
+      .step(0.01)
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "branches")
+      .name("Arm count")
+      .min(2)
+      .max(20)
+      .step(1)
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "spin")
+      .name("Arm twist")
+      .min(-5)
+      .max(5)
+      .step(0.001)
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "randomness")
+      .name("Scatter radius")
+      .min(0)
+      .max(2)
+      .step(0.001)
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "randomnessPower")
+      .name("Scatter clustering")
+      .min(1)
+      .max(10)
+      .step(0.001)
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "edgeUniformityPower")
+      .name("Center density")
+      .min(1)
+      .max(10)
+      .step(0.1)
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "squash")
+      .name("Y squash")
+      .min(0)
+      .max(1)
+      .step(0.01)
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .addColor(state, "insideColor")
+      .name("Center color")
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .addColor(state, "outsideColor")
+      .name("Edge color")
+      .onFinishChange(() => this.regenerate());
+  };
+
+  public update = (): void => {};
+
+  public destroy = (): void => {
+    this.scene.remove(this.points);
+    this.geometry.dispose();
+    this.material.dispose();
+    this.guiRegistry?.dispose();
   };
 }
 

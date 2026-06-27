@@ -4,7 +4,6 @@ import Experience, {
 } from "@modules/Experience/Experience";
 import Environment from "./Environment";
 import Floor from "./Floor";
-import * as THREE from "three";
 import Galaxy from "./Galaxy";
 
 class World implements Updatable, Destroyable {
@@ -19,6 +18,7 @@ class World implements Updatable, Destroyable {
 
     this.floor = new Floor();
     this.environment = new Environment();
+    this.galaxy = new Galaxy();
 
     console.log("World");
   }
@@ -30,6 +30,7 @@ class World implements Updatable, Destroyable {
   public destroy = () => {
     this.floor?.destroy();
     this.environment?.destroy();
+    this.galaxy?.destroy();
   };
 }
 

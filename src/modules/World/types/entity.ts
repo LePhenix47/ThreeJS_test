@@ -18,6 +18,19 @@ export abstract class MeshEntity {
   protected abstract setMesh(): void;
 }
 
+/** Base contract for any entity that owns a geometry, material, and a {@link THREE.Points} object. */
+export abstract class PointsEntity {
+  protected abstract geometry: THREE.BufferGeometry;
+  protected abstract material: THREE.Material;
+  protected abstract points: THREE.Points;
+  /** Instantiates and assigns `geometry`. */
+  protected abstract setGeometry(): void;
+  /** Instantiates and assigns `material`. */
+  protected abstract setMaterial(): void;
+  /** Instantiates and assigns `points` from `geometry` and `material`. */
+  protected abstract setPoints(): void;
+}
+
 /** Extends `MeshEntity` with texture map support. Use `Pick<EntityTexture, ...>` on the class property to declare only the slots actually used. */
 export abstract class TexturedMeshEntity extends MeshEntity {
   protected abstract textures: Partial<EntityTexture>;
