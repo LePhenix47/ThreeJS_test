@@ -9,6 +9,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 import vertexShader from "@shaders/galaxy/vertex.glsl";
 import fragmentShader from "@shaders/galaxy/fragment.glsl";
+import { randomSignValue } from "@/utils/numbers/math";
 
 type GalaxyState = {
   /** Total number of stars rendered in the galaxy. */
@@ -148,20 +149,19 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
        * Signed power-law scatter: bias magnitude toward 0, then randomly flip sign.
        * Gives tight arm cores with occasional outliers.
        */
-      const sign = () => (Math.random() < 0.5 ? 1 : -1);
       const randomX =
         Math.pow(Math.random(), randomnessPower) *
-        sign() *
+        randomSignValue() *
         randomness *
         randomRadius;
       const randomY =
         Math.pow(Math.random(), randomnessPower) *
-        sign() *
+        randomSignValue() *
         randomness *
         randomRadius;
       const randomZ =
         Math.pow(Math.random(), randomnessPower) *
-        sign() *
+        randomSignValue() *
         randomness *
         randomRadius;
 
