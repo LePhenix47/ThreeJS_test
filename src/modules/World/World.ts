@@ -2,22 +2,16 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import Environment from "./Environment";
-import Floor from "./Floor";
 import Galaxy from "./Galaxy";
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
-  public environment?: Environment;
   public galaxy?: Galaxy;
-  public floor?: Floor;
 
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.floor = new Floor();
-    this.environment = new Environment();
     this.galaxy = new Galaxy();
 
     console.log("World");
@@ -28,8 +22,6 @@ class World implements Updatable, Destroyable {
   };
 
   public destroy = () => {
-    this.floor?.destroy();
-    this.environment?.destroy();
     this.galaxy?.destroy();
   };
 }
