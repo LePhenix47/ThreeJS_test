@@ -5,10 +5,12 @@ import Experience, {
 import Environment from "./Environment";
 import Floor from "./Floor";
 import * as THREE from "three";
+import Galaxy from "./Galaxy";
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment?: Environment;
+  public galaxy?: Galaxy;
   public floor?: Floor;
 
   constructor() {
@@ -21,7 +23,9 @@ class World implements Updatable, Destroyable {
     console.log("World");
   }
 
-  public update = () => {};
+  public update = () => {
+    this.galaxy?.update();
+  };
 
   public destroy = () => {
     this.floor?.destroy();

@@ -269,3 +269,5 @@ class Galaxy extends MeshEntity implements Updatable, Destroyable {
     this.material.dispose();
   };
 }
+
+export default Galaxy;
