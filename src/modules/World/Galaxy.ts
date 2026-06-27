@@ -88,8 +88,8 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.debug;
   }
 
-  private get resources() {
-    return this.experience!.resources;
+  private get state(): GalaxyState {
+    return this.guiRegistry?.state || this.debugDefaults;
   }
 
   constructor() {
@@ -120,7 +120,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
    * @returns The branch angle in radians.
    */
   private computeBranchAngle = (index: number) => {
-    const { branches } = this.debugDefaults;
+    const { branches } = this.state;
 
     const oneRevolution: number = 2 * Math.PI;
     const indexOffset: number = index % branches;
@@ -141,7 +141,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
       randomness,
       randomnessPower,
       squash,
-    } = this.debugDefaults;
+    } = this.state;
 
     const itemSize: number = 3;
     const positions = new Float32Array(count * itemSize);
@@ -216,7 +216,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = (): void => {
-    const { size, insideColor } = this.debugDefaults;
+    const { size, insideColor } = this.state;
 
     const material = new THREE.PointsMaterial({
       color: new THREE.Color(insideColor),
