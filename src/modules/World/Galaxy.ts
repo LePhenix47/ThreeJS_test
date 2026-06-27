@@ -75,6 +75,10 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.debug;
   }
 
+  private get time() {
+    return this.experience!.time;
+  }
+
   private get state(): GalaxyState {
     return this.guiRegistry?.state || this.debugDefaults;
   }
@@ -183,12 +187,18 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = (): void => {
-    const { size, insideColor } = this.state;
+    const { size } = this.state;
 
     const material = new THREE.ShaderMaterial({
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       vertexColors: true,
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uSize: { value: size },
+      },
     });
 
     this.material = material;
@@ -293,7 +303,9 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
       .onFinishChange(() => this.regenerate());
   };
 
-  public update = (): void => {};
+  public update = (): void => {
+    this.material.uniforms.uTime.value = this.time.elapsedSeconds;
+  };
 
   public destroy = (): void => {
     this.scene.remove(this.points);
