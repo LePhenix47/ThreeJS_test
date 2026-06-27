@@ -42,7 +42,6 @@ type GalaxyState = {
 
   /** Hex color of stars near the outer edge (e.g. `"#1b3984"`). */
   outsideColor: string;
-
 };
 
 class Galaxy extends PointsEntity implements Updatable, Destroyable {
@@ -62,7 +61,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
   };
 
   protected geometry: THREE.BufferGeometry;
-  protected material: THREE.PointsMaterial;
+  protected material: THREE.ShaderMaterial;
   protected points: THREE.Points;
 
   private get scene() {
@@ -132,11 +131,11 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     const positions = new Float32Array(count * itemSize);
     const colors = new Float32Array(count * itemSize);
 
-    for (let i = 0; i < positions.length; i += itemSize) {
-      const actualIndex = i / itemSize;
+    for (let i = 0; i < count; i++) {
+      const i3 = i * itemSize;
 
       const randomRadius = Math.random() * radius;
-      const branchAngle = this.computeBranchAngle(actualIndex);
+      const branchAngle = this.computeBranchAngle(i);
 
       /*
        * Signed power-law scatter: bias magnitude toward 0, then randomly flip sign.
@@ -147,16 +146,16 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
       const randomY = Math.pow(Math.random(), randomnessPower) * sign() * randomness * randomRadius;
       const randomZ = Math.pow(Math.random(), randomnessPower) * sign() * randomness * randomRadius;
 
-      positions[i]     = Math.cos(branchAngle) * randomRadius + randomX;
-      positions[i + 1] = randomY;
-      positions[i + 2] = Math.sin(branchAngle) * randomRadius + randomZ;
+      positions[i3]     = Math.cos(branchAngle) * randomRadius + randomX;
+      positions[i3 + 1] = randomY;
+      positions[i3 + 2] = Math.sin(branchAngle) * randomRadius + randomZ;
 
       const mixedColor = insideColorObj.clone();
       mixedColor.lerp(outsideColorObj, randomRadius / radius);
 
-      colors[i]     = mixedColor.r;
-      colors[i + 1] = mixedColor.g;
-      colors[i + 2] = mixedColor.b;
+      colors[i3]     = mixedColor.r;
+      colors[i3 + 1] = mixedColor.g;
+      colors[i3 + 2] = mixedColor.b;
     }
 
     geometry.setAttribute(
@@ -171,10 +170,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
   protected setMaterial = (): void => {
     const { size, insideColor } = this.state;
 
-    const material = new THREE.PointsMaterial({
-      color: new THREE.Color(insideColor),
-      size: size,
-      sizeAttenuation: true,
+    const material = new THREE.ShaderMaterial({
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       vertexColors: true,
