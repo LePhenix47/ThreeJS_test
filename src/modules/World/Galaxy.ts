@@ -226,6 +226,8 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
       blending: THREE.AdditiveBlending,
       vertexColors: true,
     });
+
+    this.material = material;
   };
 
   protected setPoints = (): void => {
