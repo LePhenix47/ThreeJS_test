@@ -7,6 +7,9 @@ import Experience, {
 import { PointsEntity } from "./types/entity";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
+import vertexShader from "@shaders/galaxy/vertex.glsl";
+import fragmentShader from "@shaders/galaxy/fragment.glsl";
+
 type GalaxyState = {
   /** Total number of stars rendered in the galaxy. */
   count: number;
@@ -142,18 +145,30 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
        * Gives tight arm cores with occasional outliers.
        */
       const sign = () => (Math.random() < 0.5 ? 1 : -1);
-      const randomX = Math.pow(Math.random(), randomnessPower) * sign() * randomness * randomRadius;
-      const randomY = Math.pow(Math.random(), randomnessPower) * sign() * randomness * randomRadius;
-      const randomZ = Math.pow(Math.random(), randomnessPower) * sign() * randomness * randomRadius;
+      const randomX =
+        Math.pow(Math.random(), randomnessPower) *
+        sign() *
+        randomness *
+        randomRadius;
+      const randomY =
+        Math.pow(Math.random(), randomnessPower) *
+        sign() *
+        randomness *
+        randomRadius;
+      const randomZ =
+        Math.pow(Math.random(), randomnessPower) *
+        sign() *
+        randomness *
+        randomRadius;
 
-      positions[i3]     = Math.cos(branchAngle) * randomRadius + randomX;
+      positions[i3] = Math.cos(branchAngle) * randomRadius + randomX;
       positions[i3 + 1] = randomY;
       positions[i3 + 2] = Math.sin(branchAngle) * randomRadius + randomZ;
 
       const mixedColor = insideColorObj.clone();
       mixedColor.lerp(outsideColorObj, randomRadius / radius);
 
-      colors[i3]     = mixedColor.r;
+      colors[i3] = mixedColor.r;
       colors[i3 + 1] = mixedColor.g;
       colors[i3 + 2] = mixedColor.b;
     }
@@ -186,7 +201,6 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     this.points = points;
   };
 
-  // ! Uh we really do not have a choice in the matter here ???
   private regenerate = (): void => {
     this.scene.remove(this.points);
     this.geometry.dispose();
