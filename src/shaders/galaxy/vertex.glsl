@@ -4,6 +4,7 @@ uniform float uSize;
 attribute float aScales;
 
 varying float vScales;
+varying vec3 vColor;
 
 void main() {
     /*
@@ -26,4 +27,6 @@ void main() {
 
     // * Attribute → Varyings
     vScales = aScales;
+
+    vColor = color;
 }
