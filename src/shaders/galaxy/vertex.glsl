@@ -13,7 +13,7 @@ void main() {
     */ 
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
-// * Galaxy "whirlpool" effect
+// * Galaxy "vortex" effect
     float distanceFromCenter = distance(modelPosition.xz, vec2(0.0));
     float angle = atan(modelPosition.x, modelPosition.z);
     float angleOffset = (1.0 / distanceFromCenter) * uTime * 0.2;
