@@ -2,4 +2,6 @@ precision mediump float; // ? Medium precision float (~10-bit mantissa, minimum 
 
 void main() {
     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+
+    #include <colorspace_fragment>
 }
