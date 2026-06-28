@@ -3,7 +3,7 @@ precision mediump float; // ? Medium precision float (~10-bit mantissa, minimum 
 varying float vScales;
 
 void main() {
-    float dist = length(gl_PointCoord - vec2(0.5));
+    float dist = distance(gl_PointCoord, vec2(0.5));
 
     float radius = 0.2;
 
