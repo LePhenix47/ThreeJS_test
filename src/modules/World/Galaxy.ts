@@ -247,8 +247,8 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     galaxyFolder
       .add(state, "size")
       .name("Star size")
-      .min(0.001)
-      .max(0.1)
+      .min(0.01)
+      .max(3.0)
       .step(0.001)
       .onFinishChange(() => this.regenerate());
 
