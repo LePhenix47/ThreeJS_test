@@ -21,6 +21,10 @@ class Renderer implements Resizable, Updatable, Destroyable {
     return this.experience.scene;
   }
 
+  get rendererPixelRatio(): number {
+    return this.instance.getPixelRatio();
+  }
+
   constructor() {
     if (!Experience.instance) {
       throw new Error("Experience instance not found");
