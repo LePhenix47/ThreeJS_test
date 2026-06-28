@@ -11,6 +11,16 @@ void main() {
     * Position
     */ 
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+
+    float distanceFromCenter = distance(modelPosition.xz, vec2(0.0));
+    float angle = atan(modelPosition.x, modelPosition.z);
+    float angleOffset = (1.0 / distanceFromCenter) * uTime * 0.2;
+
+    angle += angleOffset;
+
+    modelPosition.x = distanceFromCenter * cos(angle);
+    modelPosition.z = distanceFromCenter * sin(angle);
+
     vec4 viewPosition = viewMatrix * modelPosition;
     vec4 projectedPosition = projectionMatrix * viewPosition;
 
