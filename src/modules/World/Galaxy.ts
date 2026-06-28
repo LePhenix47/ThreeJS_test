@@ -4,7 +4,7 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import { PointsEntity } from "./types/entity";
+import { PreviewablePointsEntity } from "./types/entity";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 import vertexShader from "@shaders/galaxy/vertex.glsl";
@@ -48,7 +48,7 @@ type GalaxyState = {
   outsideColor: string;
 };
 
-class Galaxy extends PointsEntity implements Updatable, Destroyable {
+class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private guiRegistry: GUIStateRegistry<GalaxyState> | null = null;
   private previewRegistry: GUIStateRegistry<{ visible: boolean }> | null = null;
@@ -69,9 +69,9 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
   protected material: THREE.ShaderMaterial;
   protected points: THREE.Points;
 
-  private previewGeometry: THREE.BufferGeometry | null = null;
-  private previewMaterial: THREE.ShaderMaterial | null = null;
-  private previewPoint: THREE.Points | null = null;
+  protected previewGeometry: THREE.BufferGeometry | null = null;
+  protected previewMaterial: THREE.ShaderMaterial | null = null;
+  protected previewPoint: THREE.Points | null = null;
 
   private get scene() {
     return this.experience!.scene;
@@ -228,7 +228,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     this.points = points;
   };
 
-  private setPreviewGeometry = (): void => {
+  protected setPreviewGeometry = (): void => {
     const geometry = new THREE.BufferGeometry();
 
     const itemSize = 3;
@@ -243,7 +243,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     this.previewGeometry = geometry;
   };
 
-  private setPreviewMaterial = (): void => {
+  protected setPreviewMaterial = (): void => {
     this.previewMaterial = new THREE.ShaderMaterial({
       depthWrite: false,
       vertexColors: true,
@@ -256,7 +256,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     });
   };
 
-  private setPreviewPoints = (): void => {
+  protected setPreviewPoints = (): void => {
     if (!this.previewGeometry || !this.previewMaterial) return;
 
     this.previewPoint = new THREE.Points(this.previewGeometry, this.previewMaterial);
@@ -386,7 +386,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     }
   };
 
-  private destroyPreview = (): void => {
+  protected destroyPreview = (): void => {
     if (!this.previewPoint) return;
 
     this.scene.remove(this.previewPoint);
