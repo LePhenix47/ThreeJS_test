@@ -51,6 +51,7 @@ type GalaxyState = {
 class Galaxy extends PointsEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private guiRegistry: GUIStateRegistry<GalaxyState> | null = null;
+  private previewRegistry: GUIStateRegistry<{ visible: boolean }> | null = null;
 
   private readonly debugDefaults: GalaxyState = {
     count: 200_000,
@@ -67,6 +68,10 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
   protected geometry: THREE.BufferGeometry;
   protected material: THREE.ShaderMaterial;
   protected points: THREE.Points;
+
+  private previewGeometry: THREE.BufferGeometry | null = null;
+  private previewMaterial: THREE.ShaderMaterial | null = null;
+  private previewPoint: THREE.Points | null = null;
 
   private get scene() {
     return this.experience!.scene;
@@ -223,6 +228,42 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     this.points = points;
   };
 
+  private setPreviewGeometry = (): void => {
+    const geometry = new THREE.BufferGeometry();
+
+    const itemSize = 3;
+    const position = new Float32Array([0, 0, 0]);
+    const color = new Float32Array([1, 1, 1]);
+    const scale = new Float32Array([1]);
+
+    geometry.setAttribute("position", new THREE.BufferAttribute(position, itemSize));
+    geometry.setAttribute("color", new THREE.BufferAttribute(color, itemSize));
+    geometry.setAttribute("aScales", new THREE.BufferAttribute(scale, 1));
+
+    this.previewGeometry = geometry;
+  };
+
+  private setPreviewMaterial = (): void => {
+    this.previewMaterial = new THREE.ShaderMaterial({
+      depthWrite: false,
+      vertexColors: true,
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uSize: { value: 2000 },
+      },
+    });
+  };
+
+  private setPreviewPoints = (): void => {
+    if (!this.previewGeometry || !this.previewMaterial) return;
+
+    this.previewPoint = new THREE.Points(this.previewGeometry, this.previewMaterial);
+    this.previewPoint.visible = false;
+    this.scene.add(this.previewPoint);
+  };
+
   private regenerate = (): void => {
     this.scene.remove(this.points);
     this.geometry.dispose();
@@ -313,10 +354,49 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
       .addColor(state, "outsideColor")
       .name("Edge color")
       .onFinishChange(() => this.regenerate());
+
+    this.setPreviewGeometry();
+    this.setPreviewMaterial();
+    this.setPreviewPoints();
+    if (!this.previewPoint) return;
+
+    const previewRegistry = new GUIStateRegistry<{ visible: boolean }>(
+      "galaxy-preview-state",
+      { visible: false },
+    );
+    this.previewRegistry = previewRegistry;
+
+    this.previewPoint.visible = previewRegistry.state.visible;
+
+    const debugFolder = this.debug.gui.addFolder("Shader debug");
+    debugFolder
+      .add(previewRegistry.state, "visible")
+      .name("Show preview")
+      .onChange((v: boolean) => {
+        this.previewPoint!.visible = v;
+      });
   };
 
   public update = (): void => {
-    this.material.uniforms.uTime.value = this.time.elapsedSeconds;
+    const t = this.time.elapsedSeconds;
+    this.material.uniforms.uTime.value = t;
+
+    if (this.previewMaterial) {
+      this.previewMaterial.uniforms.uTime.value = t;
+    }
+  };
+
+  private destroyPreview = (): void => {
+    if (!this.previewPoint) return;
+
+    this.scene.remove(this.previewPoint);
+    this.previewGeometry?.dispose();
+    this.previewMaterial?.dispose();
+    this.previewRegistry?.dispose();
+    this.previewPoint = null;
+    this.previewGeometry = null;
+    this.previewMaterial = null;
+    this.previewRegistry = null;
   };
 
   public destroy = (): void => {
@@ -324,6 +404,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     this.geometry.dispose();
     this.material.dispose();
     this.guiRegistry?.dispose();
+    this.destroyPreview();
   };
 }
 
