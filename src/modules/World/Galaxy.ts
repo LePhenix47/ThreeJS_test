@@ -236,7 +236,10 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
     const color = new Float32Array([1, 1, 1]);
     const scale = new Float32Array([1]);
 
-    geometry.setAttribute("position", new THREE.BufferAttribute(position, itemSize));
+    geometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(position, itemSize),
+    );
     geometry.setAttribute("color", new THREE.BufferAttribute(color, itemSize));
     geometry.setAttribute("aScales", new THREE.BufferAttribute(scale, 1));
 
@@ -259,7 +262,10 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
   protected setPreviewPoints = (): void => {
     if (!this.previewGeometry || !this.previewMaterial) return;
 
-    this.previewPoint = new THREE.Points(this.previewGeometry, this.previewMaterial);
+    this.previewPoint = new THREE.Points(
+      this.previewGeometry,
+      this.previewMaterial,
+    );
     this.previewPoint.visible = false;
     this.scene.add(this.previewPoint);
   };
@@ -299,11 +305,13 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
 
     galaxyFolder
       .add(state, "size")
-      .name("Star size")
+      .name("uSize")
       .min(0.01)
       .max(10.0)
-      .step(0.001)
-      .onFinishChange(() => this.regenerate());
+      .step(0.001);
+    registry.bind("size", (v: number) => {
+      this.material.uniforms.uSize.value = v * this.renderer.rendererPixelRatio;
+    });
 
     galaxyFolder
       .add(state, "radius")
