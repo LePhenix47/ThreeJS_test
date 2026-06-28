@@ -73,27 +73,27 @@ export function generateSphericalRandomness({
   randomness,
   randomnessPower,
   squash,
+  heightFalloff = 1,
 }: {
   randomness: number;
   randomnessPower: number;
   squash: number;
+  /** Vertical taper factor `[0..1]`. `1 - distanceFromCenter / radius` gives disc shape. */
+  heightFalloff?: number;
 }): {
   x: number;
   y: number;
   z: number;
 } {
   const theta: number = Math.random() * 2 * Math.PI;
-
   const phi: number = Math.acos(2 * Math.random() - 1);
-
-  const radiusRandomnessBase: number = Math.random() * randomness;
-  const rho: number = Math.pow(radiusRandomnessBase, randomnessPower);
+  const rho: number = Math.pow(Math.random(), randomnessPower) * randomness;
 
   const xzPlanes3dRadius = rho * Math.sin(phi);
 
   return {
     x: xzPlanes3dRadius * Math.cos(theta),
     z: xzPlanes3dRadius * Math.sin(theta),
-    y: rho * Math.cos(phi) * squash,
+    y: rho * Math.cos(phi) * squash * heightFalloff,
   };
 }

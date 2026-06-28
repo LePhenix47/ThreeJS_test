@@ -9,7 +9,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 import vertexShader from "@shaders/galaxy/vertex.glsl";
 import fragmentShader from "@shaders/galaxy/fragment.glsl";
-import { randomSignValue } from "@/utils/numbers/math";
+import { generateSphericalRandomness } from "@utils/placement/sphere-placement";
 
 type GalaxyState = {
   /** Total number of stars rendered in the galaxy. */
@@ -46,6 +46,12 @@ type GalaxyState = {
 
   /** Hex color of stars near the outer edge (e.g. `"#1b3984"`). */
   outsideColor: string;
+
+  /**
+   * Vertical flattening factor applied to scatter's Y component.
+   * `0` = completely flat disc, `1` = spherical scatter.
+   */
+  squash: number;
 };
 
 class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
@@ -63,6 +69,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
     randomnessPower: 3,
     insideColor: "#ff6030",
     outsideColor: "#1b3984",
+    squash: 0.2,
   };
 
   protected geometry: THREE.BufferGeometry;
@@ -139,6 +146,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
       outsideColor,
       randomness,
       randomnessPower,
+      squash,
     } = this.state;
 
     const insideColorObj = new THREE.Color(insideColor);
@@ -157,27 +165,12 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
       const randomRadius = Math.random() * radius;
       const branchAngle = this.computeBranchAngle(i);
 
-      /*
-       * Signed power-law scatter: bias magnitude toward 0, then randomly flip sign.
-       * Gives tight arm cores with occasional outliers.
-       */
-      const randomX =
-        Math.pow(Math.random(), randomnessPower) *
-        randomSignValue() *
-        randomness *
-        randomRadius;
-      const randomY =
-        Math.pow(Math.random(), randomnessPower) *
-        randomSignValue() *
-        randomness *
-        randomRadius;
-      const randomZ =
-        Math.pow(Math.random(), randomnessPower) *
-        randomSignValue() *
-        randomness *
-        randomRadius;
+      const heightFalloff = 1 - randomRadius / radius;
 
-      // * Base positions
+      const { x: randomX, y: randomY, z: randomZ } =
+        generateSphericalRandomness({ randomness, randomnessPower, squash, heightFalloff });
+
+      // * Base positions (clean spiral arm — scatter applied in vertex shader after spin)
       positions[i3] = Math.cos(branchAngle) * randomRadius;
       positions[i3 + 1] = 0.0;
       positions[i3 + 2] = Math.sin(branchAngle) * randomRadius;
@@ -371,6 +364,13 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
     galaxyFolder
       .addColor(state, "outsideColor")
       .name("Edge color")
+      .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "squash")
+      .min(0)
+      .max(1)
+      .step(0.001)
       .onFinishChange(() => this.regenerate());
 
     this.setPreviewGeometry();
