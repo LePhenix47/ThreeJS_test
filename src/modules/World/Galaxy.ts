@@ -148,6 +148,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
 
     const positions = new Float32Array(count * itemSize);
     const colors = new Float32Array(count * itemSize);
+    const randomnessPosition = new Float32Array(count * itemSize);
     const scales = new Float32Array(count);
 
     for (let i = 0; i < count; i++) {
@@ -176,10 +177,15 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
         randomness *
         randomRadius;
 
+      // * Base positions
+      positions[i3] = Math.cos(branchAngle) * randomRadius;
+      positions[i3 + 1] = 0.0;
+      positions[i3 + 2] = Math.sin(branchAngle) * randomRadius;
+
       // * Random positions
-      positions[i3] = Math.cos(branchAngle) * randomRadius + randomX;
-      positions[i3 + 1] = randomY;
-      positions[i3 + 2] = Math.sin(branchAngle) * randomRadius + randomZ;
+      randomnessPosition[i3] = randomX;
+      randomnessPosition[i3 + 1] = randomY;
+      randomnessPosition[i3 + 2] = randomZ;
 
       // * Random colors
       const mixedColor = insideColorObj.clone();
@@ -199,6 +205,10 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
     );
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, itemSize));
     geometry.setAttribute("aScales", new THREE.BufferAttribute(scales, 1));
+    geometry.setAttribute(
+      "aRandomness",
+      new THREE.BufferAttribute(randomnessPosition, itemSize),
+    );
 
     this.geometry = geometry;
   };

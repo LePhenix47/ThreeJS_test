@@ -2,6 +2,7 @@ uniform float uTime;
 uniform float uSize;
 
 attribute float aScales;
+attribute vec3 aRandomness;
 
 varying float vScales;
 varying vec3 vColor;
@@ -12,6 +13,7 @@ void main() {
     */ 
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
+// * Galaxy "whirlpool" effect
     float distanceFromCenter = distance(modelPosition.xz, vec2(0.0));
     float angle = atan(modelPosition.x, modelPosition.z);
     float angleOffset = (1.0 / distanceFromCenter) * uTime * 0.2;
@@ -20,6 +22,9 @@ void main() {
 
     modelPosition.x = distanceFromCenter * cos(angle);
     modelPosition.z = distanceFromCenter * sin(angle);
+
+// * Add randomness on the position
+    modelPosition += vec4(aRandomness, 1.0);
 
     vec4 viewPosition = viewMatrix * modelPosition;
     vec4 projectedPosition = projectionMatrix * viewPosition;
