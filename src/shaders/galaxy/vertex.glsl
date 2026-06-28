@@ -1,6 +1,10 @@
 uniform float uTime;
 uniform float uSize;
 
+attribute float aScales;
+
+varying float vScales;
+
 void main() {
     /*
     * Position
@@ -14,5 +18,8 @@ void main() {
     /*
     * Size, sets the size of the fragment
     */
-    gl_PointSize = uSize;
+    gl_PointSize = uSize * aScales;
+
+    // * Attribute → Varyings
+    vScales = aScales;
 }

@@ -136,8 +136,10 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     const outsideColorObj = new THREE.Color(outsideColor);
 
     const itemSize: number = 3;
+
     const positions = new Float32Array(count * itemSize);
     const colors = new Float32Array(count * itemSize);
+    const scales = new Float32Array(count);
 
     for (let i = 0; i < count; i++) {
       const i3 = i * itemSize;
@@ -165,16 +167,21 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
         randomness *
         randomRadius;
 
+      // * Random positions
       positions[i3] = Math.cos(branchAngle) * randomRadius + randomX;
       positions[i3 + 1] = randomY;
       positions[i3 + 2] = Math.sin(branchAngle) * randomRadius + randomZ;
 
+      // * Random colors
       const mixedColor = insideColorObj.clone();
       mixedColor.lerp(outsideColorObj, randomRadius / radius);
 
       colors[i3] = mixedColor.r;
       colors[i3 + 1] = mixedColor.g;
       colors[i3 + 2] = mixedColor.b;
+
+      // * Random scales
+      scales[i] = Math.random();
     }
 
     geometry.setAttribute(
@@ -182,6 +189,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
       new THREE.BufferAttribute(positions, itemSize),
     );
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, itemSize));
+    geometry.setAttribute("aScales", new THREE.BufferAttribute(scales, 1));
 
     this.geometry = geometry;
   };
@@ -248,7 +256,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
       .add(state, "size")
       .name("Star size")
       .min(0.01)
-      .max(3.0)
+      .max(10.0)
       .step(0.001)
       .onFinishChange(() => this.regenerate());
 
