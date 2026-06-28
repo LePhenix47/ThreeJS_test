@@ -80,6 +80,10 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.time;
   }
 
+  private get renderer() {
+    return this.experience!.renderer;
+  }
+
   private get state(): GalaxyState {
     return this.guiRegistry?.state || this.debugDefaults;
   }
@@ -205,7 +209,7 @@ class Galaxy extends PointsEntity implements Updatable, Destroyable {
       fragmentShader,
       uniforms: {
         uTime: { value: 0 },
-        uSize: { value: size },
+        uSize: { value: size * this.renderer.rendererPixelRatio },
       },
     });
 
