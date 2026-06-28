@@ -5,9 +5,8 @@ varying float vScales;
 void main() {
     float dist = distance(gl_PointCoord, vec2(0.5));
 
-    dist *= 2.0;
-
     float circle = 1.0 - dist;
+    circle = pow(circle, 10.0);
 
     gl_FragColor = vec4(vec3(circle), 1.0);
 
