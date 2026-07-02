@@ -52,6 +52,9 @@ type GalaxyState = {
    * `0` = completely flat disc, `1` = spherical scatter.
    */
   squash: number;
+
+  /** Gravitational lensing strength — tangential deflection scale near center. `0` = off. */
+  lensStrength: number;
 };
 
 class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
@@ -70,6 +73,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
     insideColor: "#ff6030",
     outsideColor: "#1b3984",
     squash: 0.2,
+    lensStrength: 0,
   };
 
   protected geometry: THREE.BufferGeometry;
@@ -167,8 +171,16 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
 
       const heightFalloff = 1 - randomRadius / radius;
 
-      const { x: randomX, y: randomY, z: randomZ } =
-        generateSphericalRandomness({ randomness, randomnessPower, squash, heightFalloff });
+      const {
+        x: randomX,
+        y: randomY,
+        z: randomZ,
+      } = generateSphericalRandomness({
+        randomness,
+        randomnessPower,
+        squash,
+        heightFalloff,
+      });
 
       // * Base positions (clean spiral arm — scatter applied in vertex shader after spin)
       positions[i3] = Math.cos(branchAngle) * randomRadius;
@@ -207,7 +219,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = (): void => {
-    const { size } = this.state;
+    const { size, lensStrength } = this.state;
 
     const material = new THREE.ShaderMaterial({
       depthWrite: false,
@@ -218,6 +230,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
       uniforms: {
         uTime: { value: 0 },
         uSize: { value: size * this.renderer.rendererPixelRatio },
+        uLensStrength: { value: lensStrength },
       },
     });
 
@@ -372,6 +385,16 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
       .max(1)
       .step(0.001)
       .onFinishChange(() => this.regenerate());
+
+    galaxyFolder
+      .add(state, "lensStrength")
+      .name("uLensStrength")
+      .min(0)
+      .max(5)
+      .step(0.001);
+    registry.bind("lensStrength", (v: number) => {
+      this.material.uniforms.uLensStrength.value = v;
+    });
 
     this.setPreviewGeometry();
     this.setPreviewMaterial();

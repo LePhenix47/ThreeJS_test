@@ -1,5 +1,6 @@
 uniform float uTime;
 uniform float uSize;
+uniform float uLensStrength;
 
 attribute float aScales;
 attribute vec3 aRandomness;
@@ -25,6 +26,13 @@ void main() {
 
 // * Add randomness on the position
     modelPosition += vec4(aRandomness, 0.0);
+
+// * Gravitational lensing to deflect stars near center
+    vec2 inwardDir = -modelPosition.xz;
+    vec2 radialNormal = normalize(inwardDir);
+    vec2 tangentDir = vec2(-radialNormal.y, radialNormal.x);
+    float lensDeflection = uLensStrength / (distanceFromCenter * distanceFromCenter);
+    modelPosition.xz += tangentDir * lensDeflection;
 
     vec4 viewPosition = viewMatrix * modelPosition;
     vec4 projectedPosition = projectionMatrix * viewPosition;
