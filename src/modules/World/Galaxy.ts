@@ -248,7 +248,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
     const geometry = new THREE.BufferGeometry();
 
     const itemSize = 3;
-    const position = new Float32Array([0, 0, 0]);
+    const position = new Float32Array([0.001, 0, 0]);
     const color = new Float32Array([1, 1, 1]);
     const scale = new Float32Array([1]);
 
@@ -271,6 +271,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
       uniforms: {
         uTime: { value: 0 },
         uSize: { value: 2_000 },
+        uLensStrength: { value: 0 },
       },
     });
   };
