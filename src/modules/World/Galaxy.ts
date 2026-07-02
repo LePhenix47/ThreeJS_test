@@ -270,7 +270,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
       fragmentShader,
       uniforms: {
         uTime: { value: 0 },
-        uSize: { value: 2000 },
+        uSize: { value: 2_000 },
       },
     });
   };
