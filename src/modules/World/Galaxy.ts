@@ -248,7 +248,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
     const geometry = new THREE.BufferGeometry();
 
     const itemSize = 3;
-    const position = new Float32Array([0.001, 0, 0]);
+    const position = new Float32Array([0.001, 0, 0]); // ? since we divide lens distance from center, if we set it to 0 we get 1/0
     const color = new Float32Array([1, 1, 1]);
     const scale = new Float32Array([1]);
 
