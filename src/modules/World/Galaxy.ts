@@ -167,10 +167,10 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
     for (let i = 0; i < count; i++) {
       const i3 = i * itemSize;
 
-      const randomRadius = Math.random() * radius;
-      const branchAngle = this.computeBranchAngle(i);
+      const randomRadius: number = Math.random() * radius;
+      const branchAngle: number = this.computeBranchAngle(i);
 
-      const heightFalloff = 1 - randomRadius / radius;
+      const heightFalloff: number = 1 - randomRadius / radius;
 
       const {
         x: randomX,
@@ -248,7 +248,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
   protected setPreviewGeometry = (): void => {
     const geometry = new THREE.BufferGeometry();
 
-    const itemSize = 3;
+    const itemSize: number = 3;
     const position = new Float32Array([0.001, 0, 0]); // ? since we divide lens distance from center, if we set it to 0 we get 1/0
     const color = new Float32Array([1, 1, 1]);
     const scale = new Float32Array([1]);
@@ -421,11 +421,11 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
   };
 
   public update = (): void => {
-    const t = this.time.elapsedSeconds;
-    this.material.uniforms.uTime.value = t;
+    const timeElapsed: number = this.time.elapsedSeconds;
+    this.material.uniforms.uTime.value = timeElapsed;
 
     if (this.previewMaterial) {
-      this.previewMaterial.uniforms.uTime.value = t;
+      this.previewMaterial.uniforms.uTime.value = timeElapsed;
     }
   };
 
