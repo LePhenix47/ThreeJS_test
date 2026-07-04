@@ -10,6 +10,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import vertexShader from "@shaders/galaxy/vertex.glsl";
 import fragmentShader from "@shaders/galaxy/fragment.glsl";
 import { generateSphericalRandomness } from "@utils/placement/sphere-placement";
+import { ColorEnum, SpaceEnum } from "@/utils/enums/space-color";
 
 type GalaxyState = {
   /** Total number of stars rendered in the galaxy. */
@@ -183,22 +184,22 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
       });
 
       // * Base positions (clean spiral arm — scatter applied in vertex shader after spin)
-      positions[i3] = Math.cos(branchAngle) * randomRadius;
-      positions[i3 + 1] = 0.0;
-      positions[i3 + 2] = Math.sin(branchAngle) * randomRadius;
+      positions[i3 + SpaceEnum.X] = Math.cos(branchAngle) * randomRadius;
+      positions[i3 + SpaceEnum.Y] = 0.0;
+      positions[i3 + SpaceEnum.Z] = Math.sin(branchAngle) * randomRadius;
 
       // * Random positions
-      randomnessPosition[i3] = randomX;
-      randomnessPosition[i3 + 1] = randomY;
-      randomnessPosition[i3 + 2] = randomZ;
+      randomnessPosition[i3 + SpaceEnum.X] = randomX;
+      randomnessPosition[i3 + SpaceEnum.Y] = randomY;
+      randomnessPosition[i3 + SpaceEnum.Z] = randomZ;
 
       // * Random colors
       const mixedColor = insideColorObj.clone();
       mixedColor.lerp(outsideColorObj, randomRadius / radius);
 
-      colors[i3] = mixedColor.r;
-      colors[i3 + 1] = mixedColor.g;
-      colors[i3 + 2] = mixedColor.b;
+      colors[i3 + ColorEnum.Red] = mixedColor.r;
+      colors[i3 + ColorEnum.Green] = mixedColor.g;
+      colors[i3 + ColorEnum.Blue] = mixedColor.b;
 
       // * Random scales
       scales[i] = Math.random();
