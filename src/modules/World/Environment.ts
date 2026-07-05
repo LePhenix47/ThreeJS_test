@@ -1,6 +1,7 @@
 import Experience, { Destroyable } from "@modules/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import { EnvironmentEntity, EnvironmentMapConfig } from "./types/entity";
 
 type EnvironmentState = {
   axisHelper: boolean;
@@ -8,13 +9,16 @@ type EnvironmentState = {
   gridHelper: boolean;
 };
 
-class Environment implements Destroyable {
+class Environment extends EnvironmentEntity implements Destroyable {
   private readonly experience: Experience | null;
   private sunLight: THREE.DirectionalLight;
   private axisHelper: THREE.AxesHelper;
   private lightHelper: THREE.DirectionalLightHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
+
+  protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
+  protected envMapConfig: EnvironmentMapConfig = {};
 
   private get scene() {
     return this.experience!.scene;
@@ -29,6 +33,7 @@ class Environment implements Destroyable {
   }
 
   constructor() {
+    super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
@@ -41,6 +46,10 @@ class Environment implements Destroyable {
 
     console.log("Environment");
   }
+
+  protected setEnvMap = (): void => {};
+
+  protected updateMaterial = (): void => {};
 
   private setLights = () => {
     const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
