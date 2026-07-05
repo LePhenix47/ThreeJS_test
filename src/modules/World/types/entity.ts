@@ -41,7 +41,10 @@ export abstract class GltfEntity {
   protected abstract setModel(): void;
   protected animation?: AnimationState<string>;
 
-  // * NOTE: We use the regular function syntax to avoid memory issues
+  /*
+   * NOTE, we use regular method syntax: lives on the prototype
+   * 1000 GltfEntity instances share 1 copy vs. 1000 copies with an arrow field
+   */
   protected destroyModel(): void {
     this.model.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
