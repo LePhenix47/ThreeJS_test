@@ -64,8 +64,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   };
 
   protected setTextures = (): void => {
-    const color = this.resources.getTexture("human", "color");
-    const normal = this.resources.getTexture("human", "normal");
+    const { color, normal } = this.resources.getTextures("human");
 
     this.textures = {
       color,
