@@ -1,9 +1,15 @@
 import { TextureSourceType } from "@modules/Experience/utils/Resources/types";
 
-// prettier-ignore
+import envMap0 from "./environment-maps/env-0";
+
 const textures = [
+  // prettier-ignore
+  envMap0,
 ] as const;
 
+export default textures;
+
+// ? ------------------- TYPES -----------------
 type RawTextures = typeof textures;
 type TextureUnion = RawTextures[number];
 
@@ -24,5 +30,3 @@ type TextureByName = {
 
 export type GetPathsFromName<T extends keyof TextureByName> =
   keyof TextureByName[T]["paths"];
-
-export default textures;

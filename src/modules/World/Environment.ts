@@ -24,6 +24,10 @@ class Environment extends EnvironmentEntity implements Destroyable {
     return this.experience!.scene;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   private get camera() {
     return this.experience!.camera;
   }
@@ -37,6 +41,10 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
+    this.setEnvMap();
+    this.scene.background = this.envMapTexture;
+    this.scene.environment = this.envMapTexture;
+
     this.setLights();
     this.setHelpers();
 
@@ -47,7 +55,11 @@ class Environment extends EnvironmentEntity implements Destroyable {
     console.log("Environment");
   }
 
-  protected setEnvMap = (): void => {};
+  protected setEnvMap = (): void => {
+    const envMap = this.resources.getCubeTexture("env-map-0");
+
+    this.envMapTexture = envMap;
+  };
 
   protected updateMaterial = (): void => {};
 
