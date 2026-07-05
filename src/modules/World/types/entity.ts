@@ -40,4 +40,26 @@ export abstract class GltfEntity {
   /** Loads the GLTF asset and assigns the scene root to `model`. */
   protected abstract setModel(): void;
   protected animation?: AnimationState<string>;
+
+  // * NOTE: We use the regular function syntax to avoid memory issues
+  protected destroyModel(): void {
+    this.model.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+
+      child.geometry.dispose();
+
+      /*
+        ? Dispose material(s). A mesh can have either a single material or
+        ? an array of materials when different geometry groups use different materials.
+      */
+      if (!Array.isArray(child.material)) {
+        child.material.dispose();
+        return;
+      }
+
+      for (const material of child.material) {
+        material.dispose();
+      }
+    });
+  }
 }
