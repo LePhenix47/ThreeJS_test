@@ -122,7 +122,14 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     });
   };
 
-  update = (): void => {};
+  update = (): void => {
+    /* TODO: cursor-driven slap interaction.
+     * eelslap.com was a site where a guy got slapped by a fish in slow-mo,
+     * but playback position was tied to the cursor X on screen —
+     * move mouse right = fish goes forward, move left = fish goes back.
+     * Do the same here: normalize mousemove clientX (0..1), lerp a rotation
+     * or position offset on the head mesh so it reacts to horizontal cursor movement. */
+  };
 
   destroy = (): void => {
     this.guiRegistry?.dispose();
