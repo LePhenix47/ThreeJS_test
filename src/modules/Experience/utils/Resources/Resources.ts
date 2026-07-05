@@ -111,10 +111,14 @@ class Resources extends EventEmitter<ResourcesEvents> {
 
   private handleLoadingManager = () => {
     this.loadingManager.onLoad = () => {
-      this.allLoaded = true;
-      this.emit("textures-loaded");
-      console.log("Textures loaded");
-
+      /*
+       * ! Do NOT emit "textures-loaded" here.
+       * loadingManager.onLoad fires when its internal queue hits 0 — but GLTF loading
+       * is multi-pass: it fetches the .gltf JSON, then starts secondary requests for
+       * .bin / embedded textures. Between those two passes the queue briefly empties,
+       * triggering a false "all done". We use a manual counter in sourceLoaded instead,
+       * which only emits once every declared source has actually landed in this.items.
+       */
       this.originalOnLoad?.();
     };
   };
@@ -146,6 +150,19 @@ class Resources extends EventEmitter<ResourcesEvents> {
 
     this.loaders = loaders;
   };
+
+  private get totalToLoad(): number {
+    return this.sources.reduce((total, source) => {
+      if (source.type === "texture" || source.type === "ldrEnvTexture") {
+        return total + Object.keys(source.paths).length;
+      }
+      return total + 1;
+    }, 0);
+  }
+
+  private get loadedCount(): number {
+    return Object.keys(this.items).length;
+  }
 
   public loadResources = () => {
     for (const source of this.sources) {
@@ -270,6 +287,12 @@ class Resources extends EventEmitter<ResourcesEvents> {
     const itemKey = key ? `${source.name}_${key}` : source.name;
     this.items[itemKey] = file;
     console.log(`${itemKey} loaded`);
+
+    if (this.loadedCount === this.totalToLoad) {
+      this.allLoaded = true;
+      this.emit("textures-loaded");
+      console.log("ALL TEXTURES LOADED !!!", this.items);
+    }
   };
 }
 
