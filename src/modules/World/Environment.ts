@@ -1,18 +1,17 @@
 import Experience, { Destroyable } from "@modules/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import { EnvironmentEntity, EnvironmentMapConfig } from "./types/entity";
 
-type EnvironmentMap = {
-  texture: THREE.CubeTexture | null;
-  intensity: number;
-  updateMaterial: () => void;
-};
-
-class Environment implements Destroyable {
+class Environment extends EnvironmentEntity implements Destroyable {
   private readonly experience: Experience | null;
+
   private sunLight: THREE.DirectionalLight;
   private sunLightHelper: THREE.DirectionalLightHelper | null = null;
-  private envMap: EnvironmentMap;
+
+  protected envMapTexture: THREE.CubeTexture | null = null;
+  protected envMapConfig: EnvironmentMapConfig = { environmentIntensity: 0.4 };
+
   private guiRegistry: GUIStateRegistry<{
     envMapIntensity: number;
     sunLightIntensity: number;
@@ -31,44 +30,33 @@ class Environment implements Destroyable {
   }
 
   constructor() {
+    super();
     console.log("World");
 
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.envMap = this.setEnvMap();
-    this.sunLight = this.initSunLight(true);
+    this.setEnvMap();
+    this.setSunLight(true);
 
     this.scene.add(this.sunLight);
 
-    this.scene.environment = this.envMap.texture;
-    this.scene.background = this.envMap.texture;
+    this.scene.environment = this.envMapTexture;
+    this.scene.background = this.envMapTexture;
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
   }
 
-  private setEnvMap = (): EnvironmentMap => {
-    /*
-     * updateMaterial lives on the data bag so GUI debug controls can call it directly
-     * when intensity/texture changes — no need to pass a separate callback reference
-     *  */
-    const initEnvMap: EnvironmentMap = {
-      intensity: 0.4,
-      texture: null,
-      updateMaterial: this.updateMaterial,
-    };
-
+  protected setEnvMap = (): void => {
     const texture = this.resources.getCubeTexture("environmentMapTexture");
     texture.colorSpace = THREE.SRGBColorSpace;
 
-    initEnvMap.texture = texture;
-
-    return initEnvMap;
+    this.envMapTexture = texture;
   };
 
-  private initSunLight = (showHelper?: boolean) => {
+  private setSunLight = (showHelper?: boolean): void => {
     const sunLight = new THREE.DirectionalLight("white", 4);
 
     const mapSize = 2 ** 10;
@@ -78,36 +66,37 @@ class Environment implements Destroyable {
     sunLight.shadow.normalBias = 0.05;
 
     sunLight.position.set(3, 3, -2.25);
+    this.sunLight = sunLight;
 
-    if (showHelper) {
-      this.sunLightHelper = new THREE.DirectionalLightHelper(sunLight, 5);
-      this.scene.add(this.sunLightHelper);
-    }
+    if (!showHelper) return;
 
-    return sunLight;
+    this.sunLightHelper = new THREE.DirectionalLightHelper(this.sunLight, 5);
+    this.scene.add(this.sunLightHelper);
   };
 
-  private updateMaterial = () => {
+  protected updateMaterial = (): void => {
+    const { environmentIntensity } = this.envMapConfig;
+
     this.scene.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
 
-      child.material.envMap = this.envMap.texture;
-      child.material.envMapIntensity = this.envMap.intensity;
+      child.material.envMap = this.envMapTexture;
+      child.material.envMapIntensity = environmentIntensity ?? 1;
       child.material.needsUpdate = true;
     });
   };
 
   private addDebugFolders = () => {
     const registry = new GUIStateRegistry("environment-gui-state", {
-      envMapIntensity: this.envMap.intensity,
+      envMapIntensity: this.envMapConfig.environmentIntensity ?? 1,
       sunLightIntensity: this.sunLight.intensity,
       sunLightHelper: false,
     });
 
     registry
       .bind("envMapIntensity", (v) => {
-        this.envMap.intensity = v;
-        this.envMap.updateMaterial();
+        this.envMapConfig.environmentIntensity = v;
+        this.updateMaterial();
       })
       .bind("sunLightIntensity", (v) => {
         this.sunLight.intensity = v;
