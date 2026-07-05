@@ -44,7 +44,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
     this.scene.add(this.model);
 
-    this.castModelShadows();
+    this.updateMaterials();
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -64,12 +64,16 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   };
 
   protected setTextures = (): void => {
-    const { color, normal } = this.resources.getTextures("human");
+    const textures = this.resources.getTextures("human");
 
-    this.textures = {
-      color,
-      normal,
-    };
+    for (const [key, texture] of Object.entries(textures)) {
+      if (key === "color") texture.colorSpace = THREE.SRGBColorSpace;
+
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+    }
+
+    this.textures = textures;
   };
 
   protected setModel = (): void => {
@@ -77,6 +81,15 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     console.log(humanGltf);
 
     const humanModelLoaded = humanGltf.scene;
+
+    const mesh = humanModelLoaded.children[0];
+
+    if (!(mesh instanceof THREE.Mesh))
+      throw new Error("Human: expected Mesh at children[0]");
+
+    mesh.rotation.y = THREE.MathUtils.degToRad(90);
+
+    mesh.material = this.material;
 
     this.model = humanModelLoaded;
 
@@ -93,10 +106,19 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     const debugFolder = this.debug.gui.addFolder("Human");
   };
 
-  private castModelShadows = () => {
+  private updateMaterials = () => {
     this.model.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return;
+      if (
+        !(child instanceof THREE.Mesh) ||
+        !(child.material instanceof THREE.MeshStandardMaterial)
+      )
+        return;
+
       child.castShadow = true;
+      child.receiveShadow = true;
+      child.material.envMapIntensity = 1;
+
+      child.material.needsUpdate = true;
     });
   };
 
@@ -105,24 +127,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   destroy = (): void => {
     this.guiRegistry?.dispose();
 
-    this.model.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return;
-
-      child.geometry.dispose();
-
-      /*
-        ? Dispose material(s). A mesh can have either a single material or
-        ? an array of materials when different geometry groups use different materials.
-      */
-      if (!Array.isArray(child.material)) {
-        child.material.dispose();
-        return;
-      }
-
-      for (const material of child.material) {
-        material.dispose();
-      }
-    });
+    this.destroyModel();
 
     this.scene.remove(this.model);
   };

@@ -64,25 +64,24 @@ class Environment extends EnvironmentEntity implements Destroyable {
   protected updateMaterial = (): void => {};
 
   private setLights = () => {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 3);
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    const size: number = 2 ** 10;
     sunLight.castShadow = true;
-    sunLight.shadow.radius = 4;
-    sunLight.shadow.mapSize.set(2048, 2048);
+    sunLight.shadow.mapSize.set(size, size);
+    sunLight.shadow.normalBias = 0.05;
 
     const { camera } = sunLight.shadow;
-    camera.near = 0.5;
-    camera.far = 100;
+    camera.far = 15;
     camera.top = 7;
     camera.right = 7;
     camera.bottom = -7;
     camera.left = -7;
 
-    sunLight.position.set(5, 5, 5);
+    sunLight.position.set(0.25, 2, -2.25);
 
     this.sunLight = sunLight;
-    this.scene.add(ambientLight, sunLight);
+    this.scene.add(sunLight);
   };
 
   private setHelpers = () => {
