@@ -1,10 +1,12 @@
 import { TextureSourceType } from "@modules/Experience/utils/Resources/types";
 
 import envMap0 from "./environment-maps/env-0";
+import humanModelTextures from "./human/human";
 
 const textures = [
   // prettier-ignore
   envMap0,
+  humanModelTextures,
 ] as const;
 
 export default textures;
@@ -24,7 +26,7 @@ export type CubeTextureNames = TextureNamesByType<"cubeEnvTexture">; // never
 export type HdrTextureNames = TextureNamesByType<"hdrEnvTexture">; // never
 
 // ? Creates an object with the "name" property value as the key and its whole obj as the value
-type TextureByName = {
+export type TextureByName = {
   [T in TextureUnion as T["name"]]: T;
 };
 

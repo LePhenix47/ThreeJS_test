@@ -83,3 +83,13 @@ export abstract class GltfEntity {
     });
   }
 }
+
+/** Extends `GltfEntity` with externally-loaded texture + material support. Use when the GLTF model's embedded material is replaced by a custom one. Use `Pick<EntityTexture, ...>` on the class property to declare only the slots actually used. */
+export abstract class TexturedGltfEntity extends GltfEntity {
+  protected abstract textures: Partial<EntityTexture>;
+  protected abstract material: THREE.Material;
+  /** Loads and assigns all textures into `textures`. Must run before `setMaterial`. */
+  protected abstract setTextures(): void;
+  /** Creates the custom material using `textures` and assigns it to `material`. */
+  protected abstract setMaterial(): void;
+}

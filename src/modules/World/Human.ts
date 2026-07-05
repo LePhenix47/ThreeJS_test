@@ -2,15 +2,19 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import { AnimationState, GltfEntity } from "./types/entity";
+import { EntityTexture, TexturedGltfEntity } from "./types/entity";
 
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { GLTF } from "three/examples/jsm/Addons.js";
+import { GetPathsFromName } from "../Experience/sources/textures";
 
-class Human extends GltfEntity implements Updatable, Destroyable {
+class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   protected model: THREE.Group;
+  protected material: THREE.MeshStandardMaterial;
+  protected textures: Pick<EntityTexture, GetPathsFromName<"human">>;
+
   private guiRegistry: GUIStateRegistry<{ animation: string }> | null = null;
 
   private get scene() {
@@ -34,8 +38,12 @@ class Human extends GltfEntity implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
+    this.setTextures();
+    this.setMaterial();
     this.setModel();
+
     this.scene.add(this.model);
+
     this.castModelShadows();
 
     if (this.debug?.isActive) {
@@ -44,6 +52,26 @@ class Human extends GltfEntity implements Updatable, Destroyable {
 
     console.log("Human");
   }
+
+  protected setMaterial = (): void => {
+    const { color, normal } = this.textures;
+    const material = new THREE.MeshStandardMaterial({
+      map: color,
+      normalMap: normal,
+    });
+
+    this.material = material;
+  };
+
+  protected setTextures = (): void => {
+    const color = this.resources.getTexture("human", "color");
+    const normal = this.resources.getTexture("human", "normal");
+
+    this.textures = {
+      color,
+      normal,
+    };
+  };
 
   protected setModel = (): void => {
     const humanGltf: GLTF = this.resources.getGltf("human");
