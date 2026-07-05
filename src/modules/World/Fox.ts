@@ -122,6 +122,9 @@ class Fox extends GltfEntity implements Updatable, Destroyable {
 
   public destroy = () => {
     this.guiRegistry?.dispose();
+
+    this.destroyModel();
+    this.scene.remove(this.model);
   };
 }
 
