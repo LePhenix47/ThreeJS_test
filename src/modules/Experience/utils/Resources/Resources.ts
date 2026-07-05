@@ -241,6 +241,31 @@ class Resources extends EventEmitter<ResourcesEvents> {
     return item;
   };
 
+  /** Returns all textures for a multi-map source as `{ mapKey: THREE.Texture, ... }`. Throws if the source is not a texture type. */
+  public getTextures = <TName extends RegularTextureNames | LdrTextureNames>(
+    name: TName,
+  ): Record<GetPathsFromName<TName> & TextureName, THREE.Texture> => {
+    const source = this.sources.find((s) => s.name === name);
+    if (
+      !source ||
+      (source.type !== "texture" && source.type !== "ldrEnvTexture")
+    ) {
+      throw new Error(`[Resources] "${name}" is not a multi-texture source`);
+    }
+
+    const result = {} as Record<
+      GetPathsFromName<TName> & TextureName,
+      THREE.Texture
+    >;
+
+    for (const key of Object.keys(source.paths)) {
+      const texture = this.getTexture(name, key as GetPathsFromName<TName>);
+
+      Reflect.set(result, key, texture);
+    }
+    return result;
+  };
+
   /** Returns a loaded `THREE.CubeTexture` by name. Throws if not found or wrong type. */
   public getCubeTexture = (name: CubeTextureNames): THREE.CubeTexture => {
     const item = this.items[name];
