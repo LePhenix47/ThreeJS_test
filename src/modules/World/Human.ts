@@ -8,6 +8,9 @@ import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { GLTF } from "three/examples/jsm/Addons.js";
 import { GetPathsFromName } from "../Experience/sources/textures";
+type HumanState = {
+  wireframe: boolean;
+};
 
 class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
@@ -15,7 +18,11 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   protected material: THREE.MeshStandardMaterial;
   protected textures: Pick<EntityTexture, GetPathsFromName<"human">>;
 
-  private guiRegistry: GUIStateRegistry<{}> | null = null;
+  private guiRegistry: GUIStateRegistry<HumanState> | null = null;
+
+  private readonly debugDefaults: HumanState = {
+    wireframe: false,
+  };
 
   private get scene() {
     return this.experience!.scene;
@@ -55,16 +62,17 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
   protected setMaterial = (): void => {
     const { color, normal } = this.textures;
+    const { wireframe } = this.debugDefaults;
+
     const material = new THREE.MeshStandardMaterial({
       map: color,
       normalMap: normal,
+      wireframe,
     });
 
     material.onBeforeCompile = (
       params: THREE.WebGLProgramParametersWithUniforms,
     ): void => {
-      const { uniforms, vertexShader, fragmentShader } = params;
-
       /*
         * To understand the full shader structure (what's inside vs outside main()), read:
         ? node_modules/three/src/renderers/shaders/ShaderLib/meshphysical.glsl.js
@@ -78,14 +86,12 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         * Individual chunk source: 
         ? node_modules/three/src/renderers/shaders/ShaderChunk/<name>.glsl.js
        */
-      params.vertexShader = vertexShader.replace(
-        /*glsl */ `#include #include <common>`,
+      params.vertexShader = params.vertexShader.replace(
+        /*glsl */ `#include <common>`,
         /*glsl */ `
-        #include #include <common>
+        #include <common>
         
-        float angle = 0.0;
-
-        vec2 rotationMatrix(vec2 coords, float angleRad, vec2 origin) {
+        mat2 get2dRotationMatrix(float angleRad) {
           float cosAngle = cos(angleRad);
           float sinAngle = sin(angleRad);
 
@@ -93,12 +99,27 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
           *  | cos  -sin |
           *  | sin   cos |
           */
-          mat2 rotMat = mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
-
-          return rotMat * (coords - origin) + origin;
-        };
+          return mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
+        }
         `,
       );
+
+      params.vertexShader = params.vertexShader.replace(
+        /*glsl */ `#include <begin_vertex>`,
+        /*glsl */ `
+        #include <begin_vertex>
+
+        float angle = radians(45.0); // testing
+
+        mat2 rotatedMatrix = get2dRotationMatrix(angle);
+
+      //  transformed.xz *= rotatedPos;
+       transformed.xz = rotatedMatrix * transformed.xz;
+      //  transformed.xz = transformed.xz * rotatedPos;
+        `,
+      );
+
+      console.log(params.vertexShader);
     };
 
     this.material = material;
@@ -138,11 +159,19 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   };
 
   protected addDebugFolders = (): void => {
-    const registry = new GUIStateRegistry("human-gui-state", {});
+    const registry = new GUIStateRegistry(
+      "human-gui-state",
+      this.debugDefaults,
+    );
 
     this.guiRegistry = registry;
 
     const debugFolder = this.debug.gui.addFolder("Human");
+
+    debugFolder.add(registry.state, "wireframe");
+    registry.bind("wireframe", (v) => {
+      this.material.wireframe = v;
+    });
   };
 
   private updateMaterials = () => {
