@@ -8,6 +8,7 @@ import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { GLTF } from "three/examples/jsm/Addons.js";
 import { GetPathsFromName } from "../Experience/sources/textures";
+
 type HumanState = {
   wireframe: boolean;
 };
@@ -19,6 +20,13 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   protected textures: Pick<EntityTexture, GetPathsFromName<"human">>;
 
   private guiRegistry: GUIStateRegistry<HumanState> | null = null;
+
+  protected readonly customUniforms: THREE.ShaderMaterialProperties["uniforms"] =
+    {
+      uTime: {
+        value: 0,
+      },
+    };
 
   private readonly debugDefaults: HumanState = {
     wireframe: false,
@@ -73,6 +81,8 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     material.onBeforeCompile = (
       params: THREE.WebGLProgramParametersWithUniforms,
     ): void => {
+      params.uniforms.uTime = this.customUniforms.uTime;
+
       /*
         * To understand the full shader structure (what's inside vs outside main()), read:
         ? node_modules/three/src/renderers/shaders/ShaderLib/meshphysical.glsl.js
@@ -90,6 +100,8 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         /*glsl */ `#include <common>`,
         /*glsl */ `
         #include <common>
+
+        uniform float uTime;
         
         mat2 get2dRotationMatrix(float angleRad) {
           float cosAngle = cos(angleRad);
@@ -109,7 +121,10 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         /*glsl */ `
         #include <begin_vertex>
 
-        float angle = radians(45.0); // testing
+        float amp = 0.9;
+        float freq = 1.0;
+        float offset = uTime;
+        float angle = (freq * position.y + offset) * amp; // testing
 
         mat2 rotatedMatrix = get2dRotationMatrix(angle);
 
@@ -191,7 +206,9 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   };
 
   update = (): void => {
-    /* TODO: cursor-driven slap interaction.
+    this.customUniforms.uTime.value = this.time.elapsedSeconds;
+
+    /* // TODO: cursor-driven slap interaction.
      * eelslap.com was a site where a guy got slapped by a fish in slow-mo,
      * but playback position was tied to the cursor X on screen —
      * move mouse right = fish goes forward, move left = fish goes back.
