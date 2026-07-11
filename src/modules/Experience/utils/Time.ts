@@ -49,7 +49,7 @@ class Time extends EventEmitter<TimeEvents> {
     this.tick(); // ? Initial tick
   }
 
-  private init = () => {
+  private init = (): void => {
     this.startMs = performance.now();
     this.currentMs = this.startMs;
 
@@ -57,7 +57,7 @@ class Time extends EventEmitter<TimeEvents> {
     this.deltaMs = Math.floor(1_000 / 60); // ? Avoids potential 1st frame bugs
   };
 
-  public tick = () => {
+  public tick = (): void => {
     try {
       this.updateTime();
       this.emitTickEvent();
@@ -71,7 +71,7 @@ class Time extends EventEmitter<TimeEvents> {
     }
   };
 
-  private emitTickEvent = () => {
+  private emitTickEvent = (): void => {
     const tickData = {
       currentMs: this.currentMs,
       elapsedMs: this.elapsedMs,
@@ -81,7 +81,7 @@ class Time extends EventEmitter<TimeEvents> {
     this.emit("tick", tickData);
   };
 
-  private updateTime = () => {
+  private updateTime = (): void => {
     const currentMsTick: number = performance.now();
     const previousTick: number = this.currentMs;
 
@@ -92,10 +92,10 @@ class Time extends EventEmitter<TimeEvents> {
     this.currentMs = currentMsTick;
   };
 
-  public cancelAnimationLoop = () =>
+  public cancelAnimationLoop = (): void =>
     cancelAnimationFrame(this.animationFrameId);
 
-  public destroy = () => {
+  public destroy = (): void => {
     this.cancelAnimationLoop();
 
     this.removeAllListeners();

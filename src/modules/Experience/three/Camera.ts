@@ -22,8 +22,8 @@ type CameraConstructor = Partial<{
 class Camera implements Resizable, Updatable, Destroyable {
   public static readonly CAMERA_STATE_KEY = "three-camera-state";
 
-  public readonly instance: THREE.PerspectiveCamera;
-  public readonly controls: OrbitControls;
+  public instance: THREE.PerspectiveCamera;
+  public controls: OrbitControls;
   private readonly experience: Experience;
   private cleanupPersistence: (() => void) | null = null;
 
@@ -41,8 +41,8 @@ class Camera implements Resizable, Updatable, Destroyable {
     }
     this.experience = Experience.instance;
 
-    this.instance = this.initCamera();
-    this.controls = this.initControls();
+    this.setCamera();
+    this.setControls();
 
     if (persistence) {
       this.cleanupPersistence = this.setupCameraStatePersistence();
@@ -51,8 +51,8 @@ class Camera implements Resizable, Updatable, Destroyable {
     console.log(`Camera instantiated ${persistence ? "with persistence" : ""}`);
   }
 
-  private initCamera = () => {
-    const perspectiveCamera = new THREE.PerspectiveCamera(
+  private setCamera = (): void => {
+    const camera = new THREE.PerspectiveCamera(
       75,
       this.sizes.aspectRatio,
       0.1,
@@ -60,28 +60,28 @@ class Camera implements Resizable, Updatable, Destroyable {
     );
 
     // * We must set the position in order to use OrbitControls otherwise controls won't work (pos ≠ 0, 0, 0)
-    perspectiveCamera.position.set(1, 1, 1);
+    camera.position.set(1, 1, 1);
 
-    return perspectiveCamera;
+    this.instance = camera;
   };
 
-  private initControls = () => {
+  private setControls = (): void => {
     const controls = new OrbitControls(this.instance, this.canvas);
     controls.enableDamping = true;
 
-    return controls;
+    this.controls = controls;
   };
 
-  public resize = () => {
+  public resize = (): void => {
     this.instance.aspect = this.sizes.aspectRatio;
     this.instance.updateProjectionMatrix();
   };
 
-  public update = () => {
+  public update = (): void => {
     this.controls.update();
   };
 
-  public destroy = () => {
+  public destroy = (): void => {
     this.cleanupPersistence?.();
     this.controls.dispose();
   };

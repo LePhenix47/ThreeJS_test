@@ -28,11 +28,11 @@ class Renderer implements Resizable, Updatable, Destroyable {
 
     this.experience = Experience.instance;
 
-    this.instance = this.initRenderer();
+    this.setRenderer();
     console.log("Renderer instantiated");
   }
 
-  private initRenderer = () => {
+  private setRenderer = (): void => {
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       canvas: this.experience.canvas,
@@ -44,23 +44,22 @@ class Renderer implements Resizable, Updatable, Destroyable {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     renderer.setSize(this.sizes.width, this.sizes.height);
-
     renderer.setPixelRatio(this.sizes.pixelRatio);
 
-    return renderer;
+    this.instance = renderer;
   };
 
-  public resize = () => {
+  public resize = (): void => {
     this.instance.setSize(this.sizes.width, this.sizes.height);
 
     this.instance.setPixelRatio(this.sizes.pixelRatio);
   };
 
-  public update = () => {
+  public update = (): void => {
     this.instance.render(this.scene, this.camera.instance);
   };
 
-  public destroy = () => {
+  public destroy = (): void => {
     this.instance.dispose();
   };
 }
