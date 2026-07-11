@@ -98,7 +98,7 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.world = new World();
   }
 
-  public resize = () => {
+  public resize = (): void => {
     console.log("RESIZING");
 
     // * In order to avoid race conditions OR order of operations issues
@@ -106,7 +106,7 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.renderer.resize();
   };
 
-  public update = () => {
+  public update = (): void => {
     try {
       // console.log("TICKING");
       this.camera.update();
@@ -154,19 +154,20 @@ class Experience implements Resizable, Updatable, Destroyable {
   public setDebugMode = (debugMode: boolean): this => {
     const keyName = "DEBUG_EXPERIENCE" as const;
 
-    if (debugMode) {
-      console.log("Debug mode enabled");
-      Reflect.set(window, keyName, this);
-      this.debug = new Debug({ title: "Experience debug", isActive: true });
-    } else {
+    if (!debugMode) {
       console.log("Debug mode disabled");
       Reflect.deleteProperty(window, keyName);
+      return this;
     }
+
+    console.log("Debug mode enabled");
+    Reflect.set(window, keyName, this);
+    this.debug = new Debug({ title: "Experience debug", isActive: true });
 
     return this;
   };
 
-  public destroy = () => {
+  public destroy = (): void => {
     this.sizes.destroy();
     this.time.destroy();
     this.camera.destroy();
