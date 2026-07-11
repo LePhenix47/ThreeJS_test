@@ -64,17 +64,22 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       params: THREE.WebGLProgramParametersWithUniforms,
     ): void => {
       const { uniforms, vertexShader, fragmentShader } = params;
-      console.group("uniforms");
-      console.log(uniforms);
-      console.groupEnd();
 
-      console.groupCollapsed("vertexShader");
-      console.log(vertexShader);
-      console.groupEnd();
-
-      console.groupCollapsed("fragmentShader");
-      console.log(fragmentShader);
-      console.groupEnd();
+      /*
+        ? To find which chunk to hook, open the compiled MeshStandardMaterial vertex shader
+        ? (logged via console.log(params.vertexShader)) and locate the #include you want.
+        
+        ? Then check node_modules/three/src/renderers/shaders/ShaderChunk/<chunk_name>.glsl.js
+        ? to see what variables that chunk declares — begin_vertex declares `transformed`,
+        ? the vec3 position passed down the pipeline, making it the right hook for vertex displacement.
+       */
+      params.vertexShader = vertexShader.replace(
+        /*glsl */ `#include <begin_vertex>`,
+        /*glsl */ `
+        #include <begin_vertex>
+        transformed.y += 4.0;
+        `,
+      );
     };
 
     this.material = material;
