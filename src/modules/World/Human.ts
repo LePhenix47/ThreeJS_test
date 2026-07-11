@@ -71,19 +71,14 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     console.log("Human");
   }
 
-  private setModelShadowMaterial = (): void => {
-    const modelShadowMaterial = new THREE.MeshDepthMaterial({
-      depthPacking: THREE.RGBADepthPacking,
-    });
+  private onBeforeShaderCompile = (
+    params: THREE.WebGLProgramParametersWithUniforms,
+  ) => {
+    params.uniforms.uTime = this.customUniforms.uTime;
 
-    modelShadowMaterial.onBeforeCompile = (
-      params: THREE.WebGLProgramParametersWithUniforms,
-    ) => {
-      params.uniforms.uTime = this.customUniforms.uTime;
-
-      params.vertexShader = params.vertexShader.replace(
-        /*glsl */ `#include <common>`,
-        /*glsl */ `
+    params.vertexShader = params.vertexShader.replace(
+      /*glsl */ `#include <common>`,
+      /*glsl */ `
         #include <common>
 
         uniform float uTime;
@@ -99,11 +94,11 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
           return mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
         }
         `,
-      );
+    );
 
-      params.vertexShader = params.vertexShader.replace(
-        /*glsl */ `#include <begin_vertex>`,
-        /*glsl */ `
+    params.vertexShader = params.vertexShader.replace(
+      /*glsl */ `#include <begin_vertex>`,
+      /*glsl */ `
         #include <begin_vertex>
 
         float amp = 0.9;
@@ -117,8 +112,15 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
        transformed.xz = rotatedMatrix * transformed.xz;
       //  transformed.xz = transformed.xz * rotatedPos;
         `,
-      );
-    };
+    );
+  };
+
+  private setModelShadowMaterial = (): void => {
+    const modelShadowMaterial = new THREE.MeshDepthMaterial({
+      depthPacking: THREE.RGBADepthPacking,
+    });
+
+    modelShadowMaterial.onBeforeCompile = this.onBeforeShaderCompile;
 
     this.modelShadowMaterial = modelShadowMaterial;
   };
@@ -133,64 +135,20 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       wireframe,
     });
 
-    material.onBeforeCompile = (
-      params: THREE.WebGLProgramParametersWithUniforms,
-    ): void => {
-      params.uniforms.uTime = this.customUniforms.uTime;
+    /*
+      * To understand the full shader structure (what's inside vs outside main()), read:
+      ? node_modules/three/src/renderers/shaders/ShaderLib/meshphysical.glsl.js
+      * — MeshStandardMaterial compiles from this file. It shows #include <common> is
+      * declared BEFORE void main(), and #include <begin_vertex> is INSIDE void main().
 
-      /*
-        * To understand the full shader structure (what's inside vs outside main()), read:
-        ? node_modules/three/src/renderers/shaders/ShaderLib/meshphysical.glsl.js
-        * — MeshStandardMaterial compiles from this file. It shows #include <common> is
-        * declared BEFORE void main(), and #include <begin_vertex> is INSIDE void main().
+      * ⚠ CRITICAL: GLSL function definitions cannot go inside main().
+      * → Custom functions must be injected via #include <common> (outside main).
+      * → Vertex position logic goes in #include <begin_vertex> (inside main), calls only.
 
-        * ⚠ CRITICAL: GLSL function definitions cannot go inside main().
-        * → Custom functions must be injected via #include <common> (outside main).
-        * → Vertex position logic goes in #include <begin_vertex> (inside main), calls only.
-
-        * Individual chunk source: 
-        ? node_modules/three/src/renderers/shaders/ShaderChunk/<name>.glsl.js
-       */
-      params.vertexShader = params.vertexShader.replace(
-        /*glsl */ `#include <common>`,
-        /*glsl */ `
-        #include <common>
-
-        uniform float uTime;
-        
-        mat2 get2dRotationMatrix(float angleRad) {
-          float cosAngle = cos(angleRad);
-          float sinAngle = sin(angleRad);
-
-          /* Column-major: mat2(col0.x, col0.y, col1.x, col1.y)
-          *  | cos  -sin |
-          *  | sin   cos |
-          */
-          return mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
-        }
-        `,
-      );
-
-      params.vertexShader = params.vertexShader.replace(
-        /*glsl */ `#include <begin_vertex>`,
-        /*glsl */ `
-        #include <begin_vertex>
-
-        float amp = 0.9;
-        float freq = 1.0;
-        float offset = uTime;
-        float angle = (freq * position.y + offset) * amp; // testing
-
-        mat2 rotatedMatrix = get2dRotationMatrix(angle);
-
-      //  transformed.xz *= rotatedPos;
-       transformed.xz = rotatedMatrix * transformed.xz;
-      //  transformed.xz = transformed.xz * rotatedPos;
-        `,
-      );
-
-      console.log(params.vertexShader);
-    };
+      * Individual chunk source: 
+      ? node_modules/three/src/renderers/shaders/ShaderChunk/<name>.glsl.js
+     */
+    material.onBeforeCompile = this.onBeforeShaderCompile;
 
     this.material = material;
   };
