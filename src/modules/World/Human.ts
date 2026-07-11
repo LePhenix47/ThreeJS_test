@@ -171,25 +171,33 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         `,
       );
 
+      /*
+       * ? beginnormal_vertex runs before begin_vertex — declare angle + matrix here once,
+       * ? reuse in begin_vertex. Declaring them in both chunks = 'redefinition' compile error.
+       */
+      params.vertexShader = params.vertexShader.replace(
+        /*glsl */ `#include <beginnormal_vertex>`,
+        /*glsl */ `
+        #include <beginnormal_vertex>
+
+        float amp = 0.9;
+        float freq = 1.0;
+        float angle = (freq * position.y + uTime) * amp;
+
+        mat2 rotatedMatrix = get2dRotationMatrix(angle);
+
+        objectNormal.xz = rotatedMatrix * objectNormal.xz;
+        `,
+      );
+
       params.vertexShader = params.vertexShader.replace(
         /*glsl */ `#include <begin_vertex>`,
         /*glsl */ `
         #include <begin_vertex>
 
-        float amp = 0.9;
-        float freq = 1.0;
-        float offset = uTime;
-        float angle = (freq * position.y + offset) * amp; // testing
-
-        mat2 rotatedMatrix = get2dRotationMatrix(angle);
-
-      //  transformed.xz *= rotatedPos;
-       transformed.xz = rotatedMatrix * transformed.xz;
-      //  transformed.xz = transformed.xz * rotatedPos;
+        transformed.xz = rotatedMatrix * transformed.xz;
         `,
       );
-
-      console.log(params.vertexShader);
     };
 
     this.material = material;
