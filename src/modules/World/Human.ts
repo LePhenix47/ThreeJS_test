@@ -37,7 +37,8 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
   private modelShadowMaterial: THREE.MeshDepthMaterial;
   public slapTimeline: gsap.core.Timeline | null = null;
-  private mouseMoveHandler: ((e: MouseEvent) => void) | null = null;
+  private quickToProgress: ((value: number) => void) | null = null;
+  private isEelSlapActive = false;
 
   private readonly debugDefaults: HumanState = {
     wireframe: false,
@@ -374,22 +375,14 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     if (enabled) {
       gsap.killTweensOf(this.slapTimeline);
       controls.enabled = false;
-
-      const quickToProgress = gsap.quickTo(this.slapTimeline, "progress", {
+      this.quickToProgress = gsap.quickTo(this.slapTimeline, "progress", {
         duration: 0.3,
         ease: "power1.out",
       });
-
-      this.mouseMoveHandler = (e: MouseEvent) => {
-        const rightOffset: number = 1 - e.offsetX / window.innerWidth;
-        quickToProgress(rightOffset);
-      };
-      window.addEventListener("mousemove", this.mouseMoveHandler);
+      this.isEelSlapActive = true;
     } else {
-      if (this.mouseMoveHandler) {
-        window.removeEventListener("mousemove", this.mouseMoveHandler);
-        this.mouseMoveHandler = null;
-      }
+      this.isEelSlapActive = false;
+      this.quickToProgress = null;
       controls.enabled = true;
       this.previewSlap();
     }
@@ -414,18 +407,13 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   update = (): void => {
     this.customUniforms.uTime.value = this.time.elapsedSeconds;
 
-    /* // TODO: cursor-driven slap interaction.
-     * eelslap.com was a site where a guy got slapped by a fish in slow-mo,
-     * but playback position was tied to the cursor X on screen —
-     * move mouse right = fish goes forward, move left = fish goes back.
-     * Do the same here: normalize mousemove clientX (0..1), lerp a rotation
-     * or position offset on the head mesh so it reacts to horizontal cursor movement. */
+    if (this.isEelSlapActive && this.quickToProgress) {
+      const { x } = this.experience!.pointer.normalized;
+      this.quickToProgress(1 - x);
+    }
   };
 
   destroy = (): void => {
-    if (this.mouseMoveHandler) {
-      window.removeEventListener("mousemove", this.mouseMoveHandler);
-    }
     this.slapTimeline?.kill();
     this.guiRegistry?.dispose();
 
