@@ -15,7 +15,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   protected material: THREE.MeshStandardMaterial;
   protected textures: Pick<EntityTexture, GetPathsFromName<"human">>;
 
-  private guiRegistry: GUIStateRegistry<{ animation: string }> | null = null;
+  private guiRegistry: GUIStateRegistry<{}> | null = null;
 
   private get scene() {
     return this.experience!.scene;
@@ -97,9 +97,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   };
 
   protected addDebugFolders = (): void => {
-    const registry = new GUIStateRegistry("human-gui-state", {
-      animation: "guard",
-    });
+    const registry = new GUIStateRegistry("human-gui-state", {});
 
     this.guiRegistry = registry;
 
