@@ -11,6 +11,9 @@ import { GetPathsFromName } from "../Experience/sources/textures";
 
 type HumanState = {
   wireframe: boolean;
+  amplitude: number;
+  frequency: number;
+  offset: number;
 };
 
 class Human extends TexturedGltfEntity implements Updatable, Destroyable {
@@ -23,15 +26,19 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
   protected readonly customUniforms: THREE.ShaderMaterialProperties["uniforms"] =
     {
-      uTime: {
-        value: 0,
-      },
+      uTime: { value: 0 },
+      uAmplitude: { value: 0.9 },
+      uFrequency: { value: 1.0 },
+      uOffset: { value: 0.0 },
     };
 
   private modelShadowMaterial: THREE.MeshDepthMaterial;
 
   private readonly debugDefaults: HumanState = {
     wireframe: false,
+    amplitude: 0.9,
+    frequency: 1.0,
+    offset: 0.0,
   };
 
   private get scene() {
@@ -80,6 +87,9 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       params: THREE.WebGLProgramParametersWithUniforms,
     ) => {
       params.uniforms.uTime = this.customUniforms.uTime;
+      params.uniforms.uAmplitude = this.customUniforms.uAmplitude;
+      params.uniforms.uFrequency = this.customUniforms.uFrequency;
+      params.uniforms.uOffset = this.customUniforms.uOffset;
 
       params.vertexShader = params.vertexShader.replace(
         /*glsl */ `#include <common>`,
@@ -87,7 +97,10 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         #include <common>
 
         uniform float uTime;
-        
+        uniform float uAmplitude;
+        uniform float uFrequency;
+        uniform float uOffset;
+
         mat2 get2dRotationMatrix(float angleRad) {
           float cosAngle = cos(angleRad);
           float sinAngle = sin(angleRad);
@@ -106,10 +119,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         /*glsl */ `
         #include <begin_vertex>
 
-        float amp = 0.9;
-        float freq = 1.0;
-        float offset = uTime;
-        float angle = (freq * position.y + offset) * amp; // testing
+        float angle = (uFrequency * position.y + uTime + uOffset) * uAmplitude;
 
         mat2 rotatedMatrix = get2dRotationMatrix(angle);
 
@@ -137,6 +147,9 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       params: THREE.WebGLProgramParametersWithUniforms,
     ): void => {
       params.uniforms.uTime = this.customUniforms.uTime;
+      params.uniforms.uAmplitude = this.customUniforms.uAmplitude;
+      params.uniforms.uFrequency = this.customUniforms.uFrequency;
+      params.uniforms.uOffset = this.customUniforms.uOffset;
 
       /*
         * To understand the full shader structure (what's inside vs outside main()), read:
@@ -157,7 +170,10 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         #include <common>
 
         uniform float uTime;
-        
+        uniform float uAmplitude;
+        uniform float uFrequency;
+        uniform float uOffset;
+
         mat2 get2dRotationMatrix(float angleRad) {
           float cosAngle = cos(angleRad);
           float sinAngle = sin(angleRad);
@@ -180,9 +196,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         /*glsl */ `
         #include <beginnormal_vertex>
 
-        float amp = 0.9;
-        float freq = 1.0;
-        float angle = (freq * position.y + uTime) * amp;
+        float angle = (uFrequency * position.y + uTime + uOffset) * uAmplitude;
 
         mat2 rotatedMatrix = get2dRotationMatrix(angle);
 
@@ -250,6 +264,36 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     debugFolder.add(registry.state, "wireframe");
     registry.bind("wireframe", (v) => {
       this.material.wireframe = v;
+    });
+
+    debugFolder
+      .add(registry.state, "amplitude")
+      .min(0)
+      .max(5)
+      .step(0.001)
+      .name("Amplitude");
+    registry.bind("amplitude", (v) => {
+      this.customUniforms.uAmplitude.value = v;
+    });
+
+    debugFolder
+      .add(registry.state, "frequency")
+      .min(0)
+      .max(5)
+      .step(0.001)
+      .name("Frequency");
+    registry.bind("frequency", (v) => {
+      this.customUniforms.uFrequency.value = v;
+    });
+
+    debugFolder
+      .add(registry.state, "offset")
+      .min(-180)
+      .max(180)
+      .step(0.001)
+      .name("Offset");
+    registry.bind("offset", (v) => {
+      this.customUniforms.uOffset.value = THREE.MathUtils.degToRad(v);
     });
   };
 
