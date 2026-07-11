@@ -65,6 +65,10 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     return this.experience!.debug;
   }
 
+  private get pointer() {
+    return this.experience!.pointer;
+  }
+
   constructor() {
     super();
     this.experience = Experience.instance;
@@ -360,6 +364,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
   private previewSlap = (): void => {
     if (!this.slapTimeline) return;
+
     gsap.to(this.slapTimeline, {
       progress: 1,
       duration: 0.5,
@@ -372,20 +377,24 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   private setEelSlapMode = (enabled: boolean): void => {
     const { controls } = this.experience!.camera;
 
-    if (enabled) {
-      gsap.killTweensOf(this.slapTimeline);
-      controls.enabled = false;
-      this.quickToProgress = gsap.quickTo(this.slapTimeline, "progress", {
-        duration: 0.3,
-        ease: "power1.out",
-      });
-      this.isEelSlapActive = true;
-    } else {
+    if (!enabled) {
       this.isEelSlapActive = false;
       this.quickToProgress = null;
+
       controls.enabled = true;
+
       this.previewSlap();
+
+      return;
     }
+
+    gsap.killTweensOf(this.slapTimeline);
+    controls.enabled = false;
+    this.quickToProgress = gsap.quickTo(this.slapTimeline, "progress", {
+      duration: 0.3,
+      ease: "power1.out",
+    });
+    this.isEelSlapActive = true;
   };
 
   private updateMaterials = () => {
@@ -408,8 +417,8 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     this.customUniforms.uTime.value = this.time.elapsedSeconds;
 
     if (this.isEelSlapActive && this.quickToProgress) {
-      const { x } = this.experience!.pointer.normalized;
-      this.quickToProgress(1 - x);
+      const { x } = this.pointer.normalized;
+      this.quickToProgress(1 - x); // ? X offset from the right
     }
   };
 
