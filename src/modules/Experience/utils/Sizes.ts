@@ -25,14 +25,14 @@ class Sizes extends EventEmitter<SizesEvents> {
     return this.width / this.height;
   }
 
-  setSize = (width: number, height: number) => {
+  setSize = (width: number, height: number): void => {
     this.width = width;
     this.height = height;
 
     this.pixelRatio = Math.min(window.devicePixelRatio, 2);
   };
 
-  private onResize = (entries: ResizeObserverEntry[]) => {
+  private onResize = (entries: ResizeObserverEntry[]): void => {
     for (const entry of entries) {
       if (!entry.contentRect) return;
       const { width, height } = entry.contentRect;
@@ -43,15 +43,15 @@ class Sizes extends EventEmitter<SizesEvents> {
     }
   };
 
-  beginObserve = (element: Element) => {
+  beginObserve = (element: Element): void => {
     this.resizeObserver.observe(element);
   };
 
-  endObserve = (element: Element) => {
+  endObserve = (element: Element): void => {
     this.resizeObserver.unobserve(element);
   };
 
-  destroy = () => {
+  destroy = (): void => {
     this.resizeObserver.disconnect();
 
     this.removeAllListeners();

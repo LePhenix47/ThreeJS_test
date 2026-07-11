@@ -22,18 +22,18 @@ class Debug implements Destroyable {
     console.log("Debug instantiated");
   }
 
-  private initLilGuiStyleSheets = () => {
+  private initLilGuiStyleSheets = (): void => {
     this.sheet.replaceSync(LEVA_CSS);
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, this.sheet];
   };
 
-  private destroyLilGuiStyleSheets = () => {
+  private destroyLilGuiStyleSheets = (): void => {
     document.adoptedStyleSheets = document.adoptedStyleSheets.filter(
       (s) => s !== this.sheet,
     );
   };
 
-  destroy = () => {
+  destroy = (): void => {
     this.gui.destroy();
 
     this.destroyLilGuiStyleSheets();
