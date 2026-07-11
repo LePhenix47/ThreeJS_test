@@ -66,18 +66,37 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       const { uniforms, vertexShader, fragmentShader } = params;
 
       /*
-        ? To find which chunk to hook, open the compiled MeshStandardMaterial vertex shader
-        ? (logged via console.log(params.vertexShader)) and locate the #include you want.
-        
-        ? Then check node_modules/three/src/renderers/shaders/ShaderChunk/<chunk_name>.glsl.js
-        ? to see what variables that chunk declares — begin_vertex declares `transformed`,
-        ? the vec3 position passed down the pipeline, making it the right hook for vertex displacement.
+        * To understand the full shader structure (what's inside vs outside main()), read:
+        ? node_modules/three/src/renderers/shaders/ShaderLib/meshphysical.glsl.js
+        * — MeshStandardMaterial compiles from this file. It shows #include <common> is
+        * declared BEFORE void main(), and #include <begin_vertex> is INSIDE void main().
+
+        * ⚠ CRITICAL: GLSL function definitions cannot go inside main().
+        * → Custom functions must be injected via #include <common> (outside main).
+        * → Vertex position logic goes in #include <begin_vertex> (inside main), calls only.
+
+        * Individual chunk source: 
+        ? node_modules/three/src/renderers/shaders/ShaderChunk/<name>.glsl.js
        */
       params.vertexShader = vertexShader.replace(
-        /*glsl */ `#include <begin_vertex>`,
+        /*glsl */ `#include #include <common>`,
         /*glsl */ `
-        #include <begin_vertex>
-        transformed.y += 4.0;
+        #include #include <common>
+        
+        float angle = 0.0;
+
+        vec2 rotationMatrix(vec2 coords, float angleRad, vec2 origin) {
+          float cosAngle = cos(angleRad);
+          float sinAngle = sin(angleRad);
+
+          /* Column-major: mat2(col0.x, col0.y, col1.x, col1.y)
+          *  | cos  -sin |
+          *  | sin   cos |
+          */
+          mat2 rotMat = mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
+
+          return rotMat * (coords - origin) + origin;
+        };
         `,
       );
     };
