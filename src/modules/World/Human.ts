@@ -62,7 +62,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
     material.onBeforeCompile = (
       params: THREE.WebGLProgramParametersWithUniforms,
-    ) => {
+    ): void => {
       const { uniforms, vertexShader, fragmentShader } = params;
       console.group("uniforms");
       console.log(uniforms);
