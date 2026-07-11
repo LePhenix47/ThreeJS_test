@@ -196,7 +196,7 @@ class Water extends MeshEntity implements Updatable, Destroyable {
 
     this.guiRegistry = registry;
 
-    const shaderFolder = this.debug.gui.addFolder("Shader plane");
+    const shaderFolder = this.debug.gui.addFolder("Water plane");
     shaderFolder.add(registry.state, "wireframe");
     registry.bind("wireframe", (v: boolean) => {
       this.material.wireframe = v;
