@@ -97,7 +97,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   };
 
   protected addDebugFolders = (): void => {
-    const registry = new GUIStateRegistry("fox-gui-state", {
+    const registry = new GUIStateRegistry("human-gui-state", {
       animation: "guard",
     });
 
