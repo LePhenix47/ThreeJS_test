@@ -28,6 +28,8 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       },
     };
 
+  private modelShadowMaterial: THREE.MeshDepthMaterial;
+
   private readonly debugDefaults: HumanState = {
     wireframe: false,
   };
@@ -54,6 +56,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.setTextures();
+    this.setModelShadowMaterial();
     this.setMaterial();
     this.setModel();
 
@@ -67,6 +70,58 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
     console.log("Human");
   }
+
+  private setModelShadowMaterial = (): void => {
+    const modelShadowMaterial = new THREE.MeshDepthMaterial({
+      depthPacking: THREE.RGBADepthPacking,
+    });
+
+    modelShadowMaterial.onBeforeCompile = (
+      params: THREE.WebGLProgramParametersWithUniforms,
+    ) => {
+      params.uniforms.uTime = this.customUniforms.uTime;
+
+      params.vertexShader = params.vertexShader.replace(
+        /*glsl */ `#include <common>`,
+        /*glsl */ `
+        #include <common>
+
+        uniform float uTime;
+        
+        mat2 get2dRotationMatrix(float angleRad) {
+          float cosAngle = cos(angleRad);
+          float sinAngle = sin(angleRad);
+
+          /* Column-major: mat2(col0.x, col0.y, col1.x, col1.y)
+          *  | cos  -sin |
+          *  | sin   cos |
+          */
+          return mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
+        }
+        `,
+      );
+
+      params.vertexShader = params.vertexShader.replace(
+        /*glsl */ `#include <begin_vertex>`,
+        /*glsl */ `
+        #include <begin_vertex>
+
+        float amp = 0.9;
+        float freq = 1.0;
+        float offset = uTime;
+        float angle = (freq * position.y + offset) * amp; // testing
+
+        mat2 rotatedMatrix = get2dRotationMatrix(angle);
+
+      //  transformed.xz *= rotatedPos;
+       transformed.xz = rotatedMatrix * transformed.xz;
+      //  transformed.xz = transformed.xz * rotatedPos;
+        `,
+      );
+    };
+
+    this.modelShadowMaterial = modelShadowMaterial;
+  };
 
   protected setMaterial = (): void => {
     const { color, normal } = this.textures;
@@ -167,6 +222,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     mesh.rotation.y = THREE.MathUtils.degToRad(90);
 
     mesh.material = this.material;
+    mesh.customDepthMaterial = this.modelShadowMaterial;
 
     this.model = humanModelLoaded;
 
