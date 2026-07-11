@@ -36,7 +36,10 @@ export type AnimationState<TAnimations extends string> = {
 
 /** Scene-level env map config — subset of `THREE.Scene` props, all optional. Rotation split into X/Y/Z instead of `THREE.Euler`. */
 export type EnvironmentMapConfig = Partial<
-  Pick<THREE.Scene, "backgroundBlurriness" | "backgroundIntensity" | "environmentIntensity">
+  Pick<
+    THREE.Scene,
+    "backgroundBlurriness" | "backgroundIntensity" | "environmentIntensity"
+  >
 > & {
   environmentRotationX?: number;
   environmentRotationY?: number;
@@ -86,6 +89,8 @@ export abstract class GltfEntity {
 
 /** Extends `GltfEntity` with externally-loaded texture + material support. Use when the GLTF model's embedded material is replaced by a custom one. Use `Pick<EntityTexture, ...>` on the class property to declare only the slots actually used. */
 export abstract class TexturedGltfEntity extends GltfEntity {
+  protected readonly customUniforms?: THREE.ShaderMaterialProperties["uniforms"]; // In the event we change the material of the model that ain't a RawShaderMaterial/ShaderMaterial
+
   protected abstract textures: Partial<EntityTexture>;
   protected abstract material: THREE.Material;
   /** Loads and assigns all textures into `textures`. Must run before `setMaterial`. */
