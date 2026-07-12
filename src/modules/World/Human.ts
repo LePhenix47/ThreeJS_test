@@ -16,6 +16,7 @@ type HumanState = {
   frequency: number;
   offset: number;
   rotationY: number;
+  uTimePlayback: boolean;
   eelSlapMode: boolean;
 };
 
@@ -46,6 +47,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     frequency: 0,
     offset: 0.0,
     rotationY: 0,
+    uTimePlayback: false,
     eelSlapMode: false,
   };
 
@@ -132,7 +134,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         /*glsl */ `
         #include <begin_vertex>
 
-        float angle = (uFrequency * position.y + uOffset) * uAmplitude;
+        float angle = (uFrequency * position.y + uTime + uOffset) * uAmplitude;
 
         mat2 rotatedMatrix = get2dRotationMatrix(angle);
 
@@ -209,7 +211,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         /*glsl */ `
         #include <beginnormal_vertex>
 
-        float angle = (uFrequency * position.y + uOffset) * uAmplitude;
+        float angle = (uFrequency * position.y + uTime + uOffset) * uAmplitude;
 
         mat2 rotatedMatrix = get2dRotationMatrix(angle);
 
@@ -281,7 +283,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
     debugFolder
       .add(registry.state, "amplitude")
-      .min(0)
+      .min(-5)
       .max(5)
       .step(0.001)
       .name("Amplitude");
@@ -317,6 +319,11 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       .name("Rotation Y");
     registry.bind("rotationY", (v) => {
       this.model.rotation.y = THREE.MathUtils.degToRad(v);
+    });
+
+    debugFolder.add(registry.state, "uTimePlayback").name("uTime Playback");
+    registry.bind("uTimePlayback", (_v) => {
+      if (!_v) this.customUniforms.uTime.value = 0;
     });
 
     debugFolder.add(registry.state, "eelSlapMode").name("Eel Slap Mode");
@@ -359,19 +366,6 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     );
 
     this.slapTimeline = tl;
-    this.previewSlap();
-  };
-
-  private previewSlap = (): void => {
-    if (!this.slapTimeline) return;
-
-    gsap.to(this.slapTimeline, {
-      progress: 1,
-      duration: 0.5,
-      ease: "power2.inOut",
-      yoyo: true,
-      repeat: -1,
-    });
   };
 
   private setEelSlapMode = (enabled: boolean): void => {
@@ -380,10 +374,9 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     if (!enabled) {
       this.isEelSlapActive = false;
       this.quickToProgress = null;
-
+      gsap.killTweensOf(this.slapTimeline);
+      this.slapTimeline?.progress(0);
       controls.enabled = true;
-
-      this.previewSlap();
 
       return;
     }
@@ -414,7 +407,9 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   };
 
   update = (): void => {
-    this.customUniforms.uTime.value = this.time.elapsedSeconds;
+    if (this.guiRegistry?.state.uTimePlayback) {
+      this.customUniforms.uTime.value = this.time.elapsedSeconds;
+    }
 
     if (this.isEelSlapActive && this.quickToProgress) {
       const { x } = this.pointer.normalized;
