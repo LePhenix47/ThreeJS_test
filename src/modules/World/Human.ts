@@ -25,6 +25,7 @@ type HumanState = {
 class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   protected model: THREE.Group;
+  protected modelMesh: THREE.Mesh;
   protected material: THREE.MeshStandardMaterial;
   protected textures: Pick<EntityTexture, GetPathsFromName<"human">>;
 
@@ -87,6 +88,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     this.setMaterial();
     this.setOutlineMaterial();
     this.setModel();
+    this.applyMaterials();
 
     this.scene.add(this.model);
 
@@ -241,8 +243,9 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   };
 
   private setOutlineMaterial = (): void => {
+    const { outlineColor } = this.debugDefaults;
     const material = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+      color: new THREE.Color(outlineColor),
       side: THREE.BackSide,
     });
 
@@ -287,16 +290,33 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
     mesh.rotation.y = THREE.MathUtils.degToRad(90);
 
-    mesh.material = this.material;
-    mesh.customDepthMaterial = this.modelShadowMaterial;
-
-    const outlineMesh = new THREE.Mesh(mesh.geometry, this.outlineMaterial);
-    outlineMesh.rotation.y = mesh.rotation.y;
-    humanModelLoaded.add(outlineMesh);
-
+    this.modelMesh = mesh;
     this.model = humanModelLoaded;
-
     this.model.position.set(0, 3.5, 0);
+  };
+
+  private applyMaterials = (): void => {
+    /*
+     * Assign the twist shader material to the body mesh
+     */
+    this.modelMesh.material = this.material;
+
+    /*
+     * customDepthMaterial replaces Three's default depth pass — keeps shadow shape
+     * ? in sync with the twist deformation (otherwise shadow stays undeformed)
+     */
+    this.modelMesh.customDepthMaterial = this.modelShadowMaterial;
+
+    /*
+     * Inverted-hull outline: second mesh on same geometry, BackSide only,
+     * ? vertex shader pushes verts along their normals → visible rim around the model
+     */
+    const outlineMesh = new THREE.Mesh(
+      this.modelMesh.geometry,
+      this.outlineMaterial,
+    );
+    outlineMesh.rotation.y = this.modelMesh.rotation.y;
+    this.model.add(outlineMesh);
   };
 
   protected addDebugFolders = (): void => {
