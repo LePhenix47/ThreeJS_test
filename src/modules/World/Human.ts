@@ -252,7 +252,9 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       this.injectTwistUniforms(params);
       params.uniforms.uOutlineThickness = this.customUniforms.uOutlineThickness;
 
-      this.injectTwistCommonChunk(params, "uniform float uOutlineThickness;");
+      const extraGlsl: string = /*glsl*/ `uniform float uOutlineThickness;`;
+
+      this.injectTwistCommonChunk(params, extraGlsl);
 
       params.vertexShader = params.vertexShader.replace(
         /*glsl */ `#include <begin_vertex>`,
