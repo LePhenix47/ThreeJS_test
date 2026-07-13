@@ -55,8 +55,8 @@ class Camera implements Resizable, Updatable, Destroyable {
     const camera = new THREE.PerspectiveCamera(
       75,
       this.sizes.aspectRatio,
-      0.1,
-      100,
+      0.001,
+      2_000,
     );
 
     // * We must set the position in order to use OrbitControls otherwise controls won't work (pos ≠ 0, 0, 0)
