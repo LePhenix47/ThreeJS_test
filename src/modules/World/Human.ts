@@ -100,6 +100,51 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     console.log("Human");
   }
 
+  private get twistAngleGlsl() {
+    return /* glsl */ `
+    float angle = (uFrequency * position.y + uTime + uOffset) * uAmplitude;
+    mat2 rotatedMatrix = get2dRotationMatrix(angle);
+  `;
+  }
+
+  private injectTwistUniforms = (
+    params: THREE.WebGLProgramParametersWithUniforms,
+  ): void => {
+    params.uniforms.uTime = this.customUniforms.uTime;
+    params.uniforms.uAmplitude = this.customUniforms.uAmplitude;
+    params.uniforms.uFrequency = this.customUniforms.uFrequency;
+    params.uniforms.uOffset = this.customUniforms.uOffset;
+  };
+
+  private injectTwistCommonChunk = (
+    params: THREE.WebGLProgramParametersWithUniforms,
+    extraUniforms = "",
+  ): void => {
+    params.vertexShader = params.vertexShader.replace(
+      /*glsl */ `#include <common>`,
+      /*glsl */ `
+      #include <common>
+
+      uniform float uTime;
+      uniform float uAmplitude;
+      uniform float uFrequency;
+      uniform float uOffset;
+      ${extraUniforms}
+
+      mat2 get2dRotationMatrix(float angleRad) {
+        float cosAngle = cos(angleRad);
+        float sinAngle = sin(angleRad);
+
+        /* Column-major: mat2(col0.x, col0.y, col1.x, col1.y)
+        *  | cos  -sin |
+        *  | sin   cos |
+        */
+        return mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
+      }
+      `,
+    );
+  };
+
   private setModelShadowMaterial = (): void => {
     const modelShadowMaterial = new THREE.MeshDepthMaterial({
       depthPacking: THREE.RGBADepthPacking,
@@ -108,46 +153,16 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     modelShadowMaterial.onBeforeCompile = (
       params: THREE.WebGLProgramParametersWithUniforms,
     ) => {
-      params.uniforms.uTime = this.customUniforms.uTime;
-      params.uniforms.uAmplitude = this.customUniforms.uAmplitude;
-      params.uniforms.uFrequency = this.customUniforms.uFrequency;
-      params.uniforms.uOffset = this.customUniforms.uOffset;
-
-      params.vertexShader = params.vertexShader.replace(
-        /*glsl */ `#include <common>`,
-        /*glsl */ `
-        #include <common>
-
-        uniform float uTime;
-        uniform float uAmplitude;
-        uniform float uFrequency;
-        uniform float uOffset;
-
-        mat2 get2dRotationMatrix(float angleRad) {
-          float cosAngle = cos(angleRad);
-          float sinAngle = sin(angleRad);
-
-          /* Column-major: mat2(col0.x, col0.y, col1.x, col1.y)
-          *  | cos  -sin |
-          *  | sin   cos |
-          */
-          return mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
-        }
-        `,
-      );
+      this.injectTwistUniforms(params);
+      this.injectTwistCommonChunk(params);
 
       params.vertexShader = params.vertexShader.replace(
         /*glsl */ `#include <begin_vertex>`,
         /*glsl */ `
         #include <begin_vertex>
 
-        float angle = (uFrequency * position.y + uTime + uOffset) * uAmplitude;
-
-        mat2 rotatedMatrix = get2dRotationMatrix(angle);
-
-      //  transformed.xz *= rotatedPos;
-       transformed.xz = rotatedMatrix * transformed.xz;
-      //  transformed.xz = transformed.xz * rotatedPos;
+        ${this.twistAngleGlsl}
+        transformed.xz = rotatedMatrix * transformed.xz;
         `,
       );
     };
@@ -168,10 +183,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     material.onBeforeCompile = (
       params: THREE.WebGLProgramParametersWithUniforms,
     ): void => {
-      params.uniforms.uTime = this.customUniforms.uTime;
-      params.uniforms.uAmplitude = this.customUniforms.uAmplitude;
-      params.uniforms.uFrequency = this.customUniforms.uFrequency;
-      params.uniforms.uOffset = this.customUniforms.uOffset;
+      this.injectTwistUniforms(params);
 
       /*
         * To understand the full shader structure (what's inside vs outside main()), read:
@@ -183,31 +195,10 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         * → Custom functions must be injected via #include <common> (outside main).
         * → Vertex position logic goes in #include <begin_vertex> (inside main), calls only.
 
-        * Individual chunk source: 
+        * Individual chunk source:
         ? node_modules/three/src/renderers/shaders/ShaderChunk/<name>.glsl.js
        */
-      params.vertexShader = params.vertexShader.replace(
-        /*glsl */ `#include <common>`,
-        /*glsl */ `
-        #include <common>
-
-        uniform float uTime;
-        uniform float uAmplitude;
-        uniform float uFrequency;
-        uniform float uOffset;
-
-        mat2 get2dRotationMatrix(float angleRad) {
-          float cosAngle = cos(angleRad);
-          float sinAngle = sin(angleRad);
-
-          /* Column-major: mat2(col0.x, col0.y, col1.x, col1.y)
-          *  | cos  -sin |
-          *  | sin   cos |
-          */
-          return mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
-        }
-        `,
-      );
+      this.injectTwistCommonChunk(params);
 
       /*
        * ? beginnormal_vertex runs before begin_vertex — declare angle + matrix here once,
@@ -218,10 +209,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
         /*glsl */ `
         #include <beginnormal_vertex>
 
-        float angle = (uFrequency * position.y + uTime + uOffset) * uAmplitude;
-
-        mat2 rotatedMatrix = get2dRotationMatrix(angle);
-
+        ${this.twistAngleGlsl}
         objectNormal.xz = rotatedMatrix * objectNormal.xz;
         `,
       );
@@ -261,44 +249,21 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     material.onBeforeCompile = (
       params: THREE.WebGLProgramParametersWithUniforms,
     ): void => {
-      params.uniforms.uTime = this.customUniforms.uTime;
-      params.uniforms.uAmplitude = this.customUniforms.uAmplitude;
-      params.uniforms.uFrequency = this.customUniforms.uFrequency;
-      params.uniforms.uOffset = this.customUniforms.uOffset;
+      this.injectTwistUniforms(params);
       params.uniforms.uOutlineThickness = this.customUniforms.uOutlineThickness;
 
-      params.vertexShader = params.vertexShader.replace(
-        /*glsl */ `#include <common>`,
-        /*glsl */ `
-        #include <common>
-
-        uniform float uTime;
-        uniform float uAmplitude;
-        uniform float uFrequency;
-        uniform float uOffset;
-        uniform float uOutlineThickness;
-
-        mat2 get2dRotationMatrix(float angleRad) {
-          float cosAngle = cos(angleRad);
-          float sinAngle = sin(angleRad);
-          return mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
-        }
-        `,
-      );
+      this.injectTwistCommonChunk(params, "uniform float uOutlineThickness;");
 
       params.vertexShader = params.vertexShader.replace(
         /*glsl */ `#include <begin_vertex>`,
         /*glsl */ `
         #include <begin_vertex>
 
-        float angle = (uFrequency * position.y + uTime + uOffset) * uAmplitude;
-        mat2 rotatedMatrix = get2dRotationMatrix(angle);
-
+        ${this.twistAngleGlsl}
         transformed.xz = rotatedMatrix * transformed.xz;
 
         vec3 twistedNormal = normal;
         twistedNormal.xz = rotatedMatrix * twistedNormal.xz;
-
         transformed += twistedNormal * uOutlineThickness;
         `,
       );
