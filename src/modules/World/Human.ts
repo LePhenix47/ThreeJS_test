@@ -17,6 +17,8 @@ type HumanState = {
   offset: number;
   rotationY: number;
   uTimePlayback: boolean;
+  outlineThickness: number;
+  outlineColor: string;
   eelSlapMode: boolean;
 };
 
@@ -34,9 +36,11 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       uAmplitude: { value: 0.5 },
       uFrequency: { value: 0 },
       uOffset: { value: 0.0 },
+      uOutlineThickness: { value: 0.02 },
     };
 
   private modelShadowMaterial: THREE.MeshDepthMaterial;
+  private outlineMaterial: THREE.MeshBasicMaterial;
   public slapTimeline: gsap.core.Timeline | null = null;
   private quickToProgress: ((value: number) => void) | null = null;
   private isEelSlapActive = false;
@@ -48,6 +52,8 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     offset: 0.0,
     rotationY: 0,
     uTimePlayback: false,
+    outlineThickness: 0.02,
+    outlineColor: "#ffffff",
     eelSlapMode: false,
   };
 
@@ -79,6 +85,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     this.setTextures();
     this.setModelShadowMaterial();
     this.setMaterial();
+    this.setOutlineMaterial();
     this.setModel();
 
     this.scene.add(this.model);
@@ -245,6 +252,61 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     this.textures = textures;
   };
 
+  private setOutlineMaterial = (): void => {
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.BackSide,
+    });
+
+    material.onBeforeCompile = (
+      params: THREE.WebGLProgramParametersWithUniforms,
+    ): void => {
+      params.uniforms.uTime = this.customUniforms.uTime;
+      params.uniforms.uAmplitude = this.customUniforms.uAmplitude;
+      params.uniforms.uFrequency = this.customUniforms.uFrequency;
+      params.uniforms.uOffset = this.customUniforms.uOffset;
+      params.uniforms.uOutlineThickness = this.customUniforms.uOutlineThickness;
+
+      params.vertexShader = params.vertexShader.replace(
+        /*glsl */ `#include <common>`,
+        /*glsl */ `
+        #include <common>
+
+        uniform float uTime;
+        uniform float uAmplitude;
+        uniform float uFrequency;
+        uniform float uOffset;
+        uniform float uOutlineThickness;
+
+        mat2 get2dRotationMatrix(float angleRad) {
+          float cosAngle = cos(angleRad);
+          float sinAngle = sin(angleRad);
+          return mat2(cosAngle, sinAngle, -sinAngle, cosAngle);
+        }
+        `,
+      );
+
+      params.vertexShader = params.vertexShader.replace(
+        /*glsl */ `#include <begin_vertex>`,
+        /*glsl */ `
+        #include <begin_vertex>
+
+        float angle = (uFrequency * position.y + uTime + uOffset) * uAmplitude;
+        mat2 rotatedMatrix = get2dRotationMatrix(angle);
+
+        transformed.xz = rotatedMatrix * transformed.xz;
+
+        vec3 twistedNormal = normal;
+        twistedNormal.xz = rotatedMatrix * twistedNormal.xz;
+
+        transformed += twistedNormal * uOutlineThickness;
+        `,
+      );
+    };
+
+    this.outlineMaterial = material;
+  };
+
   protected setModel = (): void => {
     const humanGltf: GLTF = this.resources.getGltf("human");
     console.log(humanGltf);
@@ -260,6 +322,10 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
 
     mesh.material = this.material;
     mesh.customDepthMaterial = this.modelShadowMaterial;
+
+    const outlineMesh = new THREE.Mesh(mesh.geometry, this.outlineMaterial);
+    outlineMesh.rotation.y = mesh.rotation.y;
+    humanModelLoaded.add(outlineMesh);
 
     this.model = humanModelLoaded;
 
@@ -324,6 +390,21 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     debugFolder.add(registry.state, "uTimePlayback").name("uTime Playback");
     registry.bind("uTimePlayback", (_v) => {
       if (!_v) this.customUniforms.uTime.value = 0;
+    });
+
+    debugFolder
+      .add(registry.state, "outlineThickness")
+      .min(0)
+      .max(0.1)
+      .step(0.001)
+      .name("Outline Thickness");
+    registry.bind("outlineThickness", (v) => {
+      this.customUniforms.uOutlineThickness.value = v;
+    });
+
+    debugFolder.addColor(registry.state, "outlineColor").name("Outline Color");
+    registry.bind("outlineColor", (v) => {
+      this.outlineMaterial.color.set(v);
     });
 
     debugFolder.add(registry.state, "eelSlapMode").name("Eel Slap Mode");
