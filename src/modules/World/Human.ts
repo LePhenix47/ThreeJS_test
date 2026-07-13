@@ -22,15 +22,35 @@ type HumanState = {
   eelSlapMode: boolean;
 };
 
+/**
+ * Human character model. Core lesson: modifying a GLTF model's mesh and material at runtime.
+ *
+ * Three.js GLTF models ship with embedded materials — you cannot swap them for a `ShaderMaterial`
+ * without losing the PBR lighting model. Instead, `onBeforeCompile` intercepts the shader source
+ * just before GPU compilation, letting you inject custom GLSL into any built-in material.
+ *
+ * Three materials are compiled here, each sharing the same twist deformation via `injectTwistUniforms`
+ * and `injectTwistCommonChunk`:
+ * - `material` — the visible body mesh (`MeshStandardMaterial` + twist + normal rotation for lighting)
+ * - `modelShadowMaterial` — depth pass shadow match (`MeshDepthMaterial` + twist, assigned via `customDepthMaterial`)
+ * - `outlineMaterial` — inverted-hull outline (`MeshBasicMaterial` BackSide + twist-aware normal expansion)
+ */
 class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
+  /** Root group loaded from the GLTF scene — may contain multiple children. */
   protected model: THREE.Group;
+  /** The single renderable `THREE.Mesh` extracted from `model.children[0]`. */
   protected modelMesh: THREE.Mesh;
+  /** PBR body material with twist deformation injected via `onBeforeCompile`. */
   protected material: THREE.MeshStandardMaterial;
   protected textures: Pick<EntityTexture, GetPathsFromName<"human">>;
 
   private guiRegistry: GUIStateRegistry<HumanState> | null = null;
 
+  /**
+   * Shared uniform refs passed into every `onBeforeCompile` callback.
+   * Single source of truth — mutating `.value` here updates all three materials simultaneously.
+   */
   protected readonly customUniforms: THREE.ShaderMaterialProperties["uniforms"] =
     {
       uTime: { value: 0 },
@@ -40,9 +60,13 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
       uOutlineThickness: { value: 0.02 },
     };
 
+  /** Depth pass material — mirrors the twist so shadows match the deformed body. */
   private modelShadowMaterial: THREE.MeshDepthMaterial;
+  /** Inverted-hull outline material (`BackSide` + normal expansion in vertex shader). */
   private outlineMaterial: THREE.MeshBasicMaterial;
+  /** GSAP timeline scrubbed by mouse X in Eel Slap mode. */
   public slapTimeline: gsap.core.Timeline | null = null;
+  /** `gsap.quickTo` setter for smooth timeline scrubbing — only active while Eel Slap mode is on. */
   private quickToProgress: ((value: number) => void) | null = null;
   private isEelSlapActive = false;
 
@@ -109,6 +133,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
   `;
   }
 
+  /** Registers the four shared twist uniforms on a shader's params object. Call at the top of every `onBeforeCompile`. */
   private injectTwistUniforms = (
     params: THREE.WebGLProgramParametersWithUniforms,
   ): void => {
@@ -118,6 +143,10 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     params.uniforms.uOffset = this.customUniforms.uOffset;
   };
 
+  /**
+   * Replaces `#include <common>` to declare twist uniforms and `get2dRotationMatrix` outside `main()`.
+   * @param extraUniforms - Optional extra GLSL uniform declarations to append (e.g. `"uniform float uOutlineThickness;"`)
+   */
   private injectTwistCommonChunk = (
     params: THREE.WebGLProgramParametersWithUniforms,
     extraUniforms = "",
@@ -147,6 +176,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     );
   };
 
+  /** Builds the depth-pass material that mirrors the twist deformation so cast shadows match the visible mesh. */
   private setModelShadowMaterial = (): void => {
     const modelShadowMaterial = new THREE.MeshDepthMaterial({
       depthPacking: THREE.RGBADepthPacking,
@@ -172,6 +202,11 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     this.modelShadowMaterial = modelShadowMaterial;
   };
 
+  /**
+   * Builds the visible body material (`MeshStandardMaterial`) with twist deformation injected via `onBeforeCompile`.
+   * Rotates `objectNormal` in `beginnormal_vertex` so lighting responds correctly to the deformed surface,
+   * then applies the same rotation to `transformed` in `begin_vertex`.
+   */
   protected setMaterial = (): void => {
     const { color, normal } = this.textures;
     const { wireframe } = this.debugDefaults;
@@ -242,6 +277,11 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     this.textures = textures;
   };
 
+  /**
+   * Builds the inverted-hull outline material (`MeshBasicMaterial`, `BackSide`).
+   * The vertex shader expands each vertex along its twist-aware normal by `uOutlineThickness`,
+   * creating a rim visible only where the back faces peek out behind the front-facing body mesh.
+   */
   private setOutlineMaterial = (): void => {
     const { outlineColor } = this.debugDefaults;
     const material = new THREE.MeshBasicMaterial({
@@ -277,6 +317,7 @@ class Human extends TexturedGltfEntity implements Updatable, Destroyable {
     this.outlineMaterial = material;
   };
 
+  /** Loads the GLTF asset, extracts the body mesh from `scene.children[0]`, and stores both as `model` and `modelMesh`. Material assignment happens separately in `applyMaterials`. */
   protected setModel = (): void => {
     const humanGltf: GLTF = this.resources.getGltf("human");
     console.log(humanGltf);
