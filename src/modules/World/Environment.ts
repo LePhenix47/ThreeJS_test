@@ -11,6 +11,7 @@ type EnvironmentState = {
 
 class Environment extends EnvironmentEntity implements Destroyable {
   private readonly experience: Experience | null;
+  private ambientLight: THREE.AmbientLight;
   private sunLight: THREE.DirectionalLight;
   private axisHelper: THREE.AxesHelper;
   private lightHelper: THREE.DirectionalLightHelper;
@@ -51,7 +52,8 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.scene.background = this.envMapTexture;
     this.scene.environment = this.envMapTexture;
 
-    this.setLights();
+    this.setAmbientLight();
+    this.setSunLight();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -69,8 +71,13 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   protected updateMaterial = (): void => {};
 
-  private setLights = () => {
-    const sunLight = new THREE.DirectionalLight(0xffffff, 3);
+  private setAmbientLight = (): void => {
+    this.ambientLight = new THREE.AmbientLight("#ffffff", 1);
+    this.scene.add(this.ambientLight);
+  };
+
+  private setSunLight = (withHelper = true): void => {
+    const sunLight = new THREE.DirectionalLight("#ffffff", 3);
 
     const size: number = 2 ** 10;
     sunLight.castShadow = true;
@@ -87,9 +94,11 @@ class Environment extends EnvironmentEntity implements Destroyable {
     sunLight.position.set(0.25, 2, -2.25);
 
     this.sunLight = sunLight;
-    this.lightHelper = new THREE.DirectionalLightHelper(sunLight);
+    this.scene.add(sunLight);
 
-    this.scene.add(sunLight, this.lightHelper);
+    if (!withHelper) return;
+    this.lightHelper = new THREE.DirectionalLightHelper(sunLight);
+    this.scene.add(this.lightHelper);
   };
 
   private setHelpers = () => {
@@ -142,14 +151,16 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   public destroy = () => {
     this.scene.remove(
+      this.ambientLight,
       this.sunLight,
       this.axisHelper,
       this.lightHelper,
       this.gridHelper,
     );
+    this.ambientLight.dispose();
     this.sunLight.dispose();
     this.axisHelper.dispose();
-    this.lightHelper.dispose();
+    this.lightHelper?.dispose();
     this.gridHelper.dispose();
     this.guiRegistry?.dispose();
   };
