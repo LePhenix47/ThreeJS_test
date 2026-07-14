@@ -1,28 +1,34 @@
-import Experience, { Destroyable } from "../Experience/Experience";
+import Experience, { Destroyable } from "@modules/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-
-const FLOOR_SIZE = 2 ** 12;
+import { SideEnum } from "@/utils/enums/three";
+import Enum from "@/utils/enums";
+import { MeshEntity } from "./types/entity";
 
 type FloorState = {
   color: string;
   wireframe: boolean;
-  side: "front" | "back" | "double";
+  side: keyof typeof SideEnum;
   subdivisions: number;
 };
 
-const sideMap = new Map<FloorState["side"], THREE.Side>([
-  ["front", THREE.FrontSide],
-  ["back", THREE.BackSide],
-  ["double", THREE.DoubleSide],
-]);
-
-class Floor implements Destroyable {
+class Floor extends MeshEntity implements Destroyable {
   private readonly experience: Experience | null;
-  private geometry: THREE.PlaneGeometry;
-  private material: THREE.MeshStandardMaterial;
-  private mesh: THREE.Mesh;
+
+  protected geometry: THREE.PlaneGeometry;
+  protected material: THREE.MeshStandardMaterial;
+  protected mesh: THREE.Mesh;
+
   private guiRegistry: GUIStateRegistry<FloorState> | null = null;
+
+  private readonly debugDefaults: FloorState = {
+    color: "#777777",
+    wireframe: false,
+    side: "double",
+    subdivisions: 1,
+  };
+
+  private readonly FLOOR_SIZE = 2 ** 12;
 
   private get scene() {
     return this.experience!.scene;
@@ -33,6 +39,8 @@ class Floor implements Destroyable {
   }
 
   constructor() {
+    super();
+
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
@@ -49,43 +57,39 @@ class Floor implements Destroyable {
     console.log("Floor");
   }
 
-  private setGeometry = () => {
-    this.geometry = new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE);
+  protected setGeometry = () => {
+    const { subdivisions } = this.debugDefaults;
+    this.geometry = new THREE.PlaneGeometry(
+      this.FLOOR_SIZE,
+      this.FLOOR_SIZE,
+      subdivisions,
+      subdivisions,
+    );
   };
 
-  private setMaterial = () => {
+  protected setMaterial = () => {
+    const { color, side, wireframe } = this.debugDefaults;
+
     this.material = new THREE.MeshStandardMaterial({
-      color: "#777777",
+      color,
+      wireframe,
       metalness: 0.3,
       roughness: 0.4,
+      side: SideEnum[side],
     });
   };
 
-  private setMesh = () => {
+  protected setMesh = () => {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
-    this.mesh.rotation.x = -Math.PI * 0.5;
+    this.mesh.rotation.x = THREE.MathUtils.degToRad(-90);
     this.mesh.receiveShadow = true;
   };
 
   private addDebugFolders = () => {
-    const registry = new GUIStateRegistry<FloorState>("floor-gui-state", {
-      color: "#777777",
-      wireframe: false,
-      side: "double",
-      subdivisions: 1,
-    });
-
-    registry
-      .bind("color", (v) => {
-        this.material.color.set(v);
-      })
-      .bind("wireframe", (v) => {
-        this.material.wireframe = v;
-      })
-      .bind("side", (v) => {
-        this.material.side = sideMap.get(v)!;
-      });
-
+    const registry = new GUIStateRegistry<FloorState>(
+      "floor-gui-state",
+      this.debugDefaults,
+    );
     this.guiRegistry = registry;
 
     const { state } = registry;
@@ -94,17 +98,33 @@ class Floor implements Destroyable {
     const floorFolder = gui.addFolder("Floor");
 
     floorFolder.addColor(state, "color").name("Color");
+    registry.bind("color", (v) => {
+      this.material.color.set(v);
+    });
+
     floorFolder.add(state, "wireframe").name("Wireframe");
-    floorFolder.add(state, "side", ["front", "back", "double"]).name("Side");
+    registry.bind("wireframe", (v) => {
+      this.material.wireframe = v;
+    });
+
+    const sideValues = Enum.keys(SideEnum);
+    floorFolder.add(state, "side", sideValues).name("Side");
+    registry.bind("side", (v) => {
+      this.material.side = SideEnum[v];
+    });
+
     floorFolder
-      .add(state, "subdivisions", 1, 100, 1)
+      .add(state, "subdivisions")
+      .step(1)
+      .min(1)
+      .max(100)
       .name("Subdivisions")
       .onFinishChange(
         registry.bindFinal("subdivisions", (segments) => {
           this.mesh.geometry.dispose();
           this.mesh.geometry = new THREE.PlaneGeometry(
-            FLOOR_SIZE,
-            FLOOR_SIZE,
+            this.FLOOR_SIZE,
+            this.FLOOR_SIZE,
             segments,
             segments,
           );
