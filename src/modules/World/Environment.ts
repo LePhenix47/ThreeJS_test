@@ -17,6 +17,12 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
+  private readonly debugDefaults: EnvironmentState = {
+    axisHelper: true,
+    lightHelper: true,
+    gridHelper: true,
+  };
+
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
   protected envMapConfig: EnvironmentMapConfig = {};
 
@@ -70,47 +76,45 @@ class Environment extends EnvironmentEntity implements Destroyable {
     sunLight.position.set(5, 5, 5);
 
     this.sunLight = sunLight;
-    this.scene.add(ambientLight, sunLight);
+    this.lightHelper = new THREE.DirectionalLightHelper(sunLight);
+
+    this.scene.add(sunLight, this.lightHelper);
   };
 
   private setHelpers = () => {
     this.axisHelper = new THREE.AxesHelper(3);
-    this.lightHelper = new THREE.DirectionalLightHelper(this.sunLight);
     this.gridHelper = new THREE.GridHelper(10, 10);
 
-    this.scene.add(this.axisHelper, this.lightHelper, this.gridHelper);
+    this.scene.add(this.axisHelper, this.gridHelper);
   };
 
   private addDebugFolders = () => {
     const registry = new GUIStateRegistry<EnvironmentState>(
       "environment-gui-state",
-      {
-        axisHelper: true,
-        lightHelper: true,
-        gridHelper: true,
-      },
+      this.debugDefaults,
     );
-
-    registry
-      .bind("axisHelper", (v) => {
-        this.axisHelper.visible = v;
-      })
-      .bind("lightHelper", (v) => {
-        this.lightHelper.visible = v;
-      })
-      .bind("gridHelper", (v) => {
-        this.gridHelper.visible = v;
-      });
-
     this.guiRegistry = registry;
 
     const { state } = registry;
     const { gui } = this.debug;
 
     const helpersFolder = gui.addFolder("Helpers");
+
     helpersFolder.add(state, "axisHelper").name("Axis Helper");
+    registry.bind("axisHelper", (v) => {
+      this.axisHelper.visible = v;
+    });
+
     helpersFolder.add(state, "lightHelper").name("Light Helper");
+    registry.bind("lightHelper", (v) => {
+      this.lightHelper.visible = v;
+    });
+
     helpersFolder.add(state, "gridHelper").name("Grid Helper");
+    registry.bind("gridHelper", (v) => {
+      this.gridHelper.visible = v;
+    });
+
     helpersFolder
       .add(
         {
@@ -118,8 +122,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
             const { controls } = this.camera;
             controls.target.set(0, 0, 0);
             controls.update();
-
-            console.log("click");
           },
         },
         "resetPivot",
