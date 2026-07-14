@@ -2,32 +2,35 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import Environment from "./Environment";
-import Floor from "./Floor";
-import * as THREE from "three";
+import CoffeeSmoke from "./CoffeeSmoke";
 
 // * To setup GLSL shaders: git cherry-pick 905deb41a596f9122c2e71fb56a1194a0585c98d
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
-  public environment?: Environment;
-  public floor?: Floor;
+  public coffeeSmoke?: CoffeeSmoke;
+
+  private get resources() {
+    return this.experience!.resources;
+  }
 
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.floor = new Floor();
-    this.environment = new Environment();
+    this.resources.on("textures-loaded", () => {
+      this.coffeeSmoke = new CoffeeSmoke();
+    });
 
     console.log("World");
   }
 
-  public update = () => {};
+  public update = () => {
+    this.coffeeSmoke?.update();
+  };
 
   public destroy = () => {
-    this.floor?.destroy();
-    this.environment?.destroy();
+    this.coffeeSmoke?.destroy();
   };
 }
 
