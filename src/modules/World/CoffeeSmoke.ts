@@ -7,6 +7,11 @@ import { GLTF } from "three/examples/jsm/Addons.js";
 import * as THREE from "three";
 import vertexShader from "@shaders/coffee-smoke/vertex.glsl";
 import fragmentShader from "@shaders/coffee-smoke/fragment.glsl";
+import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+
+type CoffeeSmokeState = {
+  wireframe: boolean;
+};
 
 class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
@@ -15,12 +20,22 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   protected smokeMaterial: THREE.ShaderMaterial;
   protected smokeMesh: THREE.Mesh;
 
+  private guiRegistry: GUIStateRegistry<CoffeeSmokeState> | null = null;
+
+  private readonly debugDefaults: CoffeeSmokeState = {
+    wireframe: false,
+  };
+
   private get scene() {
     return this.experience!.scene;
   }
 
   private get resources() {
     return this.experience!.resources;
+  }
+
+  private get debug() {
+    return this.experience!.debug;
   }
 
   constructor() {
@@ -35,6 +50,10 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
     this.setSmokeMaterial();
     this.setSmokeMesh();
     this.scene.add(this.smokeMesh);
+
+    if (this.debug?.isActive) {
+      this.addDebugFolders();
+    }
 
     console.log("CoffeeSmoke");
   }
@@ -64,12 +83,15 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   };
 
   protected setSmokeMaterial = (): void => {
+    const { wireframe } = this.debugDefaults;
+
     const smokeMaterial = new THREE.ShaderMaterial({
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
       vertexShader,
       fragmentShader,
+      wireframe,
     });
 
     this.smokeMaterial = smokeMaterial;
@@ -77,6 +99,24 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
 
   protected setSmokeMesh = (): void => {
     this.smokeMesh = new THREE.Mesh(this.smokeGeometry, this.smokeMaterial);
+  };
+
+  private addDebugFolders = (): void => {
+    const registry = new GUIStateRegistry<CoffeeSmokeState>(
+      "coffee-smoke-gui-state",
+      this.debugDefaults,
+    );
+    this.guiRegistry = registry;
+
+    const { state } = registry;
+    const { gui } = this.debug;
+
+    const folder = gui.addFolder("Coffee Smoke");
+
+    folder.add(state, "wireframe").name("Wireframe");
+    registry.bind("wireframe", (v) => {
+      this.smokeMaterial.wireframe = v;
+    });
   };
 
   update = (): void => {};
@@ -88,6 +128,7 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
     this.smokeGeometry.dispose();
     this.smokeMaterial.dispose();
     this.scene.remove(this.smokeMesh);
+    this.guiRegistry?.dispose();
   };
 }
 
