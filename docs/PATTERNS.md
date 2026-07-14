@@ -118,6 +118,77 @@ resources.getGltf("foxModel");                     // → GLTF
 
 ---
 
+## Adding a New Asset (Model or Texture)
+
+Each asset gets its own source file. Never inline source objects directly in the index arrays.
+
+### 1. Copy the asset to `public/`
+
+```text
+public/models/<asset-name>/<file>.glb
+public/textures/<asset-name>/<file>.png
+```
+
+### 2. Create a source file
+
+**Model** — `src/modules/Experience/sources/models/<asset-name>/<asset-name>.ts`:
+
+```ts
+import { Source } from "@modules/Experience/utils/Resources/types";
+import myModel from "@public/models/<asset-name>/<file>.glb?url";
+
+const myAsset = {
+  name: "<asset-name>",
+  type: "gltf",
+  path: myModel,
+} as const satisfies Source;
+
+export default myAsset;
+```
+
+**Texture** — `src/modules/Experience/sources/textures/<asset-name>/<asset-name>.ts`:
+
+```ts
+import { Source } from "@modules/Experience/utils/Resources/types";
+import colorMap from "@public/textures/<asset-name>/<file>.png";
+
+const myTextures = {
+  name: "<asset-name>",
+  type: "texture",
+  paths: {
+    color: colorMap,
+    // add other PBR slots as needed (normal, roughness, …)
+  },
+} as const satisfies Source;
+
+export default myTextures;
+```
+
+> Use `?url` suffix on GLB imports so Vite resolves them as URL strings for the GLTF loader.
+> Import texture files directly (no `?url`) — Vite returns a hashed URL string automatically for image assets.
+
+### 3. Register in the index
+
+`src/modules/Experience/sources/models/index.ts`:
+
+```ts
+import myAsset from "./<asset-name>/<asset-name>";
+
+const models = [myAsset] as const;
+```
+
+`src/modules/Experience/sources/textures/index.ts`:
+
+```ts
+import myTextures from "./<asset-name>/<asset-name>";
+
+const textures = [myTextures] as const;
+```
+
+**Why a file per asset?** Keeps each asset's paths self-contained and co-located. The index stays a flat import list. Inline objects in the index are harder to find, rename, and type-check.
+
+---
+
 ## Zod at System Boundaries
 
 Runtime validation is applied at the `Resources` constructor — the one place where external data (source definitions) enters the module. TypeScript types are inferred from Zod schemas to keep a single source of truth.
