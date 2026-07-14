@@ -55,7 +55,7 @@ class Camera implements Resizable, Updatable, Destroyable {
     const camera = new THREE.PerspectiveCamera(
       75,
       this.sizes.aspectRatio,
-      0.001,
+      0.1,
       2_000,
     );
 
