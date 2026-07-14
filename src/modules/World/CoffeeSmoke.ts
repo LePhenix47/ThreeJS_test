@@ -10,12 +10,14 @@ import fragmentShader from "@shaders/coffee-smoke/fragment.glsl";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 type CoffeeSmokeState = {
-  wireframe: boolean;
+  modelWireframe: boolean;
+  smokeWireframe: boolean;
 };
 
 class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   protected model: THREE.Group;
+  protected bakedMesh: THREE.Mesh;
   protected smokeGeometry: THREE.PlaneGeometry;
   protected smokeMaterial: THREE.ShaderMaterial;
   protected smokeMesh: THREE.Mesh;
@@ -23,7 +25,8 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   private guiRegistry: GUIStateRegistry<CoffeeSmokeState> | null = null;
 
   private readonly debugDefaults: CoffeeSmokeState = {
-    wireframe: false,
+    modelWireframe: false,
+    smokeWireframe: false,
   };
 
   private get scene() {
@@ -67,12 +70,13 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
       throw new Error("CoffeeSmoke: expected Mesh named 'baked'");
 
     if (
-      bakedMesh.material instanceof THREE.MeshStandardMaterial &&
+      bakedMesh.material instanceof THREE.MeshBasicMaterial &&
       bakedMesh.material.map
     ) {
       bakedMesh.material.map.anisotropy = 8;
     }
 
+    this.bakedMesh = bakedMesh;
     this.model = gltf.scene;
   };
 
@@ -83,7 +87,7 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   };
 
   protected setSmokeMaterial = (): void => {
-    const { wireframe } = this.debugDefaults;
+    const { smokeWireframe } = this.debugDefaults;
 
     const smokeMaterial = new THREE.ShaderMaterial({
       side: THREE.DoubleSide,
@@ -91,7 +95,7 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
       depthWrite: false,
       vertexShader,
       fragmentShader,
-      wireframe,
+      wireframe: smokeWireframe,
     });
 
     this.smokeMaterial = smokeMaterial;
@@ -113,10 +117,22 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
 
     const folder = gui.addFolder("Coffee Smoke");
 
-    folder.add(state, "wireframe").name("Wireframe");
-    registry.bind("wireframe", (v) => {
+    folder.add(state, "modelWireframe").name("Model Wireframe");
+    registry.bind("modelWireframe", (v) => {
+      if (!(this.bakedMesh.material instanceof THREE.MeshBasicMaterial)) return;
+
+      this.bakedMesh.material.wireframe = v;
+    });
+
+    folder.add(state, "smokeWireframe").name("Smoke Wireframe");
+    registry.bind("smokeWireframe", (v) => {
       this.smokeMaterial.wireframe = v;
     });
+  };
+
+  private destroySmoke = () => {
+    this.smokeGeometry.dispose();
+    this.smokeMaterial.dispose();
   };
 
   update = (): void => {};
@@ -125,9 +141,9 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
     this.destroyModel();
     this.scene.remove(this.model);
 
-    this.smokeGeometry.dispose();
-    this.smokeMaterial.dispose();
+    this.destroySmoke();
     this.scene.remove(this.smokeMesh);
+
     this.guiRegistry?.dispose();
   };
 }
