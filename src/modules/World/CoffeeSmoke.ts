@@ -22,6 +22,13 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   protected smokeMaterial: THREE.ShaderMaterial;
   protected smokeMesh: THREE.Mesh;
 
+  private readonly smokeDimensions = {
+    width: 1.5,
+    height: 6,
+    widthSegments: 16,
+    heightSegments: 64,
+  } as const;
+
   private guiRegistry: GUIStateRegistry<CoffeeSmokeState> | null = null;
 
   private readonly debugDefaults: CoffeeSmokeState = {
@@ -81,9 +88,7 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   };
 
   protected setSmokeGeometry = (): void => {
-    const size: number = 1;
-    const widthSegments = 16;
-    const heightSegments = 64;
+    const { width, height, widthSegments, heightSegments } = this.smokeDimensions;
 
     /*
     ? We create unit square so translations are easier (can be treated like %)
@@ -91,15 +96,10 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
     *  const smokeGeometry = new THREE.PlaneGeometry(1.5, 6, 16, 64);
     * smokeGeometry.translate(0, smokeGeometry.parameters.height / 2, 0);
     */
-    const smokeGeometry = new THREE.PlaneGeometry(
-      size,
-      size,
-      widthSegments,
-      heightSegments,
-    );
+    const smokeGeometry = new THREE.PlaneGeometry(1, 1, widthSegments, heightSegments);
 
     smokeGeometry.translate(0, 0.5, 0);
-    smokeGeometry.scale(1.5, 6, 1.5);
+    smokeGeometry.scale(width, height, width);
 
     this.smokeGeometry = smokeGeometry;
   };
