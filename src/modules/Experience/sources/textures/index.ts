@@ -1,7 +1,10 @@
 import { TextureSourceType } from "@modules/Experience/utils/Resources/types";
 
+import coffeeSmokeTextures from "./coffee-smoke/coffee-smoke";
+
 // prettier-ignore
 const textures = [
+  coffeeSmokeTextures,
 ] as const;
 
 type RawTextures = typeof textures;
