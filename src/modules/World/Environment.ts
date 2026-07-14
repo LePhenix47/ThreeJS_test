@@ -9,8 +9,9 @@ type EnvironmentState = {
   gridHelper: boolean;
 };
 
-class Environment extends EnvironmentEntity implements Destroyable {
+class Environment implements Destroyable {
   private readonly experience: Experience | null;
+  private ambientLight: THREE.AmbientLight;
   private sunLight: THREE.DirectionalLight;
   private axisHelper: THREE.AxesHelper;
   private lightHelper: THREE.DirectionalLightHelper;
@@ -30,6 +31,10 @@ class Environment extends EnvironmentEntity implements Destroyable {
     return this.experience!.scene;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   private get camera() {
     return this.experience!.camera;
   }
@@ -39,11 +44,14 @@ class Environment extends EnvironmentEntity implements Destroyable {
   }
 
   constructor() {
-    super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.setLights();
+    this.scene.background = this.envMapTexture;
+    this.scene.environment = this.envMapTexture;
+
+    this.setAmbientLight();
+    this.setSunLight();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -53,32 +61,36 @@ class Environment extends EnvironmentEntity implements Destroyable {
     console.log("Environment");
   }
 
-  protected setEnvMap = (): void => {};
-
   protected updateMaterial = (): void => {};
 
-  private setLights = () => {
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.1);
+  private setAmbientLight = (): void => {
+    this.ambientLight = new THREE.AmbientLight("#ffffff", 1);
+    this.scene.add(this.ambientLight);
+  };
 
-    const sunLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  private setSunLight = (withHelper = true): void => {
+    const sunLight = new THREE.DirectionalLight("#ffffff", 3);
+
+    const size: number = 2 ** 10;
     sunLight.castShadow = true;
-    sunLight.shadow.radius = 4;
-    sunLight.shadow.mapSize.set(2048, 2048);
+    sunLight.shadow.mapSize.set(size, size);
+    sunLight.shadow.normalBias = 0.05;
 
     const { camera } = sunLight.shadow;
-    camera.near = 0.5;
-    camera.far = 100;
+    camera.far = 15;
     camera.top = 7;
     camera.right = 7;
     camera.bottom = -7;
     camera.left = -7;
 
-    sunLight.position.set(5, 5, 5);
+    sunLight.position.set(0.25, 2, -2.25);
 
     this.sunLight = sunLight;
-    this.lightHelper = new THREE.DirectionalLightHelper(sunLight);
+    this.scene.add(sunLight);
 
-    this.scene.add(sunLight, this.lightHelper);
+    if (!withHelper) return;
+    this.lightHelper = new THREE.DirectionalLightHelper(sunLight);
+    this.scene.add(this.lightHelper);
   };
 
   private setHelpers = () => {
@@ -131,14 +143,16 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   public destroy = () => {
     this.scene.remove(
+      this.ambientLight,
       this.sunLight,
       this.axisHelper,
       this.lightHelper,
       this.gridHelper,
     );
+    this.ambientLight.dispose();
     this.sunLight.dispose();
     this.axisHelper.dispose();
-    this.lightHelper.dispose();
+    this.lightHelper?.dispose();
     this.gridHelper.dispose();
     this.guiRegistry?.dispose();
   };
