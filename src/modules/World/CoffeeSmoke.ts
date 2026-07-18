@@ -44,6 +44,10 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
     return this.experience!.resources;
   }
 
+  private get time() {
+    return this.experience!.time;
+  }
+
   private get debug() {
     return this.experience!.debug;
   }
@@ -120,6 +124,11 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
       vertexShader,
       fragmentShader,
       wireframe: smokeWireframe,
+      uniforms: {
+        uTime: {
+          value: 0,
+        },
+      },
     });
 
     this.smokeMaterial = smokeMaterial;
@@ -162,7 +171,9 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
     this.smokeMaterial.dispose();
   };
 
-  update = (): void => {};
+  update = (): void => {
+    this.smokeMaterial.uniforms.uTime.value = this.time.elapsedSeconds;
+  };
 
   destroy = (): void => {
     this.destroyModel();
