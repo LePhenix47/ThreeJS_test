@@ -1,4 +1,5 @@
 uniform float uTime;
+uniform sampler2D uPerlinNoiseTexture;
 
 varying vec2 vUv;
 
@@ -20,7 +21,10 @@ vec2 rotationMatrix(vec2 coords, float angleDeg, vec2 origin) {
 void main() {
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
-  float angle = modelPosition.y * 360.0 / 12.0 + uTime * 20.0;
+  vec4 perlinTexture = texture(uPerlinNoiseTexture, uv);
+  float perlinNoise = perlinTexture.r;
+
+  float angle = modelPosition.y * 360.0 / 12.0 + uTime * 20.0 + perlinNoise * 100.0;
   vec2 rotation = rotationMatrix(modelPosition.xz, angle, vec2(0.0));
   modelPosition.xz = rotation;
 
