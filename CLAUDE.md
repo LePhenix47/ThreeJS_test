@@ -17,6 +17,7 @@ Based on the file extension/type you're working on, read **ALL** skills (not jus
 | Git commits | Read `.claude/skills/git/commit-message-format/SKILL.md` |
 | Tauri v2 code | Read ALL files in `.claude/skills/tauri-v2/` |
 | Rust code | Read ALL files in `.claude/skills/rust/` |
+| World entities / Three.js modules | Read ALL files in `.claude/skills/threejs-experience/` |
 
 **You MUST read ALL skills in the category, not pick and choose. Reading 3/5 skills means you'll miss 2 important conventions.**
 
@@ -187,6 +188,18 @@ See [.env.example](.env.example) for required variables.
 <summary><strong>Git Skills (1 file)</strong></summary>
 
 - `commit-message-format` - Conventional commits
+</details>
+
+<details>
+<summary><strong>ThreeJS Experience Skills (7 files)</strong></summary>
+
+- `resources-gate` - When to gate entity construction behind `resources.on("textures-loaded", ...)`
+- `entity-base-classes` - Decision tree: MeshEntity / GltfEntity / TexturedMeshEntity / TexturedGltfEntity
+- `asset-source-registration` - Individual source files, `?url` for GLBs, `as const satisfies Source`
+- `debug-gui-registry` - GUIStateRegistry pattern, bind vs bindFinal, dispose
+- `shader-approach` - Path A (ShaderMaterial + .glsl) vs Path B (onBeforeCompile ⚠️)
+- `entity-lifecycle` - Sub-system getters, constructor ordering, update(), destroy() checklist
+- `shader-uniforms` - Declaring uniforms, per-frame update, shared refs, u-prefix convention
 </details>
 
 ## Reminder
