@@ -13,9 +13,10 @@ void main() {
 
   float smoke = texture.r;
   smoke *= smoothstep(0.04, 1.0, smoke);
-  // smoke *= smoothstep(1.0, 0.9, vUv.x);
-  // smoke *= smoothstep(0.0, 0.1, vUv.y);
-  // smoke *= smoothstep(1.0, 0.4, vUv.y);
+  smoke *= smoothstep(1.0, 0.9, vUv.x);
+  smoke *= smoothstep(0.0, 0.1, vUv.y);
+  smoke *= smoothstep(1.0, 0.4, vUv.y);
+
   gl_FragColor = vec4(vec3(1.0), smoke);
 
   #include <tonemapping_fragment>
