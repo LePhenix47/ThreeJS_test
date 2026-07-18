@@ -144,9 +144,7 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
         uTime: {
           value: 0,
         },
-        uPerlinNoiseTexture: {
-          value: this.smokeTextures.color,
-        },
+        uPerlinNoiseTexture: new THREE.Uniform(this.smokeTextures.color),
       },
     });
 
