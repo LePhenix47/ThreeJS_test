@@ -19,10 +19,10 @@ vec2 rotationMatrix(vec2 coords, float angleDeg, vec2 origin) {
 
 void main() {
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
-  // modelPosition.x += sin(modelPosition.x + uTime) + sin(modelPosition.z + uTime);
 
-  vec2 angle = rotationMatrix(modelPosition.xz, modelPosition.y * 360.0 / 12.0 + uTime * 20.0, vec2(0.0));
-  modelPosition.xz = angle;
+  float angle = modelPosition.y * 360.0 / 12.0 + uTime * 20.0;
+  vec2 rotation = rotationMatrix(modelPosition.xz, angle, vec2(0.0));
+  modelPosition.xz = rotation;
 
   vec4 viewPosition = viewMatrix * modelPosition;
   vec4 projectedPosition = projectionMatrix * viewPosition;
