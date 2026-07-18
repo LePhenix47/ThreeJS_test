@@ -85,11 +85,11 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   private setSmokeTexture = (): void => {
     const smokeTextures = this.resources.getTextures("coffee-smoke");
 
-    for (const [textProperty, textValue] of Object.entries(smokeTextures)) {
-      if (textProperty === "color") textValue.colorSpace = THREE.SRGBColorSpace;
+    for (const [texProperty, texValue] of Object.entries(smokeTextures)) {
+      if (texProperty === "color") texValue.colorSpace = THREE.SRGBColorSpace;
 
-      textValue.wrapS = THREE.RepeatWrapping;
-      textValue.wrapT = THREE.RepeatWrapping;
+      texValue.wrapS = THREE.RepeatWrapping;
+      texValue.wrapT = THREE.RepeatWrapping;
     }
 
     this.smokeTextures = smokeTextures;
