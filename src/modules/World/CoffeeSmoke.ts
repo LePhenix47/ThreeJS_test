@@ -2,12 +2,13 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import { GltfEntity } from "./types/entity";
+import { EntityTexture, GltfEntity } from "./types/entity";
 import { GLTF } from "three/examples/jsm/Addons.js";
 import * as THREE from "three";
 import vertexShader from "@shaders/coffee-smoke/vertex.glsl";
 import fragmentShader from "@shaders/coffee-smoke/fragment.glsl";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import { GetPathsFromName } from "../Experience/sources/textures";
 
 type CoffeeSmokeState = {
   modelWireframe: boolean;
@@ -21,6 +22,8 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   protected smokeGeometry: THREE.PlaneGeometry;
   protected smokeMaterial: THREE.ShaderMaterial;
   protected smokeMesh: THREE.Mesh;
+
+  protected textures: Pick<EntityTexture, GetPathsFromName<"coffee-smoke">>;
 
   private readonly smokeDimensions = {
     width: 1.5,
