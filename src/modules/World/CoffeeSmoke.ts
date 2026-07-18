@@ -88,7 +88,8 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   };
 
   protected setSmokeGeometry = (): void => {
-    const { width, height, widthSegments, heightSegments } = this.smokeDimensions;
+    const { width, height, widthSegments, heightSegments } =
+      this.smokeDimensions;
 
     /*
     ? We create unit square so translations are easier (can be treated like %)
@@ -96,9 +97,14 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
     *  const smokeGeometry = new THREE.PlaneGeometry(1.5, 6, 16, 64);
     * smokeGeometry.translate(0, smokeGeometry.parameters.height / 2, 0);
     */
-    const smokeGeometry = new THREE.PlaneGeometry(1, 1, widthSegments, heightSegments);
+    const smokeGeometry = new THREE.PlaneGeometry(
+      1,
+      1,
+      widthSegments,
+      heightSegments,
+    );
 
-    smokeGeometry.translate(0, 0.5, 0);
+    smokeGeometry.translate(0, 0.5, 0); // ? y +50% ↑
     smokeGeometry.scale(width, height, width);
 
     this.smokeGeometry = smokeGeometry;
