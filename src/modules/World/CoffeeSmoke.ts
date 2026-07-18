@@ -8,7 +8,7 @@ import * as THREE from "three";
 import vertexShader from "@shaders/coffee-smoke/vertex.glsl";
 import fragmentShader from "@shaders/coffee-smoke/fragment.glsl";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-import { GetPathsFromName } from "../Experience/sources/textures";
+import { GetPathsFromName } from "@modules/Experience/sources/textures";
 
 type CoffeeSmokeState = {
   modelWireframe: boolean;
@@ -19,11 +19,15 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   protected model: THREE.Group;
   protected bakedMesh: THREE.Mesh;
+
   protected smokeGeometry: THREE.PlaneGeometry;
   protected smokeMaterial: THREE.ShaderMaterial;
   protected smokeMesh: THREE.Mesh;
 
-  protected textures: Pick<EntityTexture, GetPathsFromName<"coffee-smoke">>;
+  protected smokeTextures: Pick<
+    EntityTexture,
+    GetPathsFromName<"coffee-smoke">
+  >;
 
   private readonly smokeDimensions = {
     width: 1.5,
@@ -63,9 +67,12 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
     this.setModel();
     this.scene.add(this.model);
 
+    this.setSmokeTexture();
+
     this.setSmokeGeometry();
     this.setSmokeMaterial();
     this.setSmokeMesh();
+
     this.scene.add(this.smokeMesh);
 
     if (this.debug?.isActive) {
@@ -74,6 +81,12 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
 
     console.log("CoffeeSmoke");
   }
+
+  private setSmokeTexture = (): void => {
+    const smokeTextures = this.resources.getTextures("coffee-smoke");
+
+    this.smokeTextures = smokeTextures;
+  };
 
   protected setModel = (): void => {
     const gltf: GLTF = this.resources.getGltf("coffee-smoke");
@@ -130,6 +143,9 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
       uniforms: {
         uTime: {
           value: 0,
+        },
+        uPerlinNoiseTexture: {
+          value: this.smokeTextures.color,
         },
       },
     });
