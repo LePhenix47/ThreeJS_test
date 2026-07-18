@@ -1,5 +1,7 @@
 uniform float uTime;
 
+varying vec2 vUv;
+
 vec2 rotationMatrix(vec2 coords, float angleDeg, vec2 origin) {
   float angleRad = radians(angleDeg);
 
@@ -26,4 +28,7 @@ void main() {
   vec4 projectedPosition = projectionMatrix * viewPosition;
 
   gl_Position = projectedPosition;
+
+  // * Varying 
+  vUv = uv;
 }
