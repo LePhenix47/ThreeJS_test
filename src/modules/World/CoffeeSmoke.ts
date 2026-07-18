@@ -127,7 +127,7 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
 
   protected setSmokeMesh = (): void => {
     const smokeMesh = new THREE.Mesh(this.smokeGeometry, this.smokeMaterial);
-    smokeMesh.position.y = 1.83;
+    smokeMesh.position.y = this.bakedMesh.position.y;
 
     this.smokeMesh = smokeMesh;
   };
