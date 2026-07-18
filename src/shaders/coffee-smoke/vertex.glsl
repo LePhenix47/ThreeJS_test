@@ -21,7 +21,9 @@ vec2 rotationMatrix(vec2 coords, float angleDeg, vec2 origin) {
 void main() {
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
-  vec4 perlinTexture = texture(uPerlinNoiseTexture, uv + vec2(uTime) * 0.1);
+  vec4 perlinTexture = texture(uPerlinNoiseTexture, vec2(0.5, uv.y - uTime * 0.05));
+  // vec4 perlinTexture = texture(uPerlinNoiseTexture, uv + vec2(uTime) * 0.1);
+
   float perlinNoise = perlinTexture.r;
 
   float angle = modelPosition.y * 360.0 / 12.0 + uTime * 20.0 + perlinNoise * 100.0;
