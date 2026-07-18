@@ -10,7 +10,11 @@ void main() {
   smokeUv.y -= uTime * 0.02;
 
   vec4 texture = texture(uPerlinNoiseTexture, smokeUv);
-  gl_FragColor = vec4(vec3(1.0), texture.r);
+
+  float alpha = texture.r;
+  alpha *= smoothstep(0.0, 0.1, vUv.y);   // * fade in at bottom, 0 → 10%
+  alpha *= smoothstep(1.0, 0.5, vUv.y);   // * fade out at top, 100% → 50%
+  gl_FragColor = vec4(vec3(1.0), alpha);
 
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
