@@ -13,6 +13,7 @@ import { GetPathsFromName } from "@modules/Experience/sources/textures";
 type CoffeeSmokeState = {
   modelWireframe: boolean;
   smokeWireframe: boolean;
+  smokeColor: string;
 };
 
 class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
@@ -41,6 +42,7 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   private readonly debugDefaults: CoffeeSmokeState = {
     modelWireframe: false,
     smokeWireframe: false,
+    smokeColor: "9b4d33",
   };
 
   private get scene() {
@@ -138,7 +140,7 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
   };
 
   protected setSmokeMaterial = (): void => {
-    const { smokeWireframe } = this.debugDefaults;
+    const { smokeWireframe, smokeColor } = this.debugDefaults;
 
     const smokeMaterial = new THREE.ShaderMaterial({
       side: THREE.DoubleSide,
@@ -148,10 +150,11 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
       fragmentShader,
       wireframe: smokeWireframe,
       uniforms: {
-        uTime: {
-          value: 0,
-        },
+        uTime: new THREE.Uniform(0),
         uPerlinNoiseTexture: new THREE.Uniform(this.smokeTextures.color),
+        uColor: {
+          value: new THREE.Color(smokeColor),
+        },
       },
     });
 
@@ -175,18 +178,25 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
     const { state } = registry;
     const { gui } = this.debug;
 
-    const folder = gui.addFolder("Coffee Smoke");
+    const debugFolder = gui.addFolder("Coffee Smoke");
+    const modelFolder = debugFolder.addFolder("Model");
+    const smokeFolder = debugFolder.addFolder("Smoke");
 
-    folder.add(state, "modelWireframe").name("Model Wireframe");
+    modelFolder.add(state, "modelWireframe").name("Model Wireframe");
     registry.bind("modelWireframe", (v) => {
       if (!(this.bakedMesh.material instanceof THREE.MeshBasicMaterial)) return;
 
       this.bakedMesh.material.wireframe = v;
     });
 
-    folder.add(state, "smokeWireframe").name("Smoke Wireframe");
+    smokeFolder.add(state, "smokeWireframe").name("Wireframe");
     registry.bind("smokeWireframe", (v) => {
       this.smokeMaterial.wireframe = v;
+    });
+
+    smokeFolder.addColor(state, "smokeColor").name("Color");
+    registry.bind("smokeColor", (v) => {
+      this.smokeMaterial.uniforms.uColor.value = new THREE.Color(v);
     });
   };
 
