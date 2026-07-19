@@ -1,5 +1,6 @@
 uniform sampler2D uPerlinNoiseTexture;
 uniform float uTime;
+uniform vec3 uColor;
 
 varying vec2 vUv;
 
@@ -17,7 +18,9 @@ void main() {
   smoke *= smoothstep(0.0, 0.1, vUv.y);
   smoke *= smoothstep(1.0, 0.4, vUv.y);
 
-  gl_FragColor = vec4(0.6, 0.3, 0.2, smoke);
+  vec3 color = uColor;
+
+  gl_FragColor = vec4(color, smoke);
 
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
