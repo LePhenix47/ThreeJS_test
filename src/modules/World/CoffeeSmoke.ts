@@ -180,7 +180,6 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
 
     const debugFolder = gui.addFolder("Coffee Smoke");
     const modelFolder = debugFolder.addFolder("Model");
-    const smokeFolder = debugFolder.addFolder("Smoke");
 
     modelFolder.add(state, "modelWireframe").name("Model Wireframe");
     registry.bind("modelWireframe", (v) => {
@@ -188,6 +187,8 @@ class CoffeeSmoke extends GltfEntity implements Updatable, Destroyable {
 
       this.bakedMesh.material.wireframe = v;
     });
+
+    const smokeFolder = debugFolder.addFolder("Smoke");
 
     smokeFolder.add(state, "smokeWireframe").name("Wireframe");
     registry.bind("smokeWireframe", (v) => {
