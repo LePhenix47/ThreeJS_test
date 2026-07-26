@@ -9,12 +9,22 @@ import HolographicTorus from "./HolographicTorus";
 import HolographicSphere from "./HolographicSphere";
 import HolographicSuzanne from "./HolographicSuzanne";
 
+export type HolographicEntityParams = {
+  material: THREE.ShaderMaterial;
+  group: THREE.Group;
+};
+
 class HolographicGroup implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private material: THREE.ShaderMaterial;
+  public group: THREE.Group;
   private torus: HolographicTorus;
   private sphere: HolographicSphere;
   private suzanne?: HolographicSuzanne;
+
+  private get scene() {
+    return this.experience!.scene;
+  }
 
   private get resources() {
     return this.experience!.resources;
@@ -28,12 +38,17 @@ class HolographicGroup implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
+    this.group = new THREE.Group();
+    this.scene.add(this.group);
+
     this.setMaterial();
-    this.torus = new HolographicTorus(this.material);
-    this.sphere = new HolographicSphere(this.material);
+
+    const { material, group } = this;
+    this.torus = new HolographicTorus({ material, group });
+    this.sphere = new HolographicSphere({ material, group });
 
     this.resources.on("textures-loaded", () => {
-      this.suzanne = new HolographicSuzanne(this.material);
+      this.suzanne = new HolographicSuzanne({ material, group });
     });
 
     console.log("HolographicGroup");
@@ -64,6 +79,7 @@ class HolographicGroup implements Updatable, Destroyable {
     this.sphere.destroy();
     this.suzanne?.destroy();
     this.material.dispose();
+    this.scene.remove(this.group);
   };
 }
 

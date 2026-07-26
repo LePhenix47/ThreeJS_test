@@ -3,32 +3,31 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import { MeshEntity } from "./types/entity";
+import { HolographicEntityParams } from "./HolographicGroup";
 import * as THREE from "three";
 
 class HolographicSphere extends MeshEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
+  private readonly group: THREE.Group;
   protected geometry: THREE.SphereGeometry;
   protected material: THREE.ShaderMaterial;
   protected mesh: THREE.Mesh;
-
-  private get scene() {
-    return this.experience!.scene;
-  }
 
   private get time() {
     return this.experience!.time;
   }
 
-  constructor(material: THREE.ShaderMaterial) {
+  constructor({ material, group }: HolographicEntityParams) {
     super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
+    this.group = group;
     this.material = material;
     this.setGeometry();
     this.setMesh();
     this.mesh.position.x = -3;
-    this.scene.add(this.mesh);
+    this.group.add(this.mesh);
   }
 
   protected setGeometry = (): void => {
@@ -50,7 +49,7 @@ class HolographicSphere extends MeshEntity implements Updatable, Destroyable {
 
   public destroy = (): void => {
     this.geometry.dispose();
-    this.scene.remove(this.mesh);
+    this.group.remove(this.mesh);
   };
 }
 
