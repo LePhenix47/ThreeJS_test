@@ -50,12 +50,7 @@ class HolographicSuzanne extends GltfEntity implements Updatable, Destroyable {
   };
 
   public destroy = (): void => {
-    this.model.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return;
-      child.geometry.dispose();
-      // material NOT disposed — owned by HolographicGroup
-    });
-    this.scene.remove(this.model);
+    this.destroyModel();
   };
 }
 
