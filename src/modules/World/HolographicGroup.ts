@@ -3,8 +3,10 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import * as THREE from "three";
+
 import vertexShader from "@shaders/holographic/vertex.glsl";
 import fragmentShader from "@shaders/holographic/fragment.glsl";
+
 import HolographicTorus from "./HolographicTorus";
 import HolographicSphere from "./HolographicSphere";
 import HolographicSuzanne from "./HolographicSuzanne";
