@@ -1,4 +1,4 @@
-varying vec3 vLocalPosition;
+varying vec3 vModelPosition;
 
 void main() {
 
@@ -9,5 +9,5 @@ void main() {
 
     gl_Position = projectedPosition;
 
-    vLocalPosition = position;
+    vModelPosition = modelPosition.xyz;
 }
