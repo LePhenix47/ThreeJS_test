@@ -17,7 +17,7 @@ class Environment implements Destroyable {
 
   private readonly debugDefaults: EnvironmentState = {
     lightHelper: true,
-    environmentColor: "black",
+    environmentColor: "#1d1f2a",
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
