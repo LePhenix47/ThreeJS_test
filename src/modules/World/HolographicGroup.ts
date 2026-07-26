@@ -72,7 +72,7 @@ class HolographicGroup implements Updatable, Destroyable {
       vertexShader,
       fragmentShader,
       uniforms: {
-        uTime: { value: 0 },
+        uTime: new THREE.Uniform(0),
       },
       side: THREE.FrontSide,
       transparent: true,
