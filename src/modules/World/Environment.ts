@@ -5,6 +5,7 @@ import { EnvironmentEntity, EnvironmentMapConfig } from "./types/entity";
 
 type EnvironmentState = {
   lightHelper: boolean;
+  environmentColor: string;
 };
 
 class Environment implements Destroyable {
@@ -16,6 +17,7 @@ class Environment implements Destroyable {
 
   private readonly debugDefaults: EnvironmentState = {
     lightHelper: true,
+    environmentColor: "black",
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
@@ -31,6 +33,10 @@ class Environment implements Destroyable {
 
   private get debug() {
     return this.experience!.debug;
+  }
+
+  private get renderer() {
+    return this.experience!.renderer;
   }
 
   constructor() {
@@ -92,7 +98,16 @@ class Environment implements Destroyable {
     const { state } = registry;
     const { gui } = this.debug;
 
-    const helpersFolder = gui.addFolder("Helpers");
+    const environMentFolder = gui.addFolder("environMentFolder");
+    environMentFolder
+      .addColor(state, "environmentColor")
+      .name("Renderer clear color");
+    registry.bind("environmentColor", (v) => {
+      const threeColor = new THREE.Color(v);
+      this.renderer.instance.setClearColor(threeColor);
+    });
+
+    const helpersFolder = environMentFolder.addFolder("Helpers");
 
     helpersFolder.add(state, "lightHelper").name("Light Helper");
     registry.bind("lightHelper", (v) => {
