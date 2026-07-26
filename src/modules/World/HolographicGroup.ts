@@ -51,8 +51,19 @@ class HolographicGroup implements Updatable, Destroyable {
       this.suzanne = new HolographicSuzanne({ material, group });
     });
 
+    this.setPosition();
+
     console.log("HolographicGroup");
   }
+
+  private setPosition = (): void => {
+    // * ThreeJS equivalent of getBoundingClientRect
+    const box = new THREE.Box3().setFromObject(this.group);
+
+    const height = box.max.y - box.min.y;
+
+    this.group.position.y = height * 0.5;
+  };
 
   private setMaterial = (): void => {
     this.material = new THREE.ShaderMaterial({
