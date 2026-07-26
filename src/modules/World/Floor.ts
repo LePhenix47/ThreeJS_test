@@ -82,6 +82,7 @@ class Floor extends MeshEntity implements Destroyable {
   protected setMesh = () => {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.rotation.x = THREE.MathUtils.degToRad(-90);
+    this.mesh.position.y = -0.01;
     this.mesh.receiveShadow = true;
   };
 
