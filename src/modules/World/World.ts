@@ -4,10 +4,9 @@ import Experience, {
 } from "@modules/Experience/Experience";
 import Environment from "./Environment";
 import Floor from "./Floor";
+import HolographicGroup from "./HolographicGroup";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-
-// * To setup GLSL shaders: git cherry-pick 905deb41a596f9122c2e71fb56a1194a0585c98d
 
 type WorldState = {
   axisHelper: boolean;
@@ -18,6 +17,7 @@ class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment?: Environment;
   public floor?: Floor;
+  public holographicGroup: HolographicGroup;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -45,6 +45,7 @@ class World implements Updatable, Destroyable {
 
     this.floor = new Floor();
     this.environment = new Environment();
+    this.holographicGroup = new HolographicGroup();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -106,11 +107,14 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   };
 
-  public update = () => {};
+  public update = () => {
+    this.holographicGroup.update();
+  };
 
   public destroy = () => {
     this.floor?.destroy();
     this.environment?.destroy();
+    this.holographicGroup.destroy();
     this.removeHelpers();
   };
 }

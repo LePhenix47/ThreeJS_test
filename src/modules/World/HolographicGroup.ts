@@ -1,0 +1,70 @@
+import Experience, {
+  Destroyable,
+  Updatable,
+} from "@modules/Experience/Experience";
+import * as THREE from "three";
+import vertexShader from "@shaders/holographic/vertex.glsl";
+import fragmentShader from "@shaders/holographic/fragment.glsl";
+import HolographicTorus from "./HolographicTorus";
+import HolographicSphere from "./HolographicSphere";
+import HolographicSuzanne from "./HolographicSuzanne";
+
+class HolographicGroup implements Updatable, Destroyable {
+  private readonly experience: Experience | null;
+  private material: THREE.ShaderMaterial;
+  private torus: HolographicTorus;
+  private sphere: HolographicSphere;
+  private suzanne?: HolographicSuzanne;
+
+  private get resources() {
+    return this.experience!.resources;
+  }
+
+  private get time() {
+    return this.experience!.time;
+  }
+
+  constructor() {
+    this.experience = Experience.instance;
+    if (!this.experience) throw new Error("Experience instance not found");
+
+    this.setMaterial();
+    this.torus = new HolographicTorus(this.material);
+    this.sphere = new HolographicSphere(this.material);
+
+    this.resources.on("textures-loaded", () => {
+      this.suzanne = new HolographicSuzanne(this.material);
+    });
+
+    console.log("HolographicGroup");
+  }
+
+  private setMaterial = (): void => {
+    this.material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+      },
+      side: THREE.FrontSide,
+      transparent: true,
+      depthWrite: false,
+    });
+  };
+
+  public update = (): void => {
+    this.material.uniforms.uTime.value = this.time.elapsedSeconds;
+    this.torus.update();
+    this.sphere.update();
+    this.suzanne?.update();
+  };
+
+  public destroy = (): void => {
+    this.torus.destroy();
+    this.sphere.destroy();
+    this.suzanne?.destroy();
+    this.material.dispose();
+  };
+}
+
+export default HolographicGroup;
