@@ -1,4 +1,5 @@
 varying vec3 vModelPosition;
+varying float vRelativeY;
 
 void main() {
 
@@ -10,4 +11,5 @@ void main() {
     gl_Position = projectedPosition;
 
     vModelPosition = modelPosition.xyz;
+    vRelativeY = modelPosition.y - modelMatrix[3].y;
 }
