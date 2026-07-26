@@ -4,24 +4,18 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { EnvironmentEntity, EnvironmentMapConfig } from "./types/entity";
 
 type EnvironmentState = {
-  axisHelper: boolean;
   lightHelper: boolean;
-  gridHelper: boolean;
 };
 
 class Environment implements Destroyable {
   private readonly experience: Experience | null;
   private ambientLight: THREE.AmbientLight;
   private sunLight: THREE.DirectionalLight;
-  private axisHelper: THREE.AxesHelper;
   private lightHelper: THREE.DirectionalLightHelper;
-  private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
   private readonly debugDefaults: EnvironmentState = {
-    axisHelper: true,
     lightHelper: true,
-    gridHelper: true,
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
@@ -33,10 +27,6 @@ class Environment implements Destroyable {
 
   private get resources() {
     return this.experience!.resources;
-  }
-
-  private get camera() {
-    return this.experience!.camera;
   }
 
   private get debug() {
@@ -52,7 +42,6 @@ class Environment implements Destroyable {
 
     this.setAmbientLight();
     this.setSunLight();
-    this.setHelpers();
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -93,13 +82,6 @@ class Environment implements Destroyable {
     this.scene.add(this.lightHelper);
   };
 
-  private setHelpers = () => {
-    this.axisHelper = new THREE.AxesHelper(3);
-    this.gridHelper = new THREE.GridHelper(10, 10);
-
-    this.scene.add(this.axisHelper, this.gridHelper);
-  };
-
   private addDebugFolders = () => {
     const registry = new GUIStateRegistry<EnvironmentState>(
       "environment-gui-state",
@@ -112,48 +94,17 @@ class Environment implements Destroyable {
 
     const helpersFolder = gui.addFolder("Helpers");
 
-    helpersFolder.add(state, "axisHelper").name("Axis Helper");
-    registry.bind("axisHelper", (v) => {
-      this.axisHelper.visible = v;
-    });
-
     helpersFolder.add(state, "lightHelper").name("Light Helper");
     registry.bind("lightHelper", (v) => {
       this.lightHelper.visible = v;
     });
-
-    helpersFolder.add(state, "gridHelper").name("Grid Helper");
-    registry.bind("gridHelper", (v) => {
-      this.gridHelper.visible = v;
-    });
-
-    helpersFolder
-      .add(
-        {
-          resetPivot: () => {
-            const { controls } = this.camera;
-            controls.target.set(0, 0, 0);
-            controls.update();
-          },
-        },
-        "resetPivot",
-      )
-      .name("Reset Camera Pivot");
   };
 
   public destroy = () => {
-    this.scene.remove(
-      this.ambientLight,
-      this.sunLight,
-      this.axisHelper,
-      this.lightHelper,
-      this.gridHelper,
-    );
+    this.scene.remove(this.ambientLight, this.sunLight, this.lightHelper);
     this.ambientLight.dispose();
     this.sunLight.dispose();
-    this.axisHelper.dispose();
     this.lightHelper?.dispose();
-    this.gridHelper.dispose();
     this.guiRegistry?.dispose();
   };
 }
