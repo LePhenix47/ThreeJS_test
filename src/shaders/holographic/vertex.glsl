@@ -1,4 +1,4 @@
-varying vec2 vUv;
+varying vec3 vModelPosition;
 
 void main() {
 
@@ -9,5 +9,5 @@ void main() {
 
     gl_Position = projectedPosition;
 
-    vUv = uv;
+    vModelPosition = modelPosition.xyz;
 }
