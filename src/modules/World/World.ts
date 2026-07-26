@@ -3,7 +3,6 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import Environment from "./Environment";
-import Floor from "./Floor";
 import HolographicGroup from "./HolographicGroup";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
@@ -16,7 +15,6 @@ type WorldState = {
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment?: Environment;
-  public floor?: Floor;
   public holographicGroup: HolographicGroup;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
@@ -43,7 +41,6 @@ class World implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.floor = new Floor();
     this.environment = new Environment();
     this.holographicGroup = new HolographicGroup();
     this.setHelpers();
@@ -112,7 +109,6 @@ class World implements Updatable, Destroyable {
   };
 
   public destroy = () => {
-    this.floor?.destroy();
     this.environment?.destroy();
     this.holographicGroup.destroy();
     this.removeHelpers();
