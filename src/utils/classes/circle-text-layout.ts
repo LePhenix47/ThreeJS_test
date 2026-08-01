@@ -29,7 +29,7 @@ class CircleTextLayout {
   private readonly lineHeight: number;
   private readonly horizontalPadding: number;
   private readonly verticalPadding: number;
-  private readonly MIN_SLOT_WIDTH = 24;
+  private readonly MIN_SLOT_WIDTH = 65;
 
   /**
    * @param text - Full text string to lay out.
