@@ -23,11 +23,16 @@ export type HolographicEntityParams = {
 
 class HolographicGroup implements Updatable, Destroyable {
   private readonly experience: Experience | null;
+
   private material: THREE.ShaderMaterial;
+
   public group: THREE.Group;
+
   private torus: HolographicTorus;
   private sphere: HolographicSphere;
   private suzanne?: HolographicSuzanne;
+
+  private textOverlay: HTMLParagraphElement;
 
   private get scene() {
     return this.experience!.scene;
@@ -70,6 +75,8 @@ class HolographicGroup implements Updatable, Destroyable {
 
     this.setPosition();
 
+    this.setTextOverlay();
+
     if (this.debug?.isActive) this.addDebugFolders();
 
     console.log("HolographicGroup");
@@ -101,6 +108,16 @@ class HolographicGroup implements Updatable, Destroyable {
     });
   };
 
+  private setTextOverlay = () => {
+    const parent = this.experience!.canvas.parentElement;
+
+    const textOverlay = parent?.querySelector<HTMLParagraphElement>(
+      `[data-element="text-overlay"]`,
+    )!;
+
+    this.textOverlay = textOverlay;
+  };
+
   private addDebugFolders = (): void => {
     const registry = new GUIStateRegistry<HolographicGroupState>(
       "holographic-group",
@@ -116,6 +133,7 @@ class HolographicGroup implements Updatable, Destroyable {
     // * On value
     registry.bind("color", (v) => {
       this.material.uniforms.uColor.value.set(v);
+      this.textOverlay.style.setProperty("--_chosen-color", v);
     });
   };
 

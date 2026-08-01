@@ -149,7 +149,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   return (
     <>
       <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
-      <p ref={overlayRef} className="three-scene__overlay">
+      <p
+        ref={overlayRef}
+        className="three-scene__overlay"
+        data-element="text-overlay"
+      >
         {textRuns.map(({ text, x, y }, i) => (
           <span
             key={i}

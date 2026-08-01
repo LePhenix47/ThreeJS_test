@@ -30,6 +30,8 @@
     mask-repeat: repeat;
     mask-size: 100% 4px;
     animation: mask-stripes-scroll 0.4s linear infinite;
+
+    --_chosen-color: #1d929e;
   }
 
   &__text-run {
@@ -41,7 +43,9 @@
     font-family: Consolas, monospace;
     line-height: var(--_hologram-line-height);
 
-    --_bg: linear-gradient(135deg, #00ffcc 0%, #00aaff 50%, #aa44ff 100%);
+
+
+    --_bg: linear-gradient(135deg, var(--_chosen-color, #00ffcc) 0%, #00aaff 50%, #aa44ff 100%);
 
     pointer-events: none;
   }
