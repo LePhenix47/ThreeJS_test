@@ -2,9 +2,14 @@ varying vec3 vModelPosition;
 varying vec3 vNormal;
 varying float vRelativeY;
 
+uniform float uTime;
+
+#include ../utils/random2D
+
 void main() {
 
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+    modelPosition.x += random2D(modelPosition.xz + uTime) * 0.25;
 
     vec4 viewPosition = viewMatrix * modelPosition;
     vec4 projectedPosition = projectionMatrix * viewPosition;
