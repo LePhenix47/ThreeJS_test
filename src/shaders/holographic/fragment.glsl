@@ -12,7 +12,12 @@ void main() {
 
   // * Fresnel, the reflection of the water surface based on viewing angle, perpendicular = no reflection & transparent, parallel = very reflective & opaque
   vec3 directionOfView = normalize(vModelPosition - cameraPosition);
+
   vec3 normal = normalize(vNormal);
+  if(!gl_FrontFacing) {
+    normal *= -1.0;
+  }
+
   float fresnel = dot(directionOfView, normal) + 1.0;
   fresnel = pow(fresnel, 2.0);
 

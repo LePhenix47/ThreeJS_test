@@ -74,9 +74,9 @@ class HolographicGroup implements Updatable, Destroyable {
       uniforms: {
         uTime: new THREE.Uniform(0),
       },
-      side: THREE.FrontSide,
+      side: THREE.DoubleSide,
       transparent: true,
-      depthWrite: true,
+      depthWrite: false,
     });
   };
 
