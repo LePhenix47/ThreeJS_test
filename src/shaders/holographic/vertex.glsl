@@ -11,7 +11,11 @@ void main() {
 
     gl_Position = projectedPosition;
 
+    // * Transforms normal from local coord space to world space
+    // ? non-homogenous vec, we do not want to translate nor scale the normals (scale needs normalization so it's fine to keep it)
+    vec4 modelNormal = modelMatrix * vec4(normal, 0.0);
+
     vModelPosition = modelPosition.xyz;
-    vNormal = normal;
+    vNormal = modelNormal.xyz;
     vRelativeY = modelPosition.y - modelMatrix[3].y;
 }
