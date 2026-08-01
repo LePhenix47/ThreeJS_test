@@ -17,10 +17,6 @@ class HolographicSuzanne extends GltfEntity implements Updatable, Destroyable {
     return this.experience!.resources;
   }
 
-  private get time() {
-    return this.experience!.time;
-  }
-
   constructor({ material, group }: HolographicEntityParams) {
     super();
     this.experience = Experience.instance;
@@ -43,10 +39,12 @@ class HolographicSuzanne extends GltfEntity implements Updatable, Destroyable {
     this.model = gltf.scene;
   };
 
-  public update = (): void => {
-    this.model.rotation.x = -this.time.elapsedSeconds * 0.1;
-    this.model.rotation.y = this.time.elapsedSeconds * 0.2;
+  public setRotation = (x: number, y: number): void => {
+    this.model.rotation.x = x;
+    this.model.rotation.y = y;
   };
+
+  public update = (): void => {};
 
   public destroy = (): void => {
     this.destroyModel();

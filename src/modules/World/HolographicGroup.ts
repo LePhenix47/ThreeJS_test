@@ -120,10 +120,14 @@ class HolographicGroup implements Updatable, Destroyable {
   };
 
   public update = (): void => {
-    this.material.uniforms.uTime.value = this.time.elapsedSeconds;
-    this.torus.update();
-    this.sphere.update();
-    this.suzanne?.update();
+    const time = this.time.elapsedSeconds;
+    this.material.uniforms.uTime.value = time;
+
+    const rotX = -time * 0.1;
+    const rotY = time * 0.2;
+    this.torus.setRotation(rotX, rotY);
+    this.sphere.setRotation(rotX, rotY);
+    this.suzanne?.setRotation(rotX, rotY);
   };
 
   public destroy = (): void => {

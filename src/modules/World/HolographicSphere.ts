@@ -13,10 +13,6 @@ class HolographicSphere extends MeshEntity implements Updatable, Destroyable {
   protected material: THREE.ShaderMaterial;
   protected mesh: THREE.Mesh;
 
-  private get time() {
-    return this.experience!.time;
-  }
-
   constructor({ material, group }: HolographicEntityParams) {
     super();
     this.experience = Experience.instance;
@@ -26,7 +22,7 @@ class HolographicSphere extends MeshEntity implements Updatable, Destroyable {
     this.material = material;
     this.setGeometry();
     this.setMesh();
-    this.mesh.position.x = -3;
+
     this.group.add(this.mesh);
   }
 
@@ -35,17 +31,22 @@ class HolographicSphere extends MeshEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = (): void => {
-    // Material provided externally by HolographicGroup
+    // ? Material provided externally by HolographicGroup
   };
 
   protected setMesh = (): void => {
-    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    const mesh = new THREE.Mesh(this.geometry, this.material);
+    mesh.position.x = -3;
+
+    this.mesh = mesh;
   };
 
-  public update = (): void => {
-    this.mesh.rotation.x = -this.time.elapsedSeconds * 0.1;
-    this.mesh.rotation.y = this.time.elapsedSeconds * 0.2;
+  public setRotation = (x: number, y: number): void => {
+    this.mesh.rotation.x = x;
+    this.mesh.rotation.y = y;
   };
+
+  public update = (): void => {};
 
   public destroy = (): void => {
     this.geometry.dispose();
