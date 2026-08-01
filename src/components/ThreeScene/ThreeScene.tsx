@@ -108,7 +108,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const { camera, world, time } = experience;
     const { holographicGroup } = world;
 
-    const style = getComputedStyle(canvas);
+    const style = getComputedStyle(overlay);
     const fontSize = style.getPropertyValue("--_hologram-font-size").trim();
     const LINE_HEIGHT = parseFloat(
       style.getPropertyValue("--_hologram-line-height"),
