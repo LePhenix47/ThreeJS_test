@@ -137,7 +137,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         width,
         height,
       );
-      setTextRuns(textLayout.layout(width, height, circles));
+
+      const currentTextRuns = textLayout.layout(width, height, circles);
+      setTextRuns(currentTextRuns);
     };
 
     time.on("tick", onTick);
