@@ -29,11 +29,6 @@
     font-family: Consolas, monospace;
     line-height: var(--_hologram-line-height);
 
-    background-clip: text;
-    -webkit-background-clip: text;
-
-    background: var(--_bg, red);
-    color: transparent;
     --_bg: linear-gradient(135deg, #00ffcc 0%, #00aaff 50%, #aa44ff 100%);
 
     pointer-events: none;

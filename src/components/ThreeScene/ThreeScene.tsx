@@ -153,7 +153,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
         {textRuns.map(({ text, x, y }, i) => (
           <span
             key={i}
-            className="three-scene__text-run"
+            className="three-scene__text-run text-bg-clip"
             style={
               { "--_x": `${x}px`, "--_y": `${y}px` } as React.CSSProperties
             }

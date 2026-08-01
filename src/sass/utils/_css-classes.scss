@@ -6,3 +6,12 @@
         grid-area: stack;
     }
 }
+
+.text-bg-clip {
+    background: var(--_bg, red);
+    background-clip: text;
+    -webkit-background-clip: text;
+
+
+    color: transparent;
+}
