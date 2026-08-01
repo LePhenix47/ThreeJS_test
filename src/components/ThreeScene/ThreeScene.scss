@@ -15,9 +15,21 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    --_hologram-font-size: 16px;
-    --_hologram-line-height: 26px;
+    --_hologram-font-size: 26px;
+    --_hologram-line-height: 36px;
 
+    --_hologram-stripe-height: 2px;
+    --_h-s-h-2x: calc(2*var(--_hologram-stripe-height));
+
+    mask-image: linear-gradient(180deg,
+        transparent var(--_hologram-stripe-height),
+        black var(--_hologram-stripe-height),
+        black var(--_h-s-h-2x),
+        transparent var(--_h-s-h-2x));
+
+    mask-repeat: repeat;
+    mask-size: 100% 4px;
+    animation: mask-stripes-scroll 0.4s linear infinite;
   }
 
   &__text-run {
@@ -32,5 +44,15 @@
     --_bg: linear-gradient(135deg, #00ffcc 0%, #00aaff 50%, #aa44ff 100%);
 
     pointer-events: none;
+  }
+}
+
+@keyframes mask-stripes-scroll {
+  from {
+    mask-position: 0 0;
+  }
+
+  to {
+    mask-position: 0 var(--_h-s-h-2x);
   }
 }
