@@ -151,6 +151,21 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   return (
     <>
       <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
+      <ul className="three-scene__mesh-silhouette-circles">
+        {/* {debugCircles.map(({ cx, cy, r }, i) => (
+          <li
+            key={i}
+            className="three-scene__debug-circle"
+            style={
+              {
+                "--_cx": `${cx - r}px`,
+                "--_cy": `${cy - r}px`,
+                "--_d": `${r * 2}px`,
+              } as React.CSSProperties
+            }
+          />
+        ))} */}
+      </ul>
       <p
         ref={overlayRef}
         className="three-scene__overlay"
