@@ -32,6 +32,20 @@
     animation: mask-stripes-scroll 0.4s linear infinite;
 
     --_chosen-color: #1d929e;
+    --_opacity: 1;
+
+    opacity: var(--_opacity);
+  }
+
+  &__debug-circle {
+    position: absolute;
+    left: var(--_cx);
+    top: var(--_cy);
+    width: var(--_d);
+    height: var(--_d);
+    border-radius: 50%;
+    border: 1px solid rgba(255, 0, 80, 0.8);
+    pointer-events: none;
   }
 
   &__text-run {

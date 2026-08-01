@@ -7,6 +7,7 @@ import * as THREE from "three";
 
 type HolographicGroupState = {
   color: string;
+  textVisible: boolean;
 };
 
 import vertexShader from "@shaders/holographic/vertex.glsl";
@@ -52,6 +53,7 @@ class HolographicGroup implements Updatable, Destroyable {
 
   private readonly debugDefaults: HolographicGroupState = {
     color: "#3c6ff7",
+    textVisible: true,
   };
 
   private guiRegistry: GUIStateRegistry<HolographicGroupState> | null = null;
@@ -130,10 +132,14 @@ class HolographicGroup implements Updatable, Destroyable {
     const folder = gui.addFolder("Holographic Group");
 
     folder.addColor(state, "color").name("Color");
-    // * On value
     registry.bind("color", (v) => {
       this.material.uniforms.uColor.value.set(v);
       this.textOverlay.style.setProperty("--_chosen-color", v);
+    });
+
+    folder.add(state, "textVisible").name("Show text");
+    registry.bind("textVisible", (v) => {
+      this.textOverlay.style.setProperty("--_opacity", `${v ? 1 : 0}`);
     });
   };
 
