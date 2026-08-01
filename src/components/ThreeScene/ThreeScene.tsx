@@ -6,7 +6,10 @@ import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
 import Experience from "@/modules/Experience/Experience";
-import MeshSilhouetteExtractor from "@utils/classes/mesh-silhouette-extractor";
+import MeshSilhouetteExtractor, {
+  type ScreenCircle,
+} from "@utils/classes/mesh-silhouette-extractor";
+import GUIStateRegistry from "@utils/classes/gui-state-registry";
 import GroupCircleExtractor from "@utils/classes/group-circle-extractor";
 import CircleTextLayout, {
   type TextRun,
@@ -21,6 +24,7 @@ type ThreeSceneProps = {
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const [textRuns, setTextRuns] = useState<TextRun[]>([]);
+  const [debugCircles, setDebugCircles] = useState<ScreenCircle[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLParagraphElement>(null);
 
@@ -148,11 +152,70 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     };
   }, []);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const experience = Experience.instance;
+    if (!experience) return;
+
+    const { camera, world, time, debug } = experience;
+    if (!debug?.isActive) return;
+
+    const { holographicGroup } = world;
+
+    const extractorsByGeometry = new Map<string, MeshSilhouetteExtractor>(
+      Object.entries({
+        SphereGeometry: new MeshSilhouetteExtractor(1, 4),
+        TorusKnotGeometry: new MeshSilhouetteExtractor(3, 4),
+      }),
+    );
+    const fallbackExtractor = new MeshSilhouetteExtractor(5, 4);
+    const groupExtractor = new GroupCircleExtractor(
+      extractorsByGeometry,
+      fallbackExtractor,
+    );
+
+    type ThreeSceneDebugState = { showCircles: boolean };
+    const debugRegistry = new GUIStateRegistry<ThreeSceneDebugState>(
+      "three-scene",
+      { showCircles: true },
+    );
+    const { state } = debugRegistry;
+    const debugFolder = debug.gui.addFolder("Three Scene");
+    debugFolder.add(state, "showCircles").name("Show circles");
+
+    let showCircles = true;
+    debugRegistry.bind("showCircles", (v) => {
+      showCircles = v;
+      if (!v) setDebugCircles([]);
+    });
+
+    const onTick = () => {
+      if (!showCircles) return;
+      const { clientWidth: width, clientHeight: height } = canvas;
+      const circles = groupExtractor.extract(
+        holographicGroup.group,
+        camera.instance,
+        width,
+        height,
+      );
+      setDebugCircles(circles);
+    };
+
+    time.on("tick", onTick);
+    return () => {
+      time.off("tick", onTick);
+      debugRegistry.dispose();
+      debugFolder.destroy();
+    };
+  }, []);
+
   return (
     <>
       <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
       <ul className="three-scene__mesh-silhouette-circles">
-        {/* {debugCircles.map(({ cx, cy, r }, i) => (
+        {debugCircles.map(({ cx, cy, r }, i) => (
           <li
             key={i}
             className="three-scene__debug-circle"
@@ -164,7 +227,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
               } as React.CSSProperties
             }
           />
-        ))} */}
+        ))}
       </ul>
       <p
         ref={overlayRef}
