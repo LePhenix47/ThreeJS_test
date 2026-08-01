@@ -1,6 +1,9 @@
 @use "../../sass/utils/" as *;
 
 .three-scene {
+  --_hologram-font-size: 16px;
+  --_hologram-line-height: 26px;
+
   position: absolute;
   top: 0;
   left: 0;
@@ -8,9 +11,30 @@
   height: 100%;
   overflow: hidden;
 
-  &__text {
 
-    z-index: 1;
-    position: relative;
+
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+
+  }
+
+  &__text-run {
+    position: absolute;
+    left: var(--_x);
+    top: var(--_y);
+    white-space: nowrap;
+    font-size: var(--_hologram-font-size);
+    font-family: Consolas, monospace;
+    line-height: var(--_hologram-line-height);
+
+    background-image: linear-gradient(135deg, #00ffcc 0%, #00aaff 50%, #aa44ff 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+
+    pointer-events: none;
   }
 }
