@@ -2,7 +2,12 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
+import GUIStateRegistry from "@utils/classes/gui-state-registry";
 import * as THREE from "three";
+
+type HolographicGroupState = {
+  color: string;
+};
 
 import vertexShader from "@shaders/holographic/vertex.glsl";
 import fragmentShader from "@shaders/holographic/fragment.glsl";
@@ -36,6 +41,16 @@ class HolographicGroup implements Updatable, Destroyable {
     return this.experience!.time;
   }
 
+  private get debug() {
+    return this.experience!.debug;
+  }
+
+  private readonly debugDefaults: HolographicGroupState = {
+    color: "#3c6ff7",
+  };
+
+  private guiRegistry: GUIStateRegistry<HolographicGroupState> | null = null;
+
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
@@ -55,6 +70,8 @@ class HolographicGroup implements Updatable, Destroyable {
 
     this.setPosition();
 
+    if (this.debug?.isActive) this.addDebugFolders();
+
     console.log("HolographicGroup");
   }
 
@@ -73,11 +90,32 @@ class HolographicGroup implements Updatable, Destroyable {
       fragmentShader,
       uniforms: {
         uTime: new THREE.Uniform(0),
+        uColor: {
+          value: new THREE.Color(this.debugDefaults.color),
+        },
       },
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
+    });
+  };
+
+  private addDebugFolders = (): void => {
+    const registry = new GUIStateRegistry<HolographicGroupState>(
+      "holographic-group",
+      this.debugDefaults,
+    );
+    this.guiRegistry = registry;
+    const { state } = registry;
+    const { gui } = this.debug!;
+
+    const folder = gui.addFolder("Holographic Group");
+
+    folder.addColor(state, "color").name("Color");
+    // * On value
+    registry.bind("color", (v) => {
+      this.material.uniforms.uColor.value.set(v);
     });
   };
 
@@ -94,6 +132,7 @@ class HolographicGroup implements Updatable, Destroyable {
     this.suzanne?.destroy();
     this.material.dispose();
     this.scene.remove(this.group);
+    this.guiRegistry?.dispose();
   };
 }
 

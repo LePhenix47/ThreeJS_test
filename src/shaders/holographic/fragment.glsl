@@ -3,6 +3,7 @@ varying vec3 vModelPosition;
 varying vec3 vNormal;
 
 uniform float uTime;
+uniform vec3 uColor;
 
 void main() {
     //  * Stripe
@@ -31,7 +32,7 @@ void main() {
 
   // gl_FragColor = vec4(vec3(1.0), fresnel);
   // gl_FragColor = vec4(vec3(1.0), stripes);
-  gl_FragColor = vec4(vec3(1.0), holographic);
+  gl_FragColor = vec4(uColor, holographic);
 
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
