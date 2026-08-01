@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import * as THREE from "three";
 
@@ -18,6 +18,10 @@ import CircleTextLayout, {
 import textures from "@/modules/Experience/sources/textures";
 import models from "@/modules/Experience/sources/models";
 
+type ThreeSceneDebugState = {
+  showCircles: boolean;
+};
+
 type ThreeSceneProps = {
   className?: string;
 };
@@ -27,6 +31,17 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const [debugCircles, setDebugCircles] = useState<ScreenCircle[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLParagraphElement>(null);
+
+  const groupExtractor = useMemo(() => {
+    const extractorsByGeometry = new Map<string, MeshSilhouetteExtractor>(
+      Object.entries({
+        SphereGeometry: new MeshSilhouetteExtractor(1, 4),
+        TorusKnotGeometry: new MeshSilhouetteExtractor(3, 4),
+      }),
+    );
+    const fallbackExtractor = new MeshSilhouetteExtractor(5, 4);
+    return new GroupCircleExtractor(extractorsByGeometry, fallbackExtractor);
+  }, []);
 
   const HOLOGRAM_TEXT: string =
     "The hologram effect runs across two shader stages. " +
@@ -121,18 +136,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const textLayout = new CircleTextLayout(HOLOGRAM_TEXT, FONT, LINE_HEIGHT);
 
-    const extractorsByGeometry = new Map<string, MeshSilhouetteExtractor>(
-      Object.entries({
-        SphereGeometry: new MeshSilhouetteExtractor(1, 4),
-        TorusKnotGeometry: new MeshSilhouetteExtractor(3, 4),
-      }),
-    );
-    const fallbackExtractor = new MeshSilhouetteExtractor(5, 4);
-    const groupExtractor = new GroupCircleExtractor(
-      extractorsByGeometry,
-      fallbackExtractor,
-    );
-
     const onTick = () => {
       const { clientWidth: width, clientHeight: height } = canvas;
       const circles = groupExtractor.extract(
@@ -164,19 +167,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const { holographicGroup } = world;
 
-    const extractorsByGeometry = new Map<string, MeshSilhouetteExtractor>(
-      Object.entries({
-        SphereGeometry: new MeshSilhouetteExtractor(1, 4),
-        TorusKnotGeometry: new MeshSilhouetteExtractor(3, 4),
-      }),
-    );
-    const fallbackExtractor = new MeshSilhouetteExtractor(5, 4);
-    const groupExtractor = new GroupCircleExtractor(
-      extractorsByGeometry,
-      fallbackExtractor,
-    );
-
-    type ThreeSceneDebugState = { showCircles: boolean };
     const debugRegistry = new GUIStateRegistry<ThreeSceneDebugState>(
       "three-scene",
       { showCircles: true },
