@@ -43,25 +43,26 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return new GroupCircleExtractor(extractorsByGeometry, fallbackExtractor);
   }, []);
 
-  const HOLOGRAM_TEXT: string =
-    "The hologram effect runs across two shader stages. " +
-    "In the vertex shader, a glitch displacement is computed from a time-offset Y position: subtracting the world-space Y from uTime gives a value that varies per-vertex and advances over time. " +
-    "That value is fed into three sine waves at frequencies 1x, 3.45x, and 8.76x, then summed and divided by three to keep the range consistent. " +
-    "A smoothstep clamps the result so only values above 0.3 produce displacement, and the final strength is scaled down to 0.25. " +
-    "The glitch is applied only to X and Z, leaving Y unchanged, so the mesh appears to jitter sideways rather than stretch. " +
-    "The displacement uses random2D, a hash function that maps a 2D coordinate to a scalar in [0, 1]. Subtracting 0.5 centers it around zero so vertices scatter in both directions. " +
-    "Normals are transformed using vec4(normal, 0.0) instead of 1.0 in the W component, which prevents the translation column of the model matrix from affecting them. Only rotation and non-uniform scale apply. " +
-    "The vRelativeY varying is computed as modelPosition.y minus the Y translation extracted from column 3 of the model matrix. " +
-    "This gives the Y coordinate relative to the object origin rather than the world origin, so the horizontal stripe pattern scrolls upward as uTime advances without rotating when the mesh rotates. " +
-    "In the fragment shader, stripes are generated with a modulo: the relative Y minus time times 0.1 is multiplied by 20 to set stripe density, then mod 1.0 produces a sawtooth in [0, 1]. " +
-    "Raising the sawtooth to the power of 3 sharpens the gradient so each stripe has a bright peak and a fast falloff. " +
-    "The Fresnel term uses the dot product of the view direction and the surface normal. " +
-    "Because both vectors are in world space and the view direction points toward the surface, their dot product is negative when facing the camera and near zero at grazing angles. " +
-    "Adding 1.0 shifts the range to [0, 1] with 0 face-on and 1 at the silhouette. Squaring it pushes the brightness further toward the edge. " +
-    "Back-facing fragments have their normal flipped with gl_FrontFacing so the Fresnel reads correctly on the inner surface. " +
-    "A falloff smoothstep from 0.8 to 0.0 dims fragments where Fresnel exceeds 0.8, preventing extreme silhouette angles from saturating. " +
-    "The final holographic value combines Fresnel-modulated stripes with a base Fresnel glow, then multiplies by the falloff. " +
-    "The fragment color is the uColor uniform at that alpha value, and tonemapping and colorspace transforms are applied via Three.js includes.";
+  const HOLOGRAM_TEXT: string = [
+    "The hologram effect runs across two shader stages. ",
+    "In the vertex shader, a glitch displacement is computed from a time-offset Y position: subtracting the world-space Y from uTime gives a value that varies per-vertex and advances over time. ",
+    "That value is fed into three sine waves at frequencies 1x, 3.45x, and 8.76x, then summed and divided by three to keep the range consistent. ",
+    "A smoothstep clamps the result so only values above 0.3 produce displacement, and the final strength is scaled down to 0.25. ",
+    "The glitch is applied only to X and Z, leaving Y unchanged, so the mesh appears to jitter sideways rather than stretch. ",
+    "The displacement uses random2D, a hash function that maps a 2D coordinate to a scalar in [0, 1]. Subtracting 0.5 centers it around zero so vertices scatter in both directions. ",
+    "Normals are transformed using vec4(normal, 0.0) instead of 1.0 in the W component, which prevents the translation column of the model matrix from affecting them. Only rotation and non-uniform scale apply. ",
+    "The vRelativeY varying is computed as modelPosition.y minus the Y translation extracted from column 3 of the model matrix. ",
+    "This gives the Y coordinate relative to the object origin rather than the world origin, so the horizontal stripe pattern scrolls upward as uTime advances without rotating when the mesh rotates. ",
+    "In the fragment shader, stripes are generated with a modulo: the relative Y minus time times 0.1 is multiplied by 20 to set stripe density, then mod 1.0 produces a sawtooth in [0, 1]. ",
+    "Raising the sawtooth to the power of 3 sharpens the gradient so each stripe has a bright peak and a fast falloff. ",
+    "The Fresnel term uses the dot product of the view direction and the surface normal. ",
+    "Because both vectors are in world space and the view direction points toward the surface, their dot product is negative when facing the camera and near zero at grazing angles. ",
+    "Adding 1.0 shifts the range to [0, 1] with 0 face-on and 1 at the silhouette. Squaring it pushes the brightness further toward the edge. ",
+    "Back-facing fragments have their normal flipped with gl_FrontFacing so the Fresnel reads correctly on the inner surface. ",
+    "A falloff smoothstep from 0.8 to 0.0 dims fragments where Fresnel exceeds 0.8, preventing extreme silhouette angles from saturating. ",
+    "The final holographic value combines Fresnel-modulated stripes with a base Fresnel glow, then multiplies by the falloff. ",
+    "The fragment color is the uColor uniform at that alpha value, and tonemapping and colorspace transforms are applied via Three.js includes.",
+  ].join(" ");
 
   function createLoadingManager(): THREE.LoadingManager {
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
