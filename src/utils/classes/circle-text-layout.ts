@@ -17,12 +17,9 @@ type HorizontalSpan = {
 
 // * watch: https://youtu.be/Em6gzss5zu0?si=cBfd_nSk2LNcl94X&t=802
 /**
- * Lays out text line by line inside a 2D container, flowing around
- * a set of screen-space circles (e.g. 3D mesh silhouettes projected to screen).
- *
- * For each horizontal band, it computes the horizontal spans occluded by
- * each circle, then carves the remaining open slots and fills them with text
- * using a pretext cursor so the text stream stays contiguous across lines.
+ * Places text line by line across a container, skipping over wherever
+ * a circle sits so the text wraps around them. Circles are the 3D objects'
+ * screen silhouettes — they act as obstacles the text has to flow around.
  */
 class CircleTextLayout {
   private readonly prepared: PreparedTextWithSegments;
@@ -52,9 +49,9 @@ class CircleTextLayout {
   }
 
   /**
-   * Returns the horizontal span `[left, right]` that a circle occludes within a
-   * given band, expanded by padding. Returns `null` if the circle doesn't
-   * intersect the padded band at all.
+   * Returns the pixel range `[left, right]` that a circle covers on a given line —
+   * the chunk of that line text can't go in. Returns `null` if the circle
+   * doesn't touch this line at all.
    */
   private getBlockedInterval = (
     circle: ScreenCircle,
@@ -98,9 +95,8 @@ class CircleTextLayout {
   };
 
   /**
-   * Starts with the full inset container width as a single slot and iteratively
-   * subtracts each blocked span, splitting slots where needed.
-   * Slots narrower than `MIN_SLOT_WIDTH` are discarded.
+   * Punches holes in the available line width for each blocked span and returns
+   * what's left as open slots. Slots narrower than `MIN_SLOT_WIDTH` are discarded.
    */
   private carveSlots = (
     containerWidth: number,
@@ -142,17 +138,14 @@ class CircleTextLayout {
   };
 
   /**
-   * Produces a list of positioned text runs that flow around the given circles.
-   *
-   * Walks the container top-to-bottom in `lineHeight` steps. For each band,
-   * computes blocked spans from circles, carves open slots, and fills them
-   * with text using a shared pretext cursor — so text stays contiguous across
-   * lines and slots. Stops early if the text is exhausted.
+   * Places text across the container line by line, skipping the regions blocked
+   * by circles. Returns the resulting text chunks with their pixel positions —
+   * ready to render as positioned HTML elements.
    *
    * @param containerWidth - Width of the overlay container in pixels.
    * @param containerHeight - Height of the overlay container in pixels.
-   * @param circles - Screen-space circles to flow text around.
-   * @returns Array of `TextRun` objects with text content and `(x, y)` position.
+   * @param circles - Circles to flow text around.
+   * @returns Array of `TextRun` objects — each has text content and `(x, y)` position.
    */
   public layout = (
     containerWidth: number,
