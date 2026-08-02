@@ -29,7 +29,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLParagraphElement>(null);
 
-  const showCirclesRef = useRef(true);
+  const showCirclesRef = useRef<boolean>(false);
 
   const HOLOGRAM_TEXT: string = [
     "The hologram effect runs across two shader stages. ",
@@ -129,7 +129,11 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     manager.onResult = (circles, runs) => {
       setTextRuns(runs);
-      if (isDebugActive && showCirclesRef.current) setDebugCircles(circles);
+
+      // console.log(showCirclesRef.current);
+
+      if (isDebugActive && Boolean(showCirclesRef.current))
+        setDebugCircles(circles);
     };
 
     /* mirrors the extractor config that was previously in the groupExtractor useMemo */
@@ -191,12 +195,13 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const debugRegistry = new GUIStateRegistry<ThreeSceneDebugState>(
       "three-scene",
-      { showCircles: true },
+      { showCircles: showCirclesRef.current },
     );
+
     const { state } = debugRegistry;
     const debugFolder = debug.gui.addFolder("Three Scene");
-    debugFolder.add(state, "showCircles").name("Show circles");
 
+    debugFolder.add(state, "showCircles").name("Show circles");
     debugRegistry.bind("showCircles", (v) => {
       showCirclesRef.current = v;
       if (!v) setDebugCircles([]);

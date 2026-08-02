@@ -53,7 +53,7 @@ class HolographicGroup implements Updatable, Destroyable {
 
   private readonly debugDefaults: HolographicGroupState = {
     color: "#3c6ff7",
-    textVisible: true,
+    textVisible: false,
   };
 
   private guiRegistry: GUIStateRegistry<HolographicGroupState> | null = null;
