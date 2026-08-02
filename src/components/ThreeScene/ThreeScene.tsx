@@ -170,7 +170,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const debugRegistry = new GUIStateRegistry<ThreeSceneDebugState>(
       "three-scene",
-      { showCircles: true },
+      { showCircles: false },
     );
     const { state } = debugRegistry;
     const debugFolder = debug.gui.addFolder("Three Scene");
