@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import * as THREE from "three";
 
@@ -6,14 +6,11 @@ import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
 import Experience from "@/modules/Experience/Experience";
-import MeshSilhouetteExtractor, {
-  type ScreenCircle,
-} from "@utils/classes/mesh-silhouette-extractor";
+import type { ScreenCircle } from "@utils/classes/mesh-silhouette-extractor";
+import type { TextRun } from "@utils/classes/circle-text-layout";
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
-import GroupCircleExtractor from "@utils/classes/group-circle-extractor";
-import CircleTextLayout, {
-  type TextRun,
-} from "@utils/classes/circle-text-layout";
+import HologramLayoutManager from "@utils/classes/hologram-layout-manager";
+import type { MeshData } from "@utils/types/hologram-layout-worker.types";
 
 import textures from "@/modules/Experience/sources/textures";
 import models from "@/modules/Experience/sources/models";
@@ -32,16 +29,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLParagraphElement>(null);
 
-  const groupExtractor = useMemo(() => {
-    const extractorsByGeometry = new Map<string, MeshSilhouetteExtractor>(
-      Object.entries({
-        SphereGeometry: new MeshSilhouetteExtractor(1, 4),
-        TorusKnotGeometry: new MeshSilhouetteExtractor(3, 4),
-      }),
-    );
-    const fallbackExtractor = new MeshSilhouetteExtractor(5, 4);
-    return new GroupCircleExtractor(extractorsByGeometry, fallbackExtractor);
-  }, []);
+  const showCirclesRef = useRef(true);
 
   const HOLOGRAM_TEXT: string = [
     "The hologram effect runs across two shader stages. ",
@@ -125,8 +113,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const experience = Experience.instance;
     if (!experience) return;
 
-    const { camera, world, time } = experience;
+    const { camera, world, time, debug } = experience;
     const { holographicGroup } = world;
+    const isDebugActive = !!debug?.isActive;
 
     const style = getComputedStyle(overlay);
     const fontSize = style.getPropertyValue("--_hologram-font-size").trim();
@@ -135,38 +124,70 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     );
     const FONT = `${fontSize} Consolas, monospace`;
 
-    const textLayout = new CircleTextLayout(HOLOGRAM_TEXT, FONT, LINE_HEIGHT);
+    const manager = new HologramLayoutManager();
+    manager.init(HOLOGRAM_TEXT, FONT, LINE_HEIGHT);
+
+    manager.onResult = (circles, runs) => {
+      setTextRuns(runs);
+      if (isDebugActive && showCirclesRef.current) setDebugCircles(circles);
+    };
+
+    /* mirrors the extractor config that was previously in the groupExtractor useMemo */
+    const extractorConfig = new Map(
+      Object.entries({
+        SphereGeometry: { k: 1, stride: 4 },
+        TorusKnotGeometry: { k: 3, stride: 4 },
+      }),
+    );
+    const fallbackConfig = { k: 5, stride: 4 };
+    /* reuse one Matrix4 across ticks to avoid per-frame allocation */
+    const combinedMatrix = new THREE.Matrix4();
 
     const onTick = () => {
       const { clientWidth: width, clientHeight: height } = canvas;
-      const circles = groupExtractor.extract(
-        holographicGroup.group,
-        camera.instance,
-        width,
-        height,
-      );
+      const meshes: MeshData[] = [];
 
-      const currentTextRuns = textLayout.layout(width, height, circles);
-      setTextRuns(currentTextRuns);
+      holographicGroup.group.traverse((child) => {
+        if (!(child instanceof THREE.Mesh)) return;
+        const posAttr = child.geometry.attributes.position;
+        if (!posAttr) return;
+
+        const config =
+          extractorConfig.get(child.geometry.type) ?? fallbackConfig;
+
+        /* combined matrix computed here with Three.js — sent to worker as raw floats */
+        combinedMatrix
+          .multiplyMatrices(
+            camera.instance.projectionMatrix,
+            camera.instance.matrixWorldInverse,
+          )
+          .multiply(child.matrixWorld);
+
+        meshes.push({
+          /* copy — never transfer Three.js geometry buffers directly */
+          positions: new Float32Array(posAttr.array),
+          combinedMatrix: new Float32Array(combinedMatrix.elements),
+          stride: config.stride,
+          k: config.k,
+        });
+      });
+
+      manager.tick(meshes, width, height);
     };
 
     time.on("tick", onTick);
     return () => {
       time.off("tick", onTick);
+      manager.dispose();
     };
   }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
     const experience = Experience.instance;
     if (!experience) return;
 
-    const { camera, world, time, debug } = experience;
+    const { debug } = experience;
     if (!debug?.isActive) return;
-
-    const { holographicGroup } = world;
 
     const debugRegistry = new GUIStateRegistry<ThreeSceneDebugState>(
       "three-scene",
@@ -176,27 +197,12 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     const debugFolder = debug.gui.addFolder("Three Scene");
     debugFolder.add(state, "showCircles").name("Show circles");
 
-    let showCircles = true;
     debugRegistry.bind("showCircles", (v) => {
-      showCircles = v;
+      showCirclesRef.current = v;
       if (!v) setDebugCircles([]);
     });
 
-    const onTick = () => {
-      if (!showCircles) return;
-      const { clientWidth: width, clientHeight: height } = canvas;
-      const circles = groupExtractor.extract(
-        holographicGroup.group,
-        camera.instance,
-        width,
-        height,
-      );
-      setDebugCircles(circles);
-    };
-
-    time.on("tick", onTick);
     return () => {
-      time.off("tick", onTick);
       debugRegistry.dispose();
       debugFolder.destroy();
     };
