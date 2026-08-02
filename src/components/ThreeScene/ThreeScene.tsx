@@ -115,7 +115,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
     const { camera, world, time, debug } = experience;
     const { holographicGroup } = world;
-    const isDebugActive = !!debug?.isActive;
+    const isDebugActive = Boolean(debug?.isActive);
 
     const style = getComputedStyle(overlay);
     const fontSize = style.getPropertyValue("--_hologram-font-size").trim();
