@@ -1,4 +1,3 @@
-import { M4 } from "@/utils/enums/matrices";
 import { SpaceEnum } from "@/utils/enums/space-color";
 import CircleTextLayout, {
   type TextRun,
@@ -7,6 +6,7 @@ import type { ScreenCircle } from "@utils/classes/mesh-silhouette-extractor";
 import { distance } from "@utils/numbers/math";
 import {
   HologramWorkerMessageType,
+  WorldToScreen,
   type MeshData,
   type WorkerInboundMessage,
   type WorkerOutboundMessage,
@@ -82,15 +82,15 @@ class HologramLayoutWorker {
       const y = positions[i + SpaceEnum.Y];
       const z = positions[i + SpaceEnum.Z];
 
-      const w = m[M4.r3c0] * x + m[M4.r3c1] * y + m[M4.r3c2] * z + m[M4.r3c3];
+      const w = m[WorldToScreen.perspW_byX] * x + m[WorldToScreen.perspW_byY] * y + m[WorldToScreen.perspW_byZ] * z + m[WorldToScreen.perspW_byW];
       if (w === 0) continue;
 
       const ndcX =
-        (m[M4.r0c0] * x + m[M4.r0c1] * y + m[M4.r0c2] * z + m[M4.r0c3]) / w;
+        (m[WorldToScreen.clipX_byX] * x + m[WorldToScreen.clipX_byY] * y + m[WorldToScreen.clipX_byZ] * z + m[WorldToScreen.clipX_byW]) / w;
       const ndcY =
-        (m[M4.r1c0] * x + m[M4.r1c1] * y + m[M4.r1c2] * z + m[M4.r1c3]) / w;
+        (m[WorldToScreen.clipY_byX] * x + m[WorldToScreen.clipY_byY] * y + m[WorldToScreen.clipY_byZ] * z + m[WorldToScreen.clipY_byW]) / w;
       const ndcZ =
-        (m[M4.r2c0] * x + m[M4.r2c1] * y + m[M4.r2c2] * z + m[M4.r2c3]) / w;
+        (m[WorldToScreen.clipZ_byX] * x + m[WorldToScreen.clipZ_byY] * y + m[WorldToScreen.clipZ_byZ] * z + m[WorldToScreen.clipZ_byW]) / w;
 
       /* z > 1 means vertex is behind the near plane */
       if (ndcZ > 1) continue;
