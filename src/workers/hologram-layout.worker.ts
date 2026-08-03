@@ -1,12 +1,15 @@
+import { M4 } from "@/utils/enums/matrices";
+import { SpaceEnum } from "@/utils/enums/space-color";
 import CircleTextLayout, {
   type TextRun,
 } from "@utils/classes/circle-text-layout";
 import type { ScreenCircle } from "@utils/classes/mesh-silhouette-extractor";
 import { distance } from "@utils/numbers/math";
-import type {
-  MeshData,
-  WorkerInboundMessage,
-  WorkerOutboundMessage,
+import {
+  HologramWorkerMessageType,
+  type MeshData,
+  type WorkerInboundMessage,
+  type WorkerOutboundMessage,
 } from "@utils/types/hologram-layout-worker.types";
 
 type Point2D = {
@@ -27,7 +30,7 @@ class HologramLayoutWorker {
   constructor() {
     self.onmessage = ({ data }: MessageEvent<WorkerInboundMessage>) => {
       switch (data.type) {
-        case "init": {
+        case HologramWorkerMessageType.Init: {
           const { text, font, lineHeight, horizontalPadding, verticalPadding } =
             data;
           this.textLayout = new CircleTextLayout(
@@ -39,7 +42,7 @@ class HologramLayoutWorker {
           );
           break;
         }
-        case "tick": {
+        case HologramWorkerMessageType.Tick: {
           this.tick(data);
           break;
         }
@@ -75,16 +78,19 @@ class HologramLayoutWorker {
     const m = combinedMatrix;
 
     for (let i = 0; i < positions.length; i += stride * 3) {
-      const x = positions[i];
-      const y = positions[i + 1];
-      const z = positions[i + 2];
+      const x = positions[i + SpaceEnum.X];
+      const y = positions[i + SpaceEnum.Y];
+      const z = positions[i + SpaceEnum.Z];
 
-      const w = m[3] * x + m[7] * y + m[11] * z + m[15];
+      const w = m[M4.r3c0] * x + m[M4.r3c1] * y + m[M4.r3c2] * z + m[M4.r3c3];
       if (w === 0) continue;
 
-      const ndcX = (m[0] * x + m[4] * y + m[8] * z + m[12]) / w;
-      const ndcY = (m[1] * x + m[5] * y + m[9] * z + m[13]) / w;
-      const ndcZ = (m[2] * x + m[6] * y + m[10] * z + m[14]) / w;
+      const ndcX =
+        (m[M4.r0c0] * x + m[M4.r0c1] * y + m[M4.r0c2] * z + m[M4.r0c3]) / w;
+      const ndcY =
+        (m[M4.r1c0] * x + m[M4.r1c1] * y + m[M4.r1c2] * z + m[M4.r1c3]) / w;
+      const ndcZ =
+        (m[M4.r2c0] * x + m[M4.r2c1] * y + m[M4.r2c2] * z + m[M4.r2c3]) / w;
 
       /* z > 1 means vertex is behind the near plane */
       if (ndcZ > 1) continue;
@@ -137,7 +143,9 @@ class HologramLayoutWorker {
   private kMeans = (points: Point2D[], k: number): Point2D[][] => {
     /* seed centroids evenly to avoid all starting at the same spot */
     const step = Math.floor(points.length / k);
-    let centroids = Array.from({ length: k }, (_, i) => ({ ...points[i * step] }));
+    let centroids = Array.from({ length: k }, (_, i) => ({
+      ...points[i * step],
+    }));
 
     for (let iteration = 0; iteration < 20; iteration++) {
       const clusters = this.assignToClusters(points, centroids);
@@ -206,7 +214,10 @@ class HologramLayoutWorker {
   };
 
   private tick = (
-    data: Extract<WorkerInboundMessage, { type: "tick" }>,
+    data: Extract<
+      WorkerInboundMessage,
+      { type: HologramWorkerMessageType.Tick }
+    >,
   ): void => {
     const { textLayout } = this;
     if (!textLayout) return;
@@ -218,9 +229,11 @@ class HologramLayoutWorker {
     );
     const runs: TextRun[] = textLayout.layout(width, height, circles);
 
-    self.postMessage(
-      { type: "result", circles, runs } satisfies WorkerOutboundMessage,
-    );
+    self.postMessage({
+      type: HologramWorkerMessageType.Result,
+      circles,
+      runs,
+    } satisfies WorkerOutboundMessage);
   };
 }
 

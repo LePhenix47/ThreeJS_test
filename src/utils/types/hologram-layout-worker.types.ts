@@ -1,6 +1,12 @@
 import type { ScreenCircle } from "@utils/classes/mesh-silhouette-extractor";
 import type { TextRun } from "@utils/classes/circle-text-layout";
 
+export enum HologramWorkerMessageType {
+  Init = "init",
+  Tick = "tick",
+  Result = "result",
+}
+
 /** Raw geometry data extracted from a THREE.Mesh — safe to send across threads. */
 export type MeshData = {
   /** Vertex positions (x, y, z interleaved) — a copy of the geometry buffer. */
@@ -15,7 +21,7 @@ export type MeshData = {
 
 export type WorkerInboundMessage =
   | {
-      type: "init";
+      type: HologramWorkerMessageType.Init;
       text: string;
       font: string;
       lineHeight: number;
@@ -23,7 +29,7 @@ export type WorkerInboundMessage =
       verticalPadding?: number;
     }
   | {
-      type: "tick";
+      type: HologramWorkerMessageType.Tick;
       meshes: MeshData[];
       width: number;
       height: number;
@@ -32,7 +38,7 @@ export type WorkerInboundMessage =
 // ─── Worker → Main ────────────────────────────────────────────────────────────
 
 export type WorkerOutboundMessage = {
-  type: "result";
+  type: HologramWorkerMessageType.Result;
   circles: ScreenCircle[];
   runs: TextRun[];
 };

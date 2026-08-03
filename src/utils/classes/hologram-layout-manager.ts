@@ -1,9 +1,10 @@
 import type { ScreenCircle } from "@utils/classes/mesh-silhouette-extractor";
 import type { TextRun } from "@utils/classes/circle-text-layout";
-import type {
-  MeshData,
-  WorkerInboundMessage,
-  WorkerOutboundMessage,
+import {
+  HologramWorkerMessageType,
+  type MeshData,
+  type WorkerInboundMessage,
+  type WorkerOutboundMessage,
 } from "@utils/types/hologram-layout-worker.types";
 
 type ResultCallback = (circles: ScreenCircle[], runs: TextRun[]) => void;
@@ -28,7 +29,7 @@ class HologramLayoutManager {
     this.worker.onmessage = ({
       data,
     }: MessageEvent<WorkerOutboundMessage>) => {
-      if (data.type === "result") {
+      if (data.type === HologramWorkerMessageType.Result) {
         this.onResult?.(data.circles, data.runs);
       }
     };
@@ -50,7 +51,7 @@ class HologramLayoutManager {
     verticalPadding?: number,
   ): void => {
     this.worker.postMessage({
-      type: "init",
+      type: HologramWorkerMessageType.Init,
       text,
       font,
       lineHeight,
@@ -72,7 +73,7 @@ class HologramLayoutManager {
     ]);
 
     this.worker.postMessage(
-      { type: "tick", meshes, width, height } satisfies WorkerInboundMessage,
+      { type: HologramWorkerMessageType.Tick, meshes, width, height } satisfies WorkerInboundMessage,
       { transfer: transferables },
     );
   };
