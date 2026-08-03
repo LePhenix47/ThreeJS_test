@@ -1,4 +1,14 @@
-/* * column-major 4×4 matrix index: element at row r, col c → r + c * 4 */
+/**
+ * Column-major 4×4 matrix index lookup.
+ *
+ * Three.js stores matrices in column-major order, so the element at row r and
+ * column c lives at index r + c * 4. Members are named rRcC (zero-indexed).
+ * Use these instead of bare numbers when indexing into a Float32Array[16].
+ *
+ * @example
+ * // output.x = row 0 of M dotted with [x, y, z, 1]
+ * const ndcX = (m[M4.r0c0]*x + m[M4.r0c1]*y + m[M4.r0c2]*z + m[M4.r0c3]) / w;
+ */
 // prettier-ignore
 export enum M4 {
   r0c0 = 0,  r0c1 = 4,  r0c2 = 8,  r0c3 = 12,
