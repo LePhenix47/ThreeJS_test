@@ -115,7 +115,9 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     const { size, perspectiveOn } = this.debugDefaults;
 
     /* ? gl_PointSize is in physical pixels. On a retina display 1 CSS pixel = 2 physical pixels,
-     *   so "size 10" without correction renders as 5 CSS pixels — half the intended size. */
+     *   so "size 10" without correction renders as 5 CSS pixels — half the intended size. 
+    ? NOTE: using this.renderer.pixelRatio or this.sizes.pixelRatio doesn't change anything it's the same thing
+    */
     const sizeInPhysicalPixels: number = size * this.renderer.pixelRatio;
 
     this.material = new THREE.ShaderMaterial({
