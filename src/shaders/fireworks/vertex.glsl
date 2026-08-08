@@ -1,15 +1,18 @@
 uniform float uSize;
 uniform float uTime;
+uniform vec2 uResolution;
 uniform bool uPerspectiveOn;
 
 void main() {
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+  // modelPosition.y = sin(uTime + modelPosition.x);
+
   vec4 viewPosition = viewMatrix * modelPosition;
   vec4 projectedPosition = projectionMatrix * viewPosition;
 
   gl_Position = projectedPosition;
 
-  gl_PointSize = uSize;
+  gl_PointSize = uSize * uResolution.y;
   /*
   * Adds perspective to our stars, so the ones closer to camera look bigger than those farther
   * See node_modules/three/src/renderers/shaders/ShaderLib/points.glsl.js 
