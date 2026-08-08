@@ -19,8 +19,8 @@ type FireworksState = {
   size: number;
   /** Perspective for the particles, ones closer to camera appear larger than one farther from it */
   perspectiveOn: boolean;
-  /** */
-  nthSelectedTexture: number;
+  /** Index of the selected texture in the array of textures */
+  selectedTextureIndex: number;
 };
 
 class Fireworks extends PointsEntity implements Updatable, Destroyable {
@@ -31,7 +31,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     count: 500,
     size: 10,
     perspectiveOn: false,
-    nthSelectedTexture: 1,
+    selectedTextureIndex: 1,
   };
 
   protected geometry: THREE.BufferGeometry;
@@ -135,7 +135,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = (): void => {
-    const { size, perspectiveOn, nthSelectedTexture } = this.debugDefaults;
+    const { size, perspectiveOn, selectedTextureIndex } = this.debugDefaults;
 
     /* ? gl_PointSize is in physical pixels. On a retina display 1 CSS pixel = 2 physical pixels,
      *   so "size 10" without correction renders as 5 CSS pixels — half the intended size. 
@@ -159,7 +159,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
           value: new THREE.Vector2(this.sizes.width, this.sizes.height),
         },
         uTexture: {
-          value: this.getNthTexture(nthSelectedTexture),
+          value: this.getNthTexture(selectedTextureIndex),
         },
       },
     });
@@ -211,11 +211,11 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     fireworksFolder
       .add(
         state,
-        "nthSelectedTexture",
+        "selectedTextureIndex",
         Array.from({ length: this.texturesArray.length }).map((_, i) => i),
       )
       .name("Selected texture");
-    registry.bind("nthSelectedTexture", (v) => {
+    registry.bind("selectedTextureIndex", (v) => {
       this.setCurrentTexture(v);
     });
   };
