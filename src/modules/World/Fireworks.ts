@@ -22,6 +22,8 @@ type FireworksState = {
   perspectiveOn: boolean;
   /** Index of the selected texture in the array of textures */
   selectedTextureIndex: number;
+  /** Hex color of the particles */
+  color: string;
 };
 
 class Fireworks extends PointsEntity implements Updatable, Destroyable {
@@ -33,6 +35,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     size: 10,
     perspectiveOn: false,
     selectedTextureIndex: 1,
+    color: "#ffffff",
   };
 
   protected geometry: THREE.BufferGeometry;
@@ -172,7 +175,8 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = (): void => {
-    const { size, perspectiveOn, selectedTextureIndex } = this.debugDefaults;
+    const { size, perspectiveOn, selectedTextureIndex, color } =
+      this.debugDefaults;
 
     /* ? gl_PointSize is in physical pixels. On a retina display 1 CSS pixel = 2 physical pixels,
      *   so "size 10" without correction renders as 5 CSS pixels — half the intended size. 
@@ -194,6 +198,9 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
          *   the same fraction of the screen regardless of window size. */
         uResolution: {
           value: new THREE.Vector2(this.sizes.width, this.sizes.height),
+        },
+        uColor: {
+          value: new THREE.Color(color),
         },
         uTexture: {
           value: this.getNthTexture(selectedTextureIndex),
@@ -243,6 +250,11 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     fireworksFolder.add(state, "perspectiveOn").name("Perspective");
     registry.bind("perspectiveOn", (v) => {
       this.material.uniforms.uPerspectiveOn.value = v;
+    });
+
+    fireworksFolder.addColor(state, "color").name("Color");
+    registry.bind("color", (v) => {
+      this.material.uniforms.uColor.value = new THREE.Color(v);
     });
 
     fireworksFolder

@@ -1,5 +1,7 @@
 uniform sampler2D uTexture;
 
+uniform vec3 uColor;
+
 void main() {
 
   vec2 uv = gl_PointCoord;
@@ -8,7 +10,7 @@ void main() {
   // * All the textures are gray-scaled so R=G=B, and we can just focus on the alpha, better for performance 
   float textureAlphaColor = texture(uTexture, uv).r;
 
-  gl_FragColor = vec4(vec3(1.0), textureAlphaColor);
+  gl_FragColor = vec4(uColor, textureAlphaColor);
 
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
