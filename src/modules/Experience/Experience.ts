@@ -9,6 +9,7 @@ import * as THREE from "three";
 import Resources from "./utils/Resources/Resources";
 import { Source } from "./utils/Resources/types";
 import Debug from "./utils/Debug/Debug";
+import Pointer from "./utils/Pointer";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>
@@ -43,6 +44,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public scene: THREE.Scene<THREE.Object3DEventMap>;
 
   public resources: Resources;
+  public pointer: Pointer;
   public camera: Camera;
   public renderer: Renderer;
   public world: World;
@@ -83,6 +85,9 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.resources.on("textures-loaded", () =>
       console.log("ALL TEXTURES LOADED !!!", this.resources.items),
     );
+
+    // * Pointer
+    this.pointer = new Pointer(this.canvas);
 
     // * THREE stuff
     // ? Scene
@@ -170,6 +175,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public destroy = (): void => {
     this.sizes.destroy();
     this.time.destroy();
+    this.pointer.destroy();
     this.camera.destroy();
     this.renderer.destroy();
     this.world.destroy();
