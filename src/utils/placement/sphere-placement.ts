@@ -46,11 +46,8 @@ export function getRandomUniformSpherePlacement(
   // ? Horizontal position - Spherical coordinates: [0, 2π[
   const randomTheta: number = randomInRange([0, 2 * Math.PI]);
 
-  // ? Vertical position - Spherical coordinates: [0, π]
-  let randomPhi: number = randomInRange([0, Math.PI]);
-
-  // ? putting a random angle to φ won't suffice here because the
-  randomPhi = Math.acos(1 - 2 * randomPhi);
+  // ? Vertical position - Spherical coordinates: [-1, 1]
+  const randomPhi: number = Math.acos(1 - 2 * Math.random());
 
   // ? Distance from the origin, a.k.a. radius in a 3D sphere, computed from a spherical volume
   const randomRho: number = getRandomRho(minRadius, maxRadius);
