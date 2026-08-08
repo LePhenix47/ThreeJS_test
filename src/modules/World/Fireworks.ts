@@ -136,9 +136,14 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
 
   /* ? Canvas height changed = the normalization factor changed = points would visually grow or shrink */
   private onResize = (): void => {
-    const { width, height } = this.sizes;
+    const { width, height, pixelRatio } = this.sizes;
+    const physicalPixelsWidth: number = width * pixelRatio;
+    const physicalPixelsHeight: number = height * pixelRatio;
 
-    this.material.uniforms.uResolution.value = new THREE.Vector2(width, height);
+    this.material.uniforms.uResolution.value = new THREE.Vector2(
+      physicalPixelsWidth,
+      physicalPixelsHeight,
+    );
   };
 
   protected setPoints = (): void => {
