@@ -3,12 +3,17 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
+
 import { PointsEntity } from "./types/entity";
-import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+
 import vertexShader from "@shaders/fireworks/vertex.glsl";
 import fragmentShader from "@shaders/fireworks/fragment.glsl";
+
+import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+
 import { SpaceEnum } from "@utils/enums/space-color";
 import Enum from "@/utils/enums";
+
 import { randomInRange } from "@/utils/numbers/range";
 import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placement";
 
