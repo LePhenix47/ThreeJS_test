@@ -114,6 +114,8 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   protected setMaterial = (): void => {
     const { size, perspectiveOn } = this.debugDefaults;
 
+    /* ? gl_PointSize is in physical pixels. On a retina display 1 CSS pixel = 2 physical pixels,
+     *   so "size 10" without correction renders as 5 CSS pixels — half the intended size. */
     const sizeInPhysicalPixels: number = size * this.renderer.pixelRatio;
 
     this.material = new THREE.ShaderMaterial({
@@ -123,6 +125,8 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
         uTime: new THREE.Uniform(0),
         uSize: new THREE.Uniform(sizeInPhysicalPixels),
         uPerspectiveOn: new THREE.Uniform(perspectiveOn),
+        /* ? The shader normalizes gl_PointSize against canvas height so a point always covers
+         *   the same fraction of the screen regardless of window size. */
         uResolution: {
           value: new THREE.Vector2(this.sizes.width, this.sizes.height),
         },
@@ -130,6 +134,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     });
   };
 
+  /* ? Canvas height changed = the normalization factor changed = points would visually grow or shrink */
   private onResize = (): void => {
     const { width, height } = this.sizes;
 
