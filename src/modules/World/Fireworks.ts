@@ -10,6 +10,7 @@ import fragmentShader from "@shaders/fireworks/fragment.glsl";
 import { SpaceEnum } from "@utils/enums/space-color";
 import Enum from "@/utils/enums";
 import { randomInRange } from "@/utils/numbers/range";
+import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placement";
 
 type FireworksState = {
   /** Total number of particles rendered. */
@@ -114,6 +115,30 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     this.material.uniforms.uTexture.value = texture;
   };
 
+  private nonUniformSpherical = (): THREE.Vector3 => {
+    const phi: number = randomInRange([0, Math.PI]);
+    const theta: number = randomInRange([0, Math.PI / 2]);
+
+    const nonUniformRandomRho: number = randomInRange([0.75, this.rho]);
+    const toSphericalCoords = new THREE.Spherical(
+      nonUniformRandomRho,
+      phi,
+      theta,
+    );
+
+    const position = new THREE.Vector3();
+    position.setFromSpherical(toSphericalCoords);
+
+    return position;
+  };
+
+  private uniformSpherical = () => {
+    const { x, y, z } = getRandomUniformSpherePlacement(0.75, this.rho);
+    const position = new THREE.Vector3(x, y, z);
+
+    return position;
+  };
+
   protected setGeometry = (): void => {
     const { count } = this.debugDefaults;
 
@@ -123,24 +148,11 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     const positions = new Float32Array(totalSize);
     const scales = new Float32Array(count);
 
-    const maxPhi: number = THREE.MathUtils.degToRad(180);
-    const maxTheta: number = THREE.MathUtils.degToRad(360);
-
     for (let i = 0; i < count; i++) {
       const i3: number = i * spaceComponentsPerVertex;
 
-      const phi: number = randomInRange([0, maxPhi]);
-      const theta: number = randomInRange([0, maxTheta]);
-
-      const nonUniformRandomRho: number = randomInRange([0.75, this.rho]);
-      const toSphericalCoords = new THREE.Spherical(
-        nonUniformRandomRho,
-        phi,
-        theta,
-      );
-
-      const position = new THREE.Vector3();
-      position.setFromSpherical(toSphericalCoords);
+      // const position: THREE.Vector3 = this.nonUniformSpherical();
+      const position: THREE.Vector3 = this.uniformSpherical();
 
       positions[i3 + SpaceEnum.X] = position.x;
       positions[i3 + SpaceEnum.Y] = position.y;
