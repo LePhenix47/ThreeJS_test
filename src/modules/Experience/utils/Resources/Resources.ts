@@ -18,6 +18,7 @@ import {
   LdrTextureNames,
   CubeTextureNames,
   HdrTextureNames,
+  TextureArrayNames,
   GetPathsFromName,
 } from "@modules/Experience/sources/textures";
 
@@ -156,6 +157,9 @@ class Resources extends EventEmitter<ResourcesEvents> {
       if (source.type === "texture" || source.type === "ldrEnvTexture") {
         return total + Object.keys(source.paths).length;
       }
+      if (source.type === "textureArray") {
+        return total + source.paths.length;
+      }
       return total + 1;
     }, 0);
   }
@@ -198,6 +202,15 @@ class Resources extends EventEmitter<ResourcesEvents> {
         case "hdrEnvTexture": {
           this.loaders.hdr.load(source.path, (dataTextureLoaded) => {
             this.sourceLoaded(source, dataTextureLoaded);
+          });
+          break;
+        }
+
+        case "textureArray": {
+          source.paths.forEach((path, index) => {
+            this.loaders.texture.load(path, (textureLoaded) => {
+              this.sourceLoaded(source, textureLoaded, String(index));
+            });
           });
           break;
         }
@@ -302,6 +315,24 @@ class Resources extends EventEmitter<ResourcesEvents> {
     }
 
     return item;
+  };
+
+  /** Returns all textures for a `"textureArray"` source as an ordered `THREE.Texture[]`. Throws if not found or wrong type. */
+  public getTextureArray = (name: TextureArrayNames): THREE.Texture[] => {
+    const source = this.sources.find((s) => s.name === name);
+    if (!source || source.type !== "textureArray") {
+      this.logAvailableItems(name, "texture");
+      throw new Error(`[Resources] "${name}" is not a textureArray source`);
+    }
+
+    return source.paths.map((_, index) => {
+      const itemKey = `${name}_${index}`;
+      const item = this.items[itemKey];
+      if (!this.typeFilters.texture(item)) {
+        throw new Error(`[Resources] "${itemKey}" is not a Texture`);
+      }
+      return item;
+    });
   };
 
   private sourceLoaded = (

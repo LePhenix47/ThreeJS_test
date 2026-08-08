@@ -56,11 +56,18 @@ const HdrSourceSchema = z.object({
   path: z.string(),
 });
 
+const TextureArraySourceSchema = z.object({
+  name: z.string(),
+  type: z.literal("textureArray"),
+  paths: z.array(z.string()),
+});
+
 export const SourceSchema = z.discriminatedUnion("type", [
   TextureSourceSchema,
   CubeTextureSourceSchema,
   GltfSourceSchema,
   HdrSourceSchema,
+  TextureArraySourceSchema,
 ]);
 
 export const SourceArraySchema = z.array(SourceSchema);
