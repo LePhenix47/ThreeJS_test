@@ -237,21 +237,23 @@ class Resources extends EventEmitter<ResourcesEvents> {
     );
   };
 
+  private getTextureByItemKey = (itemKey: string): THREE.Texture => {
+    const item = this.items[itemKey];
+    const isTexture = this.typeFilters.texture(item);
+    if (!isTexture) {
+      this.logAvailableItems(itemKey, "texture");
+      throw new Error(`[Resources] "${itemKey}" is not a Texture`);
+    }
+    return item;
+  };
+
   /** Returns a loaded `THREE.Texture` by name. Pass `mapKey` for multi-map sources (e.g. `"dirtTexture", "color"`). Throws if not found or wrong type. */
   public getTexture = <TName extends RegularTextureNames | LdrTextureNames>(
     name: TName,
     mapKey?: GetPathsFromName<TName>,
   ): THREE.Texture => {
     const itemKey = mapKey ? `${name}_${String(mapKey)}` : name;
-    const item = this.items[itemKey];
-
-    const isTexture = this.typeFilters.texture(item);
-    if (!isTexture) {
-      this.logAvailableItems(itemKey, "texture");
-      throw new Error(`[Resources] "${itemKey}" is not a Texture`);
-    }
-
-    return item;
+    return this.getTextureByItemKey(itemKey);
   };
 
   /** Returns all textures for a multi-map source as `{ mapKey: THREE.Texture, ... }`. Throws if the source is not a texture type. */
@@ -272,9 +274,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
     >;
 
     for (const key of Object.keys(source.paths)) {
-      const texture = this.getTexture(name, key as GetPathsFromName<TName>);
-
-      Reflect.set(result, key, texture);
+      Reflect.set(result, key, this.getTextureByItemKey(`${name}_${key}`));
     }
     return result;
   };
@@ -325,14 +325,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
       throw new Error(`[Resources] "${name}" is not a textureArray source`);
     }
 
-    return source.paths.map((_, index) => {
-      const itemKey = `${name}_${index}`;
-      const item = this.items[itemKey];
-      if (!this.typeFilters.texture(item)) {
-        throw new Error(`[Resources] "${itemKey}" is not a Texture`);
-      }
-      return item;
-    });
+    return source.paths.map((_, i) => this.getTextureByItemKey(`${name}_${i}`));
   };
 
   private sourceLoaded = (
