@@ -155,39 +155,74 @@ class Environment implements Destroyable {
 
     const skyFolder = environMentFolder.addFolder("Sky");
 
-    skyFolder.add(state, "skyTurbidity").min(0).max(20).step(0.1).name("Turbidity");
+    skyFolder
+      .add(state, "skyTurbidity")
+      .min(0)
+      .max(20)
+      .step(0.1)
+      .name("Turbidity");
     registry.bind("skyTurbidity", (v) => {
       this.sky.material.uniforms.turbidity.value = v;
     });
 
-    skyFolder.add(state, "skyRayleigh").min(0).max(10).step(0.01).name("Rayleigh");
+    skyFolder
+      .add(state, "skyRayleigh")
+      .min(0)
+      .max(10)
+      .step(0.01)
+      .name("Rayleigh");
     registry.bind("skyRayleigh", (v) => {
       this.sky.material.uniforms.rayleigh.value = v;
     });
 
-    skyFolder.add(state, "skyMieDirectionalG").min(0).max(1).step(0.001).name("Mie Directional G");
+    skyFolder
+      .add(state, "skyMieDirectionalG")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("Mie Directional G");
     registry.bind("skyMieDirectionalG", (v) => {
       this.sky.material.uniforms.mieDirectionalG.value = v;
     });
 
-    skyFolder.add(state, "skyMieCoefficient").min(0).max(1).step(0.001).name("Mie Coefficient");
+    skyFolder
+      .add(state, "skyMieCoefficient")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("Mie Coefficient");
     registry.bind("skyMieCoefficient", (v) => {
       this.sky.material.uniforms.mieCoefficient.value = v;
     });
 
     const sunPosFolder = skyFolder.addFolder("Sun Position");
 
-    sunPosFolder.add(state, "sunPositionX").min(-1).max(1).step(0.001).name("X");
+    sunPosFolder
+      .add(state, "sunPositionX")
+      .min(-1)
+      .max(1)
+      .step(0.001)
+      .name("X");
     registry.bind("sunPositionX", (v) => {
       this.sky.material.uniforms.sunPosition.value.x = v;
     });
 
-    sunPosFolder.add(state, "sunPositionY").min(-1).max(1).step(0.001).name("Y");
+    sunPosFolder
+      .add(state, "sunPositionY")
+      .min(-1)
+      .max(1)
+      .step(0.001)
+      .name("Y");
     registry.bind("sunPositionY", (v) => {
       this.sky.material.uniforms.sunPosition.value.y = v;
     });
 
-    sunPosFolder.add(state, "sunPositionZ").min(-1).max(1).step(0.001).name("Z");
+    sunPosFolder
+      .add(state, "sunPositionZ")
+      .min(-1)
+      .max(1)
+      .step(0.001)
+      .name("Z");
     registry.bind("sunPositionZ", (v) => {
       this.sky.material.uniforms.sunPosition.value.z = v;
     });
