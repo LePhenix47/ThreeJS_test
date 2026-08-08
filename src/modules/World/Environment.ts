@@ -98,8 +98,8 @@ class Environment implements Destroyable {
     const { state } = registry;
     const { gui } = this.debug;
 
-    const environMentFolder = gui.addFolder("environMentFolder");
-    environMentFolder
+    const environmentFolder = gui.addFolder("Environment");
+    environmentFolder
       .addColor(state, "environmentColor")
       .name("Renderer clear color");
     registry.bind("environmentColor", (v) => {
@@ -107,7 +107,7 @@ class Environment implements Destroyable {
       this.renderer.instance.setClearColor(threeColor);
     });
 
-    const helpersFolder = environMentFolder.addFolder("Helpers");
+    const helpersFolder = environmentFolder.addFolder("Helpers");
 
     helpersFolder.add(state, "lightHelper").name("Light Helper");
     registry.bind("lightHelper", (v) => {
