@@ -44,6 +44,10 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.debug;
   }
 
+  private get sizes() {
+    return this.experience!.sizes;
+  }
+
   private get time() {
     return this.experience!.time;
   }
@@ -68,6 +72,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     this.setPoints();
 
     this.scene.add(this.points);
+    this.sizes.on("resize", this.onResize);
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -118,8 +123,17 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
         uTime: new THREE.Uniform(0),
         uSize: new THREE.Uniform(sizeInPhysicalPixels),
         uPerspectiveOn: new THREE.Uniform(perspectiveOn),
+        uResolution: {
+          value: new THREE.Vector2(this.sizes.width, this.sizes.height),
+        },
       },
     });
+  };
+
+  private onResize = (): void => {
+    const { width, height } = this.sizes;
+
+    this.material.uniforms.uResolution.value = new THREE.Vector2(width, height);
   };
 
   protected setPoints = (): void => {
@@ -138,7 +152,12 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
 
     const fireworksFolder = gui.addFolder("Fireworks");
 
-    fireworksFolder.add(state, "size").min(1).max(50).step(1).name("Size");
+    fireworksFolder
+      .add(state, "size")
+      .min(0.001)
+      .max(10)
+      .step(0.01)
+      .name("Size");
     registry.bind("size", (v) => {
       this.material.uniforms.uSize.value = v * this.renderer.pixelRatio;
     });
@@ -155,8 +174,12 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
 
   public destroy = (): void => {
     this.scene.remove(this.points);
+
     this.geometry.dispose();
     this.material.dispose();
+
+    this.sizes.off("resize", this.onResize);
+
     this.guiRegistry?.dispose();
   };
 }
