@@ -77,8 +77,6 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     this.scene.add(this.points);
     this.sizes.on("resize", this.onResize);
 
-    this.setCurrentTexture(0);
-
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
