@@ -2,6 +2,7 @@ import Experience, { Destroyable } from "@modules/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { EnvironmentEntity, EnvironmentMapConfig } from "./types/entity";
+import { Sky } from "three/addons/objects/Sky.js";
 
 type EnvironmentState = {
   lightHelper: boolean;
@@ -10,9 +11,14 @@ type EnvironmentState = {
 
 class Environment implements Destroyable {
   private readonly experience: Experience | null;
+
   private ambientLight: THREE.AmbientLight;
+
   private sunLight: THREE.DirectionalLight;
   private lightHelper: THREE.DirectionalLightHelper;
+
+  private sky: Sky;
+
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
   private readonly debugDefaults: EnvironmentState = {
@@ -48,6 +54,9 @@ class Environment implements Destroyable {
 
     this.setAmbientLight();
     this.setSunLight();
+    this.setSky();
+
+    this.scene.add(this.sky);
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -86,6 +95,22 @@ class Environment implements Destroyable {
     if (!withHelper) return;
     this.lightHelper = new THREE.DirectionalLightHelper(sunLight);
     this.scene.add(this.lightHelper);
+  };
+
+  private setSky = () => {
+    const sky = new Sky();
+
+    // * The sky is a shader
+    // ? https://threejs.org/docs/#api/en/objects/Sky
+    sky.material.uniforms.turbidity.value = 10;
+    sky.material.uniforms.rayleigh.value = 3;
+    sky.material.uniforms.mieDirectionalG.value = 0.95;
+    sky.material.uniforms.mieCoefficient.value = 0.1;
+    sky.material.uniforms.sunPosition.value.set(0.3, -0.038, -0.95);
+
+    sky.scale.setScalar(100);
+
+    this.sky = sky;
   };
 
   private addDebugFolders = () => {
