@@ -117,12 +117,16 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
 
     const totalSize: number = spaceComponentsPerVertex * count;
     const positions = new Float32Array(totalSize);
+    const scales = new Float32Array(count);
 
     for (let i = 0; i < count; i++) {
       const i3: number = i * spaceComponentsPerVertex;
+
       positions[i3 + SpaceEnum.X] = randomInRange([-5, 5]);
       positions[i3 + SpaceEnum.Y] = randomInRange([-5, 5]);
       positions[i3 + SpaceEnum.Z] = randomInRange([-5, 5]);
+
+      scales[i] = randomInRange([0.5, 1]);
     }
 
     const geometry = new THREE.BufferGeometry();
@@ -130,6 +134,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
       "position",
       new THREE.BufferAttribute(positions, spaceComponentsPerVertex),
     );
+    geometry.setAttribute("aScale", new THREE.BufferAttribute(scales, 1));
 
     this.geometry = geometry;
   };
@@ -196,7 +201,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     fireworksFolder
       .add(state, "size")
       .min(0.001)
-      .max(10)
+      .max(3)
       .step(0.01)
       .name("Size");
     registry.bind("size", (v) => {
