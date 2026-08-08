@@ -37,6 +37,10 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   protected geometry: THREE.BufferGeometry;
   protected material: THREE.ShaderMaterial;
   protected points: THREE.Points;
+
+  /** 3D Sphere radius */
+  private rho: number = 1;
+
   private texturesArray: THREE.Texture<unknown>[];
 
   private get scene() {
@@ -119,12 +123,28 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     const positions = new Float32Array(totalSize);
     const scales = new Float32Array(count);
 
+    const maxPhi: number = THREE.MathUtils.degToRad(180);
+    const maxTheta: number = THREE.MathUtils.degToRad(360);
+
     for (let i = 0; i < count; i++) {
       const i3: number = i * spaceComponentsPerVertex;
 
-      positions[i3 + SpaceEnum.X] = randomInRange([-5, 5]);
-      positions[i3 + SpaceEnum.Y] = randomInRange([-5, 5]);
-      positions[i3 + SpaceEnum.Z] = randomInRange([-5, 5]);
+      const phi: number = randomInRange([0, maxPhi]);
+      const theta: number = randomInRange([0, maxTheta]);
+
+      const nonUniformRandomRho: number = randomInRange([0.75, this.rho]);
+      const toSphericalCoords = new THREE.Spherical(
+        nonUniformRandomRho,
+        phi,
+        theta,
+      );
+
+      const position = new THREE.Vector3();
+      position.setFromSpherical(toSphericalCoords);
+
+      positions[i3 + SpaceEnum.X] = position.x;
+      positions[i3 + SpaceEnum.Y] = position.y;
+      positions[i3 + SpaceEnum.Z] = position.z;
 
       scales[i] = randomInRange([0.5, 1]);
     }
