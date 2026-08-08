@@ -19,6 +19,8 @@ type FireworksState = {
   size: number;
   /** Perspective for the particles, ones closer to camera appear larger than one farther from it */
   perspectiveOn: boolean;
+  /** */
+  nthSelectedTexture: number;
 };
 
 class Fireworks extends PointsEntity implements Updatable, Destroyable {
@@ -29,6 +31,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     count: 500,
     size: 10,
     perspectiveOn: false,
+    nthSelectedTexture: 1,
   };
 
   protected geometry: THREE.BufferGeometry;
@@ -74,6 +77,8 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     this.scene.add(this.points);
     this.sizes.on("resize", this.onResize);
 
+    this.setCurrentTexture(0);
+
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
@@ -85,6 +90,22 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     const texturesArray = this.resources.getTextureArray("particles");
 
     this.texturesArray = texturesArray;
+  };
+
+  private getNthTexture = (index: number) => {
+    const chosenTexture = this.texturesArray[index];
+
+    if (!chosenTexture) {
+      throw new RangeError(`Cannot access texture at index: ${index}`);
+    }
+
+    return chosenTexture;
+  };
+
+  private setCurrentTexture = (index: number) => {
+    const texture = this.getNthTexture(index);
+
+    this.material.uniforms.uTexture.value = texture;
   };
 
   protected setGeometry = (): void => {
@@ -112,7 +133,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = (): void => {
-    const { size, perspectiveOn } = this.debugDefaults;
+    const { size, perspectiveOn, nthSelectedTexture } = this.debugDefaults;
 
     /* ? gl_PointSize is in physical pixels. On a retina display 1 CSS pixel = 2 physical pixels,
      *   so "size 10" without correction renders as 5 CSS pixels — half the intended size. 
@@ -123,6 +144,9 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
+      depthWrite: false,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
       uniforms: {
         uTime: new THREE.Uniform(0),
         uSize: new THREE.Uniform(sizeInPhysicalPixels),
@@ -131,6 +155,9 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
          *   the same fraction of the screen regardless of window size. */
         uResolution: {
           value: new THREE.Vector2(this.sizes.width, this.sizes.height),
+        },
+        uTexture: {
+          value: this.getNthTexture(nthSelectedTexture),
         },
       },
     });
@@ -177,6 +204,17 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     fireworksFolder.add(state, "perspectiveOn").name("Perspective");
     registry.bind("perspectiveOn", (v) => {
       this.material.uniforms.uPerspectiveOn.value = v;
+    });
+
+    fireworksFolder
+      .add(
+        state,
+        "nthSelectedTexture",
+        Array.from({ length: this.texturesArray.length }).map((_, i) => i),
+      )
+      .name("Selected texture");
+    registry.bind("nthSelectedTexture", (v) => {
+      this.setCurrentTexture(v);
     });
   };
 
