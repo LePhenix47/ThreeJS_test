@@ -1,5 +1,6 @@
 uniform float uSize;
 uniform float uTime;
+uniform bool uPerspectiveOn;
 
 void main() {
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
@@ -14,5 +15,7 @@ void main() {
   * See node_modules/three/src/renderers/shaders/ShaderLib/points.glsl.js 
   ? Explanation on video: www.youtube.com/watch?v=qjWkNZ0SXfo One formula that demystifies 3D graphics by Tsoding
   */
-  gl_PointSize *= (1.0 / -viewPosition.z);
+  if(uPerspectiveOn) {
+    gl_PointSize *= (1.0 / -viewPosition.z);
+  }
 }

@@ -17,6 +17,8 @@ type FireworksState = {
 
   /** Visual size of each particle point in pixels. */
   size: number;
+  /** Perspective for the particles, ones closer to camera appear larger than one farther from it */
+  perspectiveOn: boolean;
 };
 
 class Fireworks extends PointsEntity implements Updatable, Destroyable {
@@ -26,6 +28,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   private readonly debugDefaults: FireworksState = {
     count: 500,
     size: 10,
+    perspectiveOn: false,
   };
 
   protected geometry: THREE.BufferGeometry;
@@ -103,7 +106,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = (): void => {
-    const { size } = this.debugDefaults;
+    const { size, perspectiveOn } = this.debugDefaults;
 
     const sizeValue = size * this.renderer.pixelRatio;
 
@@ -113,6 +116,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
       uniforms: {
         uTime: new THREE.Uniform(0),
         uSize: new THREE.Uniform(sizeValue),
+        uPerspectiveOn: new THREE.Uniform(perspectiveOn),
       },
     });
   };
@@ -136,6 +140,11 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     fireworksFolder.add(state, "size").min(1).max(50).step(1).name("Size");
     registry.bind("size", (v) => {
       this.material.uniforms.uSize.value = v * this.renderer.pixelRatio;
+    });
+
+    fireworksFolder.add(state, "perspectiveOn").name("Perspective");
+    registry.bind("perspectiveOn", (v) => {
+      this.material.uniforms.uPerspectiveOn.value = v;
     });
   };
 
