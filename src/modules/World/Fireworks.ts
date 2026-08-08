@@ -278,11 +278,16 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     this.material.uniforms.uTime.value = this.time.elapsedSeconds;
   };
 
-  public destroy = (): void => {
+  private disposeFireworks = (): void => {
     this.scene.remove(this.points);
 
     this.geometry.dispose();
     this.material.dispose();
+    // ? We do not dispose of the texture since we'll use it for new fireworks
+  };
+
+  public destroy = (): void => {
+    this.disposeFireworks();
 
     this.sizes.off("resize", this.onResize);
 
