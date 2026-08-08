@@ -89,6 +89,10 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   protected setTextures = (): void => {
     const texturesArray = this.resources.getTextureArray("particles");
 
+    for (const texture of texturesArray) {
+      texture.flipY = false;
+    }
+
     this.texturesArray = texturesArray;
   };
 
