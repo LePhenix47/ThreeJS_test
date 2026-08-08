@@ -87,7 +87,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
 
     const spaceComponentsPerVertex: number = Enum.length(SpaceEnum);
 
-    const totalSize = spaceComponentsPerVertex * count;
+    const totalSize: number = spaceComponentsPerVertex * count;
     const positions = new Float32Array(totalSize);
 
     for (let i = 0; i < count; i++) {
