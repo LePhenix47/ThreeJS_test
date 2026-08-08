@@ -108,14 +108,14 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   protected setMaterial = (): void => {
     const { size, perspectiveOn } = this.debugDefaults;
 
-    const sizeValue = size * this.renderer.pixelRatio;
+    const sizeInPhysicalPixels: number = size * this.renderer.pixelRatio;
 
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       uniforms: {
         uTime: new THREE.Uniform(0),
-        uSize: new THREE.Uniform(sizeValue),
+        uSize: new THREE.Uniform(sizeInPhysicalPixels),
         uPerspectiveOn: new THREE.Uniform(perspectiveOn),
       },
     });
