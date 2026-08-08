@@ -5,7 +5,6 @@ import { EnvironmentEntity, EnvironmentMapConfig } from "./types/entity";
 import { Sky } from "three/addons/objects/Sky.js";
 
 type EnvironmentState = {
-  lightHelper: boolean;
   environmentColor: string;
   skyTurbidity: number;
   skyRayleigh: number;
@@ -21,15 +20,11 @@ class Environment implements Destroyable {
 
   private ambientLight: THREE.AmbientLight;
 
-  private sunLight: THREE.DirectionalLight;
-  private lightHelper: THREE.DirectionalLightHelper;
-
   private sky: Sky;
 
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
   private readonly debugDefaults: EnvironmentState = {
-    lightHelper: true,
     environmentColor: "black",
     skyTurbidity: 10,
     skyRayleigh: 3,
@@ -67,7 +62,6 @@ class Environment implements Destroyable {
     this.scene.environment = this.envMapTexture;
 
     this.setAmbientLight();
-    this.setSunLight();
     this.setSky();
 
     this.scene.add(this.sky);
@@ -84,31 +78,6 @@ class Environment implements Destroyable {
   private setAmbientLight = (): void => {
     this.ambientLight = new THREE.AmbientLight("#ffffff", 1);
     this.scene.add(this.ambientLight);
-  };
-
-  private setSunLight = (withHelper = true): void => {
-    const sunLight = new THREE.DirectionalLight("#ffffff", 3);
-
-    const size: number = 2 ** 10;
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.set(size, size);
-    sunLight.shadow.normalBias = 0.05;
-
-    const { camera } = sunLight.shadow;
-    camera.far = 15;
-    camera.top = 7;
-    camera.right = 7;
-    camera.bottom = -7;
-    camera.left = -7;
-
-    sunLight.position.set(0.25, 2, -2.25);
-
-    this.sunLight = sunLight;
-    this.scene.add(sunLight);
-
-    if (!withHelper) return;
-    this.lightHelper = new THREE.DirectionalLightHelper(sunLight);
-    this.scene.add(this.lightHelper);
   };
 
   private setSky = () => {
@@ -144,13 +113,6 @@ class Environment implements Destroyable {
     registry.bind("environmentColor", (v) => {
       const threeColor = new THREE.Color(v);
       this.renderer.instance.setClearColor(threeColor);
-    });
-
-    const helpersFolder = environmentFolder.addFolder("Helpers");
-
-    helpersFolder.add(state, "lightHelper").name("Light Helper");
-    registry.bind("lightHelper", (v) => {
-      this.lightHelper.visible = v;
     });
 
     const skyFolder = environmentFolder.addFolder("Sky");
@@ -229,10 +191,8 @@ class Environment implements Destroyable {
   };
 
   public destroy = () => {
-    this.scene.remove(this.ambientLight, this.sunLight, this.lightHelper);
+    this.scene.remove(this.ambientLight);
     this.ambientLight.dispose();
-    this.sunLight.dispose();
-    this.lightHelper?.dispose();
     this.guiRegistry?.dispose();
   };
 }
