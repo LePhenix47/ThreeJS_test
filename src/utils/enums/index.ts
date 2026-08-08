@@ -14,7 +14,7 @@ export default class Enum {
    * Returns the length of the enum (how many keys it has)
    */
   static length<T extends EnumType>(enumObj: T): number {
-    return this.keys(enumObj).length;
+    return Enum.keys(enumObj).length;
   }
 
   /**
