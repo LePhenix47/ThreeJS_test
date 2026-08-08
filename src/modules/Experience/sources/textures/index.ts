@@ -16,6 +16,7 @@ export type RegularTextureNames = TextureNamesByType<"texture">;
 export type LdrTextureNames = TextureNamesByType<"ldrEnvTexture">; // never (no such texture)
 export type CubeTextureNames = TextureNamesByType<"cubeEnvTexture">; // never
 export type HdrTextureNames = TextureNamesByType<"hdrEnvTexture">; // never
+export type TextureArrayNames = TextureNamesByType<"textureArray">; // never (until registered)
 
 // ? Creates an object with the "name" property value as the key and its whole obj as the value
 type TextureByName = {
