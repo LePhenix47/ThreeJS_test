@@ -3,6 +3,7 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import Environment from "./Environment";
+import Fireworks from "./Fireworks";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -16,6 +17,7 @@ type WorldState = {
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment?: Environment;
+  private fireworks?: Fireworks;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -37,12 +39,20 @@ class World implements Updatable, Destroyable {
     return this.experience!.camera;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.environment = new Environment();
     this.setHelpers();
+
+    this.resources.on("textures-loaded", () => {
+      this.fireworks = new Fireworks();
+    });
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -103,10 +113,13 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   };
 
-  public update = () => {};
+  public update = () => {
+    this.fireworks?.update();
+  };
 
   public destroy = () => {
     this.environment?.destroy();
+    this.fireworks?.destroy();
     this.removeHelpers();
   };
 }
