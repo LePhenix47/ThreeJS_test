@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import gsap from "gsap";
+
 import Experience, {
   Destroyable,
   Updatable,
@@ -52,7 +54,6 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   private rho: number = 1;
 
   private texturesArray: THREE.Texture<unknown>[];
-  private readonly abortController = new AbortController();
 
   private get scene() {
     return this.experience!.scene;
@@ -86,10 +87,6 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.camera;
   }
 
-  private get canvas() {
-    return this.experience!.canvas;
-  }
-
   constructor() {
     super();
     this.experience = Experience.instance;
@@ -103,9 +100,8 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
 
     this.scene.add(this.points);
     this.sizes.on("resize", this.onResize);
-    this.canvas.addEventListener("click", this.onClickCanvas, {
-      signal: this.abortController.signal,
-    });
+
+    this.pointer.on("click", this.onClickCanvas);
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -231,7 +227,21 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     });
   };
 
-  private onClickCanvas = (): void => {
+  private onClickCanvas = (e: MouseEvent): void => {
+    const { x: downX, y: downY } = this.pointer.lastPointerDown;
+
+    const dx: number = e.offsetX - downX;
+    const dy: number = e.offsetY - downY;
+
+    const MIN_CLICK_OFFSET_DISTANCE: number = 5;
+
+    if (distance(dx, dy) > MIN_CLICK_OFFSET_DISTANCE) return;
+
+    /*
+     * NDC (Normalized Device Coordinates): screen space where center = (0,0), edges = ±1.
+     *   unproject() needs this. Our pointer is [0→1] with Y=0 at top, so we remap:
+     *   x*2-1 maps [0,1]→[-1,+1]; negate Y because screen-Y grows down, NDC-Y grows up.
+     */
     const { x, y } = this.pointer.normalized;
     const ndcX = x * 2 - 1;
     const ndcY = -(y * 2 - 1);
@@ -319,7 +329,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     this.disposeFireworks();
 
     this.sizes.off("resize", this.onResize);
-    this.abortController.abort();
+    this.pointer.off("click", this.onClickCanvas);
 
     this.guiRegistry?.dispose();
   };
