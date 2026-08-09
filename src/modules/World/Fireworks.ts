@@ -15,6 +15,7 @@ import { SpaceEnum } from "@utils/enums/space-color";
 import Enum from "@/utils/enums";
 
 import { randomInRange } from "@/utils/numbers/range";
+import { distance } from "@utils/numbers/math";
 import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placement";
 
 type FireworksState = {
@@ -51,6 +52,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
   private rho: number = 1;
 
   private texturesArray: THREE.Texture<unknown>[];
+  private readonly abortController = new AbortController();
 
   private get scene() {
     return this.experience!.scene;
@@ -80,6 +82,14 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.pointer;
   }
 
+  private get camera() {
+    return this.experience!.camera;
+  }
+
+  private get canvas() {
+    return this.experience!.canvas;
+  }
+
   constructor() {
     super();
     this.experience = Experience.instance;
@@ -93,6 +103,9 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
 
     this.scene.add(this.points);
     this.sizes.on("resize", this.onResize);
+    this.canvas.addEventListener("click", this.onClickCanvas, {
+      signal: this.abortController.signal,
+    });
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -218,6 +231,18 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     });
   };
 
+  private onClickCanvas = (): void => {
+    const { x, y } = this.pointer.normalized;
+    const ndcX = x * 2 - 1;
+    const ndcY = -(y * 2 - 1);
+
+    const position = new THREE.Vector3(ndcX, ndcY, 0.5).unproject(
+      this.camera.instance,
+    );
+
+    console.log("Firework position:", position);
+  };
+
   /* ? Canvas height changed = the normalization factor changed = points would visually grow or shrink */
   private onResize = (): void => {
     const { width, height, pixelRatio } = this.sizes;
@@ -294,6 +319,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     this.disposeFireworks();
 
     this.sizes.off("resize", this.onResize);
+    this.abortController.abort();
 
     this.guiRegistry?.dispose();
   };
