@@ -14,13 +14,21 @@ import { randomInRange } from "@/utils/numbers/range";
 import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placement";
 
 type FireworkOptions = {
+  /** 3D world position where the burst spawns. */
   position: THREE.Vector3;
+  /** Shared texture atlas owned by the manager. */
   texturesArray: THREE.Texture<unknown>[];
+  /** Index into texturesArray that picks the particle sprite. */
   selectedTextureIndex: number;
+  /** Hex color of the particles. */
   color: string;
+  /** Visual size of each particle in pixels. */
   size: number;
+  /** Total number of particles in this burst. */
   count: number;
+  /** Whether particles closer to the camera appear larger. */
   perspectiveOn: boolean;
+  /** Called when the GSAP animation completes so the manager can dispose this burst. */
   onComplete: () => void;
 };
 
