@@ -76,6 +76,10 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.resources;
   }
 
+  private get pointer() {
+    return this.experience!.pointer;
+  }
+
   constructor() {
     super();
     this.experience = Experience.instance;
