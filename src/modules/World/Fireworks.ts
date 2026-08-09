@@ -210,6 +210,7 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
       blending: THREE.AdditiveBlending,
       uniforms: {
         uTime: new THREE.Uniform(0),
+        uProgress: new THREE.Uniform(0),
         uSize: new THREE.Uniform(sizeInPhysicalPixels),
         uPerspectiveOn: new THREE.Uniform(perspectiveOn),
         /* ? The shader normalizes gl_PointSize against canvas height so a point always covers
@@ -236,6 +237,17 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
     const MIN_CLICK_OFFSET_DISTANCE: number = 5;
 
     if (distance(dx, dy) > MIN_CLICK_OFFSET_DISTANCE) return;
+
+    gsap.to(this.material.uniforms.uProgress, {
+      value: 1,
+      duration: 3,
+      onComplete: () => {
+        console.log(
+          "%cOn complete GSAP",
+          "background: green; color:white; padding: 1rem",
+        );
+      },
+    });
 
     /*
      * NDC (Normalized Device Coordinates): screen space where center = (0,0), edges = ±1.
