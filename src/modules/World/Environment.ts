@@ -42,10 +42,6 @@ class Environment implements Destroyable {
     return this.experience!.scene;
   }
 
-  private get resources() {
-    return this.experience!.resources;
-  }
-
   private get debug() {
     return this.experience!.debug;
   }
