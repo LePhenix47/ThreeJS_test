@@ -24,6 +24,8 @@ type FireworkOptions = {
   size: number;
   /** Total number of particles in this burst. */
   count: number;
+  /** 3D sphere radius */
+  rho: number;
   /** Whether particles closer to the camera appear larger. */
   perspectiveOn: boolean;
   /** Called when the GSAP animation completes so the manager can dispose this burst. */
@@ -37,6 +39,7 @@ class Firework extends PointsEntity implements Destroyable {
   private readonly texture: THREE.Texture<unknown>;
   private readonly color: string;
   private readonly size: number;
+  private readonly rho: number;
   private readonly count: number;
   private readonly perspectiveOn: boolean;
 
@@ -56,16 +59,24 @@ class Firework extends PointsEntity implements Destroyable {
     return this.experience.renderer;
   }
 
-  constructor(options: FireworkOptions) {
+  constructor({
+    position,
+    texture,
+    color,
+    size,
+    count,
+    perspectiveOn,
+    onComplete,
+    rho,
+  }: FireworkOptions) {
     super();
-    const { position, texture, color, size, count, perspectiveOn, onComplete } =
-      options;
 
     this.experience = Experience.instance!;
     this.center = position;
     this.texture = texture;
     this.color = color;
     this.size = size;
+    this.rho = rho;
     this.count = count;
     this.perspectiveOn = perspectiveOn;
 
@@ -115,7 +126,7 @@ class Firework extends PointsEntity implements Destroyable {
 
     for (let i = 0; i < this.count; i++) {
       const i3: number = i * spaceComponentsPerVertex;
-      const { x, y, z } = getRandomUniformSpherePlacement(0, 1);
+      const { x, y, z } = getRandomUniformSpherePlacement(0, this.rho);
 
       positions[i3 + SpaceEnum.X] = this.center.x + x;
       positions[i3 + SpaceEnum.Y] = this.center.y + y;

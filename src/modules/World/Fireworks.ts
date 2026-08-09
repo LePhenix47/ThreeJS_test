@@ -8,6 +8,7 @@ import Experience, {
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 import { distance } from "@utils/numbers/math";
+import { getRandomHexColor } from "@/utils/numbers/color";
 
 import Firework from "./Firework";
 import { getValueFromNewRange, randomInRange } from "@/utils/numbers/range";
@@ -31,7 +32,7 @@ class Fireworks implements Updatable, Destroyable {
   private guiRegistry: GUIStateRegistry<FireworksState> | null = null;
 
   private readonly debugDefaults: FireworksState = {
-    count: 500,
+    count: 150,
     size: 10,
     perspectiveOn: false,
     selectedTextureIndex: 1,
@@ -59,6 +60,10 @@ class Fireworks implements Updatable, Destroyable {
 
   private get camera() {
     return this.experience.camera;
+  }
+
+  private get randomTextureIndex() {
+    return Math.floor(Math.random() * this.texturesArray.length);
   }
 
   constructor() {
@@ -111,15 +116,16 @@ class Fireworks implements Updatable, Destroyable {
       .clone()
       .addScaledVector(direction, randomInRange([1, 25]));
 
-    const { count, size, perspectiveOn, selectedTextureIndex, color } =
+    const { count, size, perspectiveOn } =
       this.guiRegistry?.state ?? this.debugDefaults;
 
     const firework = new Firework({
       position,
-      texture: this.texturesArray[selectedTextureIndex],
-      color,
+      texture: this.texturesArray[this.randomTextureIndex],
+      color: getRandomHexColor(),
       size,
       count,
+      rho: randomInRange([1, 5]),
       perspectiveOn,
       onComplete: () => this.remove(firework),
     });
@@ -129,7 +135,9 @@ class Fireworks implements Updatable, Destroyable {
 
   private remove = (firework: Firework): void => {
     firework.destroy();
-    this.active.splice(this.active.indexOf(firework), 1);
+
+    const index: number = this.active.indexOf(firework);
+    this.active.splice(index, 1);
   };
 
   private addDebugFolders = (): void => {
