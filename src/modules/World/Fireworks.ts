@@ -14,17 +14,8 @@ import Firework from "./Firework";
 import { getValueFromNewRange, randomInRange } from "@/utils/numbers/range";
 
 type FireworksState = {
-  /** Total number of particles per burst. */
-  count: number;
-
-  /** Visual size of each particle point in pixels. */
-  size: number;
   /** Perspective for the particles, ones closer to camera appear larger than ones farther from it */
   perspectiveOn: boolean;
-  /** Index of the selected texture in the array of textures */
-  selectedTextureIndex: number;
-  /** Hex color of the particles */
-  color: string;
 };
 
 class Fireworks implements Updatable, Destroyable {
@@ -32,11 +23,7 @@ class Fireworks implements Updatable, Destroyable {
   private guiRegistry: GUIStateRegistry<FireworksState> | null = null;
 
   private readonly debugDefaults: FireworksState = {
-    count: 150,
-    size: 10,
     perspectiveOn: false,
-    selectedTextureIndex: 1,
-    color: "#ffffff",
   };
 
   private texturesArray: THREE.Texture<unknown>[];
@@ -114,17 +101,16 @@ class Fireworks implements Updatable, Destroyable {
       .normalize();
     const position = camPos
       .clone()
-      .addScaledVector(direction, randomInRange([1, 25]));
+      .addScaledVector(direction, randomInRange([5, 50]));
 
-    const { count, size, perspectiveOn } =
-      this.guiRegistry?.state ?? this.debugDefaults;
+    const { perspectiveOn } = this.guiRegistry?.state ?? this.debugDefaults;
 
     const firework = new Firework({
       position,
       texture: this.texturesArray[this.randomTextureIndex],
       color: getRandomHexColor(),
-      size,
-      count,
+      size: randomInRange([5, 20]),
+      count: Math.floor(randomInRange([50, 150])),
       rho: randomInRange([1, 5]),
       perspectiveOn,
       onComplete: () => this.remove(firework),
@@ -152,25 +138,7 @@ class Fireworks implements Updatable, Destroyable {
 
     const fireworksFolder = gui.addFolder("Fireworks");
 
-    // ? These controls affect the next spawned firework, not active ones
-    fireworksFolder
-      .add(state, "size")
-      .min(0.001)
-      .max(3)
-      .step(0.01)
-      .name("Size");
-
     fireworksFolder.add(state, "perspectiveOn").name("Perspective");
-
-    fireworksFolder.addColor(state, "color").name("Color");
-
-    fireworksFolder
-      .add(
-        state,
-        "selectedTextureIndex",
-        Array.from({ length: this.texturesArray.length }).map((_, i) => i),
-      )
-      .name("Selected texture");
   };
 
   public update = (): void => {
