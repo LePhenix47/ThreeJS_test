@@ -135,6 +135,7 @@ class Firework extends PointsEntity implements Destroyable {
     const { width, height, pixelRatio } = this.sizes;
     const sizeInPhysicalPixels: number = this.size * this.renderer.pixelRatio;
 
+    const fireworkCenter: THREE.Vector3 = this.center.clone();
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
@@ -144,6 +145,7 @@ class Firework extends PointsEntity implements Destroyable {
       uniforms: {
         uTime: new THREE.Uniform(0),
         uProgress: new THREE.Uniform(0),
+        uCenter: new THREE.Uniform(fireworkCenter),
         uSize: new THREE.Uniform(sizeInPhysicalPixels),
         uPerspectiveOn: new THREE.Uniform(this.perspectiveOn),
         uTexture: new THREE.Uniform(this.texture),
