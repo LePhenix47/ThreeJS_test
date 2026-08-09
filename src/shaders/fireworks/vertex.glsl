@@ -1,5 +1,6 @@
 uniform float uSize;
 uniform float uTime;
+uniform float uProgress;
 uniform vec2 uResolution;
 uniform bool uPerspectiveOn;
 
@@ -7,7 +8,7 @@ attribute float aScale;
 
 void main() {
   vec4 modelPosition = modelMatrix * vec4(position, 1.0);
-  // modelPosition.y = sin(uTime + modelPosition.x);
+  modelPosition.y += uProgress;
 
   vec4 viewPosition = viewMatrix * modelPosition;
   vec4 projectedPosition = projectionMatrix * viewPosition;

@@ -246,6 +246,8 @@ class Fireworks extends PointsEntity implements Updatable, Destroyable {
           "%cOn complete GSAP",
           "background: green; color:white; padding: 1rem",
         );
+
+        this.material.uniforms.uProgress.value = 0;
       },
     });
 
