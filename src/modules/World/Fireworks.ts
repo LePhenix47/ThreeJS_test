@@ -10,6 +10,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { distance } from "@utils/numbers/math";
 
 import Firework from "./Firework";
+import { randomInRange } from "@/utils/numbers/range";
 
 type FireworksState = {
   /** Total number of particles per burst. */
@@ -96,9 +97,18 @@ class Fireworks implements Updatable, Destroyable {
     const { x, y } = this.pointer.normalized;
     const ndcX = x * 2 - 1;
     const ndcY = -(y * 2 - 1);
-    const position = new THREE.Vector3(ndcX, ndcY, 0.5).unproject(
-      this.camera.instance,
-    );
+
+    /* ? unproject() gives world-space coords but perspective projection is non-linear —
+     *   ANY fixed NDC z lands very close to the near plane. Instead we unproject to get
+     *   the ray direction, then walk a fixed distance along it from the camera. */
+    const { position: camPos } = this.camera.instance;
+    const direction = new THREE.Vector3(ndcX, ndcY, 0.5)
+      .unproject(this.camera.instance)
+      .sub(camPos)
+      .normalize();
+    const position = camPos
+      .clone()
+      .addScaledVector(direction, randomInRange([1, 25]));
 
     const { count, size, perspectiveOn, selectedTextureIndex, color } =
       this.guiRegistry?.state ?? this.debugDefaults;
