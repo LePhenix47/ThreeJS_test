@@ -10,7 +10,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { distance } from "@utils/numbers/math";
 
 import Firework from "./Firework";
-import { randomInRange } from "@/utils/numbers/range";
+import { getValueFromNewRange, randomInRange } from "@/utils/numbers/range";
 
 type FireworksState = {
   /** Total number of particles per burst. */
@@ -95,8 +95,9 @@ class Fireworks implements Updatable, Destroyable {
      *   unproject() needs this. Our pointer is [0→1] with Y=0 at top, so we remap:
      *   x*2-1 maps [0,1]→[-1,+1]; negate Y because screen-Y grows down, NDC-Y grows up. */
     const { x, y } = this.pointer.normalized;
-    const ndcX = x * 2 - 1;
-    const ndcY = -(y * 2 - 1);
+
+    const ndcX = getValueFromNewRange(x, [0, 1], [-1, 1]);
+    const ndcY = -1 * getValueFromNewRange(y, [0, 1], [-1, 1]);
 
     /* ? unproject() gives world-space coords but perspective projection is non-linear —
      *   ANY fixed NDC z lands very close to the near plane. Instead we unproject to get
@@ -115,8 +116,7 @@ class Fireworks implements Updatable, Destroyable {
 
     const firework = new Firework({
       position,
-      texturesArray: this.texturesArray,
-      selectedTextureIndex,
+      texture: this.texturesArray[selectedTextureIndex],
       color,
       size,
       count,

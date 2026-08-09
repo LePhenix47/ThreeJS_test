@@ -16,10 +16,8 @@ import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placem
 type FireworkOptions = {
   /** 3D world position where the burst spawns. */
   position: THREE.Vector3;
-  /** Shared texture atlas owned by the manager. */
-  texturesArray: THREE.Texture<unknown>[];
-  /** Index into texturesArray that picks the particle sprite. */
-  selectedTextureIndex: number;
+  /** Particle sprite selected by the manager before instantiation. */
+  texture: THREE.Texture<unknown>;
   /** Hex color of the particles. */
   color: string;
   /** Visual size of each particle in pixels. */
@@ -36,8 +34,7 @@ class Firework extends PointsEntity implements Destroyable {
   private readonly experience: Experience;
 
   private readonly center: THREE.Vector3;
-  private readonly texturesArray: THREE.Texture<unknown>[];
-  private readonly selectedTextureIndex: number;
+  private readonly texture: THREE.Texture<unknown>;
   private readonly color: string;
   private readonly size: number;
   private readonly count: number;
@@ -61,21 +58,12 @@ class Firework extends PointsEntity implements Destroyable {
 
   constructor(options: FireworkOptions) {
     super();
-    const {
-      position,
-      texturesArray,
-      selectedTextureIndex,
-      color,
-      size,
-      count,
-      perspectiveOn,
-      onComplete,
-    } = options;
+    const { position, texture, color, size, count, perspectiveOn, onComplete } =
+      options;
 
     this.experience = Experience.instance!;
     this.center = position;
-    this.texturesArray = texturesArray;
-    this.selectedTextureIndex = selectedTextureIndex;
+    this.texture = texture;
     this.color = color;
     this.size = size;
     this.count = count;
@@ -158,13 +146,15 @@ class Firework extends PointsEntity implements Destroyable {
         uProgress: new THREE.Uniform(0),
         uSize: new THREE.Uniform(sizeInPhysicalPixels),
         uPerspectiveOn: new THREE.Uniform(this.perspectiveOn),
+        uTexture: new THREE.Uniform(this.texture),
         /* ? The shader normalizes gl_PointSize against canvas height so a point always covers
          *   the same fraction of the screen regardless of window size. */
         uResolution: {
           value: new THREE.Vector2(width * pixelRatio, height * pixelRatio),
         },
-        uColor: { value: new THREE.Color(this.color) },
-        uTexture: { value: this.texturesArray[this.selectedTextureIndex] },
+        uColor: {
+          value: new THREE.Color(this.color),
+        },
       },
     });
   };
