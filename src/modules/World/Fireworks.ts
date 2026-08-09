@@ -101,17 +101,24 @@ class Fireworks implements Updatable, Destroyable {
       .normalize();
     const position = camPos
       .clone()
-      .addScaledVector(direction, randomInRange([5, 50]));
+      .addScaledVector(direction, randomInRange([15, 50]));
 
     const { perspectiveOn } = this.guiRegistry?.state ?? this.debugDefaults;
 
+    const texture: THREE.Texture<unknown> =
+      this.texturesArray[this.randomTextureIndex];
+    const color: string = getRandomHexColor();
+    const size: number = randomInRange([5, 20]);
+    const count: number = Math.floor(randomInRange([50, 150]));
+    const rho: number = randomInRange([1, 5]) + count / 20;
+
     const firework = new Firework({
       position,
-      texture: this.texturesArray[this.randomTextureIndex],
-      color: getRandomHexColor(),
-      size: randomInRange([5, 20]),
-      count: Math.floor(randomInRange([50, 150])),
-      rho: randomInRange([1, 5]),
+      texture,
+      color,
+      size,
+      count,
+      rho,
       perspectiveOn,
       onComplete: () => this.remove(firework),
     });
