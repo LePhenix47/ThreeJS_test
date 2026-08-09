@@ -10,11 +10,11 @@ attribute float aScale;
 #include ../utils/valueFromNewRange
 
 void main() {
-  /* ? Particles start clustered at uCenter and fly outward to their final position.
-   *   We remap the first 10% of uProgress to the full [0,1] range so the burst
-   *   looks instantaneous — the rest of the progress is used for fade-out in the fragment shader. */
+  // ? We make the rate of progress for the explosion higher, it finishes after 0.3 seconds (10% of total animation duration) 
   float explodingProgress = valueFromNewRange(uProgress, 0.0, 0.1, 0.0, 1.0);
   explodingProgress = clamp(explodingProgress, 0.0, 1.0);
+
+  explodingProgress = 1.0 - pow(1.0 - explodingProgress, 3.0); // ? ease-out cubic
 
   vec3 newPosition = mix(uCenter, position, explodingProgress);
 
