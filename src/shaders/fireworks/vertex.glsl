@@ -8,6 +8,8 @@ uniform vec3 uCenter;
 attribute float aScale;
 attribute float aTimeMultiplier;
 
+varying float vSize;
+
 #include ../utils/valueFromNewRange
 
 void main() {
@@ -61,4 +63,6 @@ void main() {
   if(uPerspectiveOn) {
     gl_PointSize *= (1.0 / -viewPosition.z);
   }
+
+  vSize = gl_PointSize;
 }
