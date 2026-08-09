@@ -10,6 +10,7 @@ import Resources from "./utils/Resources/Resources";
 import { Source } from "./utils/Resources/types";
 import Debug from "./utils/Debug/Debug";
 import Pointer from "./utils/Pointer";
+import RaycasterManager from "./utils/RaycasterManager";
 
 type InputCanvas =
   | React.RefObject<HTMLCanvasElement>
@@ -45,6 +46,7 @@ class Experience implements Resizable, Updatable, Destroyable {
 
   public resources: Resources;
   public pointer: Pointer;
+  public raycasterManager: RaycasterManager;
   public camera: Camera;
   public renderer: Renderer;
   public world: World;
@@ -88,6 +90,9 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     // * Pointer
     this.pointer = new Pointer(this.canvas);
+
+    // * Raycaster
+    this.raycasterManager = new RaycasterManager();
 
     // * THREE stuff
     // ? Scene
