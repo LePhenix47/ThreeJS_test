@@ -30,7 +30,7 @@ void main() {
   float fallingProgress = valueFromNewRange(progress, 0.1, 1.0, 0.0, 1.0);
   fallingProgress = clamp(fallingProgress, 0.0, 1.0);
   fallingProgress = 1.0 - pow(1.0 - fallingProgress, 3.0); // ? ease-out cubic
-  newPosition.y -= fallingProgress * 0.2;
+  newPosition.y -= fallingProgress;
 
   // * SCALING
   // ? The size opening progress, Up and down, no need for clamping since they're 
