@@ -6,15 +6,18 @@ uniform bool uPerspectiveOn;
 uniform vec3 uCenter;
 
 attribute float aScale;
+attribute float aTimeMultiplier;
 
 #include ../utils/valueFromNewRange
 
 void main() {
   vec3 newPosition = position;
 
+  float progress = uProgress * aTimeMultiplier;
+
   // * EXPLOSION 
   // ? We make the rate of progress for the explosion higher, it finishes after 0.3 seconds (10% of total animation duration) 
-  float explodingProgress = valueFromNewRange(uProgress, 0.0, 0.1, 0.0, 1.0);
+  float explodingProgress = valueFromNewRange(progress, 0.0, 0.1, 0.0, 1.0);
   explodingProgress = clamp(explodingProgress, 0.0, 1.0);
   explodingProgress = 1.0 - pow(1.0 - explodingProgress, 3.0); // ? ease-out cubic
 
@@ -22,23 +25,23 @@ void main() {
 
   // * FALLING
   // ? Starts progress at 0.1 seconds
-  float fallingProgress = valueFromNewRange(uProgress, 0.1, 1.0, 0.0, 1.0);
+  float fallingProgress = valueFromNewRange(progress, 0.1, 1.0, 0.0, 1.0);
   fallingProgress = clamp(fallingProgress, 0.0, 1.0);
   fallingProgress = 1.0 - pow(1.0 - fallingProgress, 3.0); // ? ease-out cubic
   newPosition.y -= fallingProgress * 0.2;
 
   // * SCALING
   // ? The size opening progress, Up and down, no need for clamping since they're 
-  float scalingOpenProgress = valueFromNewRange(uProgress, 0.0, 0.125, 0.0, 1.0);
-  float scalingCloseProgress = valueFromNewRange(uProgress, 0.125, 1.0, 1.0, 0.0);
+  float scalingOpenProgress = valueFromNewRange(progress, 0.0, 0.125, 0.0, 1.0);
+  float scalingCloseProgress = valueFromNewRange(progress, 0.125, 1.0, 1.0, 0.0);
   float scalingProgress = min(scalingOpenProgress, scalingCloseProgress);
   scalingProgress = clamp(scalingProgress, 0.0, 1.0);
 
   // * TWINKLING
-  float twinklingProgress = valueFromNewRange(uProgress, 0.2, 0.8, 0.0, 1.0);
+  float twinklingProgress = valueFromNewRange(progress, 0.2, 0.8, 0.0, 1.0);
   twinklingProgress = clamp(twinklingProgress, 0.0, 1.0);
 
-  float sizeTwinkling = valueFromNewRange(sin(uProgress * 30.0), -1.0, 1.0, 0.0, 1.0);
+  float sizeTwinkling = valueFromNewRange(sin(progress * 30.0), -1.0, 1.0, 0.0, 1.0);
   sizeTwinkling = 1.0 - twinklingProgress * sizeTwinkling;
 
   vec4 modelPosition = modelMatrix * vec4(newPosition, 1.0);
@@ -47,7 +50,8 @@ void main() {
 
   gl_Position = projectedPosition;
 
-  gl_PointSize = aScale * uSize * scalingProgress * sizeTwinkling;
+  gl_PointSize = aScale * uSize;
+  gl_PointSize = scalingProgress * sizeTwinkling;
   gl_PointSize *= uResolution.y;
   /*
   * Adds perspective to our firework sparks, so the ones closer to camera look bigger than those farther

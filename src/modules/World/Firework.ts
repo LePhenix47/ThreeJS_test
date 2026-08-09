@@ -111,6 +111,7 @@ class Firework extends PointsEntity implements Destroyable {
     const spaceComponentsPerVertex: number = Enum.length(SpaceEnum);
     const positions = new Float32Array(this.count * spaceComponentsPerVertex);
     const scales = new Float32Array(this.count);
+    const timeMultipliers = new Float32Array(this.count);
 
     for (let i = 0; i < this.count; i++) {
       const i3: number = i * spaceComponentsPerVertex;
@@ -121,6 +122,8 @@ class Firework extends PointsEntity implements Destroyable {
       positions[i3 + SpaceEnum.Z] = this.center.z + z;
 
       scales[i] = randomInRange([0.5, 1]);
+
+      timeMultipliers[i] = randomInRange([1, 2]);
     }
 
     this.geometry = new THREE.BufferGeometry();
@@ -128,7 +131,12 @@ class Firework extends PointsEntity implements Destroyable {
       "position",
       new THREE.BufferAttribute(positions, spaceComponentsPerVertex),
     );
+
     this.geometry.setAttribute("aScale", new THREE.BufferAttribute(scales, 1));
+    this.geometry.setAttribute(
+      "aTimeMultiplier",
+      new THREE.BufferAttribute(timeMultipliers, 1),
+    );
   };
 
   protected setMaterial = (): void => {
