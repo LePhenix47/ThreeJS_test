@@ -10,9 +10,9 @@ type EnvironmentState = {
   skyRayleigh: number;
   skyMieDirectionalG: number;
   skyMieCoefficient: number;
-  sunPositionX: number;
-  sunPositionY: number;
-  sunPositionZ: number;
+  elevation: number;
+  azimuth: number;
+  exposure: number;
 };
 
 class Environment implements Destroyable {
@@ -26,13 +26,13 @@ class Environment implements Destroyable {
 
   private readonly debugDefaults: EnvironmentState = {
     environmentColor: "black",
-    skyTurbidity: 10,
-    skyRayleigh: 3,
-    skyMieDirectionalG: 0.95,
-    skyMieCoefficient: 0.1,
-    sunPositionX: 0.3,
-    sunPositionY: -0.038,
-    sunPositionZ: -0.95,
+    skyTurbidity: 0,
+    skyRayleigh: 9.59,
+    skyMieDirectionalG: 0.487,
+    skyMieCoefficient: 0.708,
+    elevation: 0,
+    azimuth: 180,
+    exposure: 1,
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
@@ -75,6 +75,13 @@ class Environment implements Destroyable {
 
   protected updateMaterial = (): void => {};
 
+  private updateSunPosition = (elevation: number, azimuth: number): void => {
+    const phi = THREE.MathUtils.degToRad(90 - elevation);
+    const theta = THREE.MathUtils.degToRad(azimuth);
+    const sun = new THREE.Vector3().setFromSphericalCoords(1, phi, theta);
+    this.sky.material.uniforms.sunPosition.value.copy(sun);
+  };
+
   private setAmbientLight = (): void => {
     this.ambientLight = new THREE.AmbientLight("#ffffff", 1);
     this.scene.add(this.ambientLight);
@@ -89,11 +96,12 @@ class Environment implements Destroyable {
     sky.material.uniforms.rayleigh.value = 3;
     sky.material.uniforms.mieDirectionalG.value = 0.95;
     sky.material.uniforms.mieCoefficient.value = 0.1;
-    sky.material.uniforms.sunPosition.value.set(0.3, -0.038, -0.95);
-
     sky.scale.setScalar(100);
 
     this.sky = sky;
+
+    const { elevation, azimuth } = this.debugDefaults;
+    this.updateSunPosition(elevation, azimuth);
   };
 
   private addDebugFolders = () => {
@@ -119,6 +127,7 @@ class Environment implements Destroyable {
 
     skyFolder
       .add(state, "skyTurbidity")
+      .name("skyTurbidity")
       .min(0)
       .max(20)
       .step(0.1)
@@ -129,6 +138,7 @@ class Environment implements Destroyable {
 
     skyFolder
       .add(state, "skyRayleigh")
+      .name("skyRayleigh")
       .min(0)
       .max(10)
       .step(0.01)
@@ -139,6 +149,7 @@ class Environment implements Destroyable {
 
     skyFolder
       .add(state, "skyMieDirectionalG")
+      .name("skyMieDirectionalG")
       .min(0)
       .max(1)
       .step(0.001)
@@ -149,6 +160,7 @@ class Environment implements Destroyable {
 
     skyFolder
       .add(state, "skyMieCoefficient")
+      .name("skyMieCoefficient")
       .min(0)
       .max(1)
       .step(0.001)
@@ -157,36 +169,34 @@ class Environment implements Destroyable {
       this.sky.material.uniforms.mieCoefficient.value = v;
     });
 
-    const sunPosFolder = skyFolder.addFolder("Sun Position");
-
-    sunPosFolder
-      .add(state, "sunPositionX")
-      .min(-1)
-      .max(1)
-      .step(0.001)
-      .name("X");
-    registry.bind("sunPositionX", (v) => {
-      this.sky.material.uniforms.sunPosition.value.x = v;
+    skyFolder
+      .add(state, "elevation")
+      .min(0)
+      .max(90)
+      .step(0.1)
+      .name("elevation");
+    registry.bind("elevation", (v) => {
+      this.updateSunPosition(v, registry.state.azimuth);
     });
 
-    sunPosFolder
-      .add(state, "sunPositionY")
-      .min(-1)
-      .max(1)
-      .step(0.001)
-      .name("Y");
-    registry.bind("sunPositionY", (v) => {
-      this.sky.material.uniforms.sunPosition.value.y = v;
+    skyFolder
+      .add(state, "azimuth")
+      .min(-180)
+      .max(180)
+      .step(0.1)
+      .name("azimuth");
+    registry.bind("azimuth", (v) => {
+      this.updateSunPosition(registry.state.elevation, v);
     });
 
-    sunPosFolder
-      .add(state, "sunPositionZ")
-      .min(-1)
-      .max(1)
-      .step(0.001)
-      .name("Z");
-    registry.bind("sunPositionZ", (v) => {
-      this.sky.material.uniforms.sunPosition.value.z = v;
+    environmentFolder
+      .add(state, "exposure")
+      .min(0)
+      .max(2)
+      .step(0.01)
+      .name("toneMappingExposure");
+    registry.bind("exposure", (v) => {
+      this.renderer.instance.toneMappingExposure = v;
     });
   };
 
