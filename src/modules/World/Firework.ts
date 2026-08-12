@@ -13,11 +13,11 @@ import Enum from "@/utils/enums";
 import { randomInRange } from "@/utils/numbers/range";
 import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placement";
 
-type FireworkOptions = {
+export type FireworkOptions = {
   /** 3D world position where the burst spawns. */
   position: THREE.Vector3;
   /** Particle sprite selected by the manager before instantiation. */
-  texture: THREE.Texture<unknown>;
+  texture: THREE.Texture<HTMLImageElement>;
   /** Hex color of the particles. */
   color: string;
   /** Visual size of each particle in pixels. */
@@ -36,12 +36,13 @@ class Firework extends PointsEntity implements Destroyable {
   private readonly experience: Experience;
 
   private readonly center: THREE.Vector3;
-  private readonly texture: THREE.Texture<unknown>;
+  private readonly texture: THREE.Texture<HTMLImageElement>;
   private readonly color: string;
   private readonly size: number;
   private readonly rho: number;
   private readonly count: number;
   private readonly perspectiveOn: boolean;
+  private readonly animationTween: GSAPTween;
 
   protected geometry: THREE.BufferGeometry;
   protected material: THREE.ShaderMaterial;
@@ -57,6 +58,10 @@ class Firework extends PointsEntity implements Destroyable {
 
   private get renderer() {
     return this.experience.renderer;
+  }
+
+  private get time() {
+    return this.experience.time;
   }
 
   constructor({
@@ -87,7 +92,7 @@ class Firework extends PointsEntity implements Destroyable {
 
     this.sizes.on("resize", this.onResize);
 
-    gsap.to(this.material.uniforms.uProgress, {
+    this.animationTween = gsap.to(this.material.uniforms.uProgress, {
       value: 1,
       duration: 3,
       onComplete,
@@ -118,7 +123,7 @@ class Firework extends PointsEntity implements Destroyable {
     return position;
   };
 
-  protected setGeometry = (): void => {
+  protected setGeometry(): void {
     const spaceComponentsPerVertex: number = Enum.length(SpaceEnum);
     const positions = new Float32Array(this.count * spaceComponentsPerVertex);
     const scales = new Float32Array(this.count);
@@ -137,25 +142,27 @@ class Firework extends PointsEntity implements Destroyable {
       timeMultipliers[i] = randomInRange([1, 2]);
     }
 
-    this.geometry = new THREE.BufferGeometry();
-    this.geometry.setAttribute(
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
       "position",
       new THREE.BufferAttribute(positions, spaceComponentsPerVertex),
     );
 
-    this.geometry.setAttribute("aScale", new THREE.BufferAttribute(scales, 1));
-    this.geometry.setAttribute(
+    geometry.setAttribute("aScale", new THREE.BufferAttribute(scales, 1));
+    geometry.setAttribute(
       "aTimeMultiplier",
       new THREE.BufferAttribute(timeMultipliers, 1),
     );
-  };
 
-  protected setMaterial = (): void => {
+    this.geometry = geometry;
+  }
+
+  protected setMaterial(): void {
     const { width, height, pixelRatio } = this.sizes;
     const sizeInPhysicalPixels: number = this.size * this.renderer.pixelRatio;
 
     const fireworkCenter: THREE.Vector3 = this.center.clone();
-    this.material = new THREE.ShaderMaterial({
+    const material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       depthWrite: false,
@@ -178,15 +185,17 @@ class Firework extends PointsEntity implements Destroyable {
         },
       },
     });
-  };
 
-  protected setPoints = (): void => {
+    this.material = material;
+  }
+
+  protected setPoints(): void {
     this.points = new THREE.Points(this.geometry, this.material);
-  };
+  }
 
-  public updateTime = (elapsedSeconds: number): void => {
-    this.material.uniforms.uTime.value = elapsedSeconds;
-  };
+  public updateTime(): void {
+    this.material.uniforms.uTime.value = this.time.elapsedSeconds;
+  }
 
   /* ? Canvas height changed = the normalization factor changed = points would visually grow or shrink */
   private onResize = (): void => {
@@ -197,13 +206,14 @@ class Firework extends PointsEntity implements Destroyable {
     );
   };
 
-  public destroy = (): void => {
+  public destroy(): void {
     this.scene.remove(this.points);
+    this.animationTween.kill();
     this.geometry.dispose();
     this.material.dispose();
     // ? We do not dispose of the textures — they're owned by the manager and reused
     this.sizes.off("resize", this.onResize);
-  };
+  }
 }
 
 export default Firework;
