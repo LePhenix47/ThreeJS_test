@@ -318,15 +318,19 @@ class Resources extends EventEmitter<ResourcesEvents> {
   };
 
   /** Returns all textures for a `"textureArray"` source as an ordered `T[]`. Throws if not found or wrong type. */
-  public getTextureArray = <T extends THREE.Texture = THREE.Texture>(name: TextureArrayNames): T[] => {
+  public getTextureArray<T = HTMLImageElement>(
+    name: string,
+  ): THREE.Texture<T>[] {
     const source = this.sources.find((s) => s.name === name);
     if (!source || source.type !== "textureArray") {
       this.logAvailableItems(name, "texture");
       throw new Error(`[Resources] "${name}" is not a textureArray source`);
     }
 
-    return source.paths.map((_, i) => this.getTextureByItemKey(`${name}_${i}`)) as T[];
-  };
+    return source.paths.map(
+      (_, i) => this.getTextureByItemKey(`${name}_${i}`) as THREE.Texture<T>,
+    );
+  }
 
   private sourceLoaded = (
     source: Source,
