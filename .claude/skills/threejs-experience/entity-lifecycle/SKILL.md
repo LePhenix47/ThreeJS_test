@@ -7,6 +7,30 @@ metadata:
 
 # Entity Lifecycle
 
+## Arrow Functions vs Regular Methods
+
+**Rule:** Use arrow functions **only** for methods passed as callbacks — i.e. methods detached from their object context when handed off to another caller.
+
+```typescript
+// ✅ Arrow — passed as reference to EventEmitter / GSAP / etc.
+private onResize = (): void => { ... };
+private onClickCanvas = (e: MouseEvent): void => { ... };
+
+// ✅ Arrow — passed as inline callback
+gsap.to(..., { onComplete: this.onComplete });
+
+// ✅ Regular — always called as this.method(), this is never lost
+public update(): void { ... }
+public destroy(): void { ... }
+protected setGeometry(): void { ... }
+protected setMaterial(): void { ... }
+private addDebugFolders(): void { ... }
+```
+
+**Why it matters:** Arrow class fields create a new function per instance (heap overhead). Regular methods live on the prototype and are shared across instances. Arrow syntax is only justified when `this` would otherwise be lost.
+
+---
+
 ## Experience Sub-System Getters
 
 Always access Experience sub-systems via private getters. Never store them as properties.
@@ -85,19 +109,19 @@ constructor() {
 ## update() Pattern
 
 ```typescript
-public update = (): void => {
+public update(): void {
   // Standard: update time uniform each frame
   this.material.uniforms.uTime.value = this.time.elapsedSeconds;
-};
+}
 ```
 
 For conditional playback (GUI-toggled):
 ```typescript
-public update = (): void => {
+public update(): void {
   if (this.guiRegistry?.state.uTimePlayback) {
     this.customUniforms.uTime.value = this.time.elapsedSeconds;
   }
-};
+}
 ```
 
 ---
@@ -107,7 +131,7 @@ public update = (): void => {
 Kill animations first, then dispose GPU resources, then remove from scene, then dispose registry.
 
 ```typescript
-public destroy = (): void => {
+public destroy(): void {
   // 1. Kill animation timelines / mixers (prevent callbacks after destroy)
   this.slapTimeline?.kill();
 
@@ -123,19 +147,19 @@ public destroy = (): void => {
   // 4. Remove from scene
   this.scene.remove(this.mesh);
   // OR: this.scene.remove(this.model);
-};
+}
 ```
 
 For entities with multiple meshes (CoffeeSmoke pattern):
 ```typescript
-public destroy = (): void => {
+public destroy(): void {
   this.guiRegistry?.dispose();
   this.destroyModel();
   this.scene.remove(this.model);
   this.smokeGeometry.dispose();
   this.smokeMaterial.dispose();
   this.scene.remove(this.smokeMesh);
-};
+}
 ```
 
 ---
@@ -145,7 +169,7 @@ public destroy = (): void => {
 For entities where GUI changes require full geometry/material replacement:
 
 ```typescript
-private regenerate = (): void => {
+private regenerate(): void {
   this.scene.remove(this.points);
   this.geometry.dispose();
   this.material.dispose();
@@ -153,13 +177,13 @@ private regenerate = (): void => {
   this.setMaterial();
   this.setPoints();
   this.scene.add(this.points);
-};
+}
 
-private addDebugFolders = (): void => {
+private addDebugFolders(): void {
   const registry = new GUIStateRegistry(...);
   // Apply any sessionStorage-restored values immediately
   this.regenerate();
   // Wire expensive controls to onFinishChange
   folder.add(state, "count").onFinishChange(() => this.regenerate());
-};
+}
 ```
