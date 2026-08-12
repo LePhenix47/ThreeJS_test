@@ -100,10 +100,10 @@ class Firework extends PointsEntity implements Destroyable {
   }
 
   private nonUniformSpherical = (): THREE.Vector3 => {
-    const phi: number = randomInRange([0, Math.PI]);
-    const theta: number = randomInRange([0, Math.PI / 2]);
+    const phi: number = randomInRange(0, Math.PI);
+    const theta: number = randomInRange(0, Math.PI / 2);
 
-    const nonUniformRandomRho: number = randomInRange([0.75, 1]);
+    const nonUniformRandomRho: number = randomInRange(0.75, 1);
     const toSphericalCoords = new THREE.Spherical(
       nonUniformRandomRho,
       phi,
@@ -137,9 +137,9 @@ class Firework extends PointsEntity implements Destroyable {
       positions[i3 + SpaceEnum.Y] = this.center.y + y;
       positions[i3 + SpaceEnum.Z] = this.center.z + z;
 
-      scales[i] = randomInRange([0.5, 1]);
+      scales[i] = randomInRange(0.5, 1);
 
-      timeMultipliers[i] = randomInRange([1, 2]);
+      timeMultipliers[i] = randomInRange(1, 2);
     }
 
     const geometry = new THREE.BufferGeometry();

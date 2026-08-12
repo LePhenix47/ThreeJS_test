@@ -19,11 +19,11 @@ export function generateRandomAnnulusPosition(
   minRadius: number,
   maxRadius: number,
 ): Position2D {
-  const randomAngle: number = randomInRange([0, ONE_REVOLUTION]);
+  const randomAngle: number = randomInRange(0, ONE_REVOLUTION);
 
   // ? Equal area distribution, see EQUAL_AREA_DISTRIBUTION.md for details
   const randomRadius: number = Math.sqrt(
-    randomInRange([minRadius ** 2, maxRadius ** 2]),
+    randomInRange(minRadius ** 2, maxRadius ** 2),
   );
 
   return {

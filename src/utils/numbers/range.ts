@@ -1,29 +1,28 @@
+type RangeMapping = {
+  inputMin: number;
+  inputMax: number;
+  outputMin: number;
+  outputMax: number;
+};
+
 /**
- * Maps a value from an old range to a new range.
+ * Maps a value from an input range to an output range.
  *
  * @param {number} value The value to map.
- * @param {[number, number]} oldRange The old range [min, max].
- * @param {[number, number]} newRange The new range [min, max].
+ * @param {RangeMapping} mapping The input and output range bounds.
  * @returns {number} The mapped value.
  *
  * @example
- * const oldValue = 0.5;
- * const oldRange = [0, 1];
- * const newRange = [-1, 1];
- * const newValue = getValueFromNewRange(oldValue, oldRange, newRange);
+ * const newValue = getValueFromNewRange(0.5, { inputMin: 0, inputMax: 1, outputMin: -1, outputMax: 1 });
  * console.log(newValue); // 0
  */
 export function getValueFromNewRange(
   value: number,
-  oldRange: [number, number],
-  newRange: [number, number],
+  { inputMin, inputMax, outputMin, outputMax }: RangeMapping,
 ): number {
-  const [oldMin, oldMax] = oldRange;
-  const [newMin, newMax] = newRange;
+  const slope: number = (outputMax - outputMin) / (inputMax - inputMin);
 
-  const slope: number = (newMax - newMin) / (oldMax - oldMin);
-
-  return newMin + (value - oldMin) * slope;
+  return outputMin + (value - inputMin) * slope;
 }
 
 /**
@@ -37,13 +36,15 @@ export function getValueFromNewRange(
  *
  * `"none"`, neither the minimum nor maximum values are included.
  *
- * @param {[number, number]} range The range [min, max] to generate a random number within.
+ * @param {number} min The minimum value of the range.
+ * @param {number} max The maximum value of the range.
  * @param {"min" | "max" | "both" | "none"} inclusionRange The inclusion range to use.
  * @returns {number} A random number within the specified range.
  * @throws {Error} If the inclusion range is invalid.
  */
 export function randomInRange(
-  [min, max]: [number, number],
+  min: number,
+  max: number,
   inclusionRange: "min" | "max" | "both" | "none" = "min",
 ): number {
   if (min > max) {

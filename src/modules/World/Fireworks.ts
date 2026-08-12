@@ -98,9 +98,7 @@ class Fireworks implements Updatable, Destroyable {
   }
 
   private setTextures(): void {
-    const texturesArray = this.resources.getTextureArray(
-      "particles",
-    ) as THREE.Texture<HTMLImageElement>[];
+    const texturesArray = this.resources.getTextureArray<THREE.Texture<HTMLImageElement>>("particles");
 
     for (const texture of texturesArray) {
       texture.flipY = false;
@@ -121,8 +119,8 @@ class Fireworks implements Updatable, Destroyable {
      *   x*2-1 maps [0,1]→[-1,+1]; negate Y because screen-Y grows down, NDC-Y grows up. */
     const { x, y } = this.pointer.normalized;
 
-    const ndcX = getValueFromNewRange(x, [0, 1], [-1, 1]);
-    const ndcY = -1 * getValueFromNewRange(y, [0, 1], [-1, 1]);
+    const ndcX = getValueFromNewRange(x, { inputMin: 0, inputMax: 1, outputMin: -1, outputMax: 1 });
+    const ndcY = -1 * getValueFromNewRange(y, { inputMin: 0, inputMax: 1, outputMin: -1, outputMax: 1 });
 
     /* ? unproject() gives world-space coords but perspective projection is non-linear —
      *   ANY fixed NDC z lands very close to the near plane. Instead we unproject to get
@@ -136,10 +134,7 @@ class Fireworks implements Updatable, Destroyable {
       .clone()
       .addScaledVector(
         direction,
-        randomInRange([
-          Fireworks.CONFIG.position.min,
-          Fireworks.CONFIG.position.max,
-        ]),
+        randomInRange(Fireworks.CONFIG.position.min, Fireworks.CONFIG.position.max),
       );
 
     this.createFirework(position);
@@ -150,15 +145,12 @@ class Fireworks implements Updatable, Destroyable {
 
     const texture: THREE.Texture<HTMLImageElement> = this.getRandomTexture();
     const color: string = getRandomHexColor();
-    const size: number = randomInRange([
-      Fireworks.CONFIG.size.min,
-      Fireworks.CONFIG.size.max,
-    ]);
+    const size: number = randomInRange(Fireworks.CONFIG.size.min, Fireworks.CONFIG.size.max);
     const count: number = Math.floor(
-      randomInRange([Fireworks.CONFIG.count.min, Fireworks.CONFIG.count.max]),
+      randomInRange(Fireworks.CONFIG.count.min, Fireworks.CONFIG.count.max),
     );
     const rho: number =
-      randomInRange([Fireworks.CONFIG.rho.min, Fireworks.CONFIG.rho.max]) +
+      randomInRange(Fireworks.CONFIG.rho.min, Fireworks.CONFIG.rho.max) +
       count / 20;
 
     const firework = new Firework({

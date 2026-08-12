@@ -24,7 +24,7 @@ function getRandomRho(minRadius: number = 0, maxRadius: number = 10) {
    * ρ_random = ∛(ρ_min³ + rand() × (ρ_max³ - ρ_min³))
    */
   const randomRho: number = Math.cbrt(
-    randomInRange([smallRhoCubed, bigRhoCubed]),
+    randomInRange(smallRhoCubed, bigRhoCubed),
   );
 
   return randomRho;
@@ -44,7 +44,7 @@ export function getRandomUniformSpherePlacement(
   maxRadius: number,
 ) {
   // ? Horizontal position - Spherical coordinates: [0, 2π[
-  const randomTheta: number = randomInRange([0, 2 * Math.PI]);
+  const randomTheta: number = randomInRange(0, 2 * Math.PI);
 
   // ? Vertical position - Spherical coordinates: [-1, 1]
   const randomPhi: number = Math.acos(1 - 2 * Math.random());
