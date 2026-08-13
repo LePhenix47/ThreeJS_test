@@ -12,16 +12,15 @@ import { getRandomHexColor } from "@/utils/numbers/color";
 
 import Firework, { FireworkOptions } from "./Firework";
 import { getValueFromNewRange, randomInRange } from "@/utils/numbers/range";
+import { ObjectKeysExtract } from "@/utils/types/helper.type";
 
 type FireworksState = {
   /** Perspective for the particles, ones closer to camera appear larger than ones farther from it */
   perspectiveOn: boolean;
 };
 
-type FireworkOptionsKeys = keyof FireworkOptions;
-
-type FireworkConfigKey = Extract<
-  FireworkOptionsKeys,
+type FireworkConfigKey = ObjectKeysExtract<
+  FireworkOptions,
   "position" | "size" | "count" | "rho"
 >;
 
@@ -37,7 +36,6 @@ class Fireworks implements Updatable, Destroyable {
       min: 15,
       max: 50,
     },
-
     size: {
       min: 5,
       max: 20,

@@ -8,3 +8,8 @@
 export type NonFunctionProperties<T extends object> = {
   [K in keyof T as T[K] extends Function ? never : K]: T[K];
 };
+
+export type ObjectKeysExtract<T extends object, K extends keyof T> = keyof Pick<
+  T,
+  K
+>;
