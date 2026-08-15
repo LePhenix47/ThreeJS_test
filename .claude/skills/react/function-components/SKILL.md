@@ -1,6 +1,6 @@
 ---
 name: function-components
-description: Use function declarations (not arrow functions) for React components with TypeScript.
+description: Use when creating any React component — write it as a function declaration, not an arrow function.
 ---
 
 # React Function Components

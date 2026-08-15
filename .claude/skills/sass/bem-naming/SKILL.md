@@ -1,6 +1,6 @@
 ---
-name: sass-bem-naming
-description: Use BEM (Block Element Modifier) naming convention for all CSS class names in SASS files.
+name: bem-naming
+description: Use when naming any CSS class in a SASS file — follow BEM (Block Element Modifier) convention.
 ---
 
 # SASS BEM Naming

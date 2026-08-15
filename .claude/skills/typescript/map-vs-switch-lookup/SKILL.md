@@ -1,6 +1,6 @@
 ---
 name: map-vs-switch-lookup
-description: Use Map for key-value lookups instead of switch statements when mapping values in TypeScript.
+description: Use when mapping a key to a value in TypeScript — use a Map for simple lookups, reserve switch for cases with real branching logic.
 ---
 
 # Map vs Switch for Lookups

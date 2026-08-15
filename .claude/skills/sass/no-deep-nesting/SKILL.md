@@ -1,6 +1,6 @@
 ---
-name: sass-no-deep-nesting
-description: Keep SASS selectors shallow (≤3 levels) to avoid specificity issues and improve performance.
+name: no-deep-nesting
+description: Use when nesting selectors in a SASS file — keep nesting to ≤3 levels to avoid specificity issues and improve performance.
 ---
 
 # No Deep Nesting in SASS

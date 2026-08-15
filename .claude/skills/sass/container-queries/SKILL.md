@@ -1,6 +1,6 @@
 ---
-name: sass-container-queries
-description: Use CSS @container queries for component-based responsive design instead of viewport-based media queries when appropriate.
+name: container-queries
+description: Use when a component's layout should respond to its own container size rather than the viewport — use CSS @container queries instead of media queries.
 ---
 
 # Container Queries

@@ -1,6 +1,6 @@
 ---
-name: sass-supports-feature-queries
-description: Use @supports for progressive enhancement when using modern CSS features that may not be universally supported.
+name: supports-feature-queries
+description: Use when using a modern CSS feature that may not be universally supported — wrap it in an @supports feature query for progressive enhancement.
 ---
 
 # @supports Feature Queries

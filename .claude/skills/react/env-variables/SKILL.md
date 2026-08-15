@@ -1,6 +1,6 @@
 ---
 name: env-variables
-description: Always reference environment variables from env.ts file, never use undefined import.meta.env keys.
+description: Use when reading any environment variable in the app — reference it through env.ts, never access import.meta.env keys directly.
 ---
 
 # Environment Variables in React

@@ -1,6 +1,6 @@
 ---
 name: props-destructuring
-description: Always destructure props in React component parameters instead of accessing via props object.
+description: Use when declaring any React component's props — destructure them in the function parameters instead of accessing via a props object.
 ---
 
 # Props Destructuring in React

@@ -1,6 +1,6 @@
 ---
-name: sass-css-variables
-description: Use CSS custom properties for theming with scoped --_ prefix for component-local variables in SASS. Transform global variables with color-mix(), color(), or calc().
+name: css-variables
+description: Use when adding theming or component-local values in a SASS file — CSS custom properties with a scoped --_ prefix for component-local variables, transformed from globals via color-mix(), color(), or calc().
 ---
 
 # SASS CSS Variables

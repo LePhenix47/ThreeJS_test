@@ -1,6 +1,6 @@
 ---
 name: hooks-organization
-description: Organize React hooks in a consistent order and always clean up side effects in useEffect.
+description: Use when writing any React component that uses hooks — covers the standard hook ordering and cleaning up side effects in useEffect.
 ---
 
 # React Hooks Organization

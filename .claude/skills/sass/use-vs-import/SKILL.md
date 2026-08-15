@@ -1,6 +1,6 @@
 ---
-name: sass-use-vs-import
-description: Always use @use instead of @import for loading SASS modules and utilities.
+name: use-vs-import
+description: Use when loading any SASS module or utility file — use @use, never the deprecated @import.
 ---
 
 # @use vs @import

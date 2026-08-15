@@ -1,6 +1,6 @@
 ---
-name: zustand-custom-hooks
-description: Create custom selector hooks for commonly-used Zustand store values to ensure stable references and reusability.
+name: custom-hooks
+description: Use when a Zustand store value is read in more than one component — create a custom selector hook for it instead of inlining the selector.
 ---
 
 # Zustand Custom Selector Hooks
