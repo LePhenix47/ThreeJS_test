@@ -1,6 +1,6 @@
 ---
-name: zustand-devtools-middleware
-description: Use Zustand devtools middleware for time-travel debugging and state inspection.
+name: devtools-middleware
+description: Use when creating any Zustand store — wire up the devtools middleware for time-travel debugging and state inspection.
 ---
 
 # Zustand DevTools Middleware

@@ -1,6 +1,6 @@
 ---
-name: git-commit-message-format
-description: Use conventional commit format - type(scope): subject with bullet points and Claude Code signature.
+name: commit-message-format
+description: Use when writing any git commit message — conventional format type(scope): subject, bullet points explaining the change, and the Claude Code signature.
 ---
 
 # Git Commit Message Format

@@ -1,6 +1,6 @@
 ---
 name: type-guards-for-unions
-description: Create type guard functions to safely narrow union types in TypeScript instead of fragile property checks.
+description: Use when narrowing a TypeScript union type — write a type guard function instead of a fragile inline property check.
 ---
 
 # Type Guards for Union Types

@@ -1,6 +1,6 @@
 ---
 name: prefer-unknown-over-any
-description: Use unknown instead of any for type-safe handling of values with unknown types in TypeScript.
+description: Use when typing a value whose shape isn't known upfront in TypeScript — use unknown, never any.
 ---
 
 # Prefer `unknown` Over `any`

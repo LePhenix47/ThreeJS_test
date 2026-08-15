@@ -15,8 +15,6 @@ Based on the file extension/type you're working on, read **ALL** skills (not jus
 | `.scss` files | Read ALL files in `.claude/skills/sass/` |
 | Zustand stores | Read ALL files in `.claude/skills/zustand/` AND `.claude/skills/typescript/` |
 | Git commits | Read `.claude/skills/git/commit-message-format/SKILL.md` |
-| Tauri v2 code | Read ALL files in `.claude/skills/tauri-v2/` |
-| Rust code | Read ALL files in `.claude/skills/rust/` |
 | World entities / Three.js modules | Read ALL files in `.claude/skills/threejs-experience/` |
 
 **You MUST read ALL skills in the category, not pick and choose. Reading 3/5 skills means you'll miss 2 important conventions.**
@@ -82,21 +80,21 @@ If you modify code without reading ALL relevant skills first, you WILL:
 - **State**: Zustand
 - **Styling**: SCSS with BEM naming convention
 - **3D**: Three.js
-- **Backend**: Tauri v2 (Rust)
-- **Audio/Speech**: Vosk-rs, Whisper-rs
 
 ## Project Structure
 
 ```
 src/
-├── app/
-│   ├── components/    # React components (.tsx + .scss)
-│   ├── stores/        # Zustand stores
-│   └── sass/          # Global SCSS (variables, mixins, utils)
-├── assets/            # Static assets
-└── main.tsx           # Entry point
-
-src-tauri/             # Rust backend (Tauri v2)
+├── components/         # React components (.tsx + .scss)
+├── modules/
+│   ├── Experience/     # Three.js core (singleton, resources, utils)
+│   └── World/          # World entities (Firework, Galaxy, Environment, ...)
+├── routes/              # TanStack Router routes
+├── sass/                # Global SCSS (variables, mixins, themes)
+├── stores/              # Zustand stores
+├── utils/               # Shared TS utilities (enums, placement, numbers, ...)
+├── shaders/              # .glsl shader files
+└── main.tsx              # Entry point
 ```
 
 ## Environment Variables
@@ -115,7 +113,7 @@ See [.env.example](.env.example) for required variables.
 ## Available Skills
 
 <details>
-<summary><strong>React Skills (9 files)</strong></summary>
+<summary><strong>React Skills (5 files)</strong></summary>
 
 - `env-variables` - Environment variable handling
 - `event-listener-cleanup` - Cleanup side effects in useEffect
@@ -161,29 +159,6 @@ See [.env.example](.env.example) for required variables.
 - `custom-hooks` - Selector hooks
 - `devtools-middleware` - DevTools integration
 - `partialize-persist` - Persistence config
-</details>
-
-<details>
-<summary><strong>Tauri v2 Skills (3 files)</strong></summary>
-
-- `command-structure` - Command patterns
-- `event-emission` - Event system
-- `path-resolution` - Path handling
-</details>
-
-<details>
-<summary><strong>Rust Skills (2 files)</strong></summary>
-
-- `no-unwrap-production` - Proper error handling
-- `result-error-handling` - Result<T, E> patterns
-</details>
-
-<details>
-<summary><strong>Audio/Speech Skills (4 files)</strong></summary>
-
-- `vosk-rs/streaming-chunks` - Streaming audio
-- `whisper-rs/audio-preparation` - Audio preprocessing
-- `whisper-rs/model-loading` - Model initialization
 </details>
 
 <details>

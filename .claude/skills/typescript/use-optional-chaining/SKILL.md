@@ -1,6 +1,6 @@
 ---
 name: use-optional-chaining
-description: Use optional chaining (?.) to safely access nested properties that might be null or undefined.
+description: Use when accessing a nested property that might be null or undefined in TypeScript — use optional chaining (?.) instead of manual null checks.
 ---
 
 # Use Optional Chaining

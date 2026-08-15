@@ -1,6 +1,6 @@
 ---
-name: sass-media-queries-responsive
-description: Use existing responsive mixins from utils/_mixins.scss for mobile-first responsive design.
+name: media-queries-responsive
+description: Use when adding responsive behavior to a SASS file — use the existing mobile-first mixins from utils/_mixins.scss instead of writing raw media queries.
 ---
 
 # SASS Media Queries & Responsive Design
