@@ -125,7 +125,7 @@ See [.env.example](.env.example) for required variables.
 </details>
 
 <details>
-<summary><strong>TypeScript Skills (7 files)</strong></summary>
+<summary><strong>TypeScript Skills (9 files)</strong></summary>
 
 - `destructure-objects-always` - Always destructure objects
 - `map-vs-switch-lookup` - Prefer Maps for lookups
@@ -134,6 +134,8 @@ See [.env.example](.env.example) for required variables.
 - `type-vs-interface` - When to use each
 - `use-guard-clauses` - Early returns, no nesting
 - `use-optional-chaining` - Use `?.` operator
+- `config-key-subset-typing` - Type a config's keys against a subset of another type's keys
+- `comment-prefixes` - Better Comments convention (`?`/`*`/`!`/`TODO`) — when and how to use each prefix
 </details>
 
 <details>
@@ -191,15 +193,18 @@ See [.env.example](.env.example) for required variables.
 </details>
 
 <details>
-<summary><strong>ThreeJS Experience Skills (7 files)</strong></summary>
+<summary><strong>ThreeJS Experience Skills (10 files)</strong></summary>
 
 - `resources-gate` - When to gate entity construction behind `resources.on("textures-loaded", ...)`
-- `entity-base-classes` - Decision tree: MeshEntity / GltfEntity / TexturedMeshEntity / TexturedGltfEntity
-- `asset-source-registration` - Individual source files, `?url` for GLBs, `as const satisfies Source`
+- `entity-base-classes` - Decision tree: MeshEntity / PointsEntity / GltfEntity / TexturedMeshEntity / TexturedGltfEntity / EnvironmentEntity
+- `asset-source-registration` - Individual source files, `?url` for GLBs, `as const satisfies Source`, `textureArray` sources
 - `debug-gui-registry` - GUIStateRegistry pattern, bind vs bindFinal, dispose
-- `shader-approach` - Path A (ShaderMaterial + .glsl) vs Path B (onBeforeCompile ⚠️)
-- `entity-lifecycle` - Sub-system getters, constructor ordering, update(), destroy() checklist
-- `shader-uniforms` - Declaring uniforms, per-frame update, shared refs, u-prefix convention
+- `shader-approach` - Path A (ShaderMaterial + .glsl) vs Path B (onBeforeCompile ⚠️), structuring onBeforeCompile injections
+- `entity-lifecycle` - Sub-system getters, constructor ordering, update(), destroy() checklist, code-quality checklist
+- `shader-uniforms` - Declaring uniforms, per-frame update, shared refs, u-prefix convention, GSAP tweening, resize-reactive uniforms
+- `composite-entities` - Pool pattern and shared-resource group pattern for entities made of multiple sub-entities
+- `particle-buffer-geometry` - Enum-indexed buffer attributes, placement utils, GUI-state fallback getter for particle systems
+- `web-worker-offload` - Manager+Worker pattern for offloading per-frame heavy computation off the main thread
 </details>
 
 ## Reminder

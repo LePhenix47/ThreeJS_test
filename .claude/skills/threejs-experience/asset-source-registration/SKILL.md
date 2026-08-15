@@ -1,6 +1,6 @@
 ---
 name: asset-source-registration
-description: Use when adding any new model or texture asset to the project — covers the file structure, Vite import pattern, and how to register the source so Resources can load it.
+description: Use when adding any new model or texture asset to the project, including a pool of interchangeable texture variants — covers the file structure, Vite import pattern, and how to register the source so Resources can load it.
 metadata:
   type: reference
 ---
@@ -52,6 +52,26 @@ const coffeeSmokeTextures = {
 
 export default coffeeSmokeTextures;
 ```
+
+## Texture array source file
+
+For a pool of interchangeable texture variants an entity picks from at runtime (e.g. random particle sprites), `paths` is an **array**, not a keyed object:
+
+```typescript
+import { Source } from "@modules/Experience/utils/Resources/types";
+import tex1 from "@public/textures/particles/1.png";
+import tex2 from "@public/textures/particles/2.png";
+
+const particles = {
+  name: "particles",
+  type: "textureArray",
+  paths: [tex1, tex2],
+} as const satisfies Source;
+
+export default particles;
+```
+
+Retrieve it as an ordered array via `resources.getTextureArray<T>(name): THREE.Texture<T>[]` — not `getTexture()`/`getTextures()`, which are for the keyed `texture` source type above.
 
 ## Vite import rules
 

@@ -1,6 +1,6 @@
 ---
 name: shader-approach
-description: Use when adding any custom shader behavior to a World entity — determines whether to use ShaderMaterial with .glsl files or onBeforeCompile injection based on whether PBR lighting must be preserved.
+description: Use when adding any custom shader behavior to a World entity — determines whether to use ShaderMaterial with .glsl files or onBeforeCompile injection based on whether PBR lighting must be preserved, and how to structure onBeforeCompile injections (shared helpers, shadow-matching, outline meshes) once Path B is chosen.
 metadata:
   type: reference
 ---
@@ -108,3 +108,93 @@ material.onBeforeCompile = (params: THREE.WebGLProgramParametersWithUniforms) =>
 | `#include <begin_vertex>` | Inside `main()` | Mutate `transformed` — vertex position |
 
 `beginnormal_vertex` runs before `begin_vertex` — declare variables (angle, matrix) in `beginnormal_vertex`, reuse in `begin_vertex`. Declaring in both = redefinition compile error.
+
+---
+
+## Finding Injection Points
+
+When you don't know which `#include <chunkName>` to patch, or in what order chunks run relative to `main()`, don't guess — read the actual Three.js shader source:
+
+- `node_modules/three/src/renderers/shaders/ShaderLib/<material>.glsl.js` — shows the built-in material's full chunk order
+- `node_modules/three/src/renderers/shaders/ShaderChunk/<name>.glsl.js` — shows an individual chunk's source
+
+This is how `beginnormal_vertex`/`begin_vertex` get identified for a twist/deform effect on `MeshStandardMaterial`.
+
+---
+
+## Factor Repeated Injection Across Materials
+
+When the same deformation must be patched into more than one material (e.g. a visible body material + its shadow/outline counterparts), extract two private helpers instead of duplicating the `.replace()` calls per material:
+
+```typescript
+/** Registers shared uniform refs on a shader's params object. Call at the top of every onBeforeCompile. */
+private injectDeformUniforms = (
+  params: THREE.WebGLProgramParametersWithUniforms,
+): void => {
+  params.uniforms.uTime = this.customUniforms.uTime;
+  params.uniforms.uAmplitude = this.customUniforms.uAmplitude;
+};
+
+/**
+ * Replaces #include <common> to declare shared uniforms + helper functions outside main().
+ * @param extraUniforms - Optional extra GLSL uniform declarations only one material needs.
+ */
+private injectDeformCommonChunk = (
+  params: THREE.WebGLProgramParametersWithUniforms,
+  extraUniforms = "",
+): void => {
+  params.vertexShader = params.vertexShader.replace(
+    /* glsl */ `#include <common>`,
+    /* glsl */ `
+    #include <common>
+    uniform float uTime;
+    uniform float uAmplitude;
+    ${extraUniforms}
+    `,
+  );
+};
+```
+
+Call both helpers first inside every `onBeforeCompile`, then add the material-specific `.replace()` for the chunk that actually needs the deformation applied.
+
+---
+
+## Shadow-Matched Deformation
+
+If a vertex shader deforms a mesh's position, its cast shadow will not match unless a `MeshDepthMaterial` gets the *same* deformation injected via the same helpers:
+
+```typescript
+const shadowMaterial = new THREE.MeshDepthMaterial({
+  depthPacking: THREE.RGBADepthPacking,
+});
+shadowMaterial.onBeforeCompile = (params) => {
+  this.injectDeformUniforms(params);
+  this.injectDeformCommonChunk(params);
+  params.vertexShader = params.vertexShader.replace(
+    /* glsl */ `#include <begin_vertex>`,
+    /* glsl */ `#include <begin_vertex>\n/* apply deformation to transformed */`,
+  );
+};
+mesh.customDepthMaterial = shadowMaterial;
+```
+
+---
+
+## Inverted-Hull Outline
+
+A cheap outline technique: a second mesh sharing the same geometry, `BackSide` material, vertex shader pushes each vertex outward along its normal by a thickness uniform.
+
+```typescript
+const outlineMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+outlineMaterial.onBeforeCompile = (params) => {
+  params.uniforms.uOutlineThickness = this.customUniforms.uOutlineThickness;
+  params.vertexShader = params.vertexShader.replace(
+    /* glsl */ `#include <begin_vertex>`,
+    /* glsl */ `
+    #include <begin_vertex>
+    transformed += normal * uOutlineThickness;
+    `,
+  );
+};
+const outlineMesh = new THREE.Mesh(mesh.geometry, outlineMaterial);
+```

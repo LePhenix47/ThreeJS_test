@@ -87,3 +87,51 @@ registry.bind("size", (v) => {
   this.material.uniforms.uSize.value = v * this.renderer.rendererPixelRatio;
 });
 ```
+
+---
+
+## Tweening a Uniform with GSAP
+
+To animate a uniform over time outside the per-frame `update()` loop, tween `.value` directly with `gsap.to()`. Keep the tween reference on the instance and kill it in `destroy()`.
+
+```typescript
+private readonly animationTween: GSAPTween;
+
+constructor() {
+  // ...
+  this.animationTween = gsap.to(this.material.uniforms.uProgress, {
+    value: 1,
+    duration: 3,
+    onComplete: this.onComplete,
+  });
+}
+
+public destroy(): void {
+  this.animationTween.kill();
+}
+```
+
+---
+
+## Resize-Reactive Uniforms
+
+Any uniform derived from canvas size (`uResolution`, aspect-dependent point scaling) must resubscribe on resize and recompute — setting it once in `setMaterial()` is not enough, since the value goes stale the moment the window changes size.
+
+```typescript
+constructor() {
+  // ...
+  this.sizes.on("resize", this.onResize);
+}
+
+private onResize = (): void => {
+  const { width, height, pixelRatio } = this.sizes;
+  this.material.uniforms.uResolution.value = new THREE.Vector2(
+    width * pixelRatio,
+    height * pixelRatio,
+  );
+};
+
+public destroy(): void {
+  this.sizes.off("resize", this.onResize);
+}
+```
