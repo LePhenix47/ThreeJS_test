@@ -1,6 +1,6 @@
 ---
 name: entity-lifecycle
-description: Use when writing any World entity class — covers the Experience sub-system getter pattern, constructor method ordering per entity type, update() pattern, and destroy() completeness checklist.
+description: Use when writing any World entity class — covers the Experience sub-system getter pattern, constructor method ordering per entity type, update() pattern, destroy() completeness checklist, and a code-quality checklist for config constants, event-subscription pairing, and option-type documentation.
 metadata:
   type: reference
 ---
@@ -187,3 +187,34 @@ private addDebugFolders(): void {
   folder.add(state, "count").onFinishChange(() => this.regenerate());
 }
 ```
+
+---
+
+## Code-Quality Checklist
+
+- Group related tunable numeric ranges into a single `static readonly CONFIG` object instead of scattering literals through methods — keeps the tunable surface visible at a glance and pairs related values (e.g. `min`/`max`) together.
+- Any standalone magic threshold/limit gets a descriptive `static readonly NAME` instead of an inline literal at its call site.
+- Every subscription added during setup (`.on(...)`) must have its exact counterpart removal in `destroy()` — when adding a new listener, add its removal in the same pass, don't defer it.
+- A small helper that returns an element of an existing array/collection should derive its return type from that collection (`(typeof this.items)[number]`) instead of restating a parallel type that can drift out of sync.
+
+### Document non-obvious fields
+
+Public options/config/state type fields, and class properties whose purpose isn't obvious from their name+type alone, get a one-line `/** ... */` doc comment describing their *role* — not a restatement of the type:
+
+```typescript
+export type FireworkOptions = {
+  /** 3D world position where the burst spawns. */
+  position: THREE.Vector3;
+  /** Called when the animation completes so the manager can dispose this instance. */
+  onComplete: () => void;
+};
+
+class Human {
+  /** Depth pass material — mirrors the deformation so shadows match the body. */
+  private modelShadowMaterial: THREE.MeshDepthMaterial;
+  /** GSAP timeline scrubbed by pointer position while the special mode is active. */
+  public slapTimeline: gsap.core.Timeline | null = null;
+}
+```
+
+Skip it for fields where the name+type already say everything (`private geometry: THREE.BufferGeometry` needs no comment).
