@@ -62,7 +62,7 @@ Otherwise, it renders as a THREE.Mesh:
 ### GltfEntity
 - Abstract property: `model: GLTF["scene"]`
 - Abstract method: `setModel()`
-- Concrete method: `destroyModel()` — traverses all children, disposes geometry and material(s) (handles both single material and material array)
+- Concrete method: `destroyModel(disposeMaterial = true)` — traverses all children, disposes geometry and (unless told not to) material(s) (handles both single material and material array). Pass `false` when `material` was assigned by reference from an external owner — e.g. a `composite-entities` shared-resource group — so the owner disposes it exactly once instead of the child double-disposing it.
 - Optional: `animation?: AnimationState<TAnimations>`
 
 ### TexturedGltfEntity (extends GltfEntity)

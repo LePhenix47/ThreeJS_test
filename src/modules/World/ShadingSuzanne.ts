@@ -47,11 +47,8 @@ class ShadingSuzanne extends GltfEntity implements Updatable, Destroyable {
   public update(): void {}
 
   public destroy(): void {
-    // ? Geometry-only disposal — material is owned + disposed by ShadingGroup, not this entity
-    this.model.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return;
-      child.geometry.dispose();
-    });
+    // ? material is owned + disposed by ShadingGroup, not this entity
+    this.destroyModel(false);
     this.group.remove(this.model);
   }
 }
