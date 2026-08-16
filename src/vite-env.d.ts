@@ -10,6 +10,12 @@ export interface ImportMetaEnv {
 
   // Custom environment variables
   readonly VITE_BASE_PATH: string;
+  /* ? Raw Vite injection is actually the string "true"/"false" — this says
+   *   `boolean` because it's typed as env.ts's coerced GUARANTEE (env.ts
+   *   runs it through envBoolean before anyone touches it), not the literal
+   *   Vite value. Never read import.meta.env.VITE_STRICT_MODE directly for
+   *   that reason — always go through the validated `env` default export. */
+  readonly VITE_STRICT_MODE: boolean;
 
   // Add more custom variables here following the VITE_ prefix convention
   // Example:
