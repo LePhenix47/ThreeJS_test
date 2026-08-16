@@ -67,4 +67,36 @@ export abstract class GltfEntity {
   /** Loads the GLTF asset and assigns the scene root to `model`. */
   protected abstract setModel(): void;
   protected animation?: AnimationState<string>;
+
+  /*
+   * NOTE, we use regular method syntax: lives on the prototype
+   * 1000 GltfEntity instances share 1 copy vs. 1000 copies with an arrow field
+   */
+  /**
+   * Traverses `model`, disposing geometry on every mesh.
+   * @param disposeMaterial - Pass `false` when `material` was assigned by reference from
+   * an external owner (e.g. a shared-resource group) — that owner disposes it, not this entity.
+   */
+  protected destroyModel(disposeMaterial = true): void {
+    this.model.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+
+      child.geometry.dispose();
+
+      if (!disposeMaterial) return;
+
+      /*
+        ? Dispose material(s). A mesh can have either a single material or
+        ? an array of materials when different geometry groups use different materials.
+      */
+      if (!Array.isArray(child.material)) {
+        child.material.dispose();
+        return;
+      }
+
+      for (const material of child.material) {
+        material.dispose();
+      }
+    });
+  }
 }
