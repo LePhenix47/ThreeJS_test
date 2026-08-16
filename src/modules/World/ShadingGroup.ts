@@ -11,11 +11,17 @@ import fragmentShader from "@shaders/shading/fragment.glsl";
 import ShadingTorusKnot from "./ShadingTorusKnot";
 import ShadingSphere from "./ShadingSphere";
 import ShadingSuzanne from "./ShadingSuzanne";
+import DirectionalLightHelper from "./DirectionalLightHelper";
 
 type ShadingGroupState = {
   uColor: string;
   uAmbientLightColor: string;
   uAmbientLightIntensity: number;
+  uDirectionalLightColor: string;
+  uDirectionalLightIntensity: number;
+  uDirectionalLightPositionX: number;
+  uDirectionalLightPositionY: number;
+  uDirectionalLightPositionZ: number;
 };
 
 export type ShadingEntityParams = {
@@ -33,11 +39,17 @@ class ShadingGroup implements Updatable, Destroyable {
   private torusKnot: ShadingTorusKnot;
   private sphere: ShadingSphere;
   private suzanne?: ShadingSuzanne;
+  private directionalLightHelper: DirectionalLightHelper;
 
   private readonly debugDefaults: ShadingGroupState = {
     uColor: "#ffffff",
     uAmbientLightColor: "#ff0000",
     uAmbientLightIntensity: 0.5,
+    uDirectionalLightColor: "#ffffff",
+    uDirectionalLightIntensity: 1,
+    uDirectionalLightPositionX: 1,
+    uDirectionalLightPositionY: 1,
+    uDirectionalLightPositionZ: 0,
   };
 
   private guiRegistry: GUIStateRegistry<ShadingGroupState> | null = null;
@@ -75,14 +87,25 @@ class ShadingGroup implements Updatable, Destroyable {
       this.suzanne = new ShadingSuzanne({ material, group });
     });
 
+    this.directionalLightHelper = new DirectionalLightHelper();
+    this.applyDirectionalLightHelperState();
+
     if (this.debug?.isActive) this.addDebugFolders();
 
     console.log("ShadingGroup");
   }
 
   private setMaterial(): void {
-    const { uColor, uAmbientLightColor, uAmbientLightIntensity } =
-      this.debugDefaults;
+    const {
+      uColor,
+      uAmbientLightColor,
+      uAmbientLightIntensity,
+      uDirectionalLightColor,
+      uDirectionalLightIntensity,
+      uDirectionalLightPositionX,
+      uDirectionalLightPositionY,
+      uDirectionalLightPositionZ,
+    } = this.debugDefaults;
 
     this.material = new THREE.ShaderMaterial({
       vertexShader,
@@ -93,8 +116,35 @@ class ShadingGroup implements Updatable, Destroyable {
           new THREE.Color(uAmbientLightColor),
         ),
         uAmbientLightIntensity: new THREE.Uniform(uAmbientLightIntensity),
+        uDirectionalLightColor: new THREE.Uniform(
+          new THREE.Color(uDirectionalLightColor),
+        ),
+        uDirectionalLightIntensity: new THREE.Uniform(
+          uDirectionalLightIntensity,
+        ),
+        uDirectionalLightPosition: new THREE.Uniform(
+          new THREE.Vector3(
+            uDirectionalLightPositionX,
+            uDirectionalLightPositionY,
+            uDirectionalLightPositionZ,
+          ),
+        ),
       },
     });
+  }
+
+  /** Applies the directional light's position + color to the helper plane — from either `debugDefaults` (initial) or live GUI state. */
+  private applyDirectionalLightHelperState(): void {
+    const { state } = this.guiRegistry ?? { state: this.debugDefaults };
+    const {
+      uDirectionalLightColor,
+      uDirectionalLightPositionX: x,
+      uDirectionalLightPositionY: y,
+      uDirectionalLightPositionZ: z,
+    } = state;
+
+    this.directionalLightHelper.setPosition(new THREE.Vector3(x, y, z));
+    this.directionalLightHelper.setColor(uDirectionalLightColor);
   }
 
   private addDebugFolders(): void {
@@ -128,6 +178,65 @@ class ShadingGroup implements Updatable, Destroyable {
     registry.bind("uAmbientLightIntensity", (v) => {
       this.material.uniforms.uAmbientLightIntensity.value = v;
     });
+
+    const directionalLightFolder = folder.addFolder("Directional Light");
+
+    directionalLightFolder
+      .addColor(state, "uDirectionalLightColor")
+      .name("Color");
+    registry.bind("uDirectionalLightColor", (v) => {
+      this.material.uniforms.uDirectionalLightColor.value.set(v);
+      this.directionalLightHelper.setColor(v);
+    });
+
+    directionalLightFolder
+      .add(state, "uDirectionalLightIntensity")
+      .min(0)
+      .max(5)
+      .step(0.001)
+      .name("Intensity");
+    registry.bind("uDirectionalLightIntensity", (v) => {
+      this.material.uniforms.uDirectionalLightIntensity.value = v;
+    });
+
+    /* ? One Vector3 is built from 3 independent state keys and drives two
+     *   targets (the uniform + the helper mesh) — a shared local callback
+     *   avoids reconstructing the vector three times over. */
+    const updateDirectionalLightPosition = (): void => {
+      const {
+        uDirectionalLightPositionX: x,
+        uDirectionalLightPositionY: y,
+        uDirectionalLightPositionZ: z,
+      } = state;
+      const position = new THREE.Vector3(x, y, z);
+
+      this.material.uniforms.uDirectionalLightPosition.value.copy(position);
+      this.directionalLightHelper.setPosition(position);
+    };
+
+    directionalLightFolder
+      .add(state, "uDirectionalLightPositionX")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Position X");
+    registry.bind("uDirectionalLightPositionX", updateDirectionalLightPosition);
+
+    directionalLightFolder
+      .add(state, "uDirectionalLightPositionY")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Position Y");
+    registry.bind("uDirectionalLightPositionY", updateDirectionalLightPosition);
+
+    directionalLightFolder
+      .add(state, "uDirectionalLightPositionZ")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Position Z");
+    registry.bind("uDirectionalLightPositionZ", updateDirectionalLightPosition);
   }
 
   public update(): void {
@@ -144,6 +253,7 @@ class ShadingGroup implements Updatable, Destroyable {
     this.torusKnot.destroy();
     this.sphere.destroy();
     this.suzanne?.destroy();
+    this.directionalLightHelper.destroy();
     this.material.dispose();
     this.scene.remove(this.group);
     this.guiRegistry?.dispose();
