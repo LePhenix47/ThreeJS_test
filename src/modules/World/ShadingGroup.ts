@@ -36,7 +36,7 @@ class ShadingGroup implements Updatable, Destroyable {
 
   private readonly debugDefaults: ShadingGroupState = {
     uColor: "#ffffff",
-    uAmbientLightColor: "red",
+    uAmbientLightColor: "#ff0000",
     uAmbientLightIntensity: 0.5,
   };
 
