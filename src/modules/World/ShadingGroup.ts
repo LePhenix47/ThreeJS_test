@@ -13,7 +13,9 @@ import ShadingSphere from "./ShadingSphere";
 import ShadingSuzanne from "./ShadingSuzanne";
 
 type ShadingGroupState = {
-  color: string;
+  uColor: string;
+  uAmbientLightColor: string;
+  uAmbientLightIntensity: number;
 };
 
 export type ShadingEntityParams = {
@@ -33,7 +35,9 @@ class ShadingGroup implements Updatable, Destroyable {
   private suzanne?: ShadingSuzanne;
 
   private readonly debugDefaults: ShadingGroupState = {
-    color: "#ffffff",
+    uColor: "#ffffff",
+    uAmbientLightColor: "red",
+    uAmbientLightIntensity: 0.5,
   };
 
   private guiRegistry: GUIStateRegistry<ShadingGroupState> | null = null;
@@ -77,13 +81,18 @@ class ShadingGroup implements Updatable, Destroyable {
   }
 
   private setMaterial(): void {
-    const { color } = this.debugDefaults;
+    const { uColor, uAmbientLightColor, uAmbientLightIntensity } =
+      this.debugDefaults;
 
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       uniforms: {
-        uColor: new THREE.Uniform(new THREE.Color(color)),
+        uColor: new THREE.Uniform(new THREE.Color(uColor)),
+        uAmbientLightColor: new THREE.Uniform(
+          new THREE.Color(uAmbientLightColor),
+        ),
+        uAmbientLightIntensity: new THREE.Uniform(uAmbientLightIntensity),
       },
     });
   }
@@ -99,9 +108,25 @@ class ShadingGroup implements Updatable, Destroyable {
 
     const folder = gui.addFolder("Shading");
 
-    folder.addColor(state, "color").name("Color");
-    registry.bind("color", (v) => {
+    folder.addColor(state, "uColor").name("Objects Color");
+    registry.bind("uColor", (v) => {
       this.material.uniforms.uColor.value.set(v);
+    });
+
+    const ambientLightFolder = folder.addFolder("Ambient Light");
+    ambientLightFolder.addColor(state, "uAmbientLightColor").name("Color");
+    registry.bind("uAmbientLightColor", (v) => {
+      this.material.uniforms.uAmbientLightColor.value.set(v);
+    });
+
+    ambientLightFolder
+      .add(state, "uAmbientLightIntensity")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("Intensity");
+    registry.bind("uAmbientLightIntensity", (v) => {
+      this.material.uniforms.uAmbientLightIntensity.value = v;
     });
   }
 
