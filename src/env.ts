@@ -35,11 +35,13 @@ const EnvSchema = z.object({
    *   reject every real value Vite ever produces here. */
   BASE_URL: z.string().min(1),
   DEV: envBoolean,
-  /* ? Vite's mode is open-ended: "development"/"production" by default,
-   *   but any custom string is valid via `vite --mode <name>` (e.g.
-   *   "staging"). There's no fixed set to enum against — this is
-   *   intentional, not a missing validation. */
-  MODE: z.string().min(1),
+  /* ? Vite's mode CAN be any custom string via `--mode <name>`, but this
+   *   project's scripts (package.json) only ever run plain `vite` /
+   *   `vite build` / `vite preview` — no --mode flag anywhere — so the
+   *   only real values are "development" and "production". Closed enum
+   *   gives real autocomplete + rejection of typos. Extend the list if a
+   *   custom mode script gets added later. */
+  MODE: z.enum(["development", "production"]),
   PROD: envBoolean,
   SSR: envBoolean,
 
@@ -48,7 +50,6 @@ const EnvSchema = z.object({
   VITE_STRICT_MODE: envBoolean,
   // Add more custom variables here
   // IMPORTANT: Also add them to ImportMetaEnv in vite-env.d.ts
-  // (the _EnvKeysMatchImportMetaEnv check below fails the build if you forget)
   // Example:
   // VITE_API_URL: z.string().url(),
   // VITE_API_KEY: z.string().min(1),
@@ -68,7 +69,10 @@ function validateEnv(): EnvType {
   try {
     const parsed = EnvSchema.parse(import.meta.env);
 
-    console.log("Parsed ENV", parsed);
+    if (parsed.MODE === "development") {
+      console.log("Parsed ENV", parsed);
+    }
+
     return parsed;
   } catch (error) {
     if (error instanceof z.ZodError) {
