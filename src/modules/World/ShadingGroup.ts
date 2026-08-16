@@ -87,8 +87,7 @@ class ShadingGroup implements Updatable, Destroyable {
       this.suzanne = new ShadingSuzanne({ material, group });
     });
 
-    this.directionalLightHelper = new DirectionalLightHelper();
-    this.applyDirectionalLightHelperState();
+    this.setDirectionalLightHelper();
 
     if (this.debug?.isActive) this.addDebugFolders();
 
@@ -133,18 +132,37 @@ class ShadingGroup implements Updatable, Destroyable {
     });
   }
 
-  /** Applies the directional light's position + color to the helper plane — from either `debugDefaults` (initial) or live GUI state. */
-  private applyDirectionalLightHelperState(): void {
-    const { state } = this.guiRegistry ?? { state: this.debugDefaults };
+  /**
+   * Rebuilds the light-direction vector from its 3 separate GUI-state axes and pushes it
+   * to both the uniform and the helper mesh. Passed directly as the `bind()` callback for
+   * all 3 position keys — arrow field so `this` survives being passed by reference, ignores
+   * the single changed value `bind()` hands it and re-reads all 3 current axes instead.
+   */
+  private updateDirectionalLightPosition = (): void => {
+    const { uDirectionalLightPositionX: x, uDirectionalLightPositionY: y, uDirectionalLightPositionZ: z } =
+      this.guiRegistry?.state ?? this.debugDefaults;
+    const position = new THREE.Vector3(x, y, z);
+
+    this.material.uniforms.uDirectionalLightPosition.value.copy(position);
+    this.directionalLightHelper.setPosition(position);
+  };
+
+  private setDirectionalLightHelper(): void {
     const {
       uDirectionalLightColor,
       uDirectionalLightPositionX: x,
       uDirectionalLightPositionY: y,
       uDirectionalLightPositionZ: z,
-    } = state;
+    } = this.guiRegistry?.state || this.debugDefaults;
 
-    this.directionalLightHelper.setPosition(new THREE.Vector3(x, y, z));
-    this.directionalLightHelper.setColor(uDirectionalLightColor);
+    const directionalLightHelper = new DirectionalLightHelper();
+
+    const position = new THREE.Vector3(x, y, z);
+
+    directionalLightHelper.setPosition(position);
+    directionalLightHelper.setColor(uDirectionalLightColor);
+
+    this.directionalLightHelper = directionalLightHelper;
   }
 
   private addDebugFolders(): void {
@@ -199,28 +217,13 @@ class ShadingGroup implements Updatable, Destroyable {
       this.material.uniforms.uDirectionalLightIntensity.value = v;
     });
 
-    /* ? One Vector3 is built from 3 independent state keys and drives two
-     *   targets (the uniform + the helper mesh) — a shared local callback
-     *   avoids reconstructing the vector three times over. */
-    const updateDirectionalLightPosition = (): void => {
-      const {
-        uDirectionalLightPositionX: x,
-        uDirectionalLightPositionY: y,
-        uDirectionalLightPositionZ: z,
-      } = state;
-      const position = new THREE.Vector3(x, y, z);
-
-      this.material.uniforms.uDirectionalLightPosition.value.copy(position);
-      this.directionalLightHelper.setPosition(position);
-    };
-
     directionalLightFolder
       .add(state, "uDirectionalLightPositionX")
       .min(-5)
       .max(5)
       .step(0.01)
       .name("Position X");
-    registry.bind("uDirectionalLightPositionX", updateDirectionalLightPosition);
+    registry.bind("uDirectionalLightPositionX", this.updateDirectionalLightPosition);
 
     directionalLightFolder
       .add(state, "uDirectionalLightPositionY")
@@ -228,7 +231,7 @@ class ShadingGroup implements Updatable, Destroyable {
       .max(5)
       .step(0.01)
       .name("Position Y");
-    registry.bind("uDirectionalLightPositionY", updateDirectionalLightPosition);
+    registry.bind("uDirectionalLightPositionY", this.updateDirectionalLightPosition);
 
     directionalLightFolder
       .add(state, "uDirectionalLightPositionZ")
@@ -236,7 +239,7 @@ class ShadingGroup implements Updatable, Destroyable {
       .max(5)
       .step(0.01)
       .name("Position Z");
-    registry.bind("uDirectionalLightPositionZ", updateDirectionalLightPosition);
+    registry.bind("uDirectionalLightPositionZ", this.updateDirectionalLightPosition);
   }
 
   public update(): void {
