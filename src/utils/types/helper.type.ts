@@ -8,3 +8,14 @@
 export type NonFunctionProperties<T extends object> = {
   [K in keyof T as T[K] extends Function ? never : K]: T[K];
 };
+
+/**
+ * Widens a literal union to `string` while keeping editor autocomplete for
+ * the known literal members. `T | string` alone would collapse to plain
+ * `string` and lose the suggestions — intersecting with `{}` stops that
+ * collapse without changing what's actually accepted at runtime.
+ *
+ * @example
+ * type Mode = LooseAutocomplete<"development" | "production">;
+ */
+export type LooseAutocomplete<T extends string> = T | (string & {});
