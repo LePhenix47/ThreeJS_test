@@ -123,7 +123,7 @@ See [.env.example](.env.example) for required variables.
 </details>
 
 <details>
-<summary><strong>TypeScript Skills (9 files)</strong></summary>
+<summary><strong>TypeScript Skills (10 files)</strong></summary>
 
 - `destructure-objects-always` - Always destructure objects
 - `map-vs-switch-lookup` - Prefer Maps for lookups
@@ -134,6 +134,7 @@ See [.env.example](.env.example) for required variables.
 - `use-optional-chaining` - Use `?.` operator
 - `config-key-subset-typing` - Type a config's keys against a subset of another type's keys
 - `comment-prefixes` - Better Comments convention (`?`/`*`/`!`/`TODO`) — when and how to use each prefix
+- `layered-enums` - Split a flat enum into structural + semantic layers for indexing matrices/packed data
 </details>
 
 <details>
