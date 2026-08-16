@@ -76,7 +76,7 @@ class ShadingGroup implements Updatable, Destroyable {
     console.log("ShadingGroup");
   }
 
-  private setMaterial = (): void => {
+  private setMaterial(): void {
     const { color } = this.debugDefaults;
 
     this.material = new THREE.ShaderMaterial({
@@ -86,9 +86,9 @@ class ShadingGroup implements Updatable, Destroyable {
         uColor: new THREE.Uniform(new THREE.Color(color)),
       },
     });
-  };
+  }
 
-  private addDebugFolders = (): void => {
+  private addDebugFolders(): void {
     const registry = new GUIStateRegistry<ShadingGroupState>(
       "shading-group-gui-state",
       this.debugDefaults,
@@ -103,9 +103,9 @@ class ShadingGroup implements Updatable, Destroyable {
     registry.bind("color", (v) => {
       this.material.uniforms.uColor.value.set(v);
     });
-  };
+  }
 
-  public update = (): void => {
+  public update(): void {
     const elapsedTime = this.time.elapsedSeconds;
 
     const rotX = -elapsedTime * 0.1;
@@ -113,16 +113,16 @@ class ShadingGroup implements Updatable, Destroyable {
     this.torusKnot.setRotation(rotX, rotY);
     this.sphere.setRotation(rotX, rotY);
     this.suzanne?.setRotation(rotX, rotY);
-  };
+  }
 
-  public destroy = (): void => {
+  public destroy(): void {
     this.torusKnot.destroy();
     this.sphere.destroy();
     this.suzanne?.destroy();
     this.material.dispose();
     this.scene.remove(this.group);
     this.guiRegistry?.dispose();
-  };
+  }
 }
 
 export default ShadingGroup;

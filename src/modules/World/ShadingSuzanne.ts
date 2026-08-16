@@ -28,7 +28,7 @@ class ShadingSuzanne extends GltfEntity implements Updatable, Destroyable {
     this.group.add(this.model);
   }
 
-  protected setModel = (): void => {
+  protected setModel(): void {
     const gltf: GLTF = this.resources.getGltf("suzanne");
 
     gltf.scene.traverse((child) => {
@@ -37,23 +37,23 @@ class ShadingSuzanne extends GltfEntity implements Updatable, Destroyable {
     });
 
     this.model = gltf.scene;
-  };
+  }
 
-  public setRotation = (x: number, y: number): void => {
+  public setRotation(x: number, y: number): void {
     this.model.rotation.x = x;
     this.model.rotation.y = y;
-  };
+  }
 
-  public update = (): void => {};
+  public update(): void {}
 
-  public destroy = (): void => {
+  public destroy(): void {
     // ? Geometry-only disposal — material is owned + disposed by ShadingGroup, not this entity
     this.model.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
       child.geometry.dispose();
     });
     this.group.remove(this.model);
-  };
+  }
 }
 
 export default ShadingSuzanne;
