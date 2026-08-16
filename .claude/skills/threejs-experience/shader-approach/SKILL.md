@@ -54,6 +54,34 @@ this.smokeMaterial = new THREE.ShaderMaterial({
 
 ---
 
+## GLSL Style
+
+Applies to any GLSL written for this project — standalone `.glsl` files (Path A) and inline injected strings (Path B) alike:
+
+- Opening brace on the same line as the function signature (`void main() {`), not on its own line.
+- Name each stage of a transform pipeline as its own variable instead of collapsing it into one chained expression — each named stage is a point where a later modification (e.g. displacement) can be inserted without restructuring the line:
+
+```glsl
+void main() {
+    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+    vec4 viewPosition = viewMatrix * modelPosition;
+    vec4 projectedPosition = projectionMatrix * viewPosition;
+
+    gl_Position = projectedPosition;
+}
+```
+
+not
+
+```glsl
+void main() {
+    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * viewMatrix * modelPosition;
+}
+```
+
+---
+
 ## Path B: onBeforeCompile (keep PBR)
 
 ⚠️ **Current approach — known to be painful.** `onBeforeCompile` is Three.js's only hook into its built-in shader compilation pipeline. String-patching shader source is fragile and hard to read. This pattern may be replaced in future lessons. Do not treat it as the ideal solution — it's just the current one.
