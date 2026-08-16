@@ -14,15 +14,16 @@ varying vec3 vModelPosition;
 void main() {
     vec3 color = uColor;
 
-    vec3 normal = normalize(vNormal);
+    vec3 normal = normalize(vNormal); // ? Some normal vectors are smaller than one, we just care about the direction 
+    vec3 directionOfView = normalize(vModelPosition - cameraPosition);
 
     vec3 light = uAmbientLightColor;
     light += ambientLight(color, uAmbientLightIntensity);
-    light += directionalLight(uDirectionalLightColor, uDirectionalLightIntensity, normal, uDirectionalLightPosition);
+    light += directionalLight(uDirectionalLightColor, uDirectionalLightIntensity, normal, uDirectionalLightPosition, directionOfView);
 
     color *= light;
 
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(light, 1.0);
     // gl_FragColor = vec4(normal, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
