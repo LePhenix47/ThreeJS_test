@@ -1,6 +1,27 @@
 import { z } from "zod";
 import type { ImportMetaEnv } from "./vite-env";
 
+/* ? Vite only injects DEV/PROD/SSR as real compile-time booleans. Every
+ *   custom VITE_* var comes from .env text, so it always arrives as a raw
+ *   string ("true", "42", ...) even when it's conceptually a boolean or
+ *   number — z.boolean()/z.number() alone would reject those strings.
+ *   These preprocessors coerce the raw string before the real check runs. */
+function coerceBoolean(value: unknown): unknown {
+  if (typeof value === "boolean") return value;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return value;
+}
+
+function coerceNumber(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  if (value.trim() === "") return value;
+  return Number(value);
+}
+
+const envBoolean = z.preprocess(coerceBoolean, z.boolean());
+export const envNumber = z.preprocess(coerceNumber, z.number());
+
 /**
  * Environment variables schema using Zod for runtime validation
  * This ensures type safety and validates that all required env vars are present
@@ -8,25 +29,37 @@ import type { ImportMetaEnv } from "./vite-env";
  */
 const EnvSchema = z.object({
   // Vite built-in variables
-  BASE_URL: z.string(),
-  DEV: z.boolean(),
-  MODE: z.string(),
-  PROD: z.boolean(),
-  SSR: z.boolean(),
+  /* ? Despite the name, BASE_URL is Vite's app *base path* (e.g. "/",
+   *   "/ThreeJS_test/"), not a full URL — it's whatever `base` resolves to
+   *   in vite.config.ts. Do NOT switch this to z.string().url(), it will
+   *   reject every real value Vite ever produces here. */
+  BASE_URL: z.string().min(1),
+  DEV: envBoolean,
+  /* ? Vite's mode is open-ended: "development"/"production" by default,
+   *   but any custom string is valid via `vite --mode <name>` (e.g.
+   *   "staging"). There's no fixed set to enum against — this is
+   *   intentional, not a missing validation. */
+  MODE: z.string().min(1),
+  PROD: envBoolean,
+  SSR: envBoolean,
 
   // Custom environment variables
-  VITE_BASE_PATH: z.string(),
+  VITE_BASE_PATH: z.string().min(1, "VITE_BASE_PATH is required for routing."),
+  VITE_STRICT_MODE: envBoolean,
   // Add more custom variables here
   // IMPORTANT: Also add them to ImportMetaEnv in vite-env.d.ts
+  // (the _EnvKeysMatchImportMetaEnv check below fails the build if you forget)
   // Example:
   // VITE_API_URL: z.string().url(),
   // VITE_API_KEY: z.string().min(1),
+  // VITE_MAX_RETRIES: envNumber,   // "3"    -> 3
+  // VITE_DEBUG_MODE: envBoolean,   // "true" -> true
 }) satisfies z.ZodType<ImportMetaEnv>;
 
 /**
  * Type inference from the schema
  */
-type EnvType = z.infer<typeof EnvSchema>;
+export type EnvType = z.infer<typeof EnvSchema>;
 
 /**
  * Parse and validate environment variables at runtime
@@ -34,6 +67,8 @@ type EnvType = z.infer<typeof EnvSchema>;
 function validateEnv(): EnvType {
   try {
     const parsed = EnvSchema.parse(import.meta.env);
+
+    console.log("Parsed ENV", parsed);
     return parsed;
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -41,7 +76,7 @@ function validateEnv(): EnvType {
       console.error(error.format());
     }
     throw new Error(
-      "Failed to validate environment variables. Check console for details."
+      "Failed to validate environment variables. Check console for details.",
     );
   }
 }
