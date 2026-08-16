@@ -116,6 +116,7 @@ public update(): void {
 ```
 
 For conditional playback (GUI-toggled):
+
 ```typescript
 public update(): void {
   if (this.guiRegistry?.state.uTimePlayback) {
@@ -151,6 +152,7 @@ public destroy(): void {
 ```
 
 For entities with multiple meshes (CoffeeSmoke pattern):
+
 ```typescript
 public destroy(): void {
   this.guiRegistry?.dispose();
@@ -196,10 +198,31 @@ private addDebugFolders(): void {
 - Any standalone magic threshold/limit gets a descriptive `static readonly NAME` instead of an inline literal at its call site.
 - Every subscription added during setup (`.on(...)`) must have its exact counterpart removal in `destroy()` — when adding a new listener, add its removal in the same pass, don't defer it.
 - A small helper that returns an element of an existing array/collection should derive its return type from that collection (`(typeof this.items)[number]`) instead of restating a parallel type that can drift out of sync.
+- A single `this.child = new Child(...)` assignment is fine bare in the constructor. The moment a setup step needs more than one statement — construct _and_ apply initial state, construct _and_ register a listener — wrap all of it in its own `setX()`/`configureX()` method, called as one line from the constructor. Never leave multiple raw statements for one conceptual setup step sitting directly in the constructor body.
+- When extracting a helper method, give it explicit parameters for whatever it operates on — don't have it implicitly reach for `this.property` / enclosing-scope state that only exists because of when it happens to be called. A zero-parameter method that just reads instance state set immediately before calling it isn't a real extraction, it's the same code split into two places for no reason — merge it back into one method, or make it take the value(s) it needs so it's actually callable with different data.
+- Never define a local `const fn = () => {...}` inside a method body to bridge it to some external callback signature (e.g. a GUI library's `bind(key, (value) => void)` firing once per key). If the logic needs to be a callback target, make the logic itself an arrow **class field** and pass it directly — a zero/fewer-parameter function is structurally assignable wherever a callback with more parameters is expected, so `registry.bind("key", this.myMethod)` works with no wrapper needed even if `myMethod` ignores the value `bind()` would hand it. No local function declarations inside method bodies, ever — if something needs to be callable independently, it's a class method, not a nested closure.
+- When a `this.property` needs multiple configuration steps before it's ready (constructing it, setting sub-properties, calling an init method), do all of that on a local `const` first and assign to `this.property` only once, fully configured, as the last line:
+
+```typescript
+const directionalLightHelper = new DirectionalLightHelper();
+directionalLightHelper.setPosition(position);
+directionalLightHelper.setColor(color);
+this.directionalLightHelper = directionalLightHelper;
+```
+
+not
+
+```typescript
+this.directionalLightHelper = new DirectionalLightHelper();
+this.directionalLightHelper.setPosition(position);
+this.directionalLightHelper.setColor(color);
+```
+
+Avoids repeating the `this.x.` prefix at every step, and no other code can ever observe `this.property` half-configured mid-setup.
 
 ### Document non-obvious fields
 
-Public options/config/state type fields, and class properties whose purpose isn't obvious from their name+type alone, get a one-line `/** ... */` doc comment describing their *role* — not a restatement of the type:
+Public options/config/state type fields, and class properties whose purpose isn't obvious from their name+type alone, get a one-line `/** ... */` doc comment describing their _role_ — not a restatement of the type:
 
 ```typescript
 export type FireworkOptions = {
