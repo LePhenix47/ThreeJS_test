@@ -2,9 +2,7 @@ uniform vec3 uColor;
 uniform vec3 uAmbientLightColor;
 uniform float uAmbientLightIntensity;
 
-vec3 ambientLight(vec3 color, float intensity) {
-    return color * intensity;
-}
+#include ../utils/lights/ambientLight
 
 void main() {
     vec3 color = uColor;
