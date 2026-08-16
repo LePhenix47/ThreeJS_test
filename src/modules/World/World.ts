@@ -2,12 +2,9 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import Environment from "./Environment";
-import Floor from "./Floor";
+import ShadingGroup from "./ShadingGroup";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-
-// * To setup GLSL shaders: git cherry-pick 905deb41a596f9122c2e71fb56a1194a0585c98d
 
 type WorldState = {
   axisHelper: boolean;
@@ -16,8 +13,7 @@ type WorldState = {
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
-  public environment?: Environment;
-  public floor?: Floor;
+  public shadingGroup: ShadingGroup;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -43,8 +39,7 @@ class World implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.floor = new Floor();
-    this.environment = new Environment();
+    this.shadingGroup = new ShadingGroup();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -55,8 +50,14 @@ class World implements Updatable, Destroyable {
   }
 
   private setHelpers = () => {
-    this.axisHelper = new THREE.AxesHelper(3);
-    this.gridHelper = new THREE.GridHelper(10, 10);
+    const axisHelper = new THREE.AxesHelper(3);
+    axisHelper.position.y = -1;
+
+    this.axisHelper = axisHelper;
+
+    const gridHelper = new THREE.GridHelper(10, 10);
+    gridHelper.position.y = -1;
+    this.gridHelper = gridHelper;
 
     this.scene.add(this.axisHelper, this.gridHelper);
   };
@@ -106,11 +107,12 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   };
 
-  public update = () => {};
+  public update = () => {
+    this.shadingGroup.update();
+  };
 
   public destroy = () => {
-    this.floor?.destroy();
-    this.environment?.destroy();
+    this.shadingGroup.destroy();
     this.removeHelpers();
   };
 }
