@@ -47,7 +47,17 @@ const EnvSchema = z.object({
 
   // Custom environment variables
   VITE_BASE_PATH: z.string().min(1, "VITE_BASE_PATH is required for routing."),
-  VITE_STRICT_MODE: envBoolean,
+  /* ? deploy.yml builds CI's .env from .env.example (sed-stripping everything
+   *   after "# Facultative"), and VITE_STRICT_MODE was never in
+   *   .env.example at all — so the key is genuinely ABSENT in CI, not just
+   *   present-and-empty. .default(false) (not .optional()) is what fixes
+   *   this without turning VITE_STRICT_MODE into an optional property:
+   *   the parsed OUTPUT is always a real, required `boolean` either way, so
+   *   ImportMetaEnv in vite-env.d.ts needs no `?:` change — confirmed via
+   *   z.infer, omitting the key from an object literal typed as the
+   *   inferred output still errors as "missing", same as any other
+   *   required field. */
+  VITE_STRICT_MODE: envBoolean.default(false),
   // Add more custom variables here
   // IMPORTANT: Also add them to ImportMetaEnv in vite-env.d.ts
   // Example:
