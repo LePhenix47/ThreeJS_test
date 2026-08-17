@@ -1,5 +1,12 @@
 # ThreeJS Test Project
 
+## All Claude Responses
+
+Keep your responses concise, ELI5, and actionable
+When reporting to me, be extremely concise, load-bearing words only. Priorities: user understanding > concision > grammar. Directive not recap → never padding. Split-second read. Do not compromise on meaning.  Presenting data: use tables.
+End with: *DO THIS* block → concrete next actions for user, numbered, priority-first. Spell out reply options on decisions. Omit only when no user action.
+
+
 ## CRITICAL: Mandatory Workflow
 
 **BEFORE modifying ANY file, you MUST follow this exact process:**
@@ -8,14 +15,14 @@
 
 Based on the file extension/type you're working on, read **ALL** skills (not just some):
 
-| File Type | Skills to Read (ALL of them) |
-|-----------|------------------------------|
-| `.tsx` components | Read ALL files in `.claude/skills/react/` AND `.claude/skills/typescript/` AND `.claude/skills/sass/` |
-| `.ts` files | Read ALL files in `.claude/skills/typescript/` |
-| `.scss` files | Read ALL files in `.claude/skills/sass/` |
-| Zustand stores | Read ALL files in `.claude/skills/zustand/` AND `.claude/skills/typescript/` |
-| Git commits | Read `.claude/skills/git/commit-message-format/SKILL.md` |
-| World entities / Three.js modules | Read ALL files in `.claude/skills/threejs-experience/` |
+| File Type                         | Skills to Read (ALL of them)                                                                          |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `.tsx` components                 | Read ALL files in `.claude/skills/react/` AND `.claude/skills/typescript/` AND `.claude/skills/sass/` |
+| `.ts` files                       | Read ALL files in `.claude/skills/typescript/`                                                        |
+| `.scss` files                     | Read ALL files in `.claude/skills/sass/`                                                              |
+| Zustand stores                    | Read ALL files in `.claude/skills/zustand/` AND `.claude/skills/typescript/`                          |
+| Git commits                       | Read `.claude/skills/git/commit-message-format/SKILL.md`                                              |
+| World entities / Three.js modules | Read ALL files in `.claude/skills/threejs-experience/`                                                |
 
 **You MUST read ALL skills in the category, not pick and choose. Reading 3/5 skills means you'll miss 2 important conventions.**
 
@@ -24,6 +31,7 @@ Based on the file extension/type you're working on, read **ALL** skills (not jus
 After making changes, verify you haven't violated ANY of these rules:
 
 #### React/TSX Files
+
 - [ ] Used `function` declarations (not arrow functions)
 - [ ] Destructured props in parameters
 - [ ] Organized hooks in correct order (state, refs, context, custom hooks, effects, handlers)
@@ -35,6 +43,7 @@ After making changes, verify you haven't violated ANY of these rules:
 - [ ] Used optional chaining where appropriate
 
 #### SCSS Files
+
 - [ ] Used BEM naming (`.block__element--modifier`)
 - [ ] NO inline styles in TSX
 - [ ] Used CSS variables for theming
@@ -44,6 +53,7 @@ After making changes, verify you haven't violated ANY of these rules:
 - [ ] Used `px` for font-sizes/gaps/spacing, appropriate units for dimensions
 
 #### TypeScript Files
+
 - [ ] Destructured objects always
 - [ ] Used guard clauses (early returns)
 - [ ] Used `unknown` over `any`
@@ -53,12 +63,14 @@ After making changes, verify you haven't violated ANY of these rules:
 - [ ] Preferred Maps over switch statements for lookups
 
 #### Zustand Stores
+
 - [ ] Separated actions into `actions` object
 - [ ] Used `partialize` for persistence
 - [ ] Created custom selector hooks
 - [ ] Enabled DevTools middleware
 
 #### Git Commits
+
 - [ ] Used format: `type(scope): subject`
 - [ ] Added bullet points explaining changes
 - [ ] Included Claude Code signature
@@ -67,6 +79,7 @@ After making changes, verify you haven't violated ANY of these rules:
 ### 3. If You Skip This Process
 
 If you modify code without reading ALL relevant skills first, you WILL:
+
 - Miss important conventions
 - Write code that violates project standards
 - Create inconsistent code that needs refactoring
@@ -100,6 +113,7 @@ src/
 ## Environment Variables
 
 See [.env.example](.env.example) for required variables.
+
 - `VITE_BASE_PATH`: Required for routing
 
 ## Core Principles
@@ -120,6 +134,7 @@ See [.env.example](.env.example) for required variables.
 - `function-components` - Use function declarations
 - `hooks-organization` - Standard hook ordering
 - `props-destructuring` - Destructure in parameters
+
 </details>
 
 <details>
@@ -135,6 +150,7 @@ See [.env.example](.env.example) for required variables.
 - `config-key-subset-typing` - Type a config's keys against a subset of another type's keys
 - `comment-prefixes` - Better Comments convention (`?`/`*`/`!`/`TODO`) — when and how to use each prefix
 - `layered-enums` - Split a flat enum into structural + semantic layers for indexing matrices/packed data
+
 </details>
 
 <details>
@@ -151,6 +167,7 @@ See [.env.example](.env.example) for required variables.
 - `supports-feature-queries` - @supports usage
 - `use-project-mixins` - Available mixins
 - `use-vs-import` - Use @use, not @import
+
 </details>
 
 <details>
@@ -160,12 +177,14 @@ See [.env.example](.env.example) for required variables.
 - `custom-hooks` - Selector hooks
 - `devtools-middleware` - DevTools integration
 - `partialize-persist` - Persistence config
+
 </details>
 
 <details>
 <summary><strong>Git Skills (1 file)</strong></summary>
 
 - `commit-message-format` - Conventional commits
+
 </details>
 
 <details>
@@ -181,6 +200,7 @@ See [.env.example](.env.example) for required variables.
 - `composite-entities` - Pool pattern and shared-resource group pattern for entities made of multiple sub-entities
 - `particle-buffer-geometry` - Enum-indexed buffer attributes, placement utils, GUI-state fallback getter for particle systems
 - `web-worker-offload` - Manager+Worker pattern for offloading per-frame heavy computation off the main thread
+
 </details>
 
 ## Reminder
