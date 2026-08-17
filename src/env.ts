@@ -1,26 +1,6 @@
 import { z } from "zod";
 import type { ImportMetaEnv } from "./vite-env";
-
-/* ? Vite only injects DEV/PROD/SSR as real compile-time booleans. Every
- *   custom VITE_* var comes from .env text, so it always arrives as a raw
- *   string ("true", "42", ...) even when it's conceptually a boolean or
- *   number — z.boolean()/z.number() alone would reject those strings.
- *   These preprocessors coerce the raw string before the real check runs. */
-function coerceBoolean(value: unknown): unknown {
-  if (typeof value === "boolean") return value;
-  if (value === "true") return true;
-  if (value === "false") return false;
-  return value;
-}
-
-function coerceNumber(value: unknown): unknown {
-  if (typeof value !== "string") return value;
-  if (value.trim() === "") return value;
-  return Number(value);
-}
-
-const envBoolean = z.preprocess(coerceBoolean, z.boolean());
-export const envNumber = z.preprocess(coerceNumber, z.number());
+import EnvCoercion from "@utils/classes/env-coercion";
 
 /**
  * Environment variables schema using Zod for runtime validation
@@ -34,7 +14,7 @@ const EnvSchema = z.object({
    *   in vite.config.ts. Do NOT switch this to z.string().url(), it will
    *   reject every real value Vite ever produces here. */
   BASE_URL: z.string().min(1),
-  DEV: envBoolean,
+  DEV: EnvCoercion.boolean,
   /* ? Vite's mode CAN be any custom string via `--mode <name>`, but this
    *   project's scripts (package.json) only ever run plain `vite` /
    *   `vite build` / `vite preview` — no --mode flag anywhere — so the
@@ -42,8 +22,8 @@ const EnvSchema = z.object({
    *   gives real autocomplete + rejection of typos. Extend the list if a
    *   custom mode script gets added later. */
   MODE: z.enum(["development", "production"]),
-  PROD: envBoolean,
-  SSR: envBoolean,
+  PROD: EnvCoercion.boolean,
+  SSR: EnvCoercion.boolean,
 
   // Custom environment variables
   VITE_BASE_PATH: z.string().min(1, "VITE_BASE_PATH is required for routing."),
@@ -57,14 +37,14 @@ const EnvSchema = z.object({
    *   z.infer, omitting the key from an object literal typed as the
    *   inferred output still errors as "missing", same as any other
    *   required field. */
-  VITE_STRICT_MODE: envBoolean.default(false),
+  VITE_STRICT_MODE: EnvCoercion.boolean.default(false),
   // Add more custom variables here
   // IMPORTANT: Also add them to ImportMetaEnv in vite-env.d.ts
   // Example:
   // VITE_API_URL: z.string().url(),
   // VITE_API_KEY: z.string().min(1),
-  // VITE_MAX_RETRIES: envNumber,   // "3"    -> 3
-  // VITE_DEBUG_MODE: envBoolean,   // "true" -> true
+  // VITE_MAX_RETRIES: EnvCoercion.number,   // "3"    -> 3
+  // VITE_DEBUG_MODE: EnvCoercion.boolean,   // "true" -> true
 }) satisfies z.ZodType<ImportMetaEnv>;
 
 /**
@@ -77,7 +57,6 @@ export type EnvType = z.infer<typeof EnvSchema>;
  */
 function validateEnv(): EnvType {
   try {
-    console.log(import.meta.env);
     const parsed = EnvSchema.parse(import.meta.env);
 
     if (parsed.MODE === "development") {
