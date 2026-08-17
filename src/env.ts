@@ -70,8 +70,8 @@ function validateEnv(): EnvType {
     const parsed = EnvSchema.parse(import.meta.env);
 
     if (parsed.MODE === "development") {
-      console.log("Parsed ENV", parsed);
     }
+    console.log("Parsed ENV", parsed);
 
     return parsed;
   } catch (error) {
