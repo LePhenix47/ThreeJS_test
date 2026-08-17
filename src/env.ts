@@ -67,11 +67,12 @@ export type EnvType = z.infer<typeof EnvSchema>;
  */
 function validateEnv(): EnvType {
   try {
+    console.log(import.meta.env);
     const parsed = EnvSchema.parse(import.meta.env);
 
     if (parsed.MODE === "development") {
+      console.log("Parsed ENV", parsed);
     }
-    console.log("Parsed ENV", parsed);
 
     return parsed;
   } catch (error) {
