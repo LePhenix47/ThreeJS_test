@@ -5,7 +5,7 @@
 Keep your responses concise, ELI5, and actionable
 When reporting to me, be extremely concise, load-bearing words only. Priorities: user understanding > concision > grammar. Directive not recap → never padding. Split-second read. Do not compromise on meaning.  Presenting data: use tables.
 End with: *DO THIS* block → concrete next actions for user, numbered, priority-first. Spell out reply options on decisions. Omit only when no user action.
-Apply `.claude/skills/unslop/SKILL.md` to everything — chat replies, docs, commits, PR text. Strip AI tells always.
+Apply `.claude/skills/unslop/SKILL.md` to everything. Chat replies, docs, commits, PR text. Strip AI tells always.
 
 
 ## CRITICAL: Mandatory Workflow
@@ -149,7 +149,7 @@ See [.env.example](.env.example) for required variables.
 - `use-guard-clauses` - Early returns, no nesting
 - `use-optional-chaining` - Use `?.` operator
 - `config-key-subset-typing` - Type a config's keys against a subset of another type's keys
-- `comment-prefixes` - Better Comments convention (`?`/`*`/`!`/`TODO`) — when and how to use each prefix
+- `comment-prefixes` - Better Comments convention (`?`/`*`/`!`/`TODO`). When and how to use each prefix
 - `layered-enums` - Split a flat enum into structural + semantic layers for indexing matrices/packed data
 
 </details>

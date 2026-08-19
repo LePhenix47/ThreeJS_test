@@ -1,6 +1,6 @@
 ---
 name: entity-lifecycle
-description: Use when writing any World entity class — covers the Experience sub-system getter pattern, constructor method ordering per entity type, update() pattern, destroy() completeness checklist, and a code-quality checklist for config constants, event-subscription pairing, and option-type documentation.
+description: Use when writing any World entity class. Covers the Experience sub-system getter pattern, constructor method ordering per entity type, update() pattern, destroy() completeness checklist, and a code-quality checklist for config constants, event-subscription pairing, and option-type documentation.
 metadata:
   type: reference
 ---
@@ -9,17 +9,17 @@ metadata:
 
 ## Arrow Functions vs Regular Methods
 
-**Rule:** Use arrow functions **only** for methods passed as callbacks — i.e. methods detached from their object context when handed off to another caller.
+**Rule:** Use arrow functions **only** for methods passed as callbacks. I.e. methods detached from their object context when handed off to another caller.
 
 ```typescript
-// ✅ Arrow — passed as reference to EventEmitter / GSAP / etc.
+// ✅ Arrow. Passed as reference to EventEmitter / GSAP / etc.
 private onResize = (): void => { ... };
 private onClickCanvas = (e: MouseEvent): void => { ... };
 
-// ✅ Arrow — passed as inline callback
+// ✅ Arrow. Passed as inline callback
 gsap.to(..., { onComplete: this.onComplete });
 
-// ✅ Regular — always called as this.method(), this is never lost
+// ✅ Regular. Always called as this.method(), this is never lost
 public update(): void { ... }
 public destroy(): void { ... }
 protected setGeometry(): void { ... }
@@ -66,7 +66,7 @@ constructor() {
 }
 ```
 
-### GltfEntity with additional custom mesh (e.g. CoffeeSmoke — baked model + smoke plane)
+### GltfEntity with additional custom mesh (e.g. CoffeeSmoke. Baked model + smoke plane)
 
 ```typescript
 constructor() {
@@ -93,7 +93,7 @@ constructor() {
   if (!this.experience) throw new Error("...");
 
   this.setTextures();            // MUST run before setMaterial (material needs textures)
-  this.setModelShadowMaterial(); // depth pass — mirrors deformation for shadow matching
+  this.setModelShadowMaterial(); // depth pass. Mirrors deformation for shadow matching
   this.setMaterial();            // visible body material
   this.setOutlineMaterial();     // inverted-hull outline
   this.setModel();               // load GLTF, extract mesh
@@ -194,13 +194,13 @@ private addDebugFolders(): void {
 
 ## Code-Quality Checklist
 
-- Group related tunable numeric ranges into a single `static readonly CONFIG` object instead of scattering literals through methods — keeps the tunable surface visible at a glance and pairs related values (e.g. `min`/`max`) together.
+- Group related tunable numeric ranges into a single `static readonly CONFIG` object instead of scattering literals through methods. Keeps the tunable surface visible at a glance and pairs related values (e.g. `min`/`max`) together.
 - Any standalone magic threshold/limit gets a descriptive `static readonly NAME` instead of an inline literal at its call site.
-- Every subscription added during setup (`.on(...)`) must have its exact counterpart removal in `destroy()` — when adding a new listener, add its removal in the same pass, don't defer it.
+- Every subscription added during setup (`.on(...)`) must have its exact counterpart removal in `destroy()`. When adding a new listener, add its removal in the same pass, don't defer it.
 - A small helper that returns an element of an existing array/collection should derive its return type from that collection (`(typeof this.items)[number]`) instead of restating a parallel type that can drift out of sync.
-- A single `this.child = new Child(...)` assignment is fine bare in the constructor. The moment a setup step needs more than one statement — construct _and_ apply initial state, construct _and_ register a listener — wrap all of it in its own `setX()`/`configureX()` method, called as one line from the constructor. Never leave multiple raw statements for one conceptual setup step sitting directly in the constructor body.
-- When extracting a helper method, give it explicit parameters for whatever it operates on — don't have it implicitly reach for `this.property` / enclosing-scope state that only exists because of when it happens to be called. A zero-parameter method that just reads instance state set immediately before calling it isn't a real extraction, it's the same code split into two places for no reason — merge it back into one method, or make it take the value(s) it needs so it's actually callable with different data.
-- Never define a local `const fn = () => {...}` inside a method body to bridge it to some external callback signature (e.g. a GUI library's `bind(key, (value) => void)` firing once per key). If the logic needs to be a callback target, make the logic itself an arrow **class field** and pass it directly — a zero/fewer-parameter function is structurally assignable wherever a callback with more parameters is expected, so `registry.bind("key", this.myMethod)` works with no wrapper needed even if `myMethod` ignores the value `bind()` would hand it. No local function declarations inside method bodies, ever — if something needs to be callable independently, it's a class method, not a nested closure.
+- A single `this.child = new Child(...)` assignment is fine bare in the constructor. The moment a setup step needs more than one statement. Construct _and_ apply initial state, construct _and_ register a listener. Wrap all of it in its own `setX()`/`configureX()` method, called as one line from the constructor. Never leave multiple raw statements for one conceptual setup step sitting directly in the constructor body.
+- When extracting a helper method, give it explicit parameters for whatever it operates on. Don't have it implicitly reach for `this.property` / enclosing-scope state that only exists because of when it happens to be called. A zero-parameter method that just reads instance state set immediately before calling it isn't a real extraction, it's the same code split into two places for no reason. Merge it back into one method, or make it take the value(s) it needs so it's actually callable with different data.
+- Never define a local `const fn = () => {...}` inside a method body to bridge it to some external callback signature (e.g. a GUI library's `bind(key, (value) => void)` firing once per key). If the logic needs to be a callback target, make the logic itself an arrow **class field** and pass it directly. A zero/fewer-parameter function is structurally assignable wherever a callback with more parameters is expected, so `registry.bind("key", this.myMethod)` works with no wrapper needed even if `myMethod` ignores the value `bind()` would hand it. No local function declarations inside method bodies, ever. If something needs to be callable independently, it's a class method, not a nested closure.
 - When a `this.property` needs multiple configuration steps before it's ready (constructing it, setting sub-properties, calling an init method), do all of that on a local `const` first and assign to `this.property` only once, fully configured, as the last line:
 
 ```typescript
@@ -222,7 +222,7 @@ Avoids repeating the `this.x.` prefix at every step, and no other code can ever 
 
 ### Document non-obvious fields
 
-Public options/config/state type fields, and class properties whose purpose isn't obvious from their name+type alone, get a one-line `/** ... */` doc comment describing their _role_ — not a restatement of the type:
+Public options/config/state type fields, and class properties whose purpose isn't obvious from their name+type alone, get a one-line `/** ... */` doc comment describing their _role_. Not a restatement of the type:
 
 ```typescript
 export type FireworkOptions = {
@@ -233,7 +233,7 @@ export type FireworkOptions = {
 };
 
 class Human {
-  /** Depth pass material — mirrors the deformation so shadows match the body. */
+  /** Depth pass material. Mirrors the deformation so shadows match the body. */
   private modelShadowMaterial: THREE.MeshDepthMaterial;
   /** GSAP timeline scrubbed by pointer position while the special mode is active. */
   public slapTimeline: gsap.core.Timeline | null = null;

@@ -1,6 +1,6 @@
 ---
 name: type-vs-interface
-description: Use when declaring any TypeScript type — use `type`, not `interface` (project standard).
+description: Use when declaring any TypeScript type. Use `type`, not `interface` (project standard).
 ---
 
 # Use `type` (Not `interface`)

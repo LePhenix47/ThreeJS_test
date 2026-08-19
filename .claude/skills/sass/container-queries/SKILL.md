@@ -1,6 +1,6 @@
 ---
 name: container-queries
-description: Use when a component's layout should respond to its own container size rather than the viewport — use CSS @container queries instead of media queries.
+description: Use when a component's layout should respond to its own container size rather than the viewport. Use CSS @container queries instead of media queries.
 ---
 
 # Container Queries

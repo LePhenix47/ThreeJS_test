@@ -1,6 +1,6 @@
 ---
 name: event-listener-cleanup
-description: Use when adding an event listener inside a React useEffect — requires a cleanup function that removes it, to prevent memory leaks.
+description: Use when adding an event listener inside a React useEffect. Requires a cleanup function that removes it, to prevent memory leaks.
 ---
 
 # Event Listener Cleanup

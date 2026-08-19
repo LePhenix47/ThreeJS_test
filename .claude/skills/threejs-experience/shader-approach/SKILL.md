@@ -1,6 +1,6 @@
 ---
 name: shader-approach
-description: Use when adding any custom shader behavior to a World entity — determines whether to use ShaderMaterial with .glsl files or onBeforeCompile injection based on whether PBR lighting must be preserved, and how to structure onBeforeCompile injections (shared helpers, shadow-matching, outline meshes) once Path B is chosen.
+description: Use when adding any custom shader behavior to a World entity. Determines whether to use ShaderMaterial with .glsl files or onBeforeCompile injection based on whether PBR lighting must be preserved, and how to structure onBeforeCompile injections (shared helpers, shadow-matching, outline meshes) once Path B is chosen.
 metadata:
   type: reference
 ---
@@ -19,7 +19,7 @@ Does the entity need Three.js PBR lighting / shadows / depth pass?
 
 ## Path A: ShaderMaterial (no PBR needed)
 
-**Applies to:** standalone geometry with full custom shader — ShaderPlane, Galaxy particles, CoffeeSmoke smoke mesh
+**Applies to:** standalone geometry with full custom shader. ShaderPlane, Galaxy particles, CoffeeSmoke smoke mesh
 
 You write every line of vertex + fragment. PBR lighting is not available.
 
@@ -56,10 +56,10 @@ this.smokeMaterial = new THREE.ShaderMaterial({
 
 ## GLSL Style
 
-Applies to any GLSL written for this project — standalone `.glsl` files (Path A) and inline injected strings (Path B) alike:
+Applies to any GLSL written for this project. Standalone `.glsl` files (Path A) and inline injected strings (Path B) alike:
 
 - Opening brace on the same line as the function signature (`void main() {`), not on its own line.
-- Name each stage of a transform pipeline as its own variable instead of collapsing it into one chained expression — each named stage is a point where a later modification (e.g. displacement) can be inserted without restructuring the line:
+- Name each stage of a transform pipeline as its own variable instead of collapsing it into one chained expression. Each named stage is a point where a later modification (e.g. displacement) can be inserted without restructuring the line:
 
 ```glsl
 void main() {
@@ -84,7 +84,7 @@ void main() {
 
 ## Path B: onBeforeCompile (keep PBR)
 
-⚠️ **Current approach — known to be painful.** `onBeforeCompile` is Three.js's only hook into its built-in shader compilation pipeline. String-patching shader source is fragile and hard to read. This pattern may be replaced in future lessons. Do not treat it as the ideal solution — it's just the current one.
+⚠️ **Current approach. Known to be painful.** `onBeforeCompile` is Three.js's only hook into its built-in shader compilation pipeline. String-patching shader source is fragile and hard to read. This pattern may be replaced in future lessons. Do not treat it as the ideal solution. It's just the current one.
 
 **Applies to:** GLTF model that must keep Three.js PBR lighting, shadows, env maps (e.g. Human)
 
@@ -95,7 +95,7 @@ material.onBeforeCompile = (params: THREE.WebGLProgramParametersWithUniforms) =>
   // Inject uniforms into the params object first
   params.uniforms.uTime = this.customUniforms.uTime;
 
-  // Patch #include <common> — outside main() — for function definitions + uniform declarations
+  // Patch #include <common>. Outside main(). For function definitions + uniform declarations
   params.vertexShader = params.vertexShader.replace(
     /* glsl */ `#include <common>`,
     /* glsl */ `
@@ -105,7 +105,7 @@ material.onBeforeCompile = (params: THREE.WebGLProgramParametersWithUniforms) =>
     `,
   );
 
-  // Patch #include <beginnormal_vertex> — inside main() — to rotate objectNormal (affects lighting)
+  // Patch #include <beginnormal_vertex>. Inside main(). To rotate objectNormal (affects lighting)
   params.vertexShader = params.vertexShader.replace(
     /* glsl */ `#include <beginnormal_vertex>`,
     /* glsl */ `
@@ -114,7 +114,7 @@ material.onBeforeCompile = (params: THREE.WebGLProgramParametersWithUniforms) =>
     `,
   );
 
-  // Patch #include <begin_vertex> — inside main() — to mutate transformed (vertex position)
+  // Patch #include <begin_vertex>. Inside main(). To mutate transformed (vertex position)
   params.vertexShader = params.vertexShader.replace(
     /* glsl */ `#include <begin_vertex>`,
     /* glsl */ `
@@ -132,19 +132,19 @@ material.onBeforeCompile = (params: THREE.WebGLProgramParametersWithUniforms) =>
 | Chunk | Location | Purpose |
 |---|---|---|
 | `#include <common>` | Outside `main()` | Function definitions, uniform declarations |
-| `#include <beginnormal_vertex>` | Inside `main()` | Rotate `objectNormal` — affects lighting |
-| `#include <begin_vertex>` | Inside `main()` | Mutate `transformed` — vertex position |
+| `#include <beginnormal_vertex>` | Inside `main()` | Rotate `objectNormal`. Affects lighting |
+| `#include <begin_vertex>` | Inside `main()` | Mutate `transformed`. Vertex position |
 
-`beginnormal_vertex` runs before `begin_vertex` — declare variables (angle, matrix) in `beginnormal_vertex`, reuse in `begin_vertex`. Declaring in both = redefinition compile error.
+`beginnormal_vertex` runs before `begin_vertex`. Declare variables (angle, matrix) in `beginnormal_vertex`, reuse in `begin_vertex`. Declaring in both = redefinition compile error.
 
 ---
 
 ## Finding Injection Points
 
-When you don't know which `#include <chunkName>` to patch, or in what order chunks run relative to `main()`, don't guess — read the actual Three.js shader source:
+When you don't know which `#include <chunkName>` to patch, or in what order chunks run relative to `main()`, don't guess. Read the actual Three.js shader source:
 
-- `node_modules/three/src/renderers/shaders/ShaderLib/<material>.glsl.js` — shows the built-in material's full chunk order
-- `node_modules/three/src/renderers/shaders/ShaderChunk/<name>.glsl.js` — shows an individual chunk's source
+- `node_modules/three/src/renderers/shaders/ShaderLib/<material>.glsl.js`. Shows the built-in material's full chunk order
+- `node_modules/three/src/renderers/shaders/ShaderChunk/<name>.glsl.js`. Shows an individual chunk's source
 
 This is how `beginnormal_vertex`/`begin_vertex` get identified for a twist/deform effect on `MeshStandardMaterial`.
 

@@ -1,6 +1,6 @@
 ---
 name: partialize-persist
-description: Use when adding Zustand's persist middleware to a store — use partialize to exclude actions from what gets written to localStorage.
+description: Use when adding Zustand's persist middleware to a store. Use partialize to exclude actions from what gets written to localStorage.
 ---
 
 # Zustand Partialize with Persist

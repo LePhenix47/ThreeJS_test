@@ -1,6 +1,6 @@
 ---
 name: use-project-mixins
-description: Use when writing CSS that resembles an existing pattern — check sass/utils/_mixins.scss and use an existing mixin instead of writing repetitive CSS.
+description: Use when writing CSS that resembles an existing pattern. Check sass/utils/_mixins.scss and use an existing mixin instead of writing repetitive CSS.
 ---
 
 # Use Project Mixins

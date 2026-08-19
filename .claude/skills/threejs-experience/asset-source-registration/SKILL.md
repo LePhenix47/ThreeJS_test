@@ -1,6 +1,6 @@
 ---
 name: asset-source-registration
-description: Use when adding any new model or texture asset to the project, including a pool of interchangeable texture variants — covers the file structure, Vite import pattern, and how to register the source so Resources can load it.
+description: Use when adding any new model or texture asset to the project, including a pool of interchangeable texture variants. Covers the file structure, Vite import pattern, and how to register the source so Resources can load it.
 metadata:
   type: reference
 ---
@@ -71,7 +71,7 @@ const particles = {
 export default particles;
 ```
 
-Retrieve it as an ordered array via `resources.getTextureArray<T>(name): THREE.Texture<T>[]` — not `getTexture()`/`getTextures()`, which are for the keyed `texture` source type above.
+Retrieve it as an ordered array via `resources.getTextureArray<T>(name): THREE.Texture<T>[]`. Not `getTexture()`/`getTextures()`, which are for the keyed `texture` source type above.
 
 ## Vite import rules
 
@@ -90,7 +90,7 @@ export default models;
 
 ## Why `as const satisfies Source`
 
-- `as const` locks `name` to its literal type (`"coffee-smoke"` not `string`), so the index type can derive `ModelNames` as a string-literal union — which is what `resources.getGltf()` / `resources.getTextures()` use for type-safe key lookup
+- `as const` locks `name` to its literal type (`"coffee-smoke"` not `string`), so the index type can derive `ModelNames` as a string-literal union. Which is what `resources.getGltf()` / `resources.getTextures()` use for type-safe key lookup
 - `satisfies Source` validates the shape at compile time without widening the type
 
 ## Assets go in `public/`

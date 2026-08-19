@@ -1,6 +1,6 @@
 ---
 name: composite-entities
-description: Use when a World entity is actually composed of multiple sub-entities — a dynamically spawned/destroyed pool of same-shaped instances, or a fixed set of different entities that must share state (like one material) and render as a coordinated whole. Covers ownership rules for shared resources and how the parent coordinates children's lifecycle and per-frame updates.
+description: Use when a World entity is actually composed of multiple sub-entities. A dynamically spawned/destroyed pool of same-shaped instances, or a fixed set of different entities that must share state (like one material) and render as a coordinated whole. Covers ownership rules for shared resources and how the parent coordinates children's lifecycle and per-frame updates.
 metadata:
   type: reference
 ---
@@ -21,7 +21,7 @@ Fixed set of different entities that must share state/materials and render as on
 
 ## Pool Pattern
 
-For a dynamically-growing/shrinking set of same-shaped instances (e.g. spawned-on-click effects). A plain manager class — not itself geometry/mesh-owning — implements `Updatable` + `Destroyable`, holds an `active: T[]` array, and creates instances in response to events.
+For a dynamically-growing/shrinking set of same-shaped instances (e.g. spawned-on-click effects). A plain manager class. Not itself geometry/mesh-owning. Implements `Updatable` + `Destroyable`, holds an `active: T[]` array, and creates instances in response to events.
 
 ```typescript
 class EffectPool implements Updatable, Destroyable {
@@ -92,7 +92,7 @@ class CompositeGroup implements Updatable, Destroyable {
   public destroy(): void {
     this.partA.destroy();
     this.partB.destroy();
-    this.material.dispose(); // parent disposes what it created — once
+    this.material.dispose(); // parent disposes what it created. Once
     this.scene.remove(this.group);
   }
 }
@@ -108,12 +108,12 @@ class PartA extends MeshEntity {
   }
 
   protected setMaterial = (): void => {
-    // Material provided externally by the parent group — intentional no-op.
+    // Material provided externally by the parent group. Intentional no-op.
   };
 
   public destroy(): void {
     this.geometry.dispose();
-    // Do NOT dispose this.material — the parent owns it.
+    // Do NOT dispose this.material. The parent owns it.
   }
 }
 ```
@@ -124,7 +124,7 @@ Parent owns the shared resource(s) and injects them into each child's constructo
 
 ## Gotchas
 
-- A shared-resource child's `setMaterial()` (or whichever `setX()` owns the resource in `MeshEntity`'s contract) is legitimately a no-op — don't "fix" it into constructing its own material.
+- A shared-resource child's `setMaterial()` (or whichever `setX()` owns the resource in `MeshEntity`'s contract) is legitimately a no-op. Don't "fix" it into constructing its own material.
 - Whichever entity **creates** a shared resource is the only one that **disposes** it. A child's `destroy()` must not dispose a resource it received by reference.
-- A pool instance's `destroy()` gets called from its own `onComplete` callback, not from the manager reaching in — don't assume the manager always initiates removal.
-- Gating can be mixed inside one composite: some children built eagerly in the parent constructor, others gated behind `resources.on("textures-loaded")` in the same constructor, when only some children need external assets — see the `resources-gate` skill.
+- A pool instance's `destroy()` gets called from its own `onComplete` callback, not from the manager reaching in. Don't assume the manager always initiates removal.
+- Gating can be mixed inside one composite: some children built eagerly in the parent constructor, others gated behind `resources.on("textures-loaded")` in the same constructor, when only some children need external assets. See the `resources-gate` skill.

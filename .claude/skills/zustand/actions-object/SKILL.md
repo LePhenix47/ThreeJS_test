@@ -1,6 +1,6 @@
 ---
 name: actions-object
-description: Use when writing any Zustand store — separate actions from state into an actions object for clean organization and persistence.
+description: Use when writing any Zustand store. Separate actions from state into an actions object for clean organization and persistence.
 ---
 
 # Zustand Actions Object Pattern

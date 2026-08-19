@@ -1,6 +1,6 @@
 ---
 name: supports-feature-queries
-description: Use when using a modern CSS feature that may not be universally supported — wrap it in an @supports feature query for progressive enhancement.
+description: Use when using a modern CSS feature that may not be universally supported. Wrap it in an @supports feature query for progressive enhancement.
 ---
 
 # @supports Feature Queries
