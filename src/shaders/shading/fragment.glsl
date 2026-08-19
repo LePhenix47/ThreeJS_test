@@ -10,6 +10,7 @@ varying vec3 vModelPosition;
 
 #include ../utils/lights/ambientLight
 #include ../utils/lights/directionalLight
+#include ../utils/lights/pointLight
 
 void main() {
     vec3 color = uColor;
