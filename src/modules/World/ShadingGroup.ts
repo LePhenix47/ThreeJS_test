@@ -22,6 +22,7 @@ type ShadingGroupState = {
   uDirectionalLightPositionX: number;
   uDirectionalLightPositionY: number;
   uDirectionalLightPositionZ: number;
+  uSpecularPower: number;
 };
 
 export type ShadingEntityParams = {
@@ -50,6 +51,7 @@ class ShadingGroup implements Updatable, Destroyable {
     uDirectionalLightPositionX: 1,
     uDirectionalLightPositionY: 1,
     uDirectionalLightPositionZ: 0,
+    uSpecularPower: 20,
   };
 
   private guiRegistry: GUIStateRegistry<ShadingGroupState> | null = null;
@@ -104,6 +106,7 @@ class ShadingGroup implements Updatable, Destroyable {
       uDirectionalLightPositionX,
       uDirectionalLightPositionY,
       uDirectionalLightPositionZ,
+      uSpecularPower,
     } = this.debugDefaults;
 
     this.material = new THREE.ShaderMaterial({
@@ -128,6 +131,7 @@ class ShadingGroup implements Updatable, Destroyable {
             uDirectionalLightPositionZ,
           ),
         ),
+        uSpecularPower: new THREE.Uniform(uSpecularPower),
       },
     });
   }
@@ -240,6 +244,16 @@ class ShadingGroup implements Updatable, Destroyable {
       .step(0.01)
       .name("Position Z");
     registry.bind("uDirectionalLightPositionZ", this.updateDirectionalLightPosition);
+
+    directionalLightFolder
+      .add(state, "uSpecularPower")
+      .min(1)
+      .max(128)
+      .step(1)
+      .name("Specular Power");
+    registry.bind("uSpecularPower", (v) => {
+      this.material.uniforms.uSpecularPower.value = v;
+    });
   }
 
   public update(): void {
