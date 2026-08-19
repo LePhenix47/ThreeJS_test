@@ -1,11 +1,11 @@
 ---
 name: layered-enums
-description: Use when indexing into structured/packed numeric data (a matrix, a fixed-layout record) with a TypeScript enum — covers splitting a single flat enum into a structural layer and a semantic layer instead of hand-deriving offsets.
+description: Use when indexing into structured/packed numeric data (a matrix, a fixed-layout record) with a TypeScript enum. Covers splitting a single flat enum into a structural layer and a semantic layer instead of hand-deriving offsets.
 ---
 
 # Layered Enums
 
-A flat `X`/`Y`/`Z`-style enum stops being enough once the indexing itself is structured — e.g. reading cells out of a flattened matrix. Split it into two layers instead of hand-deriving offsets inline:
+A flat `X`/`Y`/`Z`-style enum stops being enough once the indexing itself is structured. E.g. reading cells out of a flattened matrix. Split it into two layers instead of hand-deriving offsets inline:
 
 1. A **structural enum** that names the raw layout, domain-agnostic:
 
@@ -21,7 +21,7 @@ export enum M4 {
 }
 ```
 
-2. A **semantic enum** for the specific computation, whose members alias the structural enum's values instead of restating raw numbers — naming convention `<output>_by<input>`:
+2. A **semantic enum** for the specific computation, whose members alias the structural enum's values instead of restating raw numbers. Naming convention `<output>_by<input>`:
 
 ```typescript
 // prettier-ignore
@@ -38,10 +38,10 @@ const w = m[WorldToScreen.perspW_byX] * x + m[WorldToScreen.perspW_byY] * y
 
 ## Why alias instead of writing `clipX_byX = 0` directly
 
-A bare number carries no information about what it's a position *in*. `M4.r0c0` tags the value with its shape — "cell (row 0, col 0) of a 4×4" — so the definition is checkable against `M4`'s documented layout instead of trusted on faith or re-derived by hand. Not matrix-specific: the same split applies to indexing into any packed/structured data (a struct, a fixed-layout record) where a raw offset alone doesn't say what it identifies. Same idea as a branded/nominal type — the number alone is insufficient, you also need to know *what kind* of position it is.
+A bare number carries no information about what it's a position *in*. `M4.r0c0` tags the value with its shape. "cell (row 0, col 0) of a 4×4". So the definition is checkable against `M4`'s documented layout instead of trusted on faith or re-derived by hand. Not matrix-specific: the same split applies to indexing into any packed/structured data (a struct, a fixed-layout record) where a raw offset alone doesn't say what it identifies. Same idea as a branded/nominal type. The number alone is insufficient, you also need to know *what kind* of position it is.
 
-Reach for this split once a single flat enum would need one member per meaningfully-named cell of a larger structure — the structural enum stays reusable for any same-shaped data, the semantic one documents what a specific algorithm does with it. Use `// prettier-ignore` above both so the aligned columns survive formatting.
+Reach for this split once a single flat enum would need one member per meaningfully-named cell of a larger structure. The structural enum stays reusable for any same-shaped data, the semantic one documents what a specific algorithm does with it. Use `// prettier-ignore` above both so the aligned columns survive formatting.
 
 ## Gotchas
 
-- A numeric enum's member can be initialized from another enum's member (`clipX_byX = M4.r0c0`) — this is valid TypeScript, not a typo. It resolves to a plain number at compile time; the semantic enum has zero runtime cost over the structural one.
+- A numeric enum's member can be initialized from another enum's member (`clipX_byX = M4.r0c0`). This is valid TypeScript, not a typo. It resolves to a plain number at compile time; the semantic enum has zero runtime cost over the structural one.

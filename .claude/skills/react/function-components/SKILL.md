@@ -1,6 +1,6 @@
 ---
 name: function-components
-description: Use when creating any React component — write it as a function declaration, not an arrow function.
+description: Use when creating any React component. Write it as a function declaration, not an arrow function.
 ---
 
 # React Function Components

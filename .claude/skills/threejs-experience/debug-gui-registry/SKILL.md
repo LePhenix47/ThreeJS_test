@@ -1,6 +1,6 @@
 ---
 name: debug-gui-registry
-description: Use when adding any lil-gui debug controls to a World entity — covers the GUIStateRegistry pattern, bind vs bindFinal, and cleanup.
+description: Use when adding any lil-gui debug controls to a World entity. Covers the GUIStateRegistry pattern, bind vs bindFinal, and cleanup.
 metadata:
   type: reference
 ---
@@ -12,7 +12,7 @@ metadata:
 ```typescript
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
-// 1. State type — primitive values only (string | number | boolean)
+// 1. State type. Primitive values only (string | number | boolean)
 type MyEntityState = {
   wireframe: boolean;
   color: string;
@@ -20,10 +20,10 @@ type MyEntityState = {
 };
 
 class MyEntity {
-  // 2. Registry property — null until debug is active
+  // 2. Registry property. Null until debug is active
   private guiRegistry: GUIStateRegistry<MyEntityState> | null = null;
 
-  // 3. Defaults — also used to seed setGeometry/setMaterial initial values
+  // 3. Defaults. Also used to seed setGeometry/setMaterial initial values
   private readonly debugDefaults: MyEntityState = {
     wireframe: false,
     color: "#777777",
@@ -77,7 +77,7 @@ class MyEntity {
     this.geometry.dispose();
     this.material.dispose();
     this.scene.remove(this.mesh);
-    this.guiRegistry?.dispose(); // 7. Always dispose — cancels pending sessionStorage write
+    this.guiRegistry?.dispose(); // 7. Always dispose. Cancels pending sessionStorage write
   };
 }
 ```
@@ -93,9 +93,9 @@ class MyEntity {
 
 ## Rules
 
-- `gui.add(state, key)` then `registry.bind(key, cb)` — always in this order
+- `gui.add(state, key)` then `registry.bind(key, cb)`. Always in this order
 - Storage key must be unique per entity (`"floor-gui-state"`, `"coffee-smoke-gui-state"`, etc.)
-- State type values must be primitives — no objects, no arrays
+- State type values must be primitives. No objects, no arrays
 - `guiRegistry` always initialized to `null`, set inside `addDebugFolders`
 - Dispose with `this.guiRegistry?.dispose()` in `destroy()`
 

@@ -1,6 +1,6 @@
 ---
 name: shader-uniforms
-description: Use when declaring or updating uniforms in any ShaderMaterial or onBeforeCompile material — covers naming convention, per-frame update, shared uniform refs across multiple materials, and pixel ratio.
+description: Use when declaring or updating uniforms in any ShaderMaterial or onBeforeCompile material. Covers naming convention, per-frame update, shared uniform refs across multiple materials, and pixel ratio.
 metadata:
   type: reference
 ---
@@ -30,7 +30,7 @@ protected setMaterial = (): void => {
 };
 ```
 
-Use `this.renderer.rendererPixelRatio` for point size uniforms — not `window.devicePixelRatio`.
+Use `this.renderer.rendererPixelRatio` for point size uniforms. Not `window.devicePixelRatio`.
 
 ---
 
@@ -48,29 +48,29 @@ Access time via `private get time() { return this.experience!.time; }`.
 
 ## Shared Uniforms Across Multiple Materials
 
-When the same uniform must stay in sync across several materials (e.g. Human — body + shadow + outline):
+When the same uniform must stay in sync across several materials (e.g. Human. Body + shadow + outline):
 
 ```typescript
-// Class property — single object, all materials reference the same { value } wrapper
+// Class property. Single object, all materials reference the same { value } wrapper
 protected readonly customUniforms: THREE.ShaderMaterialProperties["uniforms"] = {
   uTime: { value: 0 },
   uAmplitude: { value: 0.5 },
   uFrequency: { value: 0 },
 };
 
-// In each onBeforeCompile — assign by reference, not by value copy
+// In each onBeforeCompile. Assign by reference, not by value copy
 material.onBeforeCompile = (params) => {
   params.uniforms.uTime = this.customUniforms.uTime;       // shared ref
   params.uniforms.uAmplitude = this.customUniforms.uAmplitude;
 };
 
-// In update() — single write updates all materials
+// In update(). Single write updates all materials
 public update = (): void => {
   this.customUniforms.uTime.value = this.time.elapsedSeconds;
 };
 ```
 
-Assigning `params.uniforms.uTime = this.customUniforms.uTime` shares the `{ value }` object by reference. Mutating `.value` propagates to every material that holds that ref — no need to update each material separately.
+Assigning `params.uniforms.uTime = this.customUniforms.uTime` shares the `{ value }` object by reference. Mutating `.value` propagates to every material that holds that ref. No need to update each material separately.
 
 ---
 
@@ -115,7 +115,7 @@ public destroy(): void {
 
 ## Resize-Reactive Uniforms
 
-Any uniform derived from canvas size (`uResolution`, aspect-dependent point scaling) must resubscribe on resize and recompute — setting it once in `setMaterial()` is not enough, since the value goes stale the moment the window changes size.
+Any uniform derived from canvas size (`uResolution`, aspect-dependent point scaling) must resubscribe on resize and recompute. Setting it once in `setMaterial()` is not enough, since the value goes stale the moment the window changes size.
 
 ```typescript
 constructor() {

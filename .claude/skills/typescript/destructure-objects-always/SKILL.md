@@ -1,6 +1,6 @@
 ---
 name: destructure-objects-always
-description: Use when accessing the same object's properties more than once in TypeScript — destructure it instead of repeated dot access.
+description: Use when accessing the same object's properties more than once in TypeScript. Destructure it instead of repeated dot access.
 ---
 
 # Always Destructure Objects

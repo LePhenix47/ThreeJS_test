@@ -1,13 +1,13 @@
 ---
 name: web-worker-offload
-description: Use when asked to move per-frame CPU-bound computation (physics, layout, clustering math) into a Web Worker — covers the Manager+Worker class pairing, typed discriminated-union message protocol, and the transferable-buffer copy rule. Not a decision aid for whether to use a worker — only for how to structure one once requested.
+description: Use when asked to move per-frame CPU-bound computation (physics, layout, clustering math) into a Web Worker. Covers the Manager+Worker class pairing, typed discriminated-union message protocol, and the transferable-buffer copy rule. Not a decision aid for whether to use a worker. Only for how to structure one once requested.
 metadata:
   type: reference
 ---
 
 # Web Worker Offload
 
-Not a "should I use a worker" heuristic — this pattern applies once a Web Worker version of something has already been requested (e.g. "move this layout/physics calc into a worker"). At that point, follow this structure rather than improvising one from scratch.
+Not a "should I use a worker" heuristic. This pattern applies once a Web Worker version of something has already been requested (e.g. "move this layout/physics calc into a worker"). At that point, follow this structure rather than improvising one from scratch.
 
 ## Manager + Worker Pairing
 
@@ -75,5 +75,5 @@ self.onmessage = ({ data }: MessageEvent<WorkerInboundMessage>) => {
 
 ## Boundaries
 
-- Data sent to the worker must be plain, transferable buffers that are **copies** — never hand a live Three.js geometry buffer to `postMessage`'s `transfer` list, or Three.js loses its own view of that memory.
-- A worker has no GPU/Three.js API access — only the CPU-side math (layout, physics, clustering) moves into it. Results get posted back and applied to Three.js objects on the main thread.
+- Data sent to the worker must be plain, transferable buffers that are **copies**. Never hand a live Three.js geometry buffer to `postMessage`'s `transfer` list, or Three.js loses its own view of that memory.
+- A worker has no GPU/Three.js API access. Only the CPU-side math (layout, physics, clustering) moves into it. Results get posted back and applied to Three.js objects on the main thread.

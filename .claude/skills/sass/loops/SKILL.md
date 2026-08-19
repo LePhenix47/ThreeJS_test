@@ -1,6 +1,6 @@
 ---
 name: loops
-description: Use when a CSS pattern repeats across a known set of values in SASS — generate it with @for/@each/@while instead of writing it out by hand.
+description: Use when a CSS pattern repeats across a known set of values in SASS. Generate it with @for/@each/@while instead of writing it out by hand.
 ---
 
 # SASS Loops

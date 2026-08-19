@@ -1,6 +1,6 @@
 ---
 name: particle-buffer-geometry
-description: Use when hand-writing Float32Array buffer attributes for a particle system (positions, colors, custom per-vertex attributes) — covers indexing components by name instead of magic numbers, deriving stride, keeping placement/distribution math as pure functions, and resolving GUI-state vs defaults.
+description: Use when hand-writing Float32Array buffer attributes for a particle system (positions, colors, custom per-vertex attributes). Covers indexing components by name instead of magic numbers, deriving stride, keeping placement/distribution math as pure functions, and resolving GUI-state vs defaults.
 metadata:
   type: reference
 ---
@@ -24,7 +24,7 @@ Add a new enum to that file for any other fixed-component buffer (e.g. UV `S`/`T
 ```typescript
 import Enum from "@/utils/enums";
 
-const stride: number = Enum.length(SpaceEnum); // 3 — don't hardcode it
+const stride: number = Enum.length(SpaceEnum); // 3. Don't hardcode it
 const positions = new Float32Array(count * stride);
 ```
 
@@ -32,7 +32,7 @@ const positions = new Float32Array(count * stride);
 
 ## Keep Placement Math as Pure Functions
 
-Distribution math (sphere sampling, scatter, falloff curves) belongs in standalone pure functions under `src/utils/placement/*.ts` returning `{x, y, z}` — not inlined in the entity's `setGeometry()`. This keeps the math reusable across any particle entity and easy to reason about in isolation from Three.js/GUI concerns.
+Distribution math (sphere sampling, scatter, falloff curves) belongs in standalone pure functions under `src/utils/placement/*.ts` returning `{x, y, z}`. Not inlined in the entity's `setGeometry()`. This keeps the math reusable across any particle entity and easy to reason about in isolation from Three.js/GUI concerns.
 
 ```typescript
 // src/utils/placement/sphere-placement.ts
@@ -62,5 +62,5 @@ protected setGeometry = (): void => {
 
 ## Gotchas
 
-- `SpaceEnum`/`ColorEnum` members are declared as string literals (`"X"`, `"Y"`, `"Z"`) inside a numeric enum purely for readability — they still resolve to plain numeric indices at runtime, so `positions[i3 + SpaceEnum.X]` is exactly `positions[i3 + 0]`.
-- `Enum.length()` counts only non-numeric keys (it filters out the reverse-mapping entries TypeScript numeric enums generate) — safe to use for stride, don't hand-roll a count.
+- `SpaceEnum`/`ColorEnum` members are declared as string literals (`"X"`, `"Y"`, `"Z"`) inside a numeric enum purely for readability. They still resolve to plain numeric indices at runtime, so `positions[i3 + SpaceEnum.X]` is exactly `positions[i3 + 0]`.
+- `Enum.length()` counts only non-numeric keys (it filters out the reverse-mapping entries TypeScript numeric enums generate). Safe to use for stride, don't hand-roll a count.

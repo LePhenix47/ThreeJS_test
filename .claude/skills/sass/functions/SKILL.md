@@ -1,6 +1,6 @@
 ---
 name: functions
-description: Use when a value calculation or transformation repeats across SASS files — extract it into a SASS @function instead of duplicating it.
+description: Use when a value calculation or transformation repeats across SASS files. Extract it into a SASS @function instead of duplicating it.
 ---
 
 # SASS Functions

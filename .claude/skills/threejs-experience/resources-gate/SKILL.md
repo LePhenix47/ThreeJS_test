@@ -1,6 +1,6 @@
 ---
 name: resources-gate
-description: Use when adding or constructing any World entity in World.ts — determines whether to gate construction behind the resources event or build directly in the constructor.
+description: Use when adding or constructing any World entity in World.ts. Determines whether to gate construction behind the resources event or build directly in the constructor.
 metadata:
   type: reference
 ---
@@ -36,20 +36,20 @@ constructor() {
   this.experience = Experience.instance;
   if (!this.experience) throw new Error("Experience instance not found");
 
-  // Entities with external assets — wait for ALL resources to load
+  // Entities with external assets. Wait for ALL resources to load
   this.resources.on("textures-loaded", () => {
     this.floor = new Floor();
     this.fox = new Fox();
-    this.environment = new Environment(); // ORDER MATTERS — env last if it applies env map
+    this.environment = new Environment(); // ORDER MATTERS. Env last if it applies env map
   });
 
-  // Entities with no external assets — safe to construct immediately
+  // Entities with no external assets. Safe to construct immediately
   this.shaderPlane = new ShaderPlane();
 }
 ```
 
 ## Key facts
 
-- `"textures-loaded"` is the **only** event Resources emits. The name is a misnomer — it fires when ALL resource types finish loading (GLTFs, textures, cube textures, HDR). There is no separate `"gltfs-loaded"`.
-- Resources starts loading in its constructor (before World is created). The `"textures-loaded"` listener registered in `World` constructor is always registered before the event fires — safe ordering guaranteed.
+- `"textures-loaded"` is the **only** event Resources emits. The name is a misnomer. It fires when ALL resource types finish loading (GLTFs, textures, cube textures, HDR). There is no separate `"gltfs-loaded"`.
+- Resources starts loading in its constructor (before World is created). The `"textures-loaded"` listener registered in `World` constructor is always registered before the event fires. Safe ordering guaranteed.
 - Entity properties that are gated must be typed as optional: `public floor?: Floor`. Update and destroy must use optional chaining: `this.floor?.update()`, `this.floor?.destroy()`.

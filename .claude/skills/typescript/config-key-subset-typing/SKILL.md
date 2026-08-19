@@ -7,7 +7,7 @@ description: Use when a config or lookup object must type-check its keys against
 
 ## Rule
 
-When a config/lookup object must only cover a *subset* of another type's keys — and stay in sync if that type changes — type it against that subset instead of re-declaring the key union by hand.
+When a config/lookup object must only cover a *subset* of another type's keys. And stay in sync if that type changes. Type it against that subset instead of re-declaring the key union by hand.
 
 ```typescript
 export type ObjectKeysExtract<T extends object, K extends keyof T> = keyof Pick<T, K>;
@@ -44,4 +44,4 @@ const CONFIG: Record<ConfigKey, { min: number; max: number }> = {
 };
 ```
 
-Nothing catches it if `Options.position` gets renamed to `Options.origin` — `CONFIG.position` keeps compiling against a field that no longer exists.
+Nothing catches it if `Options.position` gets renamed to `Options.origin`. `CONFIG.position` keeps compiling against a field that no longer exists.

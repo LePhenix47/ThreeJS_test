@@ -1,6 +1,6 @@
 ---
 name: custom-hooks
-description: Use when a Zustand store value is read in more than one component — create a custom selector hook for it instead of inlining the selector.
+description: Use when a Zustand store value is read in more than one component. Create a custom selector hook for it instead of inlining the selector.
 ---
 
 # Zustand Custom Selector Hooks

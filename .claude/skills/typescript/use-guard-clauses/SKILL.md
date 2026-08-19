@@ -1,6 +1,6 @@
 ---
 name: use-guard-clauses
-description: Use when a TypeScript function's logic would otherwise nest inside if statements — use guard clauses (early returns) instead.
+description: Use when a TypeScript function's logic would otherwise nest inside if statements. Use guard clauses (early returns) instead.
 ---
 
 # Use Guard Clauses

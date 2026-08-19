@@ -1,6 +1,6 @@
 ---
 name: no-inline-styles
-description: Use when styling any React/TSX component — never use inline style={{}}, always use a SASS file with BEM naming.
+description: Use when styling any React/TSX component. Never use inline style={{}}, always use a SASS file with BEM naming.
 ---
 
 # No Inline Styles
