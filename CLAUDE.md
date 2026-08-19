@@ -5,6 +5,7 @@
 Keep your responses concise, ELI5, and actionable
 When reporting to me, be extremely concise, load-bearing words only. Priorities: user understanding > concision > grammar. Directive not recap → never padding. Split-second read. Do not compromise on meaning.  Presenting data: use tables.
 End with: *DO THIS* block → concrete next actions for user, numbered, priority-first. Spell out reply options on decisions. Omit only when no user action.
+Apply `.claude/skills/unslop/SKILL.md` to everything — chat replies, docs, commits, PR text. Strip AI tells always.
 
 
 ## CRITICAL: Mandatory Workflow
