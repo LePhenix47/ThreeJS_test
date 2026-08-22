@@ -32,6 +32,20 @@ protected setMaterial = (): void => {
 
 Use `this.renderer.rendererPixelRatio` for point size uniforms. Not `window.devicePixelRatio`.
 
+For a non-primitive value (`THREE.Color`, `THREE.Vector2/3/4`, a texture), use the `{ value: ... }` object literal, not `new THREE.Uniform(...)`. A constructor call nested inside another constructor call reads worse than a plain object property:
+
+```typescript
+// ✅ { value } — the constructor call reads as one thing, not nested inside another
+uColor: { value: new THREE.Color(color) },
+uLightPosition: { value: new THREE.Vector3(x, y, z) },
+
+// ❌ new THREE.Uniform(...) wrapping a non-primitive constructor call
+uColor: new THREE.Uniform(new THREE.Color(color)),
+uLightPosition: new THREE.Uniform(new THREE.Vector3(x, y, z)),
+```
+
+Both compile to the exact same shape (`THREE.Uniform` is just `{ value }` with a constructor), this is purely a readability rule. Primitive values (`number`, `boolean`) can use either — `new THREE.Uniform(x)` or `{ value: x }` — no nested-constructor problem there.
+
 ---
 
 ## Per-Frame Update in update()
