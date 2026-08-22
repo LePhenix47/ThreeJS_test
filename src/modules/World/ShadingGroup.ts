@@ -137,38 +137,40 @@ class ShadingGroup implements Updatable, Destroyable {
       vertexShader,
       fragmentShader,
       uniforms: {
-        uColor: new THREE.Uniform(new THREE.Color(uColor)),
-        uAmbientLightColor: new THREE.Uniform(
-          new THREE.Color(uAmbientLightColor),
-        ),
+        uColor: {
+          value: new THREE.Color(uColor),
+        },
+        uAmbientLightColor: {
+          value: new THREE.Color(uAmbientLightColor),
+        },
         uAmbientLightIntensity: new THREE.Uniform(uAmbientLightIntensity),
-        uDirectionalLightColor: new THREE.Uniform(
-          new THREE.Color(uDirectionalLightColor),
-        ),
+        uDirectionalLightColor: {
+          value: new THREE.Color(uDirectionalLightColor),
+        },
         uDirectionalLightIntensity: new THREE.Uniform(
           uDirectionalLightIntensity,
         ),
-        uDirectionalLightPosition: new THREE.Uniform(
-          new THREE.Vector3(
+        uDirectionalLightPosition: {
+          value: new THREE.Vector3(
             uDirectionalLightPositionX,
             uDirectionalLightPositionY,
             uDirectionalLightPositionZ,
           ),
+        },
+        uDirectionalLightSpecularPower: new THREE.Uniform(
+          uDirectionalLightSpecularPower,
         ),
-        uPointLight1Color: new THREE.Uniform(
-          new THREE.Color(uPointLight1Color),
-        ),
+        uPointLight1Color: {
+          value: new THREE.Color(uPointLight1Color),
+        },
         uPointLight1Intensity: new THREE.Uniform(uPointLight1Intensity),
-        uPointLight1Position: new THREE.Uniform(
-          new THREE.Vector3(
+        uPointLight1Position: {
+          value: new THREE.Vector3(
             uPointLight1PositionX,
             uPointLight1PositionY,
             uPointLight1PositionZ,
           ),
-        ),
-        uDirectionalLightSpecularPower: new THREE.Uniform(
-          uDirectionalLightSpecularPower,
-        ),
+        },
         uPointLight1SpecularPower: new THREE.Uniform(uPointLight1SpecularPower),
         uPointLight1DecayAttenuation: new THREE.Uniform(
           uPointLight1DecayAttenuation,
