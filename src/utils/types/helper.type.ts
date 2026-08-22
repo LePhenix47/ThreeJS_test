@@ -19,3 +19,6 @@ export type NonFunctionProperties<T extends object> = {
  * type Mode = LooseAutocomplete<"development" | "production">;
  */
 export type LooseAutocomplete<T extends string> = T | (string & {});
+
+/** A JSON-serializable, GUI/storage-friendly scalar — the only value shapes lil-gui controls and sessionStorage persistence can round-trip. */
+export type Primitive = string | number | boolean;
