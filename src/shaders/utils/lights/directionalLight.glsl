@@ -1,5 +1,5 @@
-vec3 directionalLight(vec3 color, float intensity, vec3 normal, vec3 position, vec3 viewDirection, float specularPower) {
-    vec3 direction = normalize(position);
+vec3 directionalLight(vec3 color, float intensity, vec3 normal, vec3 lightPosition, vec3 viewDirection, float specularPower) {
+    vec3 direction = normalize(lightPosition);
     // ? we want reflection from light to surface, not other way around, so we flip the direction
     vec3 reflection = reflect(-1.0 * direction, normal);
 
