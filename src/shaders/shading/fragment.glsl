@@ -27,7 +27,7 @@ void main() {
     vec3 light = uAmbientLightColor;
     light += ambientLight(color, uAmbientLightIntensity);
     light += directionalLight(uDirectionalLightColor, uDirectionalLightIntensity, normal, uDirectionalLightPosition, directionOfView, uDirectionalLightSpecularPower);
-    // light += pointLight(uPointLight1Color, uPointLight1Intensity, normal, uPointLight1Position, directionOfView, uDirectionalLightSpecularPower, vModelPosition);
+    light += pointLight(uPointLight1Color, uPointLight1Intensity, normal, uPointLight1Position, directionOfView, uDirectionalLightSpecularPower, vModelPosition, 0.25);
 
     color *= light;
 
