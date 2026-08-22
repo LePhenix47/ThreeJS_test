@@ -12,6 +12,7 @@ import ShadingTorusKnot from "./ShadingTorusKnot";
 import ShadingSphere from "./ShadingSphere";
 import ShadingSuzanne from "./ShadingSuzanne";
 import DirectionalLightHelper from "./DirectionalLightHelper";
+import PointLightHelper from "./PointLightHelper";
 
 type ShadingGroupState = {
   uColor: string;
@@ -22,6 +23,11 @@ type ShadingGroupState = {
   uDirectionalLightPositionX: number;
   uDirectionalLightPositionY: number;
   uDirectionalLightPositionZ: number;
+  uPointLight1Color: string;
+  uPointLight1Intensity: number;
+  uPointLight1PositionX: number;
+  uPointLight1PositionY: number;
+  uPointLight1PositionZ: number;
   uSpecularPower: number;
 };
 
@@ -41,6 +47,7 @@ class ShadingGroup implements Updatable, Destroyable {
   private sphere: ShadingSphere;
   private suzanne?: ShadingSuzanne;
   private directionalLightHelper: DirectionalLightHelper;
+  private pointLightHelper1: PointLightHelper;
 
   private readonly debugDefaults: ShadingGroupState = {
     uColor: "#ffffff",
@@ -51,6 +58,11 @@ class ShadingGroup implements Updatable, Destroyable {
     uDirectionalLightPositionX: 1,
     uDirectionalLightPositionY: 1,
     uDirectionalLightPositionZ: 0,
+    uPointLight1Color: `#${new THREE.Color(1, 0.1, 0.1).getHexString()}`,
+    uPointLight1Intensity: 1,
+    uPointLight1PositionX: 0,
+    uPointLight1PositionY: 2.5,
+    uPointLight1PositionZ: 0,
     uSpecularPower: 20,
   };
 
@@ -90,6 +102,7 @@ class ShadingGroup implements Updatable, Destroyable {
     });
 
     this.setDirectionalLightHelper();
+    this.setPointLightHelper1();
 
     if (this.debug?.isActive) this.addDebugFolders();
 
@@ -106,6 +119,11 @@ class ShadingGroup implements Updatable, Destroyable {
       uDirectionalLightPositionX,
       uDirectionalLightPositionY,
       uDirectionalLightPositionZ,
+      uPointLight1Color,
+      uPointLight1Intensity,
+      uPointLight1PositionX,
+      uPointLight1PositionY,
+      uPointLight1PositionZ,
       uSpecularPower,
     } = this.debugDefaults;
 
@@ -129,6 +147,15 @@ class ShadingGroup implements Updatable, Destroyable {
             uDirectionalLightPositionX,
             uDirectionalLightPositionY,
             uDirectionalLightPositionZ,
+          ),
+        ),
+        uPointLight1Color: new THREE.Uniform(new THREE.Color(uPointLight1Color)),
+        uPointLight1Intensity: new THREE.Uniform(uPointLight1Intensity),
+        uPointLight1Position: new THREE.Uniform(
+          new THREE.Vector3(
+            uPointLight1PositionX,
+            uPointLight1PositionY,
+            uPointLight1PositionZ,
           ),
         ),
         uSpecularPower: new THREE.Uniform(uSpecularPower),
@@ -167,6 +194,34 @@ class ShadingGroup implements Updatable, Destroyable {
     directionalLightHelper.setColor(uDirectionalLightColor);
 
     this.directionalLightHelper = directionalLightHelper;
+  }
+
+  /** Same shape as updateDirectionalLightPosition, for point light 1's position. */
+  private updatePointLight1Position = (): void => {
+    const { uPointLight1PositionX: x, uPointLight1PositionY: y, uPointLight1PositionZ: z } =
+      this.guiRegistry?.state ?? this.debugDefaults;
+    const position = new THREE.Vector3(x, y, z);
+
+    this.material.uniforms.uPointLight1Position.value.copy(position);
+    this.pointLightHelper1.setPosition(position);
+  };
+
+  private setPointLightHelper1(): void {
+    const {
+      uPointLight1Color,
+      uPointLight1PositionX: x,
+      uPointLight1PositionY: y,
+      uPointLight1PositionZ: z,
+    } = this.guiRegistry?.state || this.debugDefaults;
+
+    const pointLightHelper1 = new PointLightHelper();
+
+    const position = new THREE.Vector3(x, y, z);
+
+    pointLightHelper1.setPosition(position);
+    pointLightHelper1.setColor(uPointLight1Color);
+
+    this.pointLightHelper1 = pointLightHelper1;
   }
 
   private addDebugFolders(): void {
@@ -254,6 +309,48 @@ class ShadingGroup implements Updatable, Destroyable {
     registry.bind("uSpecularPower", (v) => {
       this.material.uniforms.uSpecularPower.value = v;
     });
+
+    const pointLight1Folder = folder.addFolder("Point Light 1");
+
+    pointLight1Folder.addColor(state, "uPointLight1Color").name("Color");
+    registry.bind("uPointLight1Color", (v) => {
+      this.material.uniforms.uPointLight1Color.value.set(v);
+      this.pointLightHelper1.setColor(v);
+    });
+
+    pointLight1Folder
+      .add(state, "uPointLight1Intensity")
+      .min(0)
+      .max(5)
+      .step(0.001)
+      .name("Intensity");
+    registry.bind("uPointLight1Intensity", (v) => {
+      this.material.uniforms.uPointLight1Intensity.value = v;
+    });
+
+    pointLight1Folder
+      .add(state, "uPointLight1PositionX")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Position X");
+    registry.bind("uPointLight1PositionX", this.updatePointLight1Position);
+
+    pointLight1Folder
+      .add(state, "uPointLight1PositionY")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Position Y");
+    registry.bind("uPointLight1PositionY", this.updatePointLight1Position);
+
+    pointLight1Folder
+      .add(state, "uPointLight1PositionZ")
+      .min(-5)
+      .max(5)
+      .step(0.01)
+      .name("Position Z");
+    registry.bind("uPointLight1PositionZ", this.updatePointLight1Position);
   }
 
   public update(): void {
@@ -271,6 +368,7 @@ class ShadingGroup implements Updatable, Destroyable {
     this.sphere.destroy();
     this.suzanne?.destroy();
     this.directionalLightHelper.destroy();
+    this.pointLightHelper1.destroy();
     this.material.dispose();
     this.scene.remove(this.group);
     this.guiRegistry?.dispose();
