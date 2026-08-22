@@ -22,3 +22,7 @@ export type LooseAutocomplete<T extends string> = T | (string & {});
 
 /** A JSON-serializable, GUI/storage-friendly scalar — the only value shapes lil-gui controls and sessionStorage persistence can round-trip. */
 export type Primitive = string | number | boolean;
+
+export type PrimitiveProperties<T extends object> = {
+  [K in keyof T as T[K] extends Primitive ? K : never]: T[K];
+};
