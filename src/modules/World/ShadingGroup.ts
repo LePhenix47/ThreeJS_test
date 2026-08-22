@@ -28,7 +28,7 @@ type ShadingGroupState = {
   uPointLight1PositionX: number;
   uPointLight1PositionY: number;
   uPointLight1PositionZ: number;
-  uSpecularPower: number;
+  uDirectionalLightSpecularPower: number;
 };
 
 export type ShadingEntityParams = {
@@ -63,7 +63,7 @@ class ShadingGroup implements Updatable, Destroyable {
     uPointLight1PositionX: 0,
     uPointLight1PositionY: 2.5,
     uPointLight1PositionZ: 0,
-    uSpecularPower: 20,
+    uDirectionalLightSpecularPower: 20,
   };
 
   private guiRegistry: GUIStateRegistry<ShadingGroupState> | null = null;
@@ -124,7 +124,7 @@ class ShadingGroup implements Updatable, Destroyable {
       uPointLight1PositionX,
       uPointLight1PositionY,
       uPointLight1PositionZ,
-      uSpecularPower,
+      uDirectionalLightSpecularPower,
     } = this.debugDefaults;
 
     this.material = new THREE.ShaderMaterial({
@@ -149,7 +149,9 @@ class ShadingGroup implements Updatable, Destroyable {
             uDirectionalLightPositionZ,
           ),
         ),
-        uPointLight1Color: new THREE.Uniform(new THREE.Color(uPointLight1Color)),
+        uPointLight1Color: new THREE.Uniform(
+          new THREE.Color(uPointLight1Color),
+        ),
         uPointLight1Intensity: new THREE.Uniform(uPointLight1Intensity),
         uPointLight1Position: new THREE.Uniform(
           new THREE.Vector3(
@@ -158,7 +160,9 @@ class ShadingGroup implements Updatable, Destroyable {
             uPointLight1PositionZ,
           ),
         ),
-        uSpecularPower: new THREE.Uniform(uSpecularPower),
+        uDirectionalLightSpecularPower: new THREE.Uniform(
+          uDirectionalLightSpecularPower,
+        ),
       },
     });
   }
@@ -170,8 +174,11 @@ class ShadingGroup implements Updatable, Destroyable {
    * the single changed value `bind()` hands it and re-reads all 3 current axes instead.
    */
   private updateDirectionalLightPosition = (): void => {
-    const { uDirectionalLightPositionX: x, uDirectionalLightPositionY: y, uDirectionalLightPositionZ: z } =
-      this.guiRegistry?.state ?? this.debugDefaults;
+    const {
+      uDirectionalLightPositionX: x,
+      uDirectionalLightPositionY: y,
+      uDirectionalLightPositionZ: z,
+    } = this.guiRegistry?.state ?? this.debugDefaults;
     const position = new THREE.Vector3(x, y, z);
 
     this.material.uniforms.uDirectionalLightPosition.value.copy(position);
@@ -198,8 +205,11 @@ class ShadingGroup implements Updatable, Destroyable {
 
   /** Same shape as updateDirectionalLightPosition, for point light 1's position. */
   private updatePointLight1Position = (): void => {
-    const { uPointLight1PositionX: x, uPointLight1PositionY: y, uPointLight1PositionZ: z } =
-      this.guiRegistry?.state ?? this.debugDefaults;
+    const {
+      uPointLight1PositionX: x,
+      uPointLight1PositionY: y,
+      uPointLight1PositionZ: z,
+    } = this.guiRegistry?.state ?? this.debugDefaults;
     const position = new THREE.Vector3(x, y, z);
 
     this.material.uniforms.uPointLight1Position.value.copy(position);
@@ -282,7 +292,10 @@ class ShadingGroup implements Updatable, Destroyable {
       .max(5)
       .step(0.01)
       .name("Position X");
-    registry.bind("uDirectionalLightPositionX", this.updateDirectionalLightPosition);
+    registry.bind(
+      "uDirectionalLightPositionX",
+      this.updateDirectionalLightPosition,
+    );
 
     directionalLightFolder
       .add(state, "uDirectionalLightPositionY")
@@ -290,7 +303,10 @@ class ShadingGroup implements Updatable, Destroyable {
       .max(5)
       .step(0.01)
       .name("Position Y");
-    registry.bind("uDirectionalLightPositionY", this.updateDirectionalLightPosition);
+    registry.bind(
+      "uDirectionalLightPositionY",
+      this.updateDirectionalLightPosition,
+    );
 
     directionalLightFolder
       .add(state, "uDirectionalLightPositionZ")
@@ -298,16 +314,19 @@ class ShadingGroup implements Updatable, Destroyable {
       .max(5)
       .step(0.01)
       .name("Position Z");
-    registry.bind("uDirectionalLightPositionZ", this.updateDirectionalLightPosition);
+    registry.bind(
+      "uDirectionalLightPositionZ",
+      this.updateDirectionalLightPosition,
+    );
 
     directionalLightFolder
-      .add(state, "uSpecularPower")
+      .add(state, "uDirectionalLightSpecularPower")
       .min(1)
       .max(128)
       .step(1)
       .name("Specular Power");
-    registry.bind("uSpecularPower", (v) => {
-      this.material.uniforms.uSpecularPower.value = v;
+    registry.bind("uDirectionalLightSpecularPower", (v) => {
+      this.material.uniforms.uDirectionalLightSpecularPower.value = v;
     });
 
     const pointLight1Folder = folder.addFolder("Point Light 1");

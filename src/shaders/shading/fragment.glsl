@@ -1,10 +1,15 @@
 uniform vec3 uColor;
 uniform vec3 uAmbientLightColor;
-uniform vec3 uDirectionalLightColor;
 uniform float uAmbientLightIntensity;
+
+uniform vec3 uDirectionalLightColor;
 uniform float uDirectionalLightIntensity;
 uniform vec3 uDirectionalLightPosition;
-uniform float uSpecularPower;
+uniform float uDirectionalLightSpecularPower;
+
+uniform vec3 uPointLight1Color;
+uniform vec3 uPointLight1Position;
+uniform float uPointLight1Intensity;
 
 varying vec3 vNormal;
 varying vec3 vModelPosition;
@@ -21,7 +26,8 @@ void main() {
 
     vec3 light = uAmbientLightColor;
     light += ambientLight(color, uAmbientLightIntensity);
-    light += directionalLight(uDirectionalLightColor, uDirectionalLightIntensity, normal, uDirectionalLightPosition, directionOfView, uSpecularPower);
+    light += directionalLight(uDirectionalLightColor, uDirectionalLightIntensity, normal, uDirectionalLightPosition, directionOfView, uDirectionalLightSpecularPower);
+    // light += pointLight(uPointLight1Color, uPointLight1Intensity, normal, uPointLight1Position, directionOfView, uDirectionalLightSpecularPower, vModelPosition);
 
     color *= light;
 
