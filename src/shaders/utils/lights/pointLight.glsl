@@ -1,4 +1,4 @@
-vec3 pointLight(vec3 color, float intensity, vec3 normal, vec3 lightPosition, vec3 viewDirection, float specularPower, vec3 modelPosition) {
+vec3 pointLight(vec3 color, float intensity, vec3 normal, vec3 lightPosition, vec3 viewDirection, float specularPower, vec3 modelPosition, float decayAttenuation) {
     // ? Vector going from the model to the light source
     vec3 lightDelta = lightPosition - modelPosition;
     vec3 direction = normalize(lightDelta);
@@ -18,6 +18,11 @@ vec3 pointLight(vec3 color, float intensity, vec3 normal, vec3 lightPosition, ve
     specular = max(0.0, specular); // ? same as shading
     specular = pow(specular, specularPower);
 
-    return color * intensity * (shading + specular);
+    // * Decay
+    float distance = length(lightDelta);
+    float decay = 1.0 - distance * decayAttenuation; // ? Attenuates the decay
+    decay = max(0.0, decay);
+
+    return color * intensity * decay * (shading + specular);
     // return vec3(specular);
 }
