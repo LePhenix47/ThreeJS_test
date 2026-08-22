@@ -33,6 +33,45 @@ type ShadingGroupState = {
   uDirectionalLightSpecularPower: number;
 };
 
+type UniformValue<T> = THREE.IUniform<T>;
+
+/**
+ * Shape of `this.material.uniforms`, so `this.material.uniforms.uX.value` autocompletes and
+ * type-checks. Scalar uniforms reuse their matching ShadingGroupState key's type instead of
+ * restating `number` by hand. Color/Vector3 uniforms can't be derived the same way (state
+ * stores a color as a hex string and a position as 3 separate scalars), so those stay hand-typed.
+ */
+type ShadingUniforms = {
+  uColor: UniformValue<THREE.Color>;
+  uAmbientLightColor: UniformValue<THREE.Color>;
+  uAmbientLightIntensity: UniformValue<
+    ShadingGroupState["uAmbientLightIntensity"]
+  >;
+  uDirectionalLightColor: UniformValue<THREE.Color>;
+  uDirectionalLightIntensity: UniformValue<
+    ShadingGroupState["uDirectionalLightIntensity"]
+  >;
+  uDirectionalLightPosition: UniformValue<THREE.Vector3>;
+  uDirectionalLightSpecularPower: UniformValue<
+    ShadingGroupState["uDirectionalLightSpecularPower"]
+  >;
+  uPointLight1Color: UniformValue<THREE.Color>;
+  uPointLight1Intensity: UniformValue<
+    ShadingGroupState["uPointLight1Intensity"]
+  >;
+  uPointLight1Position: UniformValue<THREE.Vector3>;
+  uPointLight1SpecularPower: UniformValue<
+    ShadingGroupState["uPointLight1SpecularPower"]
+  >;
+  uPointLight1DecayAttenuation: UniformValue<
+    ShadingGroupState["uPointLight1DecayAttenuation"]
+  >;
+};
+
+type MappedShading<T extends object> = {
+  [K in keyof T]: UniformValue<T[K]>;
+};
+
 export type ShadingEntityParams = {
   material: THREE.ShaderMaterial;
   group: THREE.Group;
@@ -41,7 +80,7 @@ export type ShadingEntityParams = {
 class ShadingGroup implements Updatable, Destroyable {
   private readonly experience: Experience | null;
 
-  private material: THREE.ShaderMaterial;
+  private material: THREE.ShaderMaterial & { uniforms: ShadingUniforms };
 
   public group: THREE.Group;
 
@@ -176,7 +215,7 @@ class ShadingGroup implements Updatable, Destroyable {
           uPointLight1DecayAttenuation,
         ),
       },
-    });
+    }) as THREE.ShaderMaterial & { uniforms: ShadingUniforms };
   }
 
   /**
