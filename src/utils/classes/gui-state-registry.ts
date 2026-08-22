@@ -1,6 +1,7 @@
 import { WebStorage } from "@lephenix47/webstorage-utility";
+import { Primitive } from "@utils/types/helper.type";
+import { isPrimitive } from "@utils/objects/primitive";
 
-type Primitive = string | number | boolean;
 type StateKey<TState> = keyof TState & string;
 
 /**
@@ -10,10 +11,6 @@ type StateKey<TState> = keyof TState & string;
 type LinkedCallbackMap<T extends Record<string, Primitive>> = Partial<{
   [K in keyof T & string]: (value: T[K]) => void;
 }>;
-
-function isPrimitive(value: unknown): value is Primitive {
-  return ["string", "number", "boolean"].includes(typeof value);
-}
 
 class GUIStateRegistry<T extends Record<string, Primitive>> {
   /**
