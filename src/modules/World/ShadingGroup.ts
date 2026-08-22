@@ -13,6 +13,7 @@ import ShadingSphere from "./ShadingSphere";
 import ShadingSuzanne from "./ShadingSuzanne";
 import DirectionalLightHelper from "./DirectionalLightHelper";
 import PointLightHelper from "./PointLightHelper";
+import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
 type ShadingGroupState = {
   uColor: string;
@@ -37,10 +38,6 @@ type ShadingGroupState = {
   uPointLight1SpecularPower: number;
   uPointLight1DecayAttenuation: number;
   uDirectionalLightSpecularPower: number;
-};
-
-type MapAsUniforms<T extends object> = {
-  [K in keyof T]: THREE.IUniform<T[K]>;
 };
 
 /**
@@ -72,7 +69,7 @@ export type ShadingEntityParams = {
 class ShadingGroup implements Updatable, Destroyable {
   private readonly experience: Experience | null;
 
-  private material: THREE.ShaderMaterial & { uniforms: ShadingUniforms };
+  private material: TypedShaderMaterial<ShadingUniforms>;
 
   public group: THREE.Group;
 
@@ -207,7 +204,7 @@ class ShadingGroup implements Updatable, Destroyable {
           uPointLight1DecayAttenuation,
         ),
       },
-    }) as THREE.ShaderMaterial & { uniforms: ShadingUniforms };
+    }) as TypedShaderMaterial<ShadingUniforms>;
   }
 
   /**
