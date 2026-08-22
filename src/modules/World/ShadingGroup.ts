@@ -58,12 +58,12 @@ class ShadingGroup implements Updatable, Destroyable {
     uDirectionalLightPositionX: 1,
     uDirectionalLightPositionY: 1,
     uDirectionalLightPositionZ: 0,
+    uDirectionalLightSpecularPower: 20,
     uPointLight1Color: `#${new THREE.Color(1, 0.1, 0.1).getHexString()}`,
     uPointLight1Intensity: 1,
     uPointLight1PositionX: 0,
     uPointLight1PositionY: 2.5,
     uPointLight1PositionZ: 0,
-    uDirectionalLightSpecularPower: 20,
   };
 
   private guiRegistry: GUIStateRegistry<ShadingGroupState> | null = null;
