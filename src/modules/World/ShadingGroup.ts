@@ -28,6 +28,8 @@ type ShadingGroupState = {
   uPointLight1PositionX: number;
   uPointLight1PositionY: number;
   uPointLight1PositionZ: number;
+  uPointLight1SpecularPower: number;
+  uPointLight1DecayAttenuation: number;
   uDirectionalLightSpecularPower: number;
 };
 
@@ -64,6 +66,8 @@ class ShadingGroup implements Updatable, Destroyable {
     uPointLight1PositionX: 0,
     uPointLight1PositionY: 2.5,
     uPointLight1PositionZ: 0,
+    uPointLight1SpecularPower: 20,
+    uPointLight1DecayAttenuation: 0.25,
   };
 
   private guiRegistry: GUIStateRegistry<ShadingGroupState> | null = null;
@@ -124,6 +128,8 @@ class ShadingGroup implements Updatable, Destroyable {
       uPointLight1PositionX,
       uPointLight1PositionY,
       uPointLight1PositionZ,
+      uPointLight1SpecularPower,
+      uPointLight1DecayAttenuation,
       uDirectionalLightSpecularPower,
     } = this.debugDefaults;
 
@@ -162,6 +168,10 @@ class ShadingGroup implements Updatable, Destroyable {
         ),
         uDirectionalLightSpecularPower: new THREE.Uniform(
           uDirectionalLightSpecularPower,
+        ),
+        uPointLight1SpecularPower: new THREE.Uniform(uPointLight1SpecularPower),
+        uPointLight1DecayAttenuation: new THREE.Uniform(
+          uPointLight1DecayAttenuation,
         ),
       },
     });
@@ -370,6 +380,26 @@ class ShadingGroup implements Updatable, Destroyable {
       .step(0.01)
       .name("Position Z");
     registry.bind("uPointLight1PositionZ", this.updatePointLight1Position);
+
+    pointLight1Folder
+      .add(state, "uPointLight1SpecularPower")
+      .min(1)
+      .max(128)
+      .step(1)
+      .name("Specular Power");
+    registry.bind("uPointLight1SpecularPower", (v) => {
+      this.material.uniforms.uPointLight1SpecularPower.value = v;
+    });
+
+    pointLight1Folder
+      .add(state, "uPointLight1DecayAttenuation")
+      .min(0)
+      .max(2)
+      .step(0.001)
+      .name("Decay Attenuation");
+    registry.bind("uPointLight1DecayAttenuation", (v) => {
+      this.material.uniforms.uPointLight1DecayAttenuation.value = v;
+    });
   }
 
   public update(): void {
