@@ -248,9 +248,11 @@ class ShadingGroup implements Updatable, Destroyable {
     active: PointLightUniformValue[],
   ): PointLightUniformValue[] {
     /*
-      ? uPointLights[MAX_POINT_LIGHTS] in GLSL always allocates the full slot count — Three.js's
-      ? uniform uploader writes every slot each frame regardless of uPointLightCount, so .value
-      ? must always be exactly MAX_POINT_LIGHTS long or it reads .color off undefined.
+      ? GLSL declares uPointLights as a FIXED-size array (MAX_POINT_LIGHTS slots), baked in at
+      ? shader-compile time. Three.js's uniform uploader always writes every one of those slots
+      ? each frame, ignoring uPointLightCount (that only gates the shader's own loop). So .value
+      ? must always be exactly MAX_POINT_LIGHTS long, or the uploader walks off the end of it
+      ? and reads .color off undefined.
       ? All padding slots share one reference — intensity: 0 contributes nothing to the shader
       ? loop regardless of slot, and Three.js only reads these values to upload, never mutates them.
     */
