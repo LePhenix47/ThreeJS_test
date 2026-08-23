@@ -15,6 +15,10 @@ Multiple same-shaped instances created/destroyed dynamically (spawned on an even
 
 Fixed set of different entities that must share state/materials and render as one whole?
   YES → Shared-resource group pattern
+
+Count is user-controlled at runtime via debug GUI add/remove buttons,
+each item needing its own persisted state and GUI folder?
+  YES → see the dynamic-gui-collection skill
 ```
 
 ---
