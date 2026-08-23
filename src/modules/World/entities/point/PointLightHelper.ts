@@ -1,11 +1,16 @@
 import Experience, { Destroyable } from "@modules/Experience/Experience";
-import { MeshEntity } from "./types/entity";
+import { MeshEntity } from "@modules/World/types/entity";
 import * as THREE from "three";
 
-/** Small plane placed at the directional light's position, facing the origin — a visual stand-in for a real THREE.DirectionalLightHelper since this scene has no real THREE.Light. */
-class DirectionalLightHelper extends MeshEntity implements Destroyable {
+/** Small icosahedron placed at a point light's position. A visual stand-in for a real THREE.PointLightHelper since this scene has no real THREE.Light. Multiple instances may exist at once, each with its own position and color. */
+class PointLightHelper extends MeshEntity implements Destroyable {
+  static readonly CONFIG = {
+    radius: 0.1,
+    detail: 2,
+  };
+
   private readonly experience: Experience | null;
-  protected geometry: THREE.PlaneGeometry;
+  protected geometry: THREE.IcosahedronGeometry;
   protected material: THREE.MeshBasicMaterial;
   protected mesh: THREE.Mesh;
 
@@ -26,11 +31,14 @@ class DirectionalLightHelper extends MeshEntity implements Destroyable {
   }
 
   protected setGeometry(): void {
-    this.geometry = new THREE.PlaneGeometry(0.5, 0.5);
+    this.geometry = new THREE.IcosahedronGeometry(
+      PointLightHelper.CONFIG.radius,
+      PointLightHelper.CONFIG.detail,
+    );
   }
 
   protected setMaterial(): void {
-    this.material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+    this.material = new THREE.MeshBasicMaterial();
   }
 
   protected setMesh(): void {
@@ -39,7 +47,6 @@ class DirectionalLightHelper extends MeshEntity implements Destroyable {
 
   public setPosition(position: THREE.Vector3): void {
     this.mesh.position.copy(position);
-    this.mesh.lookAt(0, 0, 3);
   }
 
   public setColor(color: string): void {
@@ -53,4 +60,4 @@ class DirectionalLightHelper extends MeshEntity implements Destroyable {
   }
 }
 
-export default DirectionalLightHelper;
+export default PointLightHelper;

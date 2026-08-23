@@ -13,12 +13,15 @@ import fragmentShader from "@shaders/shading/fragment.glsl";
 import ShadingTorusKnot from "./ShadingTorusKnot";
 import ShadingSphere from "./ShadingSphere";
 import ShadingSuzanne from "./ShadingSuzanne";
-import DirectionalLightHelper from "./DirectionalLightHelper";
+import DirectionalLightHelper from "@modules/World/lights/directional/DirectionalLightHelper";
 import PointLightEntity, {
   PointLightState,
   PointLightUniformValue,
-} from "./PointLightEntity";
-import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
+} from "@/modules/World/entities/point/PointLightEntity";
+import {
+  MapAsUniforms,
+  TypedShaderMaterial,
+} from "@modules/World/types/uniforms";
 
 type ShadingGroupState = {
   uColor: string;

@@ -2,7 +2,7 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import ShadingGroup from "./ShadingGroup";
+import ShadingGroup from "./entities/shading/ShadingGroup";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 

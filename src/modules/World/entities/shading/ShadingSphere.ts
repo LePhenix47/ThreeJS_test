@@ -2,14 +2,14 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import { MeshEntity } from "./types/entity";
+import { MeshEntity } from "@modules/World/types/entity";
 import { ShadingEntityParams } from "./ShadingGroup";
 import * as THREE from "three";
 
-class ShadingTorusKnot extends MeshEntity implements Updatable, Destroyable {
+class ShadingSphere extends MeshEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private readonly group: THREE.Group;
-  protected geometry: THREE.TorusKnotGeometry;
+  protected geometry: THREE.SphereGeometry;
   protected material: THREE.ShaderMaterial;
   protected mesh: THREE.Mesh;
 
@@ -27,7 +27,7 @@ class ShadingTorusKnot extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setGeometry(): void {
-    this.geometry = new THREE.TorusKnotGeometry(0.6, 0.25, 128, 32);
+    this.geometry = new THREE.SphereGeometry();
   }
 
   protected setMaterial(): void {
@@ -36,7 +36,7 @@ class ShadingTorusKnot extends MeshEntity implements Updatable, Destroyable {
 
   protected setMesh(): void {
     const mesh = new THREE.Mesh(this.geometry, this.material);
-    mesh.position.x = 3;
+    mesh.position.x = -3;
 
     this.mesh = mesh;
   }
@@ -54,4 +54,4 @@ class ShadingTorusKnot extends MeshEntity implements Updatable, Destroyable {
   }
 }
 
-export default ShadingTorusKnot;
+export default ShadingSphere;
