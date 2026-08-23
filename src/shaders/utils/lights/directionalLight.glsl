@@ -16,5 +16,4 @@ vec3 directionalLight(vec3 color, float intensity, vec3 normal, vec3 lightPositi
     specular = pow(specular, specularPower);
 
     return color * intensity * (shading + specular);
-    // return vec3(specular);
 }
