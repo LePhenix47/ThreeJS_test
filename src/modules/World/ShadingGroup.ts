@@ -60,6 +60,15 @@ export type ShadingEntityParams = {
   group: THREE.Group;
 };
 
+/** Infinite sequence of monotonic ids starting from `start` — `.next().value` reads and advances atomically. */
+function* pointLightIdGenerator(start: number): Generator<number, never> {
+  let id = start;
+  while (true) {
+    yield id;
+    id += 1;
+  }
+}
+
 class ShadingGroup implements Updatable, Destroyable {
   public static readonly CONFIG = {
     /** GLSL uniform array size ceiling — arrays can't be unbounded in GLSL, "dynamic" means free add/remove up to this. */
@@ -88,7 +97,7 @@ class ShadingGroup implements Updatable, Destroyable {
   private directionalLightHelper: DirectionalLightHelper;
 
   private pointLights: PointLightEntity[] = [];
-  private nextPointLightId = 0;
+  private pointLightIds = pointLightIdGenerator(0);
   private pointLightsFolder: GUI | null = null;
 
   private readonly debugDefaults: ShadingGroupState = {
@@ -280,14 +289,15 @@ class ShadingGroup implements Updatable, Destroyable {
     if (!this.pointLightsFolder) return;
     if (this.pointLights.length >= ShadingGroup.CONFIG.maxPointLights) return;
 
+    const id: number = this.pointLightIds.next().value;
+
     const entity = new PointLightEntity({
-      id: this.nextPointLightId,
+      id,
       parentFolder: this.pointLightsFolder,
       defaults: ShadingGroup.CONFIG.defaultPointLightState,
       onChange: this.syncPointLightUniforms,
       onRemove: this.removePointLight,
     });
-    this.nextPointLightId += 1;
 
     this.pointLights.push(entity);
     this.savePointLightIds();
@@ -329,7 +339,8 @@ class ShadingGroup implements Updatable, Destroyable {
       this.pointLights.push(entity);
     }
 
-    this.nextPointLightId = Math.max(...ids) + 1;
+    const nextId = Math.max(...ids) + 1;
+    this.pointLightIds = pointLightIdGenerator(nextId);
 
     this.pointLightsFolder
       .add({ add: this.addPointLight }, "add")
