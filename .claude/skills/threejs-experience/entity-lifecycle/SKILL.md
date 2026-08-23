@@ -219,6 +219,20 @@ this.directionalLightHelper.setColor(color);
 ```
 
 Avoids repeating the `this.x.` prefix at every step, and no other code can ever observe `this.property` half-configured mid-setup.
+- Never pass `new X(...)` directly as an inline argument to another call. Name it first, then pass the name:
+
+```typescript
+const position = new THREE.Vector3(x, y, z);
+this.helper.setPosition(position);
+```
+
+not
+
+```typescript
+this.helper.setPosition(new THREE.Vector3(x, y, z));
+```
+
+The call site should read as "call `setPosition` with `position`," not require parsing a nested constructor to see what's being passed.
 
 ### Document non-obvious fields
 
@@ -241,3 +255,35 @@ class Human {
 ```
 
 Skip it for fields where the name+type already say everything (`private geometry: THREE.BufferGeometry` needs no comment).
+
+### Method JSDoc: WHAT only, never WHY/HOW
+
+Constructor params/options and class properties (above) may explain WHY/HOW, that's their job — the caller can't see the implementation, the doc is the only contract they get. Methods are different: the body is right there. A method's `/** ... */` states what it does, nothing more. Reasoning, gotchas, and workarounds go in an inline `? ` comment (comment-prefixes skill) at the exact line they apply to, never stacked into the docblock, even when the reasoning is genuinely important:
+
+```typescript
+/** Pads `active` with placeholder lights up to the uniform array's fixed size. */
+private padPointLightUniformValues(
+  active: PointLightUniformValue[],
+): PointLightUniformValue[] {
+  /*
+    ? uPointLights[MAX_POINT_LIGHTS] in GLSL always allocates the full slot count — Three.js's
+    ? uniform uploader writes every slot each frame regardless of uPointLightCount, so .value
+    ? must always be exactly MAX_POINT_LIGHTS long or it reads .color off undefined.
+  */
+  ...
+}
+```
+
+not
+
+```typescript
+/**
+ * `uPointLights[MAX_POINT_LIGHTS]` in GLSL always allocates MAX_POINT_LIGHTS uniform slots —
+ * Three.js's uniform uploader writes all of them every frame regardless of `uPointLightCount`
+ * (that only controls the shader's loop, not the JS-side upload step). `.value` must always be
+ * exactly MAX_POINT_LIGHTS long or Three.js reads `.color` off `undefined` for the missing slots.
+ */
+private padPointLightUniformValues(...): PointLightUniformValue[] { ... }
+```
+
+Skip the JSDoc entirely when the method name already says the WHAT (`setPosition`, `destroy`).
