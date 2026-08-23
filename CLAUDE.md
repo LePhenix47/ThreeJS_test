@@ -173,7 +173,7 @@ See [.env.example](.env.example) for required variables.
 </details>
 
 <details>
-<summary><strong>ThreeJS Experience Skills (10 files)</strong></summary>
+<summary><strong>ThreeJS Experience Skills (11 files)</strong></summary>
 
 - `resources-gate` - When to gate entity construction behind `resources.on("textures-loaded", ...)`
 - `entity-base-classes` - Decision tree: MeshEntity / PointsEntity / GltfEntity / TexturedMeshEntity / TexturedGltfEntity / EnvironmentEntity
@@ -185,6 +185,8 @@ See [.env.example](.env.example) for required variables.
 - `composite-entities` - Pool pattern and shared-resource group pattern for entities made of multiple sub-entities
 - `particle-buffer-geometry` - Enum-indexed buffer attributes, placement utils, GUI-state fallback getter for particle systems
 - `web-worker-offload` - Manager+Worker pattern for offloading per-frame heavy computation off the main thread
+- `dynamic-gui-collection` - User-driven add/remove collections via debug GUI: per-item identity, two-tier persistence, derived-aggregate sync
+
 </details>
 
 ## Reminder
