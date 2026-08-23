@@ -7,8 +7,6 @@ import Floor from "./Floor";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
-// * To setup GLSL shaders: git cherry-pick 905deb41a596f9122c2e71fb56a1194a0585c98d
-
 type WorldState = {
   axisHelper: boolean;
   gridHelper: boolean;
@@ -55,8 +53,14 @@ class World implements Updatable, Destroyable {
   }
 
   private setHelpers = () => {
-    this.axisHelper = new THREE.AxesHelper(3);
-    this.gridHelper = new THREE.GridHelper(10, 10);
+    const axisHelper = new THREE.AxesHelper(3);
+    axisHelper.position.y = 0.02;
+
+    this.axisHelper = axisHelper;
+
+    const gridHelper = new THREE.GridHelper(10, 10);
+    gridHelper.position.y = 0.01;
+    this.gridHelper = gridHelper;
 
     this.scene.add(this.axisHelper, this.gridHelper);
   };
