@@ -17,7 +17,7 @@ import DirectionalLightHelper from "@modules/World/lights/directional/Directiona
 import PointLightEntity, {
   PointLightState,
   PointLightUniformValue,
-} from "@/modules/World/entities/point/PointLightEntity";
+} from "@modules/World/entities/point/PointLightEntity";
 import {
   MapAsUniforms,
   TypedShaderMaterial,

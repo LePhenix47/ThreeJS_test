@@ -2,7 +2,7 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import { GltfEntity } from "../../types/entity";
+import { GltfEntity } from "@modules/World/types/entity";
 import { ShadingEntityParams } from "./ShadingGroup";
 import { GLTF } from "three/examples/jsm/Addons.js";
 import * as THREE from "three";
