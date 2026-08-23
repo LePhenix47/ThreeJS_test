@@ -53,8 +53,14 @@ class World implements Updatable, Destroyable {
   }
 
   private setHelpers = () => {
-    this.axisHelper = new THREE.AxesHelper(3);
-    this.gridHelper = new THREE.GridHelper(10, 10);
+    const axisHelper = new THREE.AxesHelper(3);
+    axisHelper.position.y = 0.02;
+
+    this.axisHelper = axisHelper;
+
+    const gridHelper = new THREE.GridHelper(10, 10);
+    gridHelper.position.y = 0.01;
+    this.gridHelper = gridHelper;
 
     this.scene.add(this.axisHelper, this.gridHelper);
   };
