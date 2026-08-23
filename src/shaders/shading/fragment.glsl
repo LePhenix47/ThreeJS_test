@@ -7,11 +7,16 @@ uniform float uDirectionalLightIntensity;
 uniform vec3 uDirectionalLightPosition;
 uniform float uDirectionalLightSpecularPower;
 
-uniform vec3 uPointLight1Color;
-uniform vec3 uPointLight1Position;
-uniform float uPointLight1Intensity;
-uniform float uPointLight1SpecularPower;
-uniform float uPointLight1DecayAttenuation;
+struct PointLight {
+    vec3 color;
+    float intensity;
+    vec3 position;
+    float specularPower;
+    float decayAttenuation;
+};
+
+uniform PointLight uPointLights[MAX_POINT_LIGHTS]; // MAX_POINT_LIGHTS injected via ShaderMaterial's `defines`
+uniform int uPointLightCount;
 
 varying vec3 vNormal;
 varying vec3 vModelPosition;
@@ -29,7 +34,19 @@ void main() {
     vec3 light = uAmbientLightColor;
     light += ambientLight(color, uAmbientLightIntensity);
     light += directionalLight(uDirectionalLightColor, uDirectionalLightIntensity, normal, uDirectionalLightPosition, directionOfView, uDirectionalLightSpecularPower);
-    light += pointLight(uPointLight1Color, uPointLight1Intensity, normal, uPointLight1Position, directionOfView, uPointLight1SpecularPower, vModelPosition, uPointLight1DecayAttenuation);
+    for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
+        if (i >= uPointLightCount) break; // constant loop bound + early break — portable across WebGL2 drivers
+        light += pointLight(
+            uPointLights[i].color,
+            uPointLights[i].intensity,
+            normal,
+            uPointLights[i].position,
+            directionOfView,
+            uPointLights[i].specularPower,
+            vModelPosition,
+            uPointLights[i].decayAttenuation
+        );
+    }
 
     color *= light;
 

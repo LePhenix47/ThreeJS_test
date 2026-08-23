@@ -3,6 +3,8 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import { WebStorage } from "@lephenix47/webstorage-utility";
+import GUI from "lil-gui";
 import * as THREE from "three";
 
 import vertexShader from "@shaders/shading/vertex.glsl";
@@ -12,7 +14,10 @@ import ShadingTorusKnot from "./ShadingTorusKnot";
 import ShadingSphere from "./ShadingSphere";
 import ShadingSuzanne from "./ShadingSuzanne";
 import DirectionalLightHelper from "./DirectionalLightHelper";
-import PointLightHelper from "./PointLightHelper";
+import PointLightEntity, {
+  PointLightState,
+  PointLightUniformValue,
+} from "./PointLightEntity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
 type ShadingGroupState = {
@@ -27,16 +32,6 @@ type ShadingGroupState = {
   uDirectionalLightPositionY: number;
   uDirectionalLightPositionZ: number;
 
-  uPointLight1Color: string;
-  uPointLight1Intensity: number;
-
-  // ? uPointLight1Position
-  uPointLight1PositionX: number;
-  uPointLight1PositionY: number;
-  uPointLight1PositionZ: number;
-
-  uPointLight1SpecularPower: number;
-  uPointLight1DecayAttenuation: number;
   uDirectionalLightSpecularPower: number;
 };
 
@@ -45,6 +40,8 @@ type ShadingGroupState = {
  * type-checks. Scalar uniforms reuse their matching ShadingGroupState key's type instead of
  * restating `number` by hand. Color/Vector3 uniforms can't be derived the same way (state
  * stores a color as a hex string and a position as 3 separate scalars), so those stay hand-typed.
+ * `uPointLights`/`uPointLightCount` aren't derived from state at all — point lights are a
+ * dynamic collection managed entirely by PointLightEntity, not part of ShadingGroupState.
  */
 type ShadingUniforms = MapAsUniforms<{
   uColor: THREE.Color;
@@ -54,11 +51,8 @@ type ShadingUniforms = MapAsUniforms<{
   uDirectionalLightIntensity: ShadingGroupState["uDirectionalLightIntensity"];
   uDirectionalLightPosition: THREE.Vector3;
   uDirectionalLightSpecularPower: ShadingGroupState["uDirectionalLightSpecularPower"];
-  uPointLight1Color: THREE.Color;
-  uPointLight1Intensity: ShadingGroupState["uPointLight1Intensity"];
-  uPointLight1Position: THREE.Vector3;
-  uPointLight1SpecularPower: ShadingGroupState["uPointLight1SpecularPower"];
-  uPointLight1DecayAttenuation: ShadingGroupState["uPointLight1DecayAttenuation"];
+  uPointLights: PointLightUniformValue[];
+  uPointLightCount: number;
 }>;
 
 export type ShadingEntityParams = {
@@ -67,6 +61,21 @@ export type ShadingEntityParams = {
 };
 
 class ShadingGroup implements Updatable, Destroyable {
+  public static readonly CONFIG = {
+    /** GLSL uniform array size ceiling — arrays can't be unbounded in GLSL, "dynamic" means free add/remove up to this. */
+    maxPointLights: 8,
+    pointLightIdsStorageKey: "shading-point-light-ids",
+    defaultPointLightState: {
+      color: `#${new THREE.Color(1, 0.1, 0.1).getHexString()}`,
+      intensity: 1,
+      positionX: 0,
+      positionY: 2.5,
+      positionZ: 0,
+      specularPower: 20,
+      decayAttenuation: 0.25,
+    } satisfies PointLightState,
+  };
+
   private readonly experience: Experience | null;
 
   private material: TypedShaderMaterial<ShadingUniforms>;
@@ -77,7 +86,10 @@ class ShadingGroup implements Updatable, Destroyable {
   private sphere: ShadingSphere;
   private suzanne?: ShadingSuzanne;
   private directionalLightHelper: DirectionalLightHelper;
-  private pointLightHelper1: PointLightHelper;
+
+  private pointLights: PointLightEntity[] = [];
+  private nextPointLightId = 0;
+  private pointLightsFolder: GUI | null = null;
 
   private readonly debugDefaults: ShadingGroupState = {
     uColor: "#ffffff",
@@ -89,13 +101,6 @@ class ShadingGroup implements Updatable, Destroyable {
     uDirectionalLightPositionY: 1,
     uDirectionalLightPositionZ: 0,
     uDirectionalLightSpecularPower: 20,
-    uPointLight1Color: `#${new THREE.Color(1, 0.1, 0.1).getHexString()}`,
-    uPointLight1Intensity: 1,
-    uPointLight1PositionX: 0,
-    uPointLight1PositionY: 2.5,
-    uPointLight1PositionZ: 0,
-    uPointLight1SpecularPower: 20,
-    uPointLight1DecayAttenuation: 0.25,
   };
 
   private guiRegistry: GUIStateRegistry<ShadingGroupState> | null = null;
@@ -134,7 +139,6 @@ class ShadingGroup implements Updatable, Destroyable {
     });
 
     this.setDirectionalLightHelper();
-    this.setPointLightHelper1();
 
     if (this.debug?.isActive) this.addDebugFolders();
 
@@ -151,19 +155,15 @@ class ShadingGroup implements Updatable, Destroyable {
       uDirectionalLightPositionX,
       uDirectionalLightPositionY,
       uDirectionalLightPositionZ,
-      uPointLight1Color,
-      uPointLight1Intensity,
-      uPointLight1PositionX,
-      uPointLight1PositionY,
-      uPointLight1PositionZ,
-      uPointLight1SpecularPower,
-      uPointLight1DecayAttenuation,
       uDirectionalLightSpecularPower,
     } = this.debugDefaults;
 
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
+      defines: {
+        MAX_POINT_LIGHTS: ShadingGroup.CONFIG.maxPointLights,
+      },
       uniforms: {
         uColor: {
           value: new THREE.Color(uColor),
@@ -188,32 +188,23 @@ class ShadingGroup implements Updatable, Destroyable {
         uDirectionalLightSpecularPower: new THREE.Uniform(
           uDirectionalLightSpecularPower,
         ),
-        uPointLight1Color: {
-          value: new THREE.Color(uPointLight1Color),
+        // ? No active lights outside debug — point lights are managed entirely through the debug
+        //   GUI's Add/Remove buttons, restored from sessionStorage only when the GUI exists to
+        //   host them. .value is still padded to MAX_POINT_LIGHTS — see padPointLightUniformValues.
+        uPointLights: {
+          value: this.padPointLightUniformValues([]),
         },
-        uPointLight1Intensity: new THREE.Uniform(uPointLight1Intensity),
-        uPointLight1Position: {
-          value: new THREE.Vector3(
-            uPointLight1PositionX,
-            uPointLight1PositionY,
-            uPointLight1PositionZ,
-          ),
-        },
-        uPointLight1SpecularPower: new THREE.Uniform(uPointLight1SpecularPower),
-        uPointLight1DecayAttenuation: new THREE.Uniform(
-          uPointLight1DecayAttenuation,
-        ),
+        uPointLightCount: new THREE.Uniform(0),
       },
     }) as TypedShaderMaterial<ShadingUniforms>;
   }
 
-  /**
-   * Rebuilds the light-direction vector from its 3 separate GUI-state axes and pushes it
-   * to both the uniform and the helper mesh. Passed directly as the `bind()` callback for
-   * all 3 position keys — arrow field so `this` survives being passed by reference, ignores
-   * the single changed value `bind()` hands it and re-reads all 3 current axes instead.
-   */
+  /** Rebuilds the light-direction vector from its 3 GUI-state axes and pushes it to the uniform and the helper mesh. */
   private updateDirectionalLightPosition = (): void => {
+    /*
+      ? Bound to all 3 position keys — ignores the single changed value bind() hands it
+      ? and re-reads all 3 current axes instead.
+    */
     const {
       uDirectionalLightPositionX: x,
       uDirectionalLightPositionY: y,
@@ -243,35 +234,109 @@ class ShadingGroup implements Updatable, Destroyable {
     this.directionalLightHelper = directionalLightHelper;
   }
 
-  /** Same shape as updateDirectionalLightPosition, for point light 1's position. */
-  private updatePointLight1Position = (): void => {
-    const {
-      uPointLight1PositionX: x,
-      uPointLight1PositionY: y,
-      uPointLight1PositionZ: z,
-    } = this.guiRegistry?.state ?? this.debugDefaults;
-    const position = new THREE.Vector3(x, y, z);
+  /** Pads `active` with placeholder lights up to the uniform array's fixed size. */
+  private padPointLightUniformValues(
+    active: PointLightUniformValue[],
+  ): PointLightUniformValue[] {
+    /*
+      ? uPointLights[MAX_POINT_LIGHTS] in GLSL always allocates the full slot count — Three.js's
+      ? uniform uploader writes every slot each frame regardless of uPointLightCount, so .value
+      ? must always be exactly MAX_POINT_LIGHTS long or it reads .color off undefined.
+      ? All padding slots share one reference — intensity: 0 contributes nothing to the shader
+      ? loop regardless of slot, and Three.js only reads these values to upload, never mutates them.
+    */
+    const emptyPointLightUniform: PointLightUniformValue = {
+      color: new THREE.Color(0, 0, 0),
+      intensity: 0,
+      position: new THREE.Vector3(0, 0, 0),
+      specularPower: 1,
+      decayAttenuation: 0,
+    };
 
-    this.material.uniforms.uPointLight1Position.value.copy(position);
-    this.pointLightHelper1.setPosition(position);
+    const padded = Array.from(active);
+    while (padded.length < ShadingGroup.CONFIG.maxPointLights) {
+      padded.push(emptyPointLightUniform);
+    }
+    return padded;
+  }
+
+  /** Rebuilds the `uPointLights`/`uPointLightCount` uniforms from the live `pointLights` array. */
+  private syncPointLightUniforms = (): void => {
+    const active = this.pointLights.map((light) => light.toUniformValue());
+
+    this.material.uniforms.uPointLights.value =
+      this.padPointLightUniformValues(active);
+
+    this.material.uniforms.uPointLightCount.value = this.pointLights.length;
   };
 
-  private setPointLightHelper1(): void {
-    const {
-      uPointLight1Color,
-      uPointLight1PositionX: x,
-      uPointLight1PositionY: y,
-      uPointLight1PositionZ: z,
-    } = this.guiRegistry?.state || this.debugDefaults;
+  private savePointLightIds(): void {
+    const ids = this.pointLights.map((light) => light.id);
+    WebStorage.setKey(ShadingGroup.CONFIG.pointLightIdsStorageKey, ids, true);
+  }
 
-    const pointLightHelper1 = new PointLightHelper();
+  /** Creates a new point light in response to the "Add Point Light" GUI button. */
+  private addPointLight = (): void => {
+    if (!this.pointLightsFolder) return;
+    if (this.pointLights.length >= ShadingGroup.CONFIG.maxPointLights) return;
 
-    const position = new THREE.Vector3(x, y, z);
+    const entity = new PointLightEntity({
+      id: this.nextPointLightId,
+      parentFolder: this.pointLightsFolder,
+      defaults: ShadingGroup.CONFIG.defaultPointLightState,
+      onChange: this.syncPointLightUniforms,
+      onRemove: this.removePointLight,
+    });
+    this.nextPointLightId += 1;
 
-    pointLightHelper1.setPosition(position);
-    pointLightHelper1.setColor(uPointLight1Color);
+    this.pointLights.push(entity);
+    this.savePointLightIds();
+    this.syncPointLightUniforms();
+  };
 
-    this.pointLightHelper1 = pointLightHelper1;
+  /** Destroys one point light in response to its own "Remove" GUI button. */
+  private removePointLight = (entity: PointLightEntity): void => {
+    entity.destroy();
+
+    const index = this.pointLights.indexOf(entity);
+    if (index === -1) return;
+
+    this.pointLights.splice(index, 1);
+    this.savePointLightIds();
+    this.syncPointLightUniforms();
+  };
+
+  /** Recreates whichever point lights were active on last reload (or seeds exactly one default light on first-ever load), then wires the Add button. */
+  private restorePointLights(): void {
+    // ? Only runs when the debug GUI exists to host the per-light folders.
+    if (!this.pointLightsFolder) return;
+
+    const savedIds = WebStorage.getKey<number[]>(
+      ShadingGroup.CONFIG.pointLightIdsStorageKey,
+      true,
+    );
+    const ids: number[] = savedIds?.length > 0 ? savedIds : [0];
+
+    for (const id of ids) {
+      const entity = new PointLightEntity({
+        id,
+        parentFolder: this.pointLightsFolder,
+        defaults: ShadingGroup.CONFIG.defaultPointLightState,
+        onChange: this.syncPointLightUniforms,
+        onRemove: this.removePointLight,
+      });
+
+      this.pointLights.push(entity);
+    }
+
+    this.nextPointLightId = Math.max(...ids) + 1;
+
+    this.pointLightsFolder
+      .add({ add: this.addPointLight }, "add")
+      .name("Add Point Light");
+
+    this.savePointLightIds();
+    this.syncPointLightUniforms();
   }
 
   private addDebugFolders(): void {
@@ -369,67 +434,8 @@ class ShadingGroup implements Updatable, Destroyable {
       this.material.uniforms.uDirectionalLightSpecularPower.value = v;
     });
 
-    const pointLight1Folder = folder.addFolder("Point Light 1");
-
-    pointLight1Folder.addColor(state, "uPointLight1Color").name("Color");
-    registry.bind("uPointLight1Color", (v) => {
-      this.material.uniforms.uPointLight1Color.value.set(v);
-      this.pointLightHelper1.setColor(v);
-    });
-
-    pointLight1Folder
-      .add(state, "uPointLight1Intensity")
-      .min(0)
-      .max(5)
-      .step(0.001)
-      .name("Intensity");
-    registry.bind("uPointLight1Intensity", (v) => {
-      this.material.uniforms.uPointLight1Intensity.value = v;
-    });
-
-    pointLight1Folder
-      .add(state, "uPointLight1PositionX")
-      .min(-5)
-      .max(5)
-      .step(0.01)
-      .name("Position X");
-    registry.bind("uPointLight1PositionX", this.updatePointLight1Position);
-
-    pointLight1Folder
-      .add(state, "uPointLight1PositionY")
-      .min(-5)
-      .max(5)
-      .step(0.01)
-      .name("Position Y");
-    registry.bind("uPointLight1PositionY", this.updatePointLight1Position);
-
-    pointLight1Folder
-      .add(state, "uPointLight1PositionZ")
-      .min(-5)
-      .max(5)
-      .step(0.01)
-      .name("Position Z");
-    registry.bind("uPointLight1PositionZ", this.updatePointLight1Position);
-
-    pointLight1Folder
-      .add(state, "uPointLight1SpecularPower")
-      .min(1)
-      .max(128)
-      .step(1)
-      .name("Specular Power");
-    registry.bind("uPointLight1SpecularPower", (v) => {
-      this.material.uniforms.uPointLight1SpecularPower.value = v;
-    });
-
-    pointLight1Folder
-      .add(state, "uPointLight1DecayAttenuation")
-      .min(0)
-      .max(2)
-      .step(0.001)
-      .name("Decay Attenuation");
-    registry.bind("uPointLight1DecayAttenuation", (v) => {
-      this.material.uniforms.uPointLight1DecayAttenuation.value = v;
-    });
+    this.pointLightsFolder = folder.addFolder("Point Lights");
+    this.restorePointLights();
   }
 
   public update(): void {
@@ -446,8 +452,12 @@ class ShadingGroup implements Updatable, Destroyable {
     this.torusKnot.destroy();
     this.sphere.destroy();
     this.suzanne?.destroy();
+
     this.directionalLightHelper.destroy();
-    this.pointLightHelper1.destroy();
+    for (const light of this.pointLights) {
+      light.destroy();
+    }
+
     this.material.dispose();
     this.scene.remove(this.group);
     this.guiRegistry?.dispose();
