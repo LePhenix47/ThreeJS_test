@@ -51,7 +51,7 @@ class World implements Updatable, Destroyable {
 
   private setHelpers = () => {
     const axisHelper = new THREE.AxesHelper(3);
-    axisHelper.position.y = -1;
+    axisHelper.position.y = -0.99;
 
     this.axisHelper = axisHelper;
 
