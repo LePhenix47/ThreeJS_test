@@ -42,6 +42,9 @@ type RagingSeaUniforms = MapAsUniforms<{
 }>;
 
 class RagingSea extends MeshEntity implements Updatable, Destroyable {
+  private static readonly PLANE_SIZE = 2;
+  private static readonly SUBDIVISIONS = 512;
+
   private readonly experience: Experience | null;
 
   protected geometry: THREE.PlaneGeometry;
@@ -49,9 +52,6 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
   protected mesh: THREE.Mesh;
 
   private guiRegistry: GUIStateRegistry<RagingSeaState> | null = null;
-
-  private readonly PLANE_SIZE = 2;
-  private readonly SUBDIVISIONS = 512;
 
   private readonly debugDefaults: RagingSeaState = {
     depthColor: "#186691",
@@ -99,10 +99,10 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
 
   protected setGeometry(): void {
     this.geometry = new THREE.PlaneGeometry(
-      this.PLANE_SIZE,
-      this.PLANE_SIZE,
-      this.SUBDIVISIONS,
-      this.SUBDIVISIONS,
+      RagingSea.PLANE_SIZE,
+      RagingSea.PLANE_SIZE,
+      RagingSea.SUBDIVISIONS,
+      RagingSea.SUBDIVISIONS,
     );
   }
 
@@ -126,23 +126,23 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       vertexShader,
       fragmentShader,
       uniforms: {
-        uTime: { value: 0 },
+        uTime: new THREE.Uniform(0),
 
-        uBigWavesElevation: { value: uBigWavesElevation },
+        uBigWavesElevation: new THREE.Uniform(uBigWavesElevation),
         uBigWavesFrequency: {
           value: new THREE.Vector2(uBigWavesFrequencyX, uBigWavesFrequencyY),
         },
-        uBigWavesSpeed: { value: uBigWavesSpeed },
+        uBigWavesSpeed: new THREE.Uniform(uBigWavesSpeed),
 
-        uSmallWavesElevation: { value: uSmallWavesElevation },
-        uSmallWavesFrequency: { value: uSmallWavesFrequency },
-        uSmallWavesSpeed: { value: uSmallWavesSpeed },
-        uSmallIterations: { value: uSmallIterations },
+        uSmallWavesElevation: new THREE.Uniform(uSmallWavesElevation),
+        uSmallWavesFrequency: new THREE.Uniform(uSmallWavesFrequency),
+        uSmallWavesSpeed: new THREE.Uniform(uSmallWavesSpeed),
+        uSmallIterations: new THREE.Uniform(uSmallIterations),
 
         uDepthColor: { value: new THREE.Color(depthColor) },
         uSurfaceColor: { value: new THREE.Color(surfaceColor) },
-        uColorOffset: { value: uColorOffset },
-        uColorMultiplier: { value: uColorMultiplier },
+        uColorOffset: new THREE.Uniform(uColorOffset),
+        uColorMultiplier: new THREE.Uniform(uColorMultiplier),
       },
     }) as TypedShaderMaterial<RagingSeaUniforms>;
   }
@@ -152,8 +152,12 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
     this.mesh.rotation.x = THREE.MathUtils.degToRad(-90);
   }
 
-  /** Rebuilds the big-waves frequency vector from its 2 GUI-state axes. Passed by reference into both frequency-axis bindings. */
+  /** Rebuilds the big-waves frequency vector from its 2 GUI-state axes. */
   private updateBigWavesFrequency = (): void => {
+    /*
+      ? Bound to both frequency axes. Ignores the single changed value bind() hands it
+      ? and re-reads both current axes instead.
+    */
     const { uBigWavesFrequencyX, uBigWavesFrequencyY } =
       this.guiRegistry?.state ?? this.debugDefaults;
 
