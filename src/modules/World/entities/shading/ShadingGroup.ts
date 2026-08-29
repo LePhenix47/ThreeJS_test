@@ -105,13 +105,13 @@ class ShadingGroup implements Updatable, Destroyable {
 
   private readonly debugDefaults: ShadingGroupState = {
     uAlbedoColor: "#ffffff",
-    uAmbientLightColor: "#ff0000",
-    uAmbientLightIntensity: 0.5,
-    uDirectionalLightColor: "#ffffff",
+    uAmbientLightColor: "#ffffff",
+    uAmbientLightIntensity: 0.03,
+    uDirectionalLightColor: "#1a1aff",
     uDirectionalLightIntensity: 1,
-    uDirectionalLightPositionX: 1,
-    uDirectionalLightPositionY: 1,
-    uDirectionalLightPositionZ: 0,
+    uDirectionalLightPositionX: 0,
+    uDirectionalLightPositionY: 0,
+    uDirectionalLightPositionZ: 3,
     uDirectionalLightSpecularPower: 20,
   };
 
