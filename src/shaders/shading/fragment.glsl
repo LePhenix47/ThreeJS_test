@@ -30,8 +30,8 @@ void main() {
 
     vec3 directionOfView = normalize(vModelPosition - cameraPosition);
 
-    vec3 light = uAmbientLightColor;
-    light += ambientLight(color, uAmbientLightIntensity);
+    vec3 light = vec3(0.0);
+    light += ambientLight(uAmbientLightColor, uAmbientLightIntensity);
     light += directionalLight(uDirectionalLightColor, uDirectionalLightIntensity, vNormal, uDirectionalLightPosition, directionOfView, uDirectionalLightSpecularPower);
     for(int i = 0; i < MAX_POINT_LIGHTS; i++) {
         if(i >= uPointLightCount)
@@ -41,8 +41,8 @@ void main() {
 
     color *= light;
 
-    gl_FragColor = vec4(light, 1.0);
-    // gl_FragColor = vec4(normal, 1.0);
+    gl_FragColor = vec4(color, 1.0);
+
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
 }
