@@ -1,3 +1,6 @@
+#include ./delta
+
 vec3 direction(vec3 from, vec3 to) {
-    return normalize(to - from);
+    vec3 directionVec = delta(to, from);
+    return normalize(directionVec);
 }
