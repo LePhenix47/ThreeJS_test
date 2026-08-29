@@ -5,8 +5,8 @@ import Experience, {
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import * as THREE from "three";
 
-import vertexShader from "@shaders/water/vertex.glsl";
-import fragmentShader from "@shaders/water/fragment.glsl";
+import vertexShader from "@shaders/raging-sea/vertex.glsl";
+import fragmentShader from "@shaders/raging-sea/fragment.glsl";
 
 import { MeshEntity } from "./types/entity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
