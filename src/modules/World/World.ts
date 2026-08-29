@@ -2,8 +2,7 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import Environment from "./Environment";
-import Floor from "./Floor";
+import RagingSea from "./RagingSea";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -14,8 +13,7 @@ type WorldState = {
 
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
-  public environment?: Environment;
-  public floor?: Floor;
+  public ragingSea: RagingSea;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -41,8 +39,7 @@ class World implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.floor = new Floor();
-    this.environment = new Environment();
+    this.ragingSea = new RagingSea();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -110,11 +107,12 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   };
 
-  public update = () => {};
+  public update = () => {
+    this.ragingSea.update();
+  };
 
   public destroy = () => {
-    this.floor?.destroy();
-    this.environment?.destroy();
+    this.ragingSea.destroy();
     this.removeHelpers();
   };
 }
