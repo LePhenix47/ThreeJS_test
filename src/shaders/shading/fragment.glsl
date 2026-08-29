@@ -24,11 +24,12 @@ varying vec3 vModelPosition;
 #include ../utils/lights/ambientLight
 #include ../utils/lights/directionalLight
 #include ../utils/lights/pointLight
+#include ../utils/vectors/direction
 
 void main() {
     vec3 color = uAlbedoColor;
 
-    vec3 directionOfView = normalize(vModelPosition - cameraPosition);
+    vec3 directionOfView = direction(cameraPosition, vModelPosition);
 
     vec3 light = vec3(0.0);
     light += ambientLight(uAmbientLightColor, uAmbientLightIntensity);
