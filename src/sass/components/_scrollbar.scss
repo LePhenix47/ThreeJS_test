@@ -73,7 +73,7 @@
     }
 
     // FIX: Move the Firefox scrollbar styling inside this selector
-    @supports (scrollbar-color: black white) and (not selector(::-webkit-scrollbar)) {
+    @supports (scrollbar-color: black white) and (-moz-appearance: none) {
         * {
             --_scrollbar-bg: rgba(0, 0, 0, 15%);
             --_scrollbar-thumb-bg: blue;
