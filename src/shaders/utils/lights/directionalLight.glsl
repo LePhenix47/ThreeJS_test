@@ -1,12 +1,13 @@
 vec3 directionalLight(vec3 color, float intensity, vec3 normal, vec3 lightPosition, vec3 viewDirection, float specularPower) {
-    vec3 direction = normalize(lightPosition);
+    // ? Vector going from the model to the light source
+    vec3 lightDirection = normalize(lightPosition);
     // ? we want reflection from light to surface, not other way around, so we flip the direction
-    vec3 reflection = reflect(-1.0 * direction, normal);
-
-    normal = normalize(normal);
+    vec3 reflection = reflect(-1.0 * lightDirection, normal);
 
     // * Shading
-    float shading = dot(normal, direction);
+    // ? Get the normal direction
+    vec3 normalDirection = normalize(normal);
+    float shading = dot(normalDirection, lightDirection);
     shading = max(0.0, shading); // ? dot prod → [-1,1], we clamp to [0,1]
 
     // * Specular
