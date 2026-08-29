@@ -24,7 +24,7 @@ import {
 } from "@modules/World/types/uniforms";
 
 type ShadingGroupState = {
-  uColor: string;
+  uAlbedoColor: string;
   uAmbientLightColor: string;
   uAmbientLightIntensity: number;
   uDirectionalLightColor: string;
@@ -47,7 +47,7 @@ type ShadingGroupState = {
  * dynamic collection managed entirely by PointLightEntity, not part of ShadingGroupState.
  */
 type ShadingUniforms = MapAsUniforms<{
-  uColor: THREE.Color;
+  uAlbedoColor: THREE.Color;
   uAmbientLightColor: THREE.Color;
   uAmbientLightIntensity: ShadingGroupState["uAmbientLightIntensity"];
   uDirectionalLightColor: THREE.Color;
@@ -104,7 +104,7 @@ class ShadingGroup implements Updatable, Destroyable {
   private pointLightsFolder: GUI | null = null;
 
   private readonly debugDefaults: ShadingGroupState = {
-    uColor: "#ffffff",
+    uAlbedoColor: "#ffffff",
     uAmbientLightColor: "#ff0000",
     uAmbientLightIntensity: 0.5,
     uDirectionalLightColor: "#ffffff",
@@ -159,7 +159,7 @@ class ShadingGroup implements Updatable, Destroyable {
 
   private setMaterial(): void {
     const {
-      uColor,
+      uAlbedoColor,
       uAmbientLightColor,
       uAmbientLightIntensity,
       uDirectionalLightColor,
@@ -177,8 +177,8 @@ class ShadingGroup implements Updatable, Destroyable {
         MAX_POINT_LIGHTS: ShadingGroup.CONFIG.maxPointLights,
       },
       uniforms: {
-        uColor: {
-          value: new THREE.Color(uColor),
+        uAlbedoColor: {
+          value: new THREE.Color(uAlbedoColor),
         },
         uAmbientLightColor: {
           value: new THREE.Color(uAmbientLightColor),
@@ -366,9 +366,9 @@ class ShadingGroup implements Updatable, Destroyable {
 
     const folder = gui.addFolder("Shading");
 
-    folder.addColor(state, "uColor").name("Objects Color");
-    registry.bind("uColor", (v) => {
-      this.material.uniforms.uColor.value.set(v);
+    folder.addColor(state, "uAlbedoColor").name("Objects Color");
+    registry.bind("uAlbedoColor", (v) => {
+      this.material.uniforms.uAlbedoColor.value.set(v);
     });
 
     const ambientLightFolder = folder.addFolder("Ambient Light");

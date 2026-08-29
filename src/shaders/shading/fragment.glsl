@@ -1,4 +1,4 @@
-uniform vec3 uColor;
+uniform vec3 uAlbedoColor;
 uniform vec3 uAmbientLightColor;
 uniform float uAmbientLightIntensity;
 
@@ -26,7 +26,7 @@ varying vec3 vModelPosition;
 #include ../utils/lights/pointLight
 
 void main() {
-    vec3 color = uColor;
+    vec3 color = uAlbedoColor;
 
     vec3 directionOfView = normalize(vModelPosition - cameraPosition);
 
