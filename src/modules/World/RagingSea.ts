@@ -42,8 +42,10 @@ type RagingSeaUniforms = MapAsUniforms<{
 }>;
 
 class RagingSea extends MeshEntity implements Updatable, Destroyable {
-  private static readonly PLANE_SIZE = 2;
-  private static readonly SUBDIVISIONS = 512;
+  public static readonly CONFIG = {
+    planeSize: 2,
+    subdivisions: 2 ** 9,
+  };
 
   private readonly experience: Experience | null;
 
@@ -98,11 +100,13 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setGeometry(): void {
+    const { planeSize, subdivisions } = RagingSea.CONFIG;
+
     this.geometry = new THREE.PlaneGeometry(
-      RagingSea.PLANE_SIZE,
-      RagingSea.PLANE_SIZE,
-      RagingSea.SUBDIVISIONS,
-      RagingSea.SUBDIVISIONS,
+      planeSize,
+      planeSize,
+      subdivisions,
+      subdivisions,
     );
   }
 
