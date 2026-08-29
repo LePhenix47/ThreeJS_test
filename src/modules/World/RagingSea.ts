@@ -54,8 +54,8 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
   private guiRegistry: GUIStateRegistry<RagingSeaState> | null = null;
 
   private readonly debugDefaults: RagingSeaState = {
-    depthColor: "#186691",
-    surfaceColor: "#9bd8ff",
+    depthColor: "#ff4000",
+    surfaceColor: "#151c37",
     uBigWavesElevation: 0.2,
     uBigWavesFrequencyX: 4,
     uBigWavesFrequencyY: 1.5,
@@ -64,8 +64,8 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
     uSmallWavesFrequency: 3,
     uSmallWavesSpeed: 0.2,
     uSmallIterations: 4,
-    uColorOffset: 0.08,
-    uColorMultiplier: 5,
+    uColorOffset: 0.925,
+    uColorMultiplier: 1,
   };
 
   private get scene() {
