@@ -1,9 +1,9 @@
 #include ../vectors/delta
 
+// * Radial light with a real position. Shading plus specular, same as directionalLight, plus distance decay.
 vec3 pointLight(vec3 color, float intensity, vec3 normal, vec3 lightPosition, vec3 viewDirection, float specularPower, vec3 modelPosition, float decayAttenuation) {
     // ? Vector going from the model to the light source
     vec3 lightDelta = delta(modelPosition, lightPosition);
-    // ? we want reflection from light to surface, not other way around, so we flip the direction
     vec3 lightDirection = normalize(lightDelta);
 
     // ? we want reflection from light to surface, not other way around, so we flip the direction
