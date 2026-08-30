@@ -4,8 +4,14 @@ uniform float uColorOffset;
 uniform float uColorMultiplier;
 
 varying float vElevation;
+varying vec3 vNormal;
+varying vec3 vPosition;
+
+#include ../utils/lights/pointLight
 
 void main() {
+    vec3 normal = normalize(vNormal);
+
     float mixStrength = (vElevation + uColorOffset) * uColorMultiplier;
 
     mixStrength = smoothstep(0.0, 1.0, mixStrength);
