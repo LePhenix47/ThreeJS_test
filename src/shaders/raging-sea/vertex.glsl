@@ -22,7 +22,8 @@ void main() {
         uBigWavesElevation;
 
     for(float i = 1.0; i <= uSmallIterations; i++) {
-        elevation -= abs(perlinClassic3D(vec3(modelPosition.xz * uSmallWavesFrequency * i, uTime * uSmallWavesSpeed)) * uSmallWavesElevation / i);
+        float noise = perlinClassic3D(vec3(modelPosition.xz * uSmallWavesFrequency * i, uTime * uSmallWavesSpeed)) * uSmallWavesElevation / i;
+        elevation -= abs(noise);
     }
 
     modelPosition.y += elevation;
@@ -34,4 +35,5 @@ void main() {
 
     // * Varyings
     vElevation = elevation;
+
 }
