@@ -24,6 +24,7 @@ type RagingSeaState = {
   uSmallIterations: number;
   uColorOffset: number;
   uColorMultiplier: number;
+  wireframe: boolean;
 };
 
 type RagingSeaUniforms = MapAsUniforms<{
@@ -68,6 +69,7 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
     uSmallIterations: 4,
     uColorOffset: 0.925,
     uColorMultiplier: 1,
+    wireframe: false,
   };
 
   private get scene() {
@@ -124,11 +126,13 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       uSmallIterations,
       uColorOffset,
       uColorMultiplier,
+      wireframe,
     } = this.debugDefaults;
 
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
+      wireframe,
       uniforms: {
         uTime: new THREE.Uniform(0),
 
@@ -183,6 +187,13 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
     const { gui } = this.debug!;
 
     const seaFolder = gui.addFolder("Raging Sea");
+
+    const planeFolder = seaFolder.addFolder("Plane");
+
+    planeFolder.add(state, "wireframe").name("Wireframe");
+    registry.bind("wireframe", (v) => {
+      this.material.wireframe = v;
+    });
 
     const colorsFolder = seaFolder.addFolder("Colors");
 
