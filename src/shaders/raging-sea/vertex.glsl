@@ -13,6 +13,7 @@ varying vec3 vNormal;
 varying vec3 vPosition;
 
 #include ../utils/perlin-noise/perlinClassic3D
+#include ../utils/vectors/direction
 
 float waveElevation(vec3 position) {
     float elevation = sin(position.x * uBigWavesFrequency.x + uTime * uBigWavesSpeed) *
@@ -34,13 +35,18 @@ void main() {
     vec3 modelPositionA = modelPosition.xyz + vec3(shift, 0.0, 0.0);
     vec3 modelPositionB = modelPosition.xyz + vec3(0.0, 0.0, -1.0 * shift);
 
-    // Elevation
+    // * Elevation
     float elevation = waveElevation(modelPosition.xyz);
 
     modelPosition.y += elevation;
 
     modelPositionA.y += waveElevation(modelPositionA);
     modelPositionB.y += waveElevation(modelPositionB);
+
+    // * Computed normals
+    vec3 toA = direction(modelPosition.xyz, modelPositionA);
+    vec3 toB = direction(modelPosition.xyz, modelPositionB);
+    vec3 computedNormal = cross(toA, toB);
 
     // * Final position
     vec4 viewPosition = viewMatrix * modelPosition;
@@ -50,8 +56,7 @@ void main() {
     // * Varyings
     vElevation = elevation;
 
-    vec4 modelNormal = modelMatrix * vec4(normal, 0.0);
-    vNormal = modelNormal.xyz;
+    vNormal = computedNormal;
     vPosition = modelPosition.xyz;
 
 }
