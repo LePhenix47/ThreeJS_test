@@ -140,17 +140,17 @@ class World implements Updatable, Destroyable {
 
     const worldFolder = gui.addFolder("World");
 
-    const helpersFolder = worldFolder.addFolder("Helpers");
-
-    helpersFolder.add(state, "axisHelper").name("Axis Helper");
+    worldFolder.add(state, "axisHelper").name("Axis Helper");
     registry.bind("axisHelper", (v) => {
       this.axisHelper.visible = v;
     });
 
-    helpersFolder.add(state, "gridHelper").name("Grid Helper");
+    worldFolder.add(state, "gridHelper").name("Grid Helper");
     registry.bind("gridHelper", (v) => {
       this.gridHelper.visible = v;
     });
+
+    const helpersFolder = worldFolder.addFolder("Helpers");
 
     helpersFolder
       .add(state, "helpersPosX")
