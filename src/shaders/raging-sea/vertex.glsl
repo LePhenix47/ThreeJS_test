@@ -30,10 +30,17 @@ void main() {
     // * Base position
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
+    float shift = 1.0;
+    vec3 modelPositionA = modelPosition.xyz + vec3(shift, 0.0, 0.0);
+    vec3 modelPositionB = modelPosition.xyz + vec3(0.0, 0.0, -1.0 * shift);
+
     // Elevation
     float elevation = waveElevation(modelPosition.xyz);
 
     modelPosition.y += elevation;
+
+    modelPositionA.y += waveElevation(modelPositionA);
+    modelPositionB.y += waveElevation(modelPositionB);
 
     // * Final position
     vec4 viewPosition = viewMatrix * modelPosition;
