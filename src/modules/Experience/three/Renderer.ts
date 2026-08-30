@@ -42,7 +42,7 @@ class Renderer implements Resizable, Updatable, Destroyable {
       canvas: this.experience.canvas,
     });
 
-    renderer.toneMapping = THREE.CineonToneMapping;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.75;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
