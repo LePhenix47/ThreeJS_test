@@ -166,13 +166,10 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       ? Bound to both frequency axes. Ignores the single changed value bind() hands it
       ? and re-reads both current axes instead.
     */
-    const { uBigWavesFrequencyX, uBigWavesFrequencyY } =
+    const { uBigWavesFrequencyX: x, uBigWavesFrequencyY: y } =
       this.guiRegistry?.state ?? this.debugDefaults;
 
-    const frequency = new THREE.Vector2(
-      uBigWavesFrequencyX,
-      uBigWavesFrequencyY,
-    );
+    const frequency = new THREE.Vector2(x, y);
     this.material.uniforms.uBigWavesFrequency.value.copy(frequency);
   };
 
