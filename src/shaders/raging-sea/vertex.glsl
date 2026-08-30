@@ -9,6 +9,8 @@ uniform float uSmallWavesSpeed;
 uniform float uSmallIterations;
 
 varying float vElevation;
+varying vec3 vNormal;
+varying vec3 vPosition;
 
 #include ../utils/perlin-noise/perlinClassic3D
 
@@ -35,5 +37,9 @@ void main() {
 
     // * Varyings
     vElevation = elevation;
+
+    vec4 modelNormal = modelMatrix * vec4(normal, 0.0);
+    vNormal = modelNormal.xyz;
+    vPosition = modelPosition.xyz;
 
 }
