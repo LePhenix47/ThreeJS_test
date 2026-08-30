@@ -104,12 +104,17 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
   protected setGeometry(): void {
     const { planeSize, subdivisions } = RagingSea.CONFIG;
 
-    this.geometry = new THREE.PlaneGeometry(
+    const geometry = new THREE.PlaneGeometry(
       planeSize,
       planeSize,
       subdivisions,
       subdivisions,
     );
+
+    geometry.deleteAttribute("normal");
+    geometry.deleteAttribute("uv");
+
+    this.geometry = geometry;
   }
 
   protected setMaterial(): void {
