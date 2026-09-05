@@ -9,7 +9,7 @@ varying vec3 vPosition;
 
 #include ../utils/lights/directionalLight
 #include ../utils/lights/pointLight
-#include ../utils/vectors/delta
+#include ../utils/vectors/displacementVec3
 #include ../utils/vectors/direction
 
 void main() {
