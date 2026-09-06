@@ -11,6 +11,9 @@ import fragmentShader from "@shaders/raging-sea/fragment.glsl";
 import { MeshEntity } from "./types/entity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
+import { SideEnum } from "@/utils/enums/three";
+import Enum from "@/utils/enums";
+
 type RagingSeaState = {
   depthColor: string;
   surfaceColor: string;
@@ -28,6 +31,7 @@ type RagingSeaState = {
   uCircularOriginX: number;
   uCircularOriginY: number;
   uComputedNormalShift: number;
+  side: keyof typeof SideEnum;
   wireframe: boolean;
 };
 
@@ -80,6 +84,7 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
     uCircularOriginX: 0.0,
     uCircularOriginY: 0.0,
     wireframe: false,
+    side: "front",
     uComputedNormalShift: 0.01,
   };
 
@@ -147,6 +152,7 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       uCircularOriginY,
       uComputedNormalShift,
       wireframe,
+      side,
     } = this.debugDefaults;
 
     const uniforms: RagingSeaUniforms = {
@@ -179,6 +185,7 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       fragmentShader,
       wireframe,
       uniforms,
+      side: SideEnum[side],
     }) as TypedShaderMaterial<RagingSeaUniforms>;
   }
 
@@ -226,6 +233,12 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
     planeFolder.add(state, "wireframe").name("Wireframe");
     registry.bind("wireframe", (v) => {
       this.material.wireframe = v;
+    });
+
+    const sideValues = Enum.keys(SideEnum);
+    planeFolder.add(state, "side", sideValues).name("Side");
+    registry.bind("side", (v) => {
+      this.material.side = SideEnum[v];
     });
 
     const colorsFolder = seaFolder.addFolder("Colors");
