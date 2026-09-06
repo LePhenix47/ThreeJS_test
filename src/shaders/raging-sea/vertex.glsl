@@ -8,6 +8,10 @@ uniform float uSmallWavesFrequency;
 uniform float uSmallWavesSpeed;
 uniform float uSmallIterations;
 
+uniform vec2 uCircularWaveOrigin;
+
+uniform bool uIsCircularWave;
+
 varying float vElevation;
 varying vec3 vNormal;
 varying vec3 vPosition;
@@ -18,9 +22,16 @@ varying float vFogDepth;
 #include ../utils/vectors/direction
 
 float waveElevation(vec3 position) {
-    float elevation = sin(position.x * uBigWavesFrequency.x + uTime * uBigWavesSpeed) *
-        sin(position.z * uBigWavesFrequency.y + uTime * uBigWavesSpeed) *
-        uBigWavesElevation;
+    float elevation = 0.0;
+
+    if(uIsCircularWave) {
+        float distanceFromCenter = distance(position.xz, uCircularWaveOrigin);
+        elevation = sin(distanceFromCenter * uBigWavesFrequency.x - uTime * uBigWavesSpeed) * uBigWavesElevation;
+    } else {
+        elevation = sin(position.x * uBigWavesFrequency.x + uTime * uBigWavesSpeed) *
+            sin(position.z * uBigWavesFrequency.y + uTime * uBigWavesSpeed) *
+            uBigWavesElevation;
+    }
 
     for(float i = 1.0; i <= uSmallIterations; i++) {
         float noise = perlinClassic3D(vec3(position.xz * uSmallWavesFrequency * i, uTime * uSmallWavesSpeed)) * uSmallWavesElevation / i;

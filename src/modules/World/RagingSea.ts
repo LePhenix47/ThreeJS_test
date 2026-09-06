@@ -24,6 +24,9 @@ type RagingSeaState = {
   uSmallIterations: number;
   uColorOffset: number;
   uColorMultiplier: number;
+  uIsCircularWave: boolean;
+  uCircularOriginX: number;
+  uCircularOriginY: number;
   wireframe: boolean;
 };
 
@@ -40,6 +43,8 @@ type RagingSeaUniforms = MapAsUniforms<{
   uSurfaceColor: THREE.Color;
   uColorOffset: RagingSeaState["uColorOffset"];
   uColorMultiplier: RagingSeaState["uColorMultiplier"];
+  uIsCircularWave: RagingSeaState["uIsCircularWave"];
+  uCircularWaveOrigin: THREE.Vector2;
 }>;
 
 class RagingSea extends MeshEntity implements Updatable, Destroyable {
@@ -69,6 +74,9 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
     uSmallIterations: 4,
     uColorOffset: 0.925,
     uColorMultiplier: 1,
+    uIsCircularWave: false,
+    uCircularOriginX: 0.0,
+    uCircularOriginY: 0.0,
     wireframe: false,
   };
 
@@ -131,32 +139,41 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       uSmallIterations,
       uColorOffset,
       uColorMultiplier,
+      uIsCircularWave,
+      uCircularOriginX,
+      uCircularOriginY,
       wireframe,
     } = this.debugDefaults;
+
+    const uniforms: RagingSeaUniforms = {
+      uTime: new THREE.Uniform(0),
+
+      uBigWavesElevation: new THREE.Uniform(uBigWavesElevation),
+      uBigWavesFrequency: {
+        value: new THREE.Vector2(uBigWavesFrequencyX, uBigWavesFrequencyY),
+      },
+      uBigWavesSpeed: new THREE.Uniform(uBigWavesSpeed),
+
+      uSmallWavesElevation: new THREE.Uniform(uSmallWavesElevation),
+      uSmallWavesFrequency: new THREE.Uniform(uSmallWavesFrequency),
+      uSmallWavesSpeed: new THREE.Uniform(uSmallWavesSpeed),
+      uSmallIterations: new THREE.Uniform(uSmallIterations),
+
+      uDepthColor: { value: new THREE.Color(depthColor) },
+      uSurfaceColor: { value: new THREE.Color(surfaceColor) },
+      uColorOffset: new THREE.Uniform(uColorOffset),
+      uColorMultiplier: new THREE.Uniform(uColorMultiplier),
+      uCircularWaveOrigin: {
+        value: new THREE.Vector2(uCircularOriginX, uCircularOriginY),
+      },
+      uIsCircularWave: new THREE.Uniform(uIsCircularWave),
+    };
 
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       wireframe,
-      uniforms: {
-        uTime: new THREE.Uniform(0),
-
-        uBigWavesElevation: new THREE.Uniform(uBigWavesElevation),
-        uBigWavesFrequency: {
-          value: new THREE.Vector2(uBigWavesFrequencyX, uBigWavesFrequencyY),
-        },
-        uBigWavesSpeed: new THREE.Uniform(uBigWavesSpeed),
-
-        uSmallWavesElevation: new THREE.Uniform(uSmallWavesElevation),
-        uSmallWavesFrequency: new THREE.Uniform(uSmallWavesFrequency),
-        uSmallWavesSpeed: new THREE.Uniform(uSmallWavesSpeed),
-        uSmallIterations: new THREE.Uniform(uSmallIterations),
-
-        uDepthColor: { value: new THREE.Color(depthColor) },
-        uSurfaceColor: { value: new THREE.Color(surfaceColor) },
-        uColorOffset: new THREE.Uniform(uColorOffset),
-        uColorMultiplier: new THREE.Uniform(uColorMultiplier),
-      },
+      uniforms,
     }) as TypedShaderMaterial<RagingSeaUniforms>;
   }
 
@@ -176,6 +193,15 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
 
     const frequency = new THREE.Vector2(x, y);
     this.material.uniforms.uBigWavesFrequency.value.copy(frequency);
+  };
+
+  private updateCircularWavesOrigin = (): void => {
+    const { uCircularOriginX: x, uCircularOriginY: y } =
+      this.guiRegistry?.state || this.debugDefaults;
+
+    const originVector = new THREE.Vector2(x, y);
+
+    this.material.uniforms.uCircularWaveOrigin.value.copy(originVector);
   };
 
   private addDebugFolders(): void {
@@ -229,7 +255,34 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       this.material.uniforms.uColorMultiplier.value = v;
     });
 
-    const bigWavesFolder = seaFolder.addFolder("Big Waves");
+    const wavesFolder = seaFolder.addFolder("Waves");
+
+    wavesFolder.add(state, "uIsCircularWave").name("Circular wave form");
+    registry.bind("uIsCircularWave", (v) => {
+      this.material.uniforms.uIsCircularWave.value = v;
+    });
+
+    const circularWaveFolder = wavesFolder.addFolder("Circular Waves");
+
+    circularWaveFolder
+      .add(state, "uCircularOriginX")
+      .name("Circular origin")
+      .min(-1)
+      .max(1)
+      .step(0.01);
+    // .disable(this.guiRegistry.state.uIsCircularWave);
+    registry.bind("uCircularOriginX", this.updateCircularWavesOrigin);
+
+    circularWaveFolder
+      .add(state, "uCircularOriginY")
+      .name("Circular origin")
+      .min(-1)
+      .max(1)
+      .step(0.01);
+    // .disable(this.guiRegistry.state.uIsCircularWave);
+    registry.bind("uCircularOriginY", this.updateCircularWavesOrigin);
+
+    const bigWavesFolder = wavesFolder.addFolder("Big Waves");
 
     bigWavesFolder
       .add(state, "uBigWavesElevation")
@@ -255,6 +308,7 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       .max(10)
       .step(0.001)
       .name("Frequency Y");
+    // .disable(!this.guiRegistry.state.uIsCircularWave);
     registry.bind("uBigWavesFrequencyY", this.updateBigWavesFrequency);
 
     bigWavesFolder
@@ -267,7 +321,7 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       this.material.uniforms.uBigWavesSpeed.value = v;
     });
 
-    const smallWavesFolder = seaFolder.addFolder("Small Waves");
+    const smallWavesFolder = wavesFolder.addFolder("Small Waves");
 
     smallWavesFolder
       .add(state, "uSmallWavesElevation")
