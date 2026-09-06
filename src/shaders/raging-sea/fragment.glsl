@@ -7,10 +7,16 @@ varying float vElevation;
 varying vec3 vNormal;
 varying vec3 vPosition;
 
+varying float vFogDepth;
+
 #include ../utils/lights/directionalLight
 #include ../utils/lights/pointLight
+
 #include ../utils/vectors/displacementVec3
 #include ../utils/vectors/direction
+
+#include ../utils/fog/fogFactor
+#include ../utils/fog/mixColorFog
 
 void main() {
     vec3 normal = normalize(vNormal);
@@ -28,7 +34,10 @@ void main() {
     vec3 color = mix(uDepthColor, uSurfaceColor, mixStrength);
     color *= light;
 
-    gl_FragColor = vec4(color, 1.0);
+    float fogFactor = fogFactor(0.5, 5.0, vFogDepth);
+    vec3 foggedColor = mixColorFog(color, vec3(0.0), fogFactor);
+
+    gl_FragColor = vec4(foggedColor, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
 }

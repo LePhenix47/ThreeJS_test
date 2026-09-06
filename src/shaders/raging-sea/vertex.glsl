@@ -12,6 +12,8 @@ varying float vElevation;
 varying vec3 vNormal;
 varying vec3 vPosition;
 
+varying float vFogDepth;
+
 #include ../utils/perlin-noise/perlinClassic3D
 #include ../utils/vectors/direction
 
@@ -59,5 +61,5 @@ void main() {
 
     vNormal = computedNormal;
     vPosition = modelPosition.xyz;
-
+    vFogDepth = -1.0 * viewPosition.z;
 }
