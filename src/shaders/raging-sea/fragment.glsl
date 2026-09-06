@@ -34,7 +34,7 @@ void main() {
     vec3 color = mix(uDepthColor, uSurfaceColor, mixStrength);
     color *= light;
 
-    float fogFactor = fogFactor(0.5, 5.0, vFogDepth);
+    float fogFactor = fogFactor(0.5, 10.0, vFogDepth);
     vec3 foggedColor = mixColorFog(color, vec3(0.08), fogFactor);
 
     gl_FragColor = vec4(foggedColor, 1.0);
