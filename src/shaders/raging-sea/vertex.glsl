@@ -8,6 +8,8 @@ uniform float uSmallWavesFrequency;
 uniform float uSmallWavesSpeed;
 uniform float uSmallIterations;
 
+uniform float uComputedNormalShift;
+
 uniform vec2 uCircularWaveOrigin;
 
 uniform bool uIsCircularWave;
@@ -44,10 +46,8 @@ void main() {
     // * Base position
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
-    float shift = 0.01;
-    // shift = 1.0;
-    vec3 modelPositionA = modelPosition.xyz + vec3(shift, 0.0, 0.0);
-    vec3 modelPositionB = modelPosition.xyz + vec3(0.0, 0.0, -1.0 * shift);
+    vec3 modelPositionA = modelPosition.xyz + vec3(uComputedNormalShift, 0.0, 0.0);
+    vec3 modelPositionB = modelPosition.xyz + vec3(0.0, 0.0, -1.0 * uComputedNormalShift);
 
     // * Elevation
     float elevation = waveElevation(modelPosition.xyz);

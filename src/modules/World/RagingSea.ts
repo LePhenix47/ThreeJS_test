@@ -27,6 +27,7 @@ type RagingSeaState = {
   uIsCircularWave: boolean;
   uCircularOriginX: number;
   uCircularOriginY: number;
+  uComputedNormalShift: number;
   wireframe: boolean;
 };
 
@@ -45,6 +46,7 @@ type RagingSeaUniforms = MapAsUniforms<{
   uColorMultiplier: RagingSeaState["uColorMultiplier"];
   uIsCircularWave: RagingSeaState["uIsCircularWave"];
   uCircularWaveOrigin: THREE.Vector2;
+  uComputedNormalShift: RagingSeaState["uComputedNormalShift"];
 }>;
 
 class RagingSea extends MeshEntity implements Updatable, Destroyable {
@@ -78,6 +80,7 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
     uCircularOriginX: 0.0,
     uCircularOriginY: 0.0,
     wireframe: false,
+    uComputedNormalShift: 0.01,
   };
 
   private get scene() {
@@ -142,6 +145,7 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       uIsCircularWave,
       uCircularOriginX,
       uCircularOriginY,
+      uComputedNormalShift,
       wireframe,
     } = this.debugDefaults;
 
@@ -167,6 +171,7 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
         value: new THREE.Vector2(uCircularOriginX, uCircularOriginY),
       },
       uIsCircularWave: new THREE.Uniform(uIsCircularWave),
+      uComputedNormalShift: new THREE.Uniform(uComputedNormalShift),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -256,6 +261,16 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
     });
 
     const wavesFolder = seaFolder.addFolder("Waves");
+
+    wavesFolder
+      .add(state, "uComputedNormalShift")
+      .name("Shift (normal)")
+      .min(0.01)
+      .max(1)
+      .step(0.01);
+    registry.bind("uComputedNormalShift", (v) => {
+      this.material.uniforms.uComputedNormalShift.value = v;
+    });
 
     // ? Bind is added much later on
     wavesFolder.add(state, "uIsCircularWave").name("Circular wave form");
