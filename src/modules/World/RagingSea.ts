@@ -257,29 +257,25 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
 
     const wavesFolder = seaFolder.addFolder("Waves");
 
+    // ? Bind is added much later on
     wavesFolder.add(state, "uIsCircularWave").name("Circular wave form");
-    registry.bind("uIsCircularWave", (v) => {
-      this.material.uniforms.uIsCircularWave.value = v;
-    });
 
     const circularWaveFolder = wavesFolder.addFolder("Circular Waves");
 
-    circularWaveFolder
+    const circularOriginXController = circularWaveFolder
       .add(state, "uCircularOriginX")
       .name("Circular origin")
       .min(-1)
       .max(1)
       .step(0.01);
-    // .disable(this.guiRegistry.state.uIsCircularWave);
     registry.bind("uCircularOriginX", this.updateCircularWavesOrigin);
 
-    circularWaveFolder
+    const circularOriginYController = circularWaveFolder
       .add(state, "uCircularOriginY")
       .name("Circular origin")
       .min(-1)
       .max(1)
       .step(0.01);
-    // .disable(this.guiRegistry.state.uIsCircularWave);
     registry.bind("uCircularOriginY", this.updateCircularWavesOrigin);
 
     const bigWavesFolder = wavesFolder.addFolder("Big Waves");
@@ -302,14 +298,23 @@ class RagingSea extends MeshEntity implements Updatable, Destroyable {
       .name("Frequency X");
     registry.bind("uBigWavesFrequencyX", this.updateBigWavesFrequency);
 
-    bigWavesFolder
+    const frequencyYController = bigWavesFolder
       .add(state, "uBigWavesFrequencyY")
       .min(0)
       .max(10)
       .step(0.001)
       .name("Frequency Y");
-    // .disable(!this.guiRegistry.state.uIsCircularWave);
     registry.bind("uBigWavesFrequencyY", this.updateBigWavesFrequency);
+
+    // ? bind() deferred to here: it fires immediately, so the controllers above must already exist.
+    registry.bind("uIsCircularWave", (v) => {
+      this.material.uniforms.uIsCircularWave.value = v;
+
+      circularOriginXController.disable(!v);
+      circularOriginYController.disable(!v);
+
+      frequencyYController.disable(v);
+    });
 
     bigWavesFolder
       .add(state, "uBigWavesSpeed")
