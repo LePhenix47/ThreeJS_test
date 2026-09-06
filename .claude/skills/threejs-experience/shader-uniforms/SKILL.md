@@ -48,6 +48,47 @@ Both compile to the exact same shape (`THREE.Uniform` is just `{ value }` with a
 
 ---
 
+## Type-Safe Uniforms with TypedShaderMaterial
+
+`THREE.ShaderMaterial` isn't generic over its `uniforms` shape, so `material.uniforms.uColor.value` has no autocomplete or type-checking by default. Use the two generic helpers in `src/modules/World/types/uniforms.ts`:
+
+```typescript
+export type MapAsUniforms<T extends object> = {
+  [K in keyof T]: THREE.IUniform<T[K]>;
+};
+export type TypedShaderMaterial<TUniforms extends object> = THREE.ShaderMaterial & {
+  uniforms: TUniforms;
+};
+```
+
+Declare the uniforms shape once, build the object literal as its own annotated `const`, then cast the material:
+
+```typescript
+type MyUniforms = MapAsUniforms<{
+  uTime: number;
+  uColor: THREE.Color;
+}>;
+
+protected material: TypedShaderMaterial<MyUniforms>;
+
+protected setMaterial(): void {
+  const uniforms: MyUniforms = {
+    uTime: new THREE.Uniform(0),
+    uColor: { value: new THREE.Color(color) },
+  };
+
+  this.material = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms,
+  }) as TypedShaderMaterial<MyUniforms>;
+}
+```
+
+**The separate `const uniforms: MyUniforms = {...}` is required, not optional style.** `new THREE.ShaderMaterial({...})`'s own `uniforms` parameter is typed against Three.js's loose `{[key: string]: IUniform<any>}`. Building the object literal inline inside the constructor call, then casting the whole material afterward with `as TypedShaderMaterial<MyUniforms>`, only fixes typing for later *usage* — the literal itself is never checked against `MyUniforms`, so a typo'd key or wrong value type at the *definition* site compiles clean and only breaks at runtime. Assigning to the annotated `const` first catches that at compile time, before the unconditional cast ever happens.
+
+---
+
 ## Per-Frame Update in update()
 
 ```typescript
