@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import {
   LightEntity,
   LightEntityFactoryParams,
@@ -21,6 +22,16 @@ class PointLightEntity extends LightEntity<
   PointLightState,
   PointLightUniformValue
 > {
+  public static createEmptyUniformValue(): PointLightUniformValue {
+    return {
+      color: new THREE.Color(0, 0, 0),
+      intensity: 0,
+      position: new THREE.Vector3(0, 0, 0),
+      specularPower: 1,
+      decayAttenuation: 0,
+    };
+  }
+
   constructor(params: PointLightEntityParams) {
     super({
       ...params,

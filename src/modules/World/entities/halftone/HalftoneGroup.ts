@@ -15,7 +15,10 @@ import {
   MapAsUniforms,
   TypedShaderMaterial,
 } from "@modules/World/types/uniforms";
-import { DynamicLightCollection } from "@modules/World/types/entity";
+import {
+  DynamicLightCollection,
+  padUniformValues,
+} from "@modules/World/types/entity";
 import PointLightEntity, {
   PointLightState,
   PointLightUniformValue,
@@ -125,39 +128,21 @@ class HalftoneGroup implements Updatable, Destroyable {
     this.torus = new HalftoneTorus({ material, group });
     this.sphere = new HalftoneSphere({ material, group });
 
-    this.resources.on("textures-loaded", () => {
-      this.suzanne = new HalftoneSuzanne({ material, group });
-    });
+    this.resources.on("textures-loaded", this.handleTexturesLoaded);
 
-    this.pointLights = new DynamicLightCollection<
-      PointLightState,
-      PointLightUniformValue
-    >({
-      maxCount: HalftoneGroup.CONFIG.maxPointLights,
-      storageIdsKey: HalftoneGroup.CONFIG.pointLightIdsStorageKey,
-      defaults: HalftoneGroup.CONFIG.defaultPointLightState,
-      createEntity: (params) => new PointLightEntity(params),
-      onChange: this.syncLightUniforms,
-    });
+    this.setLightCollections();
 
-    this.directionalLights = new DynamicLightCollection<
-      DirectionalLightState,
-      DirectionalLightUniformValue
-    >({
-      maxCount: HalftoneGroup.CONFIG.maxDirectionalLights,
-      storageIdsKey: HalftoneGroup.CONFIG.directionalLightIdsStorageKey,
-      defaults: HalftoneGroup.CONFIG.defaultDirectionalLightState,
-      createEntity: (params) => new DirectionalLightEntity(params),
-      onChange: this.syncLightUniforms,
-    });
-
-    // this.setPosition();
     this.setPositionY();
 
     if (this.debug?.isActive) this.addDebugFolders();
 
     console.log("HalftoneGroup");
   }
+
+  private handleTexturesLoaded = (): void => {
+    const { material, group } = this;
+    this.suzanne = new HalftoneSuzanne({ material, group });
+  };
 
   private setPositionY(): void {
     const { positionY } = this.debugDefaults;
@@ -184,82 +169,33 @@ class HalftoneGroup implements Updatable, Destroyable {
     };
   }
 
-  private createEmptyPointLightUniformValue(): PointLightUniformValue {
-    return {
-      color: new THREE.Color(0, 0, 0),
-      intensity: 0,
-      position: new THREE.Vector3(0, 0, 0),
-      specularPower: 1,
-      decayAttenuation: 0,
-    };
-  }
+  private setMaterial(): void {
+    const emptyPointLightValue = PointLightEntity.createEmptyUniformValue();
+    const emptyDirectionalLightValue =
+      DirectionalLightEntity.createEmptyUniformValue();
 
-  private createEmptyDirectionalLightUniformValue(): DirectionalLightUniformValue {
-    return {
-      color: new THREE.Color(0, 0, 0),
-      intensity: 0,
-      position: new THREE.Vector3(0, 0, 0),
-      specularPower: 1,
-    };
-  }
-
-  /*
-    ? uPointLights/uDirectionalLights in GLSL always allocate their full fixed slot count —
-    ? Three.js's uniform uploader writes every slot each frame regardless of the matching count
-    ? uniform, so .value must always be exactly maxCount long or it reads .color off undefined.
-  */
-  private padUniformValues<T>(
-    active: T[],
-    maxCount: number,
-    emptyValue: T,
-  ): T[] {
-    const padded = Array.from(active);
-    while (padded.length < maxCount) {
-      padded.push(emptyValue);
-    }
-    return padded;
-  }
-
-  /** Rebuilds `uPointLights`/`uPointLightCount`/`uDirectionalLights`/`uDirectionalLightCount` from the live collections. */
-  private syncLightUniforms = (): void => {
-    const activePointLights = this.pointLights.getUniformValues();
-    this.material.uniforms.uPointLights.value = this.padUniformValues(
-      activePointLights,
+    const pointLightsValue = padUniformValues(
+      [],
       HalftoneGroup.CONFIG.maxPointLights,
-      this.createEmptyPointLightUniformValue(),
+      emptyPointLightValue,
     );
-    this.material.uniforms.uPointLightCount.value = activePointLights.length;
-
-    const activeDirectionalLights = this.directionalLights.getUniformValues();
-    this.material.uniforms.uDirectionalLights.value = this.padUniformValues(
-      activeDirectionalLights,
+    const directionalLightsValue = padUniformValues(
+      [],
       HalftoneGroup.CONFIG.maxDirectionalLights,
-      this.createEmptyDirectionalLightUniformValue(),
+      emptyDirectionalLightValue,
     );
-    this.material.uniforms.uDirectionalLightCount.value =
-      activeDirectionalLights.length;
-  };
 
-  private setMaterial = (): void => {
     const uniforms: HalftoneUniforms = {
       uTime: new THREE.Uniform(0),
       uColor: {
         value: new THREE.Color(),
       },
       uPointLights: {
-        value: this.padUniformValues(
-          [],
-          HalftoneGroup.CONFIG.maxPointLights,
-          this.createEmptyPointLightUniformValue(),
-        ),
+        value: pointLightsValue,
       },
       uPointLightCount: new THREE.Uniform(0),
       uDirectionalLights: {
-        value: this.padUniformValues(
-          [],
-          HalftoneGroup.CONFIG.maxDirectionalLights,
-          this.createEmptyDirectionalLightUniformValue(),
-        ),
+        value: directionalLightsValue,
       },
       uDirectionalLightCount: new THREE.Uniform(0),
     };
@@ -277,7 +213,40 @@ class HalftoneGroup implements Updatable, Destroyable {
       // depthWrite: false,
       // blending: THREE.AdditiveBlending,
     }) as TypedShaderMaterial<HalftoneUniforms>;
-  };
+  }
+
+  private setLightCollections(): void {
+    const emptyPointLightValue = PointLightEntity.createEmptyUniformValue();
+
+    this.pointLights = new DynamicLightCollection<
+      PointLightState,
+      PointLightUniformValue
+    >({
+      maxCount: HalftoneGroup.CONFIG.maxPointLights,
+      storageIdsKey: HalftoneGroup.CONFIG.pointLightIdsStorageKey,
+      defaults: HalftoneGroup.CONFIG.defaultPointLightState,
+      createEntity: (params) => new PointLightEntity(params),
+      emptyUniformValue: emptyPointLightValue,
+      uniformArray: this.material.uniforms.uPointLights,
+      countUniform: this.material.uniforms.uPointLightCount,
+    });
+
+    const emptyDirectionalLightValue =
+      DirectionalLightEntity.createEmptyUniformValue();
+
+    this.directionalLights = new DynamicLightCollection<
+      DirectionalLightState,
+      DirectionalLightUniformValue
+    >({
+      maxCount: HalftoneGroup.CONFIG.maxDirectionalLights,
+      storageIdsKey: HalftoneGroup.CONFIG.directionalLightIdsStorageKey,
+      defaults: HalftoneGroup.CONFIG.defaultDirectionalLightState,
+      createEntity: (params) => new DirectionalLightEntity(params),
+      emptyUniformValue: emptyDirectionalLightValue,
+      uniformArray: this.material.uniforms.uDirectionalLights,
+      countUniform: this.material.uniforms.uDirectionalLightCount,
+    });
+  }
 
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<HalftoneGroupState>(
