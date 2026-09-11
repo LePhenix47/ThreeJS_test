@@ -52,7 +52,7 @@ class HalftoneGroup implements Updatable, Destroyable {
   }
 
   private readonly debugDefaults: HalftoneGroupState = {
-    color: "#3c6ff7",
+    color: "#ff794d",
   };
 
   private guiRegistry: GUIStateRegistry<HalftoneGroupState> | null = null;
