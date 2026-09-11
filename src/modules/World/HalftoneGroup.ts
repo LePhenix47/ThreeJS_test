@@ -102,10 +102,10 @@ class HalftoneGroup implements Updatable, Destroyable {
       vertexShader,
       fragmentShader,
       uniforms,
-      side: THREE.DoubleSide,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
+      // side: THREE.DoubleSide,
+      // transparent: true,
+      // depthWrite: false,
+      // blending: THREE.AdditiveBlending,
     }) as TypedShaderMaterial<HalftoneUniforms>;
   };
 
