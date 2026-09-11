@@ -1,0 +1,195 @@
+import * as THREE from "three";
+import { Destroyable } from "@modules/Experience/Experience";
+import GUIStateRegistry from "@utils/classes/gui-state-registry";
+import GUI from "lil-gui";
+
+/** Contract for a light's visual stand-in mesh — this scene has no real THREE.Light. */
+export interface LightHelper extends Destroyable {
+  setPosition(position: THREE.Vector3): void;
+  setColor(color: string): void;
+}
+
+/** Fields every light type's GUI state has in common. A light type with extra tunables (e.g. point light decay) extends this. */
+export type BaseLightState = {
+  color: string;
+  intensity: number;
+  positionX: number;
+  positionY: number;
+  positionZ: number;
+  specularPower: number;
+};
+
+/** Fields every light type's uniform snapshot has in common. */
+export type BaseLightUniformValue = {
+  color: THREE.Color;
+  intensity: number;
+  position: THREE.Vector3;
+  specularPower: number;
+};
+
+export type LightEntityParams<TState extends BaseLightState> = {
+  id: string;
+  parentFolder: GUI;
+  defaults: TState;
+  onChange: () => void;
+  onRemove: (self: LightEntity<TState, BaseLightUniformValue>) => void;
+  /** Sessionstorage key prefix — must be unique per light type, keyed further by `id`. */
+  storageKeyPrefix: string;
+  /** GUI folder label prefix, e.g. "Point Light" renders as "Point Light #<uuid>". */
+  folderLabelPrefix: string;
+};
+
+/** {@link LightEntityParams} minus the 2 fields a concrete light entity's own constructor already supplies internally — the shape every concrete light entity's own params type aliases. */
+export type LightEntityFactoryParams<TState extends BaseLightState> = Omit<
+  LightEntityParams<TState>,
+  "storageKeyPrefix" | "folderLabelPrefix"
+>;
+
+/**
+ * Base for one dynamically added/removed light — owns its helper mesh, its own GUIStateRegistry
+ * (own sessionStorage key, keyed by `id`), and its own GUI folder. `id` is a UUID assigned once
+ * at creation, so a removed light's storage key never collides with a future one.
+ * `storageKeyPrefix`/`folderLabelPrefix` are passed as constructor params rather than overridable
+ * properties — a subclass's own field initializers run after this base constructor's body, so a
+ * property override wouldn't be assigned yet when `setRegistry`/`setFolder` read it here.
+ */
+export abstract class LightEntity<
+  TState extends BaseLightState,
+  TUniform extends BaseLightUniformValue,
+> implements Destroyable
+{
+  public readonly id: string;
+  protected helper: LightHelper;
+  protected registry: GUIStateRegistry<TState>;
+  protected folder: GUI;
+  private readonly storageKeyPrefix: string;
+  private readonly folderLabelPrefix: string;
+  protected readonly onChange: () => void;
+  protected readonly onRemove: (self: LightEntity<TState, TUniform>) => void;
+
+  constructor({
+    id,
+    parentFolder,
+    defaults,
+    onChange,
+    onRemove,
+    storageKeyPrefix,
+    folderLabelPrefix,
+  }: LightEntityParams<TState>) {
+    this.id = id;
+    this.onChange = onChange;
+    this.onRemove = onRemove;
+    this.storageKeyPrefix = storageKeyPrefix;
+    this.folderLabelPrefix = folderLabelPrefix;
+
+    this.setHelper(defaults);
+    this.setRegistry(defaults);
+    this.setFolder(parentFolder);
+
+    this.addFolderControls();
+  }
+
+  /** Instantiates this light type's visual stand-in mesh. */
+  protected abstract createHelper(): LightHelper;
+
+  /**
+   * Adds GUI controls beyond the shared color/intensity/position/specularPower set — a no-op
+   * by default, overridden by a light type with extra tunables (e.g. point light decay).
+   */
+  protected addExtraFolderControls(): void {}
+
+  /** Builds this light type's full uniform snapshot from `registry.state`. */
+  public abstract toUniformValue(): TUniform;
+
+  private setHelper(defaults: TState): void {
+    const helper = this.createHelper();
+
+    const position = new THREE.Vector3(
+      defaults.positionX,
+      defaults.positionY,
+      defaults.positionZ,
+    );
+    helper.setPosition(position);
+    helper.setColor(defaults.color);
+
+    this.helper = helper;
+  }
+
+  private setRegistry(defaults: TState): void {
+    const keyName = `${this.storageKeyPrefix}-${this.id}`;
+    this.registry = new GUIStateRegistry<TState>(keyName, defaults);
+  }
+
+  private setFolder(parentFolder: GUI): void {
+    this.folder = parentFolder.addFolder(`${this.folderLabelPrefix} #${this.id}`);
+  }
+
+  private addFolderControls(): void {
+    const { registry, folder } = this;
+    const { state } = registry;
+
+    folder.addColor(state, "color").name("Color");
+    registry.bind("color", this.applyColor);
+
+    folder.add(state, "intensity").min(0).max(5).step(0.001).name("Intensity");
+    registry.bind("intensity", this.onChange);
+
+    folder.add(state, "positionX").min(-5).max(5).step(0.01).name("Position X");
+    registry.bind("positionX", this.applyPosition);
+
+    folder.add(state, "positionY").min(-5).max(5).step(0.01).name("Position Y");
+    registry.bind("positionY", this.applyPosition);
+
+    folder.add(state, "positionZ").min(-5).max(5).step(0.01).name("Position Z");
+    registry.bind("positionZ", this.applyPosition);
+
+    folder
+      .add(state, "specularPower")
+      .min(1)
+      .max(128)
+      .step(1)
+      .name("Specular Power");
+    registry.bind("specularPower", this.onChange);
+
+    this.addExtraFolderControls();
+
+    folder.add({ remove: this.handleRemoveClick }, "remove").name("Remove");
+  }
+
+  private handleRemoveClick = (): void => {
+    this.onRemove(this);
+  };
+
+  private applyColor = (color: string): void => {
+    this.helper.setColor(color);
+    this.onChange();
+  };
+
+  private applyPosition = (): void => {
+    const { positionX, positionY, positionZ } = this.registry.state;
+
+    const position = new THREE.Vector3(positionX, positionY, positionZ);
+    this.helper.setPosition(position);
+
+    this.onChange();
+  };
+
+  /** Shared half of the uniform snapshot — a subclass's `toUniformValue()` spreads this and adds its own extra fields. */
+  protected getBaseUniformValue(): BaseLightUniformValue {
+    const { color, intensity, positionX, positionY, positionZ, specularPower } =
+      this.registry.state;
+
+    return {
+      color: new THREE.Color(color),
+      intensity,
+      position: new THREE.Vector3(positionX, positionY, positionZ),
+      specularPower,
+    };
+  }
+
+  public destroy(): void {
+    this.helper.destroy();
+    this.registry.dispose();
+    this.folder.destroy();
+  }
+}
