@@ -12,6 +12,8 @@ import HalftoneTorus from "./HalftoneTorus";
 import HalftoneSphere from "./HalftoneSphere";
 import HalftoneSuzanne from "./HalftoneSuzanne";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
+import { Controller } from "lil-gui";
+import gsap from "gsap";
 
 export type HalftoneEntityParams = {
   material: THREE.ShaderMaterial;
@@ -21,6 +23,7 @@ export type HalftoneEntityParams = {
 type HalftoneGroupState = {
   color: string;
   positionY: number;
+  toggleMiddleY: boolean;
 };
 
 type HalftoneUniforms = MapAsUniforms<{
@@ -55,6 +58,7 @@ class HalftoneGroup implements Updatable, Destroyable {
   private readonly debugDefaults: HalftoneGroupState = {
     color: "#ff794d",
     positionY: 0,
+    toggleMiddleY: false,
   };
 
   private guiRegistry: GUIStateRegistry<HalftoneGroupState> | null = null;
@@ -90,13 +94,23 @@ class HalftoneGroup implements Updatable, Destroyable {
     this.group.position.y = positionY;
   }
 
-  private setPosition(): void {
+  private get3DBoundingRect(): {
+    width: number;
+    height: number;
+    depth: number;
+  } {
     // * ThreeJS equivalent of getBoundingClientRect
     const box = new THREE.Box3().setFromObject(this.group);
 
+    const width = box.max.x - box.min.x;
     const height = box.max.y - box.min.y;
+    const depth = box.max.z - box.min.z;
 
-    this.group.position.y = height * 0.5;
+    return {
+      width,
+      height,
+      depth,
+    };
   }
 
   private setMaterial = (): void => {
@@ -135,9 +149,29 @@ class HalftoneGroup implements Updatable, Destroyable {
       this.material.uniforms.uColor.value.set(v);
     });
 
-    folder.add(state, "positionY").name("Y position").min(-5).max(5).step(0.1);
+    const groupYPositionController: Controller = folder
+      .add(state, "positionY")
+      .name("Y position")
+      .min(-5)
+      .max(5)
+      .step(0.1);
     registry.bind("positionY", (v) => {
       this.group.position.y = v;
+    });
+
+    folder.add(state, "toggleMiddleY").name("Toggle Middle Y pos");
+    registry.bind("toggleMiddleY", (v) => {
+      groupYPositionController.disable(v);
+
+      let newYPosition: number = state.positionY;
+      if (v) {
+        const computedHeight = this.get3DBoundingRect().height;
+        newYPosition = computedHeight / 2;
+      }
+
+      gsap.to(this.group.position, {
+        y: newYPosition,
+      });
     });
   }
 
