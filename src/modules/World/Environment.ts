@@ -1,7 +1,7 @@
 import Experience, { Destroyable } from "@modules/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-import { EnvironmentEntity, EnvironmentMapConfig } from "./types/entity";
+import { EnvironmentEntity, EnvironmentMapConfig } from "./types/environment-entity";
 
 type EnvironmentState = {
   lightHelper: boolean;

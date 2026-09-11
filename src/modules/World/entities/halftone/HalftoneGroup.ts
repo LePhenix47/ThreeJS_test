@@ -18,7 +18,7 @@ import {
 import {
   DynamicLightCollection,
   padUniformValues,
-} from "@modules/World/types/entity";
+} from "@modules/World/types/dynamic-light-collection";
 import PointLightEntity, {
   PointLightState,
   PointLightUniformValue,
@@ -206,7 +206,7 @@ class HalftoneGroup implements Updatable, Destroyable {
   }
 
   private setLightCollections(): void {
-    this.pointLights = new DynamicLightCollection<"point">({
+    this.pointLights = new DynamicLightCollection({
       maxCount: HalftoneGroup.CONFIG.maxPointLights,
       storageIdsKey: HalftoneGroup.CONFIG.pointLightIdsStorageKey,
       defaults: HalftoneGroup.CONFIG.defaultPointLightState,
@@ -216,7 +216,7 @@ class HalftoneGroup implements Updatable, Destroyable {
       countUniform: this.material.uniforms.uPointLightCount,
     });
 
-    this.directionalLights = new DynamicLightCollection<"directional">({
+    this.directionalLights = new DynamicLightCollection({
       maxCount: HalftoneGroup.CONFIG.maxDirectionalLights,
       storageIdsKey: HalftoneGroup.CONFIG.directionalLightIdsStorageKey,
       defaults: HalftoneGroup.CONFIG.defaultDirectionalLightState,

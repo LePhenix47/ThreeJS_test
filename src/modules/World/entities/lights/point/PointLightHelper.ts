@@ -1,5 +1,5 @@
 import Experience, { Destroyable } from "@modules/Experience/Experience";
-import { MeshEntity } from "@modules/World/types/entity";
+import { MeshEntity } from "@modules/World/types/mesh-entity";
 import * as THREE from "three";
 
 /** Small icosahedron placed at a point light's position. A visual stand-in for a real THREE.PointLightHelper since this scene has no real THREE.Light. Multiple instances may exist at once, each with its own position and color. */

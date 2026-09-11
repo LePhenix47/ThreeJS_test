@@ -2,7 +2,7 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import { MeshEntity } from "@modules/World/types/entity";
+import { MeshEntity } from "@modules/World/types/mesh-entity";
 import { HalftoneEntityParams } from "./HalftoneGroup";
 import * as THREE from "three";
 

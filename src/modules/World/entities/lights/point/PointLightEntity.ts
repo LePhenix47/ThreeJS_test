@@ -4,7 +4,7 @@ import {
   LightHelper,
   BaseLightState,
   BaseLightUniformValue,
-} from "@modules/World/types/entity";
+} from "@modules/World/types/light-entity";
 import PointLightHelper from "./PointLightHelper";
 
 export type PointLightState = BaseLightState & {
