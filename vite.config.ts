@@ -6,6 +6,7 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 import glsl from "vite-plugin-glsl";
+import mkcert from "vite-plugin-mkcert";
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
@@ -19,10 +20,12 @@ export default defineConfig(({ mode }) => {
       glsl({
         removeDuplicatedImports: true,
       }),
+      mkcert(),
     ],
     envPrefix: ["VITE_"],
     server: {
       port: 5173, // Change the port to your preferred one
+      strictPort: true, // Fail loudly instead of silently bumping to another port
       host: "0.0.0.0", // Allows access to your local IP address
       open: false, // Optional: Opens the browser automatically
     },
