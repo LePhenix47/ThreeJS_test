@@ -12,7 +12,14 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
 
   return {
-    plugins: [tanstackRouter(), react(), tsconfigPaths(), glsl()],
+    plugins: [
+      tanstackRouter(),
+      react(),
+      tsconfigPaths(),
+      glsl({
+        removeDuplicatedImports: true,
+      }),
+    ],
     envPrefix: ["VITE_"],
     server: {
       port: 5173, // Change the port to your preferred one
