@@ -15,15 +15,21 @@ import fragmentShader from "@shaders/halftone/fragment.glsl";
 import HalftoneTorus from "./HalftoneTorus";
 import HalftoneSphere from "./HalftoneSphere";
 import HalftoneSuzanne from "./HalftoneSuzanne";
+import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
 export type HalftoneEntityParams = {
   material: THREE.ShaderMaterial;
   group: THREE.Group;
 };
 
+type HalftoneUniforms = MapAsUniforms<{
+  uTime: number;
+  uColor: THREE.Color;
+}>;
+
 class HalftoneGroup implements Updatable, Destroyable {
   private readonly experience: Experience | null;
-  private material: THREE.ShaderMaterial;
+  private material: TypedShaderMaterial<HalftoneUniforms>;
   public group: THREE.Group;
   private torus: HalftoneTorus;
   private sphere: HalftoneSphere;
@@ -85,20 +91,22 @@ class HalftoneGroup implements Updatable, Destroyable {
   };
 
   private setMaterial = (): void => {
+    const uniforms: HalftoneUniforms = {
+      uTime: new THREE.Uniform(0),
+      uColor: {
+        value: new THREE.Color(),
+      },
+    };
+
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
-      uniforms: {
-        uTime: new THREE.Uniform(0),
-        uColor: {
-          value: new THREE.Color(this.debugDefaults.color),
-        },
-      },
+      uniforms,
       side: THREE.DoubleSide,
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-    });
+    }) as TypedShaderMaterial<HalftoneUniforms>;
   };
 
   private addDebugFolders = (): void => {
