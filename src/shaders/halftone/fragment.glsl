@@ -1,12 +1,13 @@
-varying float vRelativeY;
-varying vec3 vModelPosition;
-varying vec3 vNormal;
-
 uniform float uTime;
 uniform vec3 uColor;
 
+varying vec3 vNormal;
+varying vec3 vPosition;
+
 void main() {
-  gl_FragColor = vec4(uColor, 1.0);
+  vec3 normal = normalize(vNormal);
+
+  gl_FragColor = vec4(normal, 1.0);
 
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
