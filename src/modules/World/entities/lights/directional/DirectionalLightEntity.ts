@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import {
   LightEntity,
   LightEntityFactoryParams,
@@ -19,15 +18,6 @@ class DirectionalLightEntity extends LightEntity<
   DirectionalLightState,
   DirectionalLightUniformValue
 > {
-  public static createEmptyUniformValue(): DirectionalLightUniformValue {
-    return {
-      color: new THREE.Color(0, 0, 0),
-      intensity: 0,
-      position: new THREE.Vector3(0, 0, 0),
-      specularPower: 1,
-    };
-  }
-
   constructor(params: DirectionalLightEntityParams) {
     super({
       ...params,

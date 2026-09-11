@@ -5,6 +5,14 @@ import { Destroyable } from "@modules/Experience/Experience";
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
 import { WebStorage } from "@lephenix47/webstorage-utility";
 import GUI from "lil-gui";
+import type {
+  PointLightState,
+  PointLightUniformValue,
+} from "@modules/World/entities/lights/point/PointLightEntity";
+import type {
+  DirectionalLightState,
+  DirectionalLightUniformValue,
+} from "@modules/World/entities/lights/directional/DirectionalLightEntity";
 
 /** Full map of all possible texture slots to their loaded THREE.Texture instances. */
 export type EntityTexture = Record<TextureName, THREE.Texture>;
@@ -279,12 +287,49 @@ export abstract class LightEntity<
   }
 }
 
-/** Pads `active` with `emptyValue` up to `maxCount` — a GLSL fixed-size uniform array always allocates `maxCount` slots, and Three.js's uploader writes every slot each frame regardless of a separate count uniform, so `.value` must always be exactly that long or it reads a field off `undefined`. */
-export function padUniformValues<T>(
-  active: T[],
+/** Every concrete light type's state/uniform shape, keyed by a short discriminant. Add a new light type here, nowhere else needs to know about it beyond its own class and whatever call site uses it. */
+export type LightTypeMap = {
+  point: { state: PointLightState; uniform: PointLightUniformValue };
+  directional: {
+    state: DirectionalLightState;
+    uniform: DirectionalLightUniformValue;
+  };
+};
+
+export type LightType = keyof LightTypeMap;
+
+/** Builds a placeholder value for one padding slot — the literal shape, not delegated to a per-class method, since this is the one place allowed to know about every light type's exact fields. */
+export function createEmptyLightUniformValue<T extends LightType>(
+  type: T,
+): LightTypeMap[T]["uniform"] {
+  if (type === "point") {
+    const emptyPointLight: PointLightUniformValue = {
+      color: new THREE.Color(0, 0, 0),
+      intensity: 0,
+      position: new THREE.Vector3(0, 0, 0),
+      specularPower: 1,
+      decayAttenuation: 0,
+    };
+    return emptyPointLight as LightTypeMap[T]["uniform"];
+  }
+
+  const emptyDirectionalLight: DirectionalLightUniformValue = {
+    color: new THREE.Color(0, 0, 0),
+    intensity: 0,
+    position: new THREE.Vector3(0, 0, 0),
+    specularPower: 1,
+  };
+  return emptyDirectionalLight as LightTypeMap[T]["uniform"];
+}
+
+/** Pads `active` with an empty placeholder up to `maxCount` — a GLSL fixed-size uniform array always allocates `maxCount` slots, and Three.js's uploader writes every slot each frame regardless of a separate count uniform, so `.value` must always be exactly that long or it reads a field off `undefined`. */
+export function padUniformValues<T extends LightType>(
+  active: LightTypeMap[T]["uniform"][],
   maxCount: number,
-  emptyValue: T,
-): T[] {
+  type: T,
+): LightTypeMap[T]["uniform"][] {
+  const emptyValue = createEmptyLightUniformValue(type);
+
   const padded = Array.from(active);
   while (padded.length < maxCount) {
     padded.push(emptyValue);
@@ -292,20 +337,16 @@ export function padUniformValues<T>(
   return padded;
 }
 
-export type DynamicLightCollectionParams<
-  TState extends BaseLightState,
-  TUniform extends BaseLightUniformValue,
-> = {
+export type DynamicLightCollectionParams<T extends LightType> = {
   maxCount: number;
   /** Sessionstorage key for the list of active ids — separate from each entity's own per-field storage key. */
   storageIdsKey: string;
-  defaults: TState;
+  defaults: LightTypeMap[T]["state"];
   createEntity: (
-    params: LightEntityFactoryParams<TState>,
-  ) => LightEntity<TState, TUniform>;
-  /** Placeholder value for padding — computed once, shared by every empty slot, never mutated. */
-  emptyUniformValue: TUniform;
-  uniformArray: THREE.IUniform<TUniform[]>;
+    params: LightEntityFactoryParams<LightTypeMap[T]["state"]>,
+  ) => LightEntity<LightTypeMap[T]["state"], LightTypeMap[T]["uniform"]>;
+  emptyUniformValue: T;
+  uniformArray: THREE.IUniform<LightTypeMap[T]["uniform"][]>;
   countUniform: THREE.IUniform<number>;
 };
 
@@ -315,24 +356,23 @@ export type DynamicLightCollectionParams<
  * across reload (each entity's own field values persist separately, via its own GUIStateRegistry).
  * Owns `uniformArray`/`countUniform` outright and keeps them in sync on every add, remove, and
  * entity-level change — the owning group only has to hand over the uniform refs once, no external
- * onChange wiring needed.
+ * onChange wiring needed. Takes a single `T extends LightType` instead of separate state/uniform
+ * type params — `emptyUniformValue: T` is then just the discriminant itself, not a value someone
+ * has to build and hand in, and everything else derives from `T` via {@link LightTypeMap}.
  */
-export class DynamicLightCollection<
-  TState extends BaseLightState,
-  TUniform extends BaseLightUniformValue,
-> implements Destroyable
-{
+export class DynamicLightCollection<T extends LightType> implements Destroyable {
   private readonly maxCount: number;
   private readonly storageIdsKey: string;
-  private readonly defaults: TState;
+  private readonly defaults: LightTypeMap[T]["state"];
   private readonly createEntity: (
-    params: LightEntityFactoryParams<TState>,
-  ) => LightEntity<TState, TUniform>;
-  private readonly emptyUniformValue: TUniform;
-  private readonly uniformArray: THREE.IUniform<TUniform[]>;
+    params: LightEntityFactoryParams<LightTypeMap[T]["state"]>,
+  ) => LightEntity<LightTypeMap[T]["state"], LightTypeMap[T]["uniform"]>;
+  private readonly emptyUniformValue: T;
+  private readonly uniformArray: THREE.IUniform<LightTypeMap[T]["uniform"][]>;
   private readonly countUniform: THREE.IUniform<number>;
 
-  private active: LightEntity<TState, TUniform>[] = [];
+  private active: LightEntity<LightTypeMap[T]["state"], LightTypeMap[T]["uniform"]>[] =
+    [];
   private folder: GUI | null = null;
 
   constructor({
@@ -343,7 +383,7 @@ export class DynamicLightCollection<
     emptyUniformValue,
     uniformArray,
     countUniform,
-  }: DynamicLightCollectionParams<TState, TUniform>) {
+  }: DynamicLightCollectionParams<T>) {
     this.maxCount = maxCount;
     this.storageIdsKey = storageIdsKey;
     this.defaults = defaults;
@@ -371,7 +411,9 @@ export class DynamicLightCollection<
     this.sync();
   }
 
-  private buildEntity(id: string): LightEntity<TState, TUniform> {
+  private buildEntity(
+    id: string,
+  ): LightEntity<LightTypeMap[T]["state"], LightTypeMap[T]["uniform"]> {
     if (!this.folder) throw new Error("Collection folder not set");
 
     return this.createEntity({
@@ -395,7 +437,9 @@ export class DynamicLightCollection<
     this.sync();
   };
 
-  private remove = (entity: LightEntity<TState, BaseLightUniformValue>): void => {
+  private remove = (
+    entity: LightEntity<LightTypeMap[T]["state"], BaseLightUniformValue>,
+  ): void => {
     entity.destroy();
 
     const index = this.active.findIndex((active) => active.id === entity.id);

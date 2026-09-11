@@ -82,14 +82,8 @@ class HalftoneGroup implements Updatable, Destroyable {
   private sphere: HalftoneSphere;
   private suzanne?: HalftoneSuzanne;
 
-  private pointLights: DynamicLightCollection<
-    PointLightState,
-    PointLightUniformValue
-  >;
-  private directionalLights: DynamicLightCollection<
-    DirectionalLightState,
-    DirectionalLightUniformValue
-  >;
+  private pointLights: DynamicLightCollection<"point">;
+  private directionalLights: DynamicLightCollection<"directional">;
 
   private get scene() {
     return this.experience!.scene;
@@ -170,19 +164,15 @@ class HalftoneGroup implements Updatable, Destroyable {
   }
 
   private setMaterial(): void {
-    const emptyPointLightValue = PointLightEntity.createEmptyUniformValue();
-    const emptyDirectionalLightValue =
-      DirectionalLightEntity.createEmptyUniformValue();
-
     const pointLightsValue = padUniformValues(
       [],
       HalftoneGroup.CONFIG.maxPointLights,
-      emptyPointLightValue,
+      "point",
     );
     const directionalLightsValue = padUniformValues(
       [],
       HalftoneGroup.CONFIG.maxDirectionalLights,
-      emptyDirectionalLightValue,
+      "directional",
     );
 
     const uniforms: HalftoneUniforms = {
@@ -216,33 +206,22 @@ class HalftoneGroup implements Updatable, Destroyable {
   }
 
   private setLightCollections(): void {
-    const emptyPointLightValue = PointLightEntity.createEmptyUniformValue();
-
-    this.pointLights = new DynamicLightCollection<
-      PointLightState,
-      PointLightUniformValue
-    >({
+    this.pointLights = new DynamicLightCollection<"point">({
       maxCount: HalftoneGroup.CONFIG.maxPointLights,
       storageIdsKey: HalftoneGroup.CONFIG.pointLightIdsStorageKey,
       defaults: HalftoneGroup.CONFIG.defaultPointLightState,
       createEntity: (params) => new PointLightEntity(params),
-      emptyUniformValue: emptyPointLightValue,
+      emptyUniformValue: "point",
       uniformArray: this.material.uniforms.uPointLights,
       countUniform: this.material.uniforms.uPointLightCount,
     });
 
-    const emptyDirectionalLightValue =
-      DirectionalLightEntity.createEmptyUniformValue();
-
-    this.directionalLights = new DynamicLightCollection<
-      DirectionalLightState,
-      DirectionalLightUniformValue
-    >({
+    this.directionalLights = new DynamicLightCollection<"directional">({
       maxCount: HalftoneGroup.CONFIG.maxDirectionalLights,
       storageIdsKey: HalftoneGroup.CONFIG.directionalLightIdsStorageKey,
       defaults: HalftoneGroup.CONFIG.defaultDirectionalLightState,
       createEntity: (params) => new DirectionalLightEntity(params),
-      emptyUniformValue: emptyDirectionalLightValue,
+      emptyUniformValue: "directional",
       uniformArray: this.material.uniforms.uDirectionalLights,
       countUniform: this.material.uniforms.uDirectionalLightCount,
     });
