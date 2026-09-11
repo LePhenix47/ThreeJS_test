@@ -2,18 +2,18 @@ uniform float uTime;
 uniform vec3 uColor;
 
 struct PointLight {
-    vec3 color;
-    float intensity;
-    vec3 position;
-    float specularPower;
-    float decayAttenuation;
+  vec3 color;
+  float intensity;
+  vec3 position;
+  float specularPower;
+  float decayAttenuation;
 };
 
 struct DirectionalLight {
-    vec3 color;
-    float intensity;
-    vec3 position;
-    float specularPower;
+  vec3 color;
+  float intensity;
+  vec3 position;
+  float specularPower;
 };
 
 uniform PointLight uPointLights[MAX_POINT_LIGHTS]; // MAX_POINT_LIGHTS injected via ShaderMaterial's `defines`
@@ -32,25 +32,25 @@ varying vec3 vAbsolutePosition; // ? For the light
 
 #include ../utils/vectors/direction
 
-// void addDirectionalLights(vec3 light) {
-//   for(int i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++) {
-//     if(i >= uDirectionalLightCount)
-//       break; 
-//     light += directionalLight(uPointLights[i].color, uPointLights[i].intensity, vNormal, uPointLights[i].position, directionOfView, uPointLights[i].specularPower, vAbsolutePosition);
-//   }
+vec3 addDirectionalLights(vec3 light, vec3 directionOfView) {
+  for(int i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++) {
+    if(i >= uDirectionalLightCount)
+      break;
+    light += directionalLight(uDirectionalLights[i].color, uDirectionalLights[i].intensity, vNormal, uDirectionalLights[i].position, directionOfView, uDirectionalLights[i].specularPower);
+  }
 
-// return light;
-// }
+  return light;
+}
 
-// vec3 addPointLights(vec3 light) {
-// for(int i = 0; i < MAX_POINT_LIGHTS; i++) {
-//     if(i >= uPointLightCount)
-//       break;
-//     light += pointLight(uPointLights[i].color, uPointLights[i].intensity, vNormal, uPointLights[i].position, directionOfView, uPointLights[i].specularPower, vAbsolutePosition, uPointLights[i].decayAttenuation);
-//   }
+vec3 addPointLights(vec3 light, vec3 directionOfView) {
+  for(int i = 0; i < MAX_POINT_LIGHTS; i++) {
+    if(i >= uPointLightCount)
+      break;
+    light += pointLight(uPointLights[i].color, uPointLights[i].intensity, vNormal, uPointLights[i].position, directionOfView, uPointLights[i].specularPower, vAbsolutePosition, uPointLights[i].decayAttenuation);
+  }
 
-// return light;
-// }
+  return light;
+}
 
 void main() {
   vec3 normal = normalize(vNormal);
@@ -59,7 +59,10 @@ void main() {
 
   vec3 light = vec3(0.0);
 
-  gl_FragColor = vec4(vAbsolutePosition, 1.0);
+  light = addDirectionalLights(light, directionOfView);
+  light = addPointLights(light, directionOfView);
+
+  gl_FragColor = vec4(light, 1.0);
 
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
