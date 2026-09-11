@@ -3,7 +3,7 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import Environment from "./Environment";
-import HalftoneGroup from "./HalftoneGroup";
+import HalftoneGroup from "@modules/World/entities/halftone/HalftoneGroup";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
