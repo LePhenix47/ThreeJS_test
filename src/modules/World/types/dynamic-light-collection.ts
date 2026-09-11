@@ -82,7 +82,9 @@ export type DynamicLightCollectionParams<T extends LightType> = {
  * uniform array. Persists the active set of ids under `storageIdsKey`; each entity's
  * own state persists separately via its own GUIStateRegistry key.
  */
-export class DynamicLightCollection<T extends LightType> implements Destroyable {
+export class DynamicLightCollection<T extends LightType>
+  implements Destroyable
+{
   private readonly maxCount: number;
   private readonly storageIdsKey: string;
   private readonly defaults: LightTypeMap[T]["state"];
@@ -121,10 +123,12 @@ export class DynamicLightCollection<T extends LightType> implements Destroyable 
     this.folder = parentFolder;
 
     const savedIds = WebStorage.getKey<string[]>(this.storageIdsKey, true);
-    const ids: string[] = savedIds?.length > 0 ? savedIds : [crypto.randomUUID()];
+    const ids: string[] =
+      savedIds?.length > 0 ? savedIds : [crypto.randomUUID()];
 
     for (const id of ids) {
-      const entity = this.buildEntity(id);
+      const index = this.active.length + 1;
+      const entity = this.buildEntity(id, index);
       this.active.push(entity);
     }
 
@@ -136,15 +140,19 @@ export class DynamicLightCollection<T extends LightType> implements Destroyable 
 
   private buildEntity(
     id: string,
+    index: number,
   ): LightEntity<LightTypeMap[T]["state"], LightTypeMap[T]["uniform"]> {
-    if (!this.folder) throw new Error("DynamicLightCollection: no folder set");
+    const { folder, defaults, maxCount, sync, remove } = this;
+    if (!folder) throw new Error("DynamicLightCollection: no folder set");
 
     return this.createEntity({
       id,
-      parentFolder: this.folder,
-      defaults: this.defaults,
-      onChange: this.sync,
-      onRemove: this.remove,
+      parentFolder: folder,
+      defaults,
+      onChange: sync,
+      onRemove: remove,
+      index,
+      maxCount,
     });
   }
 
@@ -153,7 +161,8 @@ export class DynamicLightCollection<T extends LightType> implements Destroyable 
     if (this.active.length >= this.maxCount) return;
 
     const id = crypto.randomUUID();
-    const entity = this.buildEntity(id);
+    const index = this.active.length + 1;
+    const entity = this.buildEntity(id, index);
     this.active.push(entity);
 
     this.saveIds();
@@ -165,10 +174,21 @@ export class DynamicLightCollection<T extends LightType> implements Destroyable 
   ): void => {
     entity.destroy();
     this.active = this.active.filter((current) => current.id !== entity.id);
+    this.relabel();
 
     this.saveIds();
     this.sync();
   };
+
+  /** Reassigns 1-based folder labels after removal shifts positions — indices only ever shift down on a splice. */
+  private relabel(): void {
+    const { active, maxCount } = this;
+
+    for (const [i, entity] of active.entries()) {
+      const index = i + 1;
+      entity.setLabel(index, maxCount);
+    }
+  }
 
   private saveIds(): void {
     const ids = this.active.map((entity) => entity.id);

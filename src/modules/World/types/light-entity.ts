@@ -33,9 +33,13 @@ export type LightEntityParams<TState extends BaseLightState> = {
   defaults: TState;
   onChange: () => void;
   onRemove: (self: LightEntity<TState, BaseLightUniformValue>) => void;
+  /** 1-based position among currently active lights of this type — drives the folder label, not `id`. */
+  index: number;
+  /** Max lights allowed of this type, mirrors `DynamicLightCollection`'s own `maxCount` — drives the folder label's denominator. */
+  maxCount: number;
   /** Sessionstorage key prefix — must be unique per light type, keyed further by `id`. */
   storageKeyPrefix: string;
-  /** GUI folder label prefix, e.g. "Point Light" renders as "Point Light #<uuid>". */
+  /** GUI folder label prefix, e.g. "Point Light" renders as "Point Light 1/5". */
   folderLabelPrefix: string;
 };
 
@@ -73,6 +77,8 @@ export abstract class LightEntity<
     defaults,
     onChange,
     onRemove,
+    index,
+    maxCount,
     storageKeyPrefix,
     folderLabelPrefix,
   }: LightEntityParams<TState>) {
@@ -84,7 +90,7 @@ export abstract class LightEntity<
 
     this.setHelper(defaults);
     this.setRegistry(defaults);
-    this.setFolder(parentFolder);
+    this.setFolder(parentFolder, index, maxCount);
 
     this.addFolderControls();
   }
@@ -120,8 +126,19 @@ export abstract class LightEntity<
     this.registry = new GUIStateRegistry<TState>(keyName, defaults);
   }
 
-  private setFolder(parentFolder: GUI): void {
-    this.folder = parentFolder.addFolder(`${this.folderLabelPrefix} #${this.id}`);
+  private setFolder(parentFolder: GUI, index: number, maxCount: number): void {
+    const label = this.buildLabel(index, maxCount);
+    this.folder = parentFolder.addFolder(label);
+  }
+
+  private buildLabel(index: number, maxCount: number): string {
+    return `${this.folderLabelPrefix} ${index}/${maxCount}`;
+  }
+
+  /** Renames this light's folder title — called by the owning collection after add/remove shifts indices. */
+  public setLabel(index: number, maxCount: number): void {
+    const label = this.buildLabel(index, maxCount);
+    this.folder.title(label);
   }
 
   private addFolderControls(): void {

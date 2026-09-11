@@ -206,24 +206,39 @@ class HalftoneGroup implements Updatable, Destroyable {
   }
 
   private setLightCollections(): void {
+    const {
+      maxPointLights,
+      pointLightIdsStorageKey,
+      defaultPointLightState,
+      maxDirectionalLights,
+      directionalLightIdsStorageKey,
+      defaultDirectionalLightState,
+    } = HalftoneGroup.CONFIG;
+    const {
+      uPointLights,
+      uPointLightCount,
+      uDirectionalLights,
+      uDirectionalLightCount,
+    } = this.material.uniforms;
+
     this.pointLights = new DynamicLightCollection({
-      maxCount: HalftoneGroup.CONFIG.maxPointLights,
-      storageIdsKey: HalftoneGroup.CONFIG.pointLightIdsStorageKey,
-      defaults: HalftoneGroup.CONFIG.defaultPointLightState,
+      maxCount: maxPointLights,
+      storageIdsKey: pointLightIdsStorageKey,
+      defaults: defaultPointLightState,
       createEntity: (params) => new PointLightEntity(params),
       emptyUniformValue: "point",
-      uniformArray: this.material.uniforms.uPointLights,
-      countUniform: this.material.uniforms.uPointLightCount,
+      uniformArray: uPointLights,
+      countUniform: uPointLightCount,
     });
 
     this.directionalLights = new DynamicLightCollection({
-      maxCount: HalftoneGroup.CONFIG.maxDirectionalLights,
-      storageIdsKey: HalftoneGroup.CONFIG.directionalLightIdsStorageKey,
-      defaults: HalftoneGroup.CONFIG.defaultDirectionalLightState,
+      maxCount: maxDirectionalLights,
+      storageIdsKey: directionalLightIdsStorageKey,
+      defaults: defaultDirectionalLightState,
       createEntity: (params) => new DirectionalLightEntity(params),
       emptyUniformValue: "directional",
-      uniformArray: this.material.uniforms.uDirectionalLights,
-      countUniform: this.material.uniforms.uDirectionalLightCount,
+      uniformArray: uDirectionalLights,
+      countUniform: uDirectionalLightCount,
     });
   }
 
