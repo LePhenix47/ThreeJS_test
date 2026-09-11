@@ -3,17 +3,17 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import { MeshEntity } from "./types/entity";
-import { HolographicEntityParams } from "./HolographicGroup";
+import { HalftoneEntityParams } from "./HalftoneGroup";
 import * as THREE from "three";
 
-class HolographicSphere extends MeshEntity implements Updatable, Destroyable {
+class HalftoneSphere extends MeshEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private readonly group: THREE.Group;
   protected geometry: THREE.SphereGeometry;
   protected material: THREE.ShaderMaterial;
   protected mesh: THREE.Mesh;
 
-  constructor({ material, group }: HolographicEntityParams) {
+  constructor({ material, group }: HalftoneEntityParams) {
     super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
@@ -31,7 +31,7 @@ class HolographicSphere extends MeshEntity implements Updatable, Destroyable {
   };
 
   protected setMaterial = (): void => {
-    // ? Material provided externally by HolographicGroup
+    // ? Material provided externally by HalftoneGroup
   };
 
   protected setMesh = (): void => {
@@ -54,4 +54,4 @@ class HolographicSphere extends MeshEntity implements Updatable, Destroyable {
   };
 }
 
-export default HolographicSphere;
+export default HalftoneSphere;

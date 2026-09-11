@@ -5,29 +5,29 @@ import Experience, {
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
 import * as THREE from "three";
 
-type HolographicGroupState = {
+type HalftoneGroupState = {
   color: string;
 };
 
-import vertexShader from "@shaders/holographic/vertex.glsl";
-import fragmentShader from "@shaders/holographic/fragment.glsl";
+import vertexShader from "@shaders/halftone/vertex.glsl";
+import fragmentShader from "@shaders/halftone/fragment.glsl";
 
-import HolographicTorus from "./HolographicTorus";
-import HolographicSphere from "./HolographicSphere";
-import HolographicSuzanne from "./HolographicSuzanne";
+import HalftoneTorus from "./HalftoneTorus";
+import HalftoneSphere from "./HalftoneSphere";
+import HalftoneSuzanne from "./HalftoneSuzanne";
 
-export type HolographicEntityParams = {
+export type HalftoneEntityParams = {
   material: THREE.ShaderMaterial;
   group: THREE.Group;
 };
 
-class HolographicGroup implements Updatable, Destroyable {
+class HalftoneGroup implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private material: THREE.ShaderMaterial;
   public group: THREE.Group;
-  private torus: HolographicTorus;
-  private sphere: HolographicSphere;
-  private suzanne?: HolographicSuzanne;
+  private torus: HalftoneTorus;
+  private sphere: HalftoneSphere;
+  private suzanne?: HalftoneSuzanne;
 
   private get scene() {
     return this.experience!.scene;
@@ -45,11 +45,11 @@ class HolographicGroup implements Updatable, Destroyable {
     return this.experience!.debug;
   }
 
-  private readonly debugDefaults: HolographicGroupState = {
+  private readonly debugDefaults: HalftoneGroupState = {
     color: "#3c6ff7",
   };
 
-  private guiRegistry: GUIStateRegistry<HolographicGroupState> | null = null;
+  private guiRegistry: GUIStateRegistry<HalftoneGroupState> | null = null;
 
   constructor() {
     this.experience = Experience.instance;
@@ -61,18 +61,18 @@ class HolographicGroup implements Updatable, Destroyable {
     this.setMaterial();
 
     const { material, group } = this;
-    this.torus = new HolographicTorus({ material, group });
-    this.sphere = new HolographicSphere({ material, group });
+    this.torus = new HalftoneTorus({ material, group });
+    this.sphere = new HalftoneSphere({ material, group });
 
     this.resources.on("textures-loaded", () => {
-      this.suzanne = new HolographicSuzanne({ material, group });
+      this.suzanne = new HalftoneSuzanne({ material, group });
     });
 
     this.setPosition();
 
     if (this.debug?.isActive) this.addDebugFolders();
 
-    console.log("HolographicGroup");
+    console.log("HalftoneGroup");
   }
 
   private setPosition = (): void => {
@@ -102,15 +102,15 @@ class HolographicGroup implements Updatable, Destroyable {
   };
 
   private addDebugFolders = (): void => {
-    const registry = new GUIStateRegistry<HolographicGroupState>(
-      "holographic-group",
+    const registry = new GUIStateRegistry<HalftoneGroupState>(
+      "Halftone-group",
       this.debugDefaults,
     );
     this.guiRegistry = registry;
     const { state } = registry;
     const { gui } = this.debug!;
 
-    const folder = gui.addFolder("Holographic Group");
+    const folder = gui.addFolder("Halftone Group");
 
     folder.addColor(state, "color").name("Color");
     // * On value
@@ -140,4 +140,4 @@ class HolographicGroup implements Updatable, Destroyable {
   };
 }
 
-export default HolographicGroup;
+export default HalftoneGroup;

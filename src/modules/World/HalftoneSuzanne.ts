@@ -3,11 +3,11 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import { GltfEntity } from "./types/entity";
-import { HolographicEntityParams } from "./HolographicGroup";
+import { HalftoneEntityParams } from "./HalftoneGroup";
 import { GLTF } from "three/examples/jsm/Addons.js";
 import * as THREE from "three";
 
-class HolographicSuzanne extends GltfEntity implements Updatable, Destroyable {
+class HalftoneSuzanne extends GltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private readonly group: THREE.Group;
   protected model: THREE.Group;
@@ -17,7 +17,7 @@ class HolographicSuzanne extends GltfEntity implements Updatable, Destroyable {
     return this.experience!.resources;
   }
 
-  constructor({ material, group }: HolographicEntityParams) {
+  constructor({ material, group }: HalftoneEntityParams) {
     super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
@@ -52,4 +52,4 @@ class HolographicSuzanne extends GltfEntity implements Updatable, Destroyable {
   };
 }
 
-export default HolographicSuzanne;
+export default HalftoneSuzanne;

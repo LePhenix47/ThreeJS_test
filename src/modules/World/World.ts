@@ -3,7 +3,7 @@ import Experience, {
   Updatable,
 } from "@modules/Experience/Experience";
 import Environment from "./Environment";
-import HolographicGroup from "./HolographicGroup";
+import HalftoneGroup from "./HalftoneGroup";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -15,7 +15,7 @@ type WorldState = {
 class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment?: Environment;
-  public holographicGroup: HolographicGroup;
+  public HalftoneGroup: HalftoneGroup;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -42,7 +42,7 @@ class World implements Updatable, Destroyable {
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.environment = new Environment();
-    this.holographicGroup = new HolographicGroup();
+    this.HalftoneGroup = new HalftoneGroup();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -105,12 +105,12 @@ class World implements Updatable, Destroyable {
   };
 
   public update = () => {
-    this.holographicGroup.update();
+    this.HalftoneGroup.update();
   };
 
   public destroy = () => {
     this.environment?.destroy();
-    this.holographicGroup.destroy();
+    this.HalftoneGroup.destroy();
     this.removeHelpers();
   };
 }
