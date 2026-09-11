@@ -1,6 +1,6 @@
 import {
   LightEntity,
-  LightEntityParams,
+  LightEntityFactoryParams,
   LightHelper,
   BaseLightState,
   BaseLightUniformValue,
@@ -11,10 +11,8 @@ export type DirectionalLightState = BaseLightState;
 
 export type DirectionalLightUniformValue = BaseLightUniformValue;
 
-export type DirectionalLightEntityParams = Omit<
-  LightEntityParams<DirectionalLightState>,
-  "storageKeyPrefix" | "folderLabelPrefix"
->;
+export type DirectionalLightEntityParams =
+  LightEntityFactoryParams<DirectionalLightState>;
 
 class DirectionalLightEntity extends LightEntity<
   DirectionalLightState,

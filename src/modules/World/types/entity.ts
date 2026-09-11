@@ -3,6 +3,7 @@ import type { TextureName } from "@/modules/Experience/utils/Resources/types";
 import { GLTF } from "three/examples/jsm/Addons.js";
 import { Destroyable } from "@modules/Experience/Experience";
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
+import { WebStorage } from "@lephenix47/webstorage-utility";
 import GUI from "lil-gui";
 
 /** Full map of all possible texture slots to their loaded THREE.Texture instances. */
@@ -122,6 +123,12 @@ export type LightEntityParams<TState extends BaseLightState> = {
   /** GUI folder label prefix, e.g. "Point Light" renders as "Point Light #3". */
   folderLabelPrefix: string;
 };
+
+/** {@link LightEntityParams} minus the 2 fields a concrete light entity's own constructor already supplies internally — the shape every concrete light entity's own params type aliases. */
+export type LightEntityFactoryParams<TState extends BaseLightState> = Omit<
+  LightEntityParams<TState>,
+  "storageKeyPrefix" | "folderLabelPrefix"
+>;
 
 /**
  * Base for one dynamically added/removed light — owns its helper mesh, its own GUIStateRegistry
@@ -269,5 +276,137 @@ export abstract class LightEntity<
     this.helper.destroy();
     this.registry.dispose();
     this.folder.destroy();
+  }
+}
+
+/** Infinite sequence of monotonic ids starting from `start` — `.next().value` reads and advances atomically. */
+function* lightIdGenerator(start: number): Generator<number, never> {
+  let id = start;
+  while (true) {
+    yield id;
+    id += 1;
+  }
+}
+
+export type DynamicLightCollectionParams<
+  TState extends BaseLightState,
+  TUniform extends BaseLightUniformValue,
+> = {
+  maxCount: number;
+  /** Sessionstorage key for the list of active ids — separate from each entity's own per-field storage key. */
+  storageIdsKey: string;
+  defaults: TState;
+  createEntity: (
+    params: LightEntityFactoryParams<TState>,
+  ) => LightEntity<TState, TUniform>;
+  /** Called on add, remove, and whenever any active entity's own state changes — the owning group re-syncs its uniforms here. */
+  onChange: () => void;
+};
+
+/**
+ * Manages a user-driven, growable/shrinkable collection of {@link LightEntity} instances behind
+ * one debug GUI folder — an "Add" button, per-item removal, persistence of which ids are active
+ * across reload (each entity's own field values persist separately, via its own GUIStateRegistry).
+ * Does not pad or cap the uniform array itself — `getUniformValues()` returns only the active
+ * entities' snapshots, the owning group pads to its shader's fixed array length.
+ */
+export class DynamicLightCollection<
+  TState extends BaseLightState,
+  TUniform extends BaseLightUniformValue,
+> implements Destroyable
+{
+  private readonly maxCount: number;
+  private readonly storageIdsKey: string;
+  private readonly defaults: TState;
+  private readonly createEntity: (
+    params: LightEntityFactoryParams<TState>,
+  ) => LightEntity<TState, TUniform>;
+  private readonly onChange: () => void;
+
+  private active: LightEntity<TState, TUniform>[] = [];
+  private ids = lightIdGenerator(0);
+  private folder: GUI | null = null;
+
+  constructor({
+    maxCount,
+    storageIdsKey,
+    defaults,
+    createEntity,
+    onChange,
+  }: DynamicLightCollectionParams<TState, TUniform>) {
+    this.maxCount = maxCount;
+    this.storageIdsKey = storageIdsKey;
+    this.defaults = defaults;
+    this.createEntity = createEntity;
+    this.onChange = onChange;
+  }
+
+  /** Recreates whichever entities were active on last reload (or seeds one default entity on first-ever load), then wires the Add button. */
+  public restore(parentFolder: GUI): void {
+    this.folder = parentFolder;
+
+    const savedIds = WebStorage.getKey<number[]>(this.storageIdsKey, true);
+    const ids: number[] = savedIds?.length > 0 ? savedIds : [0];
+
+    for (const id of ids) {
+      this.active.push(this.buildEntity(id));
+    }
+
+    const nextId = Math.max(...ids) + 1;
+    this.ids = lightIdGenerator(nextId);
+
+    this.folder.add({ add: this.add }, "add").name("Add");
+
+    this.saveIds();
+    this.onChange();
+  }
+
+  private buildEntity(id: number): LightEntity<TState, TUniform> {
+    if (!this.folder) throw new Error("Collection folder not set");
+
+    return this.createEntity({
+      id,
+      parentFolder: this.folder,
+      defaults: this.defaults,
+      onChange: this.onChange,
+      onRemove: this.remove,
+    });
+  }
+
+  private add = (): void => {
+    if (!this.folder) return;
+    if (this.active.length >= this.maxCount) return;
+
+    const entity = this.buildEntity(this.ids.next().value);
+
+    this.active.push(entity);
+    this.saveIds();
+    this.onChange();
+  };
+
+  private remove = (entity: LightEntity<TState, BaseLightUniformValue>): void => {
+    entity.destroy();
+
+    const index = this.active.findIndex((active) => active.id === entity.id);
+    if (index === -1) return;
+
+    this.active.splice(index, 1);
+    this.saveIds();
+    this.onChange();
+  };
+
+  private saveIds(): void {
+    const ids = this.active.map((entity) => entity.id);
+    WebStorage.setKey(this.storageIdsKey, ids, true);
+  }
+
+  /** Raw snapshots for every currently active entity — unpadded, the caller pads to its shader's fixed array length. */
+  public getUniformValues(): TUniform[] {
+    return this.active.map((entity) => entity.toUniformValue());
+  }
+
+  public destroy(): void {
+    for (const entity of this.active) entity.destroy();
+    this.active.length = 0;
   }
 }

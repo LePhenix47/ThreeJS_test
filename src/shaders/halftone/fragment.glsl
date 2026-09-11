@@ -1,6 +1,27 @@
 uniform float uTime;
 uniform vec3 uColor;
 
+struct PointLight {
+    vec3 color;
+    float intensity;
+    vec3 position;
+    float specularPower;
+    float decayAttenuation;
+};
+
+struct DirectionalLight {
+    vec3 color;
+    float intensity;
+    vec3 position;
+    float specularPower;
+};
+
+uniform PointLight uPointLights[MAX_POINT_LIGHTS]; // MAX_POINT_LIGHTS injected via ShaderMaterial's `defines`
+uniform int uPointLightCount;
+
+uniform DirectionalLight uDirectionalLights[MAX_DIRECTIONAL_LIGHTS]; // MAX_DIRECTIONAL_LIGHTS injected via ShaderMaterial's `defines`
+uniform int uDirectionalLightCount;
+
 varying vec3 vNormal;
 varying vec3 vRelativePosition; // ? For the halftone
 varying vec3 vAbsolutePosition; // ? For the light

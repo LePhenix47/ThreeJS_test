@@ -1,6 +1,6 @@
 import {
   LightEntity,
-  LightEntityParams,
+  LightEntityFactoryParams,
   LightHelper,
   BaseLightState,
   BaseLightUniformValue,
@@ -15,10 +15,7 @@ export type PointLightUniformValue = BaseLightUniformValue & {
   decayAttenuation: number;
 };
 
-export type PointLightEntityParams = Omit<
-  LightEntityParams<PointLightState>,
-  "storageKeyPrefix" | "folderLabelPrefix"
->;
+export type PointLightEntityParams = LightEntityFactoryParams<PointLightState>;
 
 class PointLightEntity extends LightEntity<
   PointLightState,
