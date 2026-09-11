@@ -5,10 +5,6 @@ import Experience, {
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
 import * as THREE from "three";
 
-type HalftoneGroupState = {
-  color: string;
-};
-
 import vertexShader from "@shaders/halftone/vertex.glsl";
 import fragmentShader from "@shaders/halftone/fragment.glsl";
 
@@ -20,6 +16,11 @@ import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 export type HalftoneEntityParams = {
   material: THREE.ShaderMaterial;
   group: THREE.Group;
+};
+
+type HalftoneGroupState = {
+  color: string;
+  positionY: number;
 };
 
 type HalftoneUniforms = MapAsUniforms<{
@@ -53,6 +54,7 @@ class HalftoneGroup implements Updatable, Destroyable {
 
   private readonly debugDefaults: HalftoneGroupState = {
     color: "#ff794d",
+    positionY: 0,
   };
 
   private guiRegistry: GUIStateRegistry<HalftoneGroupState> | null = null;
@@ -74,21 +76,28 @@ class HalftoneGroup implements Updatable, Destroyable {
       this.suzanne = new HalftoneSuzanne({ material, group });
     });
 
-    this.setPosition();
+    // this.setPosition();
+    this.setPositionY();
 
     if (this.debug?.isActive) this.addDebugFolders();
 
     console.log("HalftoneGroup");
   }
 
-  private setPosition = (): void => {
+  private setPositionY(): void {
+    const { positionY } = this.debugDefaults;
+
+    this.group.position.y = positionY;
+  }
+
+  private setPosition(): void {
     // * ThreeJS equivalent of getBoundingClientRect
     const box = new THREE.Box3().setFromObject(this.group);
 
     const height = box.max.y - box.min.y;
 
     this.group.position.y = height * 0.5;
-  };
+  }
 
   private setMaterial = (): void => {
     const uniforms: HalftoneUniforms = {
@@ -109,7 +118,7 @@ class HalftoneGroup implements Updatable, Destroyable {
     }) as TypedShaderMaterial<HalftoneUniforms>;
   };
 
-  private addDebugFolders = (): void => {
+  private addDebugFolders(): void {
     const registry = new GUIStateRegistry<HalftoneGroupState>(
       "Halftone-group",
       this.debugDefaults,
@@ -125,9 +134,14 @@ class HalftoneGroup implements Updatable, Destroyable {
     registry.bind("color", (v) => {
       this.material.uniforms.uColor.value.set(v);
     });
-  };
 
-  public update = (): void => {
+    folder.add(state, "positionY").name("Y position").min(-5).max(5).step(0.1);
+    registry.bind("positionY", (v) => {
+      this.group.position.y = v;
+    });
+  }
+
+  public update(): void {
     const time = this.time.elapsedSeconds;
     this.material.uniforms.uTime.value = time;
 
@@ -136,16 +150,16 @@ class HalftoneGroup implements Updatable, Destroyable {
     this.torus.setRotation(rotX, rotY);
     this.sphere.setRotation(rotX, rotY);
     this.suzanne?.setRotation(rotX, rotY);
-  };
+  }
 
-  public destroy = (): void => {
+  public destroy(): void {
     this.torus.destroy();
     this.sphere.destroy();
     this.suzanne?.destroy();
     this.material.dispose();
     this.scene.remove(this.group);
     this.guiRegistry?.dispose();
-  };
+  }
 }
 
 export default HalftoneGroup;
