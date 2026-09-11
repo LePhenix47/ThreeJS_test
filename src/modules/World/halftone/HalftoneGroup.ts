@@ -11,7 +11,10 @@ import fragmentShader from "@shaders/halftone/fragment.glsl";
 import HalftoneTorus from "./HalftoneTorus";
 import HalftoneSphere from "./HalftoneSphere";
 import HalftoneSuzanne from "./HalftoneSuzanne";
-import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
+import {
+  MapAsUniforms,
+  TypedShaderMaterial,
+} from "@modules/World/types/uniforms";
 import { Controller } from "lil-gui";
 import gsap from "gsap";
 
