@@ -27,6 +27,9 @@ uniform vec2 uResolution;
 uniform vec3 uShadowColor;
 uniform float uShadowRepetitions;
 
+uniform vec3 uLightColor;
+uniform float uLightRepetitions;
+
 varying vec3 vNormal;
 varying vec3 vRelativePosition; // ? For the halftone
 varying vec3 vAbsolutePosition; // ? For the light
@@ -98,11 +101,15 @@ void main() {
 
   // * Final color
   vec3 color = uColor * light;
-  float lower = -0.8;
-  float upper = 1.5;
-  vec3 halftone = halftone(color, uShadowRepetitions, vec3(-0.0, -1.0, 0.0), vec2(lower, upper), uShadowColor, normal);
+  float shadowLower = -0.8;
+  float shadowUpper = 1.5;
+  color = halftone(color, uShadowRepetitions, vec3(-0.0, -1.0, 0.0), vec2(shadowLower, shadowUpper), uShadowColor, normal);
 
-  gl_FragColor = vec4(halftone, 1.0);
+  float lightLower = 0.5;
+  float lightUpper = 1.5;
+  color = halftone(color, uLightRepetitions, vec3(1.0, 1.0, 1.0), vec2(lightLower, lightUpper), uLightColor, normal);
+
+  gl_FragColor = vec4(color, 1.0);
 
   // #include <tonemapping_fragment>
   #include <colorspace_fragment>
