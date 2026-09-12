@@ -59,11 +59,14 @@ void main() {
 
   vec3 light = vec3(0.0);
 
+  light += ambientLight(vec3(1.0), 1.0);
   light = addDirectionalLights(light, directionOfView);
   light = addPointLights(light, directionOfView);
 
-  gl_FragColor = vec4(light, 1.0);
+  vec3 color = uColor * light;
 
-  #include <tonemapping_fragment>
+  gl_FragColor = vec4(color, 1.0);
+
+  // #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }
