@@ -82,9 +82,9 @@ vec3 halftone(
 // ? Circle for the halftone
   // float distance = distance(uv, vec2(0, 0));
   float distance = distance(uv, vec2(0.5, 0.5));
-  float dot = 1.0 - step(0.5 * intensity, distance);
+  float dots = 1.0 - step(0.5 * intensity, distance);
 
-  return mix(initialColor, dotsColor, dot);
+  return mix(initialColor, dotsColor, dots);
 }
 
 void main() {
