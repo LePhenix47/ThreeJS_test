@@ -191,6 +191,7 @@ class HalftoneGroup implements Updatable, Destroyable {
       uShadowRepetitions,
       uLightRepetitions,
       uShadowColor2,
+      color,
     } = this.debugDefaults;
 
     const { maxPointLights, maxDirectionalLights } = HalftoneGroup.CONFIG;
@@ -205,7 +206,7 @@ class HalftoneGroup implements Updatable, Destroyable {
     const uniforms: HalftoneUniforms = {
       uTime: new THREE.Uniform(0),
       uColor: {
-        value: new THREE.Color(),
+        value: new THREE.Color(color),
       },
       uPointLights: {
         value: pointLightsValue,
