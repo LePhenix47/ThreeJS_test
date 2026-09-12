@@ -35,6 +35,8 @@ class PointLightEntity extends LightEntity<
 
   protected addExtraFolderControls(): void {
     const { registry, folder } = this;
+    if (!folder) return;
+
     const { state } = registry;
 
     folder

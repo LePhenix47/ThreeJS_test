@@ -29,7 +29,8 @@ export type BaseLightUniformValue = {
 
 export type LightEntityParams<TState extends BaseLightState> = {
   id: string;
-  parentFolder: GUI;
+  /** Null outside debug mode — the light still needs to exist and shade, it just gets no GUI folder. */
+  parentFolder: GUI | null;
   defaults: TState;
   onChange: () => void;
   onRemove: (self: LightEntity<TState, BaseLightUniformValue>) => void;
@@ -63,9 +64,10 @@ export abstract class LightEntity<
 > implements Destroyable
 {
   public readonly id: string;
-  protected helper: LightHelper;
+  /** Null outside debug mode — the visual stand-in mesh only exists when there's a debug scene to look at it in. */
+  protected helper: LightHelper | null;
   protected registry: GUIStateRegistry<TState>;
-  protected folder: GUI;
+  protected folder: GUI | null;
   private readonly storageKeyPrefix: string;
   private readonly folderLabelPrefix: string;
   protected readonly onChange: () => void;
@@ -88,7 +90,7 @@ export abstract class LightEntity<
     this.storageKeyPrefix = storageKeyPrefix;
     this.folderLabelPrefix = folderLabelPrefix;
 
-    this.setHelper(defaults);
+    this.setHelper(defaults, parentFolder);
     this.setRegistry(defaults);
     this.setFolder(parentFolder, index, maxCount);
 
@@ -107,7 +109,13 @@ export abstract class LightEntity<
   /** Builds this light type's full uniform snapshot from `registry.state`. */
   public abstract toUniformValue(): TUniform;
 
-  private setHelper(defaults: TState): void {
+  /** Only builds the visual stand-in mesh in debug mode — `parentFolder` is null otherwise, and there's no debug scene to place it in. */
+  private setHelper(defaults: TState, parentFolder: GUI | null): void {
+    if (!parentFolder) {
+      this.helper = null;
+      return;
+    }
+
     const helper = this.createHelper();
 
     const position = new THREE.Vector3(
@@ -126,7 +134,16 @@ export abstract class LightEntity<
     this.registry = new GUIStateRegistry<TState>(keyName, defaults);
   }
 
-  private setFolder(parentFolder: GUI, index: number, maxCount: number): void {
+  private setFolder(
+    parentFolder: GUI | null,
+    index: number,
+    maxCount: number,
+  ): void {
+    if (!parentFolder) {
+      this.folder = null;
+      return;
+    }
+
     const label = this.buildLabel(index, maxCount);
     this.folder = parentFolder.addFolder(label);
   }
@@ -135,14 +152,19 @@ export abstract class LightEntity<
     return `${this.folderLabelPrefix} ${index}/${maxCount}`;
   }
 
-  /** Renames this light's folder title — called by the owning collection after add/remove shifts indices. */
+  /** Renames this light's folder title — called by the owning collection after add/remove shifts indices. No-op outside debug mode, there is no folder to rename. */
   public setLabel(index: number, maxCount: number): void {
+    if (!this.folder) return;
+
     const label = this.buildLabel(index, maxCount);
     this.folder.title(label);
   }
 
+  /** No-op outside debug mode — nothing to add controls to. */
   private addFolderControls(): void {
     const { registry, folder } = this;
+    if (!folder) return;
+
     const { state } = registry;
 
     folder.addColor(state, "color").name("Color");
@@ -178,7 +200,7 @@ export abstract class LightEntity<
   };
 
   private applyColor = (color: string): void => {
-    this.helper.setColor(color);
+    this.helper?.setColor(color);
     this.onChange();
   };
 
@@ -186,7 +208,7 @@ export abstract class LightEntity<
     const { positionX, positionY, positionZ } = this.registry.state;
 
     const position = new THREE.Vector3(positionX, positionY, positionZ);
-    this.helper.setPosition(position);
+    this.helper?.setPosition(position);
 
     this.onChange();
   };
@@ -205,8 +227,8 @@ export abstract class LightEntity<
   }
 
   public destroy(): void {
-    this.helper.destroy();
+    this.helper?.destroy();
     this.registry.dispose();
-    this.folder.destroy();
+    this.folder?.destroy();
   }
 }

@@ -27,7 +27,7 @@ import DirectionalLightEntity, {
   DirectionalLightState,
   DirectionalLightUniformValue,
 } from "@modules/World/entities/lights/directional/DirectionalLightEntity";
-import { Controller } from "lil-gui";
+import GUI, { Controller } from "lil-gui";
 import gsap from "gsap";
 
 export type HalftoneEntityParams = {
@@ -84,6 +84,8 @@ class HalftoneGroup implements Updatable, Destroyable {
 
   private pointLights: DynamicLightCollection<"point">;
   private directionalLights: DynamicLightCollection<"directional">;
+  /** Set by `addDebugFolders()` when debug is active — stays null otherwise, so `restoreLightCollections()` knows whether lights get a GUI folder at all. */
+  private debugFolder: GUI | null = null;
 
   private get scene() {
     return this.experience!.scene;
@@ -129,6 +131,7 @@ class HalftoneGroup implements Updatable, Destroyable {
     this.setPositionY();
 
     if (this.debug?.isActive) this.addDebugFolders();
+    this.restoreLightCollections();
 
     console.log("HalftoneGroup");
   }
@@ -252,6 +255,7 @@ class HalftoneGroup implements Updatable, Destroyable {
     const { gui } = this.debug!;
 
     const folder = gui.addFolder("Halftone Group");
+    this.debugFolder = folder;
 
     folder.addColor(state, "color").name("Color");
     // * On value
@@ -283,12 +287,18 @@ class HalftoneGroup implements Updatable, Destroyable {
         y: newYPosition,
       });
     });
+  }
 
-    const pointLightsFolder = folder.addFolder("Point Lights");
-    this.pointLights.restore(pointLightsFolder);
+  /** Builds and syncs both light collections regardless of debug mode — `debugFolder` is null outside debug, so lights get no GUI folder but still shade the scene. */
+  private restoreLightCollections(): void {
+    const { debugFolder, pointLights, directionalLights } = this;
 
-    const directionalLightsFolder = folder.addFolder("Directional Lights");
-    this.directionalLights.restore(directionalLightsFolder);
+    const pointLightsFolder = debugFolder?.addFolder("Point Lights") ?? null;
+    pointLights.restore(pointLightsFolder);
+
+    const directionalLightsFolder =
+      debugFolder?.addFolder("Directional Lights") ?? null;
+    directionalLights.restore(directionalLightsFolder);
   }
 
   public update(): void {

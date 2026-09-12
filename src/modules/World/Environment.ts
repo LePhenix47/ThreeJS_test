@@ -43,6 +43,8 @@ class Environment implements Destroyable {
     this.scene.background = this.envMapTexture;
     this.scene.environment = this.envMapTexture;
 
+    this.applyEnvironmentColor(this.debugDefaults.environmentColor);
+
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
@@ -51,6 +53,12 @@ class Environment implements Destroyable {
   }
 
   protected updateMaterial = (): void => {};
+
+  /** Applied unconditionally in the constructor, not just from the debug GUI — the renderer's clear color must be correct regardless of debug mode. */
+  private applyEnvironmentColor = (color: string): void => {
+    const threeColor = new THREE.Color(color);
+    this.renderer.instance.setClearColor(threeColor);
+  };
 
   private addDebugFolders = () => {
     const registry = new GUIStateRegistry<EnvironmentState>(
@@ -66,10 +74,7 @@ class Environment implements Destroyable {
     environMentFolder
       .addColor(state, "environmentColor")
       .name("Renderer clear color");
-    registry.bind("environmentColor", (v) => {
-      const threeColor = new THREE.Color(v);
-      this.renderer.instance.setClearColor(threeColor);
-    });
+    registry.bind("environmentColor", this.applyEnvironmentColor);
   };
 
   public destroy = () => {

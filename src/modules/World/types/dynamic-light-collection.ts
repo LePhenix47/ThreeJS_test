@@ -99,6 +99,7 @@ export class DynamicLightCollection<T extends LightType>
     LightTypeMap[T]["state"],
     LightTypeMap[T]["uniform"]
   >[] = [];
+  /** Null outside debug mode — lights still get built and synced, just without an "Add" control or per-light folders. */
   private folder: GUI | null = null;
 
   constructor({
@@ -119,7 +120,8 @@ export class DynamicLightCollection<T extends LightType>
     this.countUniform = countUniform;
   }
 
-  public restore(parentFolder: GUI): void {
+  /** `parentFolder` is null outside debug mode — lights still get built and synced, just with no "Add" button or per-light folders to show. */
+  public restore(parentFolder: GUI | null): void {
     this.folder = parentFolder;
 
     const savedIds = WebStorage.getKey<string[]>(this.storageIdsKey, true);
@@ -132,7 +134,7 @@ export class DynamicLightCollection<T extends LightType>
       this.active.push(entity);
     }
 
-    this.folder.add({ add: this.add }, "add").name("Add");
+    this.folder?.add({ add: this.add }, "add").name("Add");
 
     this.saveIds();
     this.sync();
@@ -143,7 +145,6 @@ export class DynamicLightCollection<T extends LightType>
     index: number,
   ): LightEntity<LightTypeMap[T]["state"], LightTypeMap[T]["uniform"]> {
     const { folder, defaults, maxCount, sync, remove } = this;
-    if (!folder) throw new Error("DynamicLightCollection: no folder set");
 
     return this.createEntity({
       id,
@@ -157,7 +158,6 @@ export class DynamicLightCollection<T extends LightType>
   }
 
   private add = (): void => {
-    if (!this.folder) return;
     if (this.active.length >= this.maxCount) return;
 
     const id = crypto.randomUUID();
