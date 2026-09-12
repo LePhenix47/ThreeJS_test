@@ -73,7 +73,7 @@ class HalftoneGroup implements Updatable, Destroyable {
       positionZ: 0,
       specularPower: 1,
     } satisfies DirectionalLightState,
-  };
+  } as const;
 
   private readonly experience: Experience | null;
   private material: TypedShaderMaterial<HalftoneUniforms>;
@@ -120,11 +120,7 @@ class HalftoneGroup implements Updatable, Destroyable {
 
     this.setMaterial();
 
-    const { material, group } = this;
-    this.torus = new HalftoneTorus({ material, group });
-    this.sphere = new HalftoneSphere({ material, group });
-
-    this.resources.on("textures-loaded", this.handleTexturesLoaded);
+    this.setGroupChildren();
 
     this.setLightCollections();
 
@@ -136,15 +132,21 @@ class HalftoneGroup implements Updatable, Destroyable {
     console.log("HalftoneGroup");
   }
 
-  private handleTexturesLoaded = (): void => {
-    const { material, group } = this;
-    this.suzanne = new HalftoneSuzanne({ material, group });
-  };
-
   private setPositionY(): void {
     const { positionY } = this.debugDefaults;
 
     this.group.position.y = positionY;
+  }
+
+  private setGroupChildren(): void {
+    const { material, group } = this;
+    this.torus = new HalftoneTorus({ material, group });
+    this.sphere = new HalftoneSphere({ material, group });
+
+    this.resources.on("textures-loaded", (): void => {
+      const { material, group } = this;
+      this.suzanne = new HalftoneSuzanne({ material, group });
+    });
   }
 
   private get3DBoundingRect(): {
@@ -167,14 +169,11 @@ class HalftoneGroup implements Updatable, Destroyable {
   }
 
   private setMaterial(): void {
-    const pointLightsValue = padUniformValues(
-      [],
-      HalftoneGroup.CONFIG.maxPointLights,
-      "point",
-    );
+    const { maxPointLights, maxDirectionalLights } = HalftoneGroup.CONFIG;
+    const pointLightsValue = padUniformValues([], maxPointLights, "point");
     const directionalLightsValue = padUniformValues(
       [],
-      HalftoneGroup.CONFIG.maxDirectionalLights,
+      maxDirectionalLights,
       "directional",
     );
 
