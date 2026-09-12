@@ -42,6 +42,7 @@ type HalftoneGroupState = {
 };
 
 type HalftoneUniforms = MapAsUniforms<{
+  uResolution: THREE.Vector2;
   uTime: number;
   uColor: THREE.Color;
   uPointLights: PointLightUniformValue[];
@@ -97,6 +98,10 @@ class HalftoneGroup implements Updatable, Destroyable {
 
   private get time() {
     return this.experience!.time;
+  }
+
+  private get sizes() {
+    return this.experience!.sizes;
   }
 
   private get debug() {
@@ -177,6 +182,7 @@ class HalftoneGroup implements Updatable, Destroyable {
       "directional",
     );
 
+    const { x, y } = this.sizes.resolution;
     const uniforms: HalftoneUniforms = {
       uTime: new THREE.Uniform(0),
       uColor: {
@@ -190,6 +196,9 @@ class HalftoneGroup implements Updatable, Destroyable {
         value: directionalLightsValue,
       },
       uDirectionalLightCount: new THREE.Uniform(0),
+      uResolution: {
+        value: new THREE.Vector2(x, y),
+      },
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -205,6 +214,11 @@ class HalftoneGroup implements Updatable, Destroyable {
       // depthWrite: false,
       // blending: THREE.AdditiveBlending,
     }) as TypedShaderMaterial<HalftoneUniforms>;
+
+    this.sizes.on("resize", () => {
+      const { x, y } = this.sizes.resolution;
+      this.material.uniforms.uResolution.value.set(x, y);
+    });
   }
 
   private setLightCollections(): void {
