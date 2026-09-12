@@ -86,6 +86,9 @@ vec3 halftone(
   float distance = distance(uv, vec2(0.5, 0.5));
   float dots = 1.0 - step(0.5 * intensity, distance);
 
+  // * The height resize fix causes problem for x, so we want: gl_FragCoord.x / uResolution.x;
+  // * For that we can take uv0.x = gl_FragCoord.x / uResolution.y, cancels the earlier divide-by-height, get following result:
+  uv0.x *= uResolution.y / uResolution.x;
   vec3 gradientColor = mix(dotsStartColor, dotsEndColor, uv0.x);
 
   return mix(initialColor, gradientColor, dots);
