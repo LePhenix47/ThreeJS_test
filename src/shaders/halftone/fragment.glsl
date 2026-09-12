@@ -25,6 +25,7 @@ uniform int uDirectionalLightCount;
 uniform vec2 uResolution;
 
 uniform vec3 uShadowColor;
+uniform vec3 uShadowColor2;
 uniform float uShadowRepetitions;
 
 // uniform vec3 uLightColor;
@@ -64,12 +65,14 @@ vec3 halftone(
   float repetitions,
   vec3 direction,
   vec2 bounds,
-  vec3 dotsColor,
+  vec3 dotsStartColor,
+  vec3 dotsEndColor,
   vec3 normal
 ) {
   // * UV
   vec2 uv = gl_FragCoord.xy / uResolution.y; // ? divide by y to avoid height resize issues
 
+  vec2 uv0 = uv;
   uv *= repetitions;
   uv = mod(uv, 1.0);
   // uv = (uv - 0.5) * 2.0; // ? From [0,1] → [-1,1]
@@ -83,7 +86,9 @@ vec3 halftone(
   float distance = distance(uv, vec2(0.5, 0.5));
   float dots = 1.0 - step(0.5 * intensity, distance);
 
-  return mix(initialColor, dotsColor, dots);
+  vec3 gradientColor = mix(dotsStartColor, dotsEndColor, uv0.x);
+
+  return mix(initialColor, gradientColor, dots);
 }
 
 void main() {
@@ -102,12 +107,12 @@ void main() {
   vec3 color = uColor * light;
   float shadowLower = -0.8;
   float shadowUpper = 1.5;
-  color = halftone(color, uShadowRepetitions, vec3(-0.0, -1.0, 0.0), vec2(shadowLower, shadowUpper), uShadowColor, normal);
+  color = halftone(color, uShadowRepetitions, vec3(-0.0, -1.0, 0.0), vec2(shadowLower, shadowUpper), uShadowColor, uShadowColor2, normal);
 
   DirectionalLight firstDirectionalLight = uDirectionalLights[0];
   float lightLower = 0.5;
   float lightUpper = 1.5;
-  color = halftone(color, uLightRepetitions, firstDirectionalLight.position, vec2(lightLower, lightUpper), firstDirectionalLight.color, normal);
+  color = halftone(color, uLightRepetitions, firstDirectionalLight.position, vec2(lightLower, lightUpper), firstDirectionalLight.color, firstDirectionalLight.color, normal);
 
   gl_FragColor = vec4(color, 1.0);
 

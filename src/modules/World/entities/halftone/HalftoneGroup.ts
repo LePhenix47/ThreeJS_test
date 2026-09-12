@@ -40,6 +40,7 @@ type HalftoneGroupState = {
   positionY: number;
   toggleMiddleY: boolean;
   uShadowColor: string;
+  uShadowColor2: string;
   uShadowRepetitions: number;
   uLightRepetitions: number;
 };
@@ -53,6 +54,7 @@ type HalftoneUniforms = MapAsUniforms<{
   uDirectionalLights: DirectionalLightUniformValue[];
   uDirectionalLightCount: number;
   uShadowColor: THREE.Color;
+  uShadowColor2: THREE.Color;
   uShadowRepetitions: HalftoneGroupState["uShadowRepetitions"];
   uLightRepetitions: HalftoneGroupState["uLightRepetitions"];
 }>;
@@ -119,7 +121,8 @@ class HalftoneGroup implements Updatable, Destroyable {
     positionY: 0,
     toggleMiddleY: false,
     uShadowRepetitions: 50,
-    uShadowColor: "#8e19b8",
+    uShadowColor: "#8E19B8",
+    uShadowColor2: "#8E19B8",
     uLightRepetitions: 100,
   };
 
@@ -183,8 +186,12 @@ class HalftoneGroup implements Updatable, Destroyable {
   }
 
   private setMaterial(): void {
-    const { uShadowColor, uShadowRepetitions, uLightRepetitions } =
-      this.debugDefaults;
+    const {
+      uShadowColor,
+      uShadowRepetitions,
+      uLightRepetitions,
+      uShadowColor2,
+    } = this.debugDefaults;
 
     const { maxPointLights, maxDirectionalLights } = HalftoneGroup.CONFIG;
     const pointLightsValue = padUniformValues([], maxPointLights, "point");
@@ -213,6 +220,9 @@ class HalftoneGroup implements Updatable, Destroyable {
       },
       uShadowColor: {
         value: new THREE.Color(uShadowColor),
+      },
+      uShadowColor2: {
+        value: new THREE.Color(uShadowColor2),
       },
       uShadowRepetitions: new THREE.Uniform(uShadowRepetitions),
       uLightRepetitions: new THREE.Uniform(uLightRepetitions),
@@ -323,6 +333,11 @@ class HalftoneGroup implements Updatable, Destroyable {
     shadowFolder.addColor(state, "uShadowColor").name("Color");
     registry.bind("uShadowColor", (v) => {
       this.material.uniforms.uShadowColor.value.set(v);
+    });
+
+    shadowFolder.addColor(state, "uShadowColor2").name("Color");
+    registry.bind("uShadowColor2", (v) => {
+      this.material.uniforms.uShadowColor2.value.set(v);
     });
 
     shadowFolder
