@@ -122,7 +122,7 @@ class HalftoneGroup implements Updatable, Destroyable {
     toggleMiddleY: false,
     uShadowRepetitions: 50,
     uShadowColor: "#8e19b8",
-    uLightRepetitions: 50,
+    uLightRepetitions: 100,
     uLightColor: "#e5ffe0",
   };
 
