@@ -71,7 +71,7 @@ class HalftoneGroup implements Updatable, Destroyable {
       positionX: 1,
       positionY: 1,
       positionZ: 0,
-      specularPower: 20,
+      specularPower: 1,
     } satisfies DirectionalLightState,
   };
 
