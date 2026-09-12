@@ -125,8 +125,7 @@ export class DynamicLightCollection<T extends LightType>
     this.folder = parentFolder;
 
     const savedIds = WebStorage.getKey<string[]>(this.storageIdsKey, true);
-    const ids: string[] =
-      savedIds?.length > 0 ? savedIds : [crypto.randomUUID()];
+    const ids: string[] = savedIds || [crypto.randomUUID()];
 
     for (const id of ids) {
       const index = this.active.length + 1;
