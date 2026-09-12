@@ -39,6 +39,10 @@ type HalftoneGroupState = {
   color: string;
   positionY: number;
   toggleMiddleY: boolean;
+  uShadowColor: string;
+  uShadowRepetitions: number;
+  uLightColor: string;
+  uLightRepetitions: number;
 };
 
 type HalftoneUniforms = MapAsUniforms<{
@@ -49,6 +53,10 @@ type HalftoneUniforms = MapAsUniforms<{
   uPointLightCount: number;
   uDirectionalLights: DirectionalLightUniformValue[];
   uDirectionalLightCount: number;
+  uShadowColor: THREE.Color;
+  uShadowRepetitions: HalftoneGroupState["uShadowRepetitions"];
+  uLightColor: THREE.Color;
+  uLightRepetitions: HalftoneGroupState["uLightRepetitions"];
 }>;
 
 class HalftoneGroup implements Updatable, Destroyable {
@@ -58,7 +66,7 @@ class HalftoneGroup implements Updatable, Destroyable {
     pointLightIdsStorageKey: "halftone-point-light-ids",
     directionalLightIdsStorageKey: "halftone-directional-light-ids",
     defaultPointLightState: {
-      color: `#${new THREE.Color(1, 0.1, 0.1).getHexString()}`,
+      color: `#8e19b8`,
       intensity: 1,
       positionX: 0,
       positionY: 2.5,
@@ -67,7 +75,7 @@ class HalftoneGroup implements Updatable, Destroyable {
       decayAttenuation: 0.25,
     } satisfies PointLightState,
     defaultDirectionalLightState: {
-      color: "#ffffff",
+      color: "#e5ffe0",
       intensity: 1,
       positionX: 1,
       positionY: 1,
@@ -112,6 +120,10 @@ class HalftoneGroup implements Updatable, Destroyable {
     color: "#ff794d",
     positionY: 0,
     toggleMiddleY: false,
+    uShadowRepetitions: 50,
+    uShadowColor: "#8e19b8",
+    uLightRepetitions: 50,
+    uLightColor: "#e5ffe0",
   };
 
   private guiRegistry: GUIStateRegistry<HalftoneGroupState> | null = null;
@@ -174,6 +186,9 @@ class HalftoneGroup implements Updatable, Destroyable {
   }
 
   private setMaterial(): void {
+    const { uShadowColor, uShadowRepetitions, uLightColor, uLightRepetitions } =
+      this.debugDefaults;
+
     const { maxPointLights, maxDirectionalLights } = HalftoneGroup.CONFIG;
     const pointLightsValue = padUniformValues([], maxPointLights, "point");
     const directionalLightsValue = padUniformValues(
@@ -182,7 +197,7 @@ class HalftoneGroup implements Updatable, Destroyable {
       "directional",
     );
 
-    const { x, y } = this.sizes.resolution;
+    const { x: resX, y: resY } = this.sizes.resolution;
     const uniforms: HalftoneUniforms = {
       uTime: new THREE.Uniform(0),
       uColor: {
@@ -197,8 +212,16 @@ class HalftoneGroup implements Updatable, Destroyable {
       },
       uDirectionalLightCount: new THREE.Uniform(0),
       uResolution: {
-        value: new THREE.Vector2(x, y),
+        value: new THREE.Vector2(resX, resY),
       },
+      uShadowColor: {
+        value: new THREE.Color(uShadowColor),
+      },
+      uShadowRepetitions: new THREE.Uniform(uShadowRepetitions),
+      uLightColor: {
+        value: new THREE.Color(uLightColor),
+      },
+      uLightRepetitions: new THREE.Uniform(uLightRepetitions),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -299,6 +322,39 @@ class HalftoneGroup implements Updatable, Destroyable {
       gsap.to(this.group.position, {
         y: newYPosition,
       });
+    });
+
+    const shadowFolder = folder.addFolder("Shadow");
+
+    shadowFolder.addColor(state, "uShadowColor").name("Color");
+    registry.bind("uShadowColor", (v) => {
+      this.material.uniforms.uShadowColor.value.set(v);
+    });
+
+    shadowFolder
+      .add(state, "uShadowRepetitions")
+      .name("Repetitions")
+      .min(0)
+      .max(200)
+      .step(1);
+    registry.bind("uShadowRepetitions", (v) => {
+      this.material.uniforms.uShadowRepetitions.value = v;
+    });
+
+    const lightFolder = folder.addFolder("Light");
+    lightFolder.addColor(state, "uLightColor").name("Color");
+    registry.bind("uLightColor", (v) => {
+      this.material.uniforms.uLightColor.value.set(v);
+    });
+
+    lightFolder
+      .add(state, "uLightRepetitions")
+      .name("Repetitions")
+      .min(0)
+      .max(200)
+      .step(1);
+    registry.bind("uLightRepetitions", (v) => {
+      this.material.uniforms.uLightRepetitions.value = v;
     });
   }
 

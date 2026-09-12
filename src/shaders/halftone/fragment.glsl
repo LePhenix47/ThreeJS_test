@@ -24,6 +24,9 @@ uniform int uDirectionalLightCount;
 
 uniform vec2 uResolution;
 
+uniform vec3 uShadowColor;
+uniform float uShadowRepetitions;
+
 varying vec3 vNormal;
 varying vec3 vRelativePosition; // ? For the halftone
 varying vec3 vAbsolutePosition; // ? For the light
@@ -59,7 +62,7 @@ vec3 halftone(
   float repetitions,
   vec3 direction,
   vec2 bounds,
-  vec3 pointColor,
+  vec3 dotsColor,
   vec3 normal
 ) {
   // * UV
@@ -78,7 +81,7 @@ vec3 halftone(
   float distance = distance(uv, vec2(0.5, 0.5));
   float dot = 1.0 - step(0.5 * intensity, distance);
 
-  return mix(initialColor, pointColor, dot);
+  return mix(initialColor, dotsColor, dot);
 }
 
 void main() {
@@ -93,13 +96,11 @@ void main() {
   light = addDirectionalLights(light, directionOfView);
   // light = addPointLights(light, directionOfView);
 
-// 
-
   // * Final color
   vec3 color = uColor * light;
   float lower = -0.8;
   float upper = 1.5;
-  vec3 halftone = halftone(color, 50.0, vec3(-0.0, -1.0, 0.0), vec2(lower, upper), vec3(1.0, 0.0, 0.0), normal);
+  vec3 halftone = halftone(color, uShadowRepetitions, vec3(-0.0, -1.0, 0.0), vec2(lower, upper), uShadowColor, normal);
 
   gl_FragColor = vec4(halftone, 1.0);
 
