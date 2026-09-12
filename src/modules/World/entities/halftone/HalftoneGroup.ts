@@ -61,8 +61,8 @@ type HalftoneUniforms = MapAsUniforms<{
 
 class HalftoneGroup implements Updatable, Destroyable {
   public static readonly CONFIG = {
-    maxPointLights: 5,
-    maxDirectionalLights: 5,
+    maxPointLights: 1,
+    maxDirectionalLights: 1,
     pointLightIdsStorageKey: "halftone-point-light-ids",
     directionalLightIdsStorageKey: "halftone-directional-light-ids",
     defaultPointLightState: {
