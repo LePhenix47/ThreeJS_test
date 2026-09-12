@@ -1,11 +1,22 @@
 import * as THREE from "three";
 
 /**
- * Every JS value that can legally be assigned to a Three.js uniform.
- * Covers primitives, Three.js math objects, textures, typed arrays,
- * plain arrays, and recursive structs / arrays of structs.
+ * A single, non-array JavaScript value that can legally be assigned to a
+ * Three.js uniform's value.
+ *
+ * Maps to GLSL scalars, vectors, matrices and samplers:
+ * - `number`            → `int` / `uint` / `float`
+ * - `boolean`           → `bool`
+ * - `THREE.Vector2/3/4` → `vec2` / `vec3` / `vec4`
+ * - `THREE.Color`       → `vec3`
+ * - `THREE.Quaternion`  → `vec4`
+ * - `THREE.Matrix3/4`   → `mat3` / `mat4`
+ * - `THREE.Texture`     → `sampler2D` / `samplerCube` (also covers
+ *                         `CubeTexture`, `DataTexture`, `CompressedTexture`, …)
+ * - `Float32Array`      → `vec*` / `mat*` (flat)
+ * - `Int32Array`        → `ivec*` / `bvec*` (flat)
  */
-export type UniformValue =
+type UniformTypes =
   | number
   | boolean
   | THREE.Vector2
@@ -15,18 +26,44 @@ export type UniformValue =
   | THREE.Quaternion
   | THREE.Matrix3
   | THREE.Matrix4
-  | THREE.Texture // ? covers Texture, CubeTexture, DataTexture, etc.
+  | THREE.Texture
   | Float32Array
-  | Int32Array
-  | Array<number> // ? flat array for vec2/vec3/vec4/mat2/mat3/mat4
-  | Array<THREE.Vector2> // ? array of vec2
-  | Array<THREE.Vector3> // ? array of vec3
-  | Array<THREE.Vector4> // ? array of vec4
-  | Array<THREE.Color> // ? array of vec3 (color)
-  | Array<THREE.Quaternion> // ? array of vec4
-  | Array<THREE.Matrix3> // ? array of mat3
-  | Array<THREE.Matrix4> // ? array of mat4
-  | Array<THREE.Texture> // ? array of samplers
+  | Int32Array;
+
+/**
+ * Distributes `Array<…>` over a union, producing the union of array types
+ * for each member. `never` for anything outside {@link UniformTypes}.
+ *
+ * @example
+  ToUniformTypeArray<THREE.Vector3 | number>
+  // => Array<THREE.Vector3> | Array<number>
+ */
+type ToUniformTypeArray<T extends unknown> = T extends UniformTypes
+  ? Array<T>
+  : never;
+
+/**
+ * The subset of {@link UniformTypes} that is legal to use as the element
+ * type of an array uniform.
+ *
+ * Excludes:
+ * - `Float32Array` / `Int32Array` — already flat buffers; arrays of them are
+ *   not valid uniform values.
+ * - `boolean` — `bvec` arrays are supplied as `Int32Array`, not `Array<boolean>`.
+ */
+type ArrayableUniformType = Exclude<
+  UniformTypes,
+  Float32Array | Int32Array | boolean
+>;
+
+/**
+ * Every JS value that can legally be assigned to a Three.js uniform.
+ * Covers primitives, Three.js math objects, textures, typed arrays,
+ * plain arrays, and recursive structs / arrays of structs.
+ */
+export type UniformValue =
+  | UniformTypes
+  | ToUniformTypeArray<ArrayableUniformType>
   | { [key: string]: UniformValue } // ? struct
   | Array<{ [key: string]: UniformValue }>; // ? array of structs
 
