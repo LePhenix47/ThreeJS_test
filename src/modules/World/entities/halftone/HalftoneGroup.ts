@@ -331,12 +331,12 @@ class HalftoneGroup implements Updatable, Destroyable {
 
     const shadowFolder = folder.addFolder("Shadow");
 
-    shadowFolder.addColor(state, "uShadowColor").name("Color");
+    shadowFolder.addColor(state, "uShadowColor").name("Gradient start");
     registry.bind("uShadowColor", (v) => {
       this.material.uniforms.uShadowColor.value.set(v);
     });
 
-    shadowFolder.addColor(state, "uShadowColor2").name("Color");
+    shadowFolder.addColor(state, "uShadowColor2").name("Gradient end");
     registry.bind("uShadowColor2", (v) => {
       this.material.uniforms.uShadowColor2.value.set(v);
     });
