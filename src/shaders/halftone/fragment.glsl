@@ -39,6 +39,7 @@ varying vec3 vAbsolutePosition; // ? For the light
 #include ../utils/lights/pointLight
 
 #include ../utils/vectors/direction
+#include ../utils/colors/linear-oklab
 
 vec3 addDirectionalLights(vec3 light, vec3 directionOfView) {
   for(int i = 0; i < MAX_DIRECTIONAL_LIGHTS; i++) {
@@ -89,7 +90,13 @@ vec3 halftone(
   // * The height resize fix causes problem for x, so we want: gl_FragCoord.x / uResolution.x;
   // * For that we can take uv0.x = gl_FragCoord.x / uResolution.y, cancels the earlier divide-by-height, get following result:
   uv0.x *= uResolution.y / uResolution.x;
-  vec3 gradientColor = mix(dotsStartColor, dotsEndColor, uv0.x);
+
+  // ? mix() on raw RGB cuts a straight line through the RGB cube, drags in off-hues at
+  // ? the midpoint (e.g. blue-ish between purple and white) — OKLab is built so that
+  // ? straight line stays perceptually sane instead
+  vec3 startOklab = linearToOklab(dotsStartColor);
+  vec3 endOklab = linearToOklab(dotsEndColor);
+  vec3 gradientColor = oklabToLinear(mix(startOklab, endOklab, uv0.x));
 
   return mix(initialColor, gradientColor, dots);
 }
