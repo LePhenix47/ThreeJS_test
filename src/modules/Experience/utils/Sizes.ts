@@ -25,6 +25,13 @@ class Sizes extends EventEmitter<SizesEvents> {
     return this.width / this.height;
   }
 
+  get resolution() {
+    return {
+      x: this.width * this.pixelRatio,
+      y: this.height * this.pixelRatio,
+    };
+  }
+
   setSize = (width: number, height: number): void => {
     this.width = width;
     this.height = height;
