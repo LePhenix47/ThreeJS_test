@@ -27,11 +27,10 @@ uniform vec2 uResolution;
 uniform vec3 uShadowColor;
 uniform float uShadowRepetitions;
 
-uniform vec3 uLightColor;
+// uniform vec3 uLightColor;
 uniform float uLightRepetitions;
 
 varying vec3 vNormal;
-varying vec3 vRelativePosition; // ? For the halftone
 varying vec3 vAbsolutePosition; // ? For the light
 
 #include ../utils/lights/ambientLight
@@ -105,9 +104,10 @@ void main() {
   float shadowUpper = 1.5;
   color = halftone(color, uShadowRepetitions, vec3(-0.0, -1.0, 0.0), vec2(shadowLower, shadowUpper), uShadowColor, normal);
 
+  DirectionalLight firstDirectionalLight = uDirectionalLights[0];
   float lightLower = 0.5;
   float lightUpper = 1.5;
-  color = halftone(color, uLightRepetitions, vec3(1.0, 1.0, 1.0), vec2(lightLower, lightUpper), uLightColor, normal);
+  color = halftone(color, uLightRepetitions, firstDirectionalLight.position, vec2(lightLower, lightUpper), firstDirectionalLight.color, normal);
 
   gl_FragColor = vec4(color, 1.0);
 

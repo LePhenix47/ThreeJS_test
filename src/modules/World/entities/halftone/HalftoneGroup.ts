@@ -41,7 +41,6 @@ type HalftoneGroupState = {
   toggleMiddleY: boolean;
   uShadowColor: string;
   uShadowRepetitions: number;
-  uLightColor: string;
   uLightRepetitions: number;
 };
 
@@ -55,7 +54,6 @@ type HalftoneUniforms = MapAsUniforms<{
   uDirectionalLightCount: number;
   uShadowColor: THREE.Color;
   uShadowRepetitions: HalftoneGroupState["uShadowRepetitions"];
-  uLightColor: THREE.Color;
   uLightRepetitions: HalftoneGroupState["uLightRepetitions"];
 }>;
 
@@ -123,7 +121,6 @@ class HalftoneGroup implements Updatable, Destroyable {
     uShadowRepetitions: 50,
     uShadowColor: "#8e19b8",
     uLightRepetitions: 100,
-    uLightColor: "#e5ffe0",
   };
 
   private guiRegistry: GUIStateRegistry<HalftoneGroupState> | null = null;
@@ -186,7 +183,7 @@ class HalftoneGroup implements Updatable, Destroyable {
   }
 
   private setMaterial(): void {
-    const { uShadowColor, uShadowRepetitions, uLightColor, uLightRepetitions } =
+    const { uShadowColor, uShadowRepetitions, uLightRepetitions } =
       this.debugDefaults;
 
     const { maxPointLights, maxDirectionalLights } = HalftoneGroup.CONFIG;
@@ -218,9 +215,6 @@ class HalftoneGroup implements Updatable, Destroyable {
         value: new THREE.Color(uShadowColor),
       },
       uShadowRepetitions: new THREE.Uniform(uShadowRepetitions),
-      uLightColor: {
-        value: new THREE.Color(uLightColor),
-      },
       uLightRepetitions: new THREE.Uniform(uLightRepetitions),
     };
 
@@ -342,10 +336,6 @@ class HalftoneGroup implements Updatable, Destroyable {
     });
 
     const lightFolder = folder.addFolder("Light");
-    lightFolder.addColor(state, "uLightColor").name("Color");
-    registry.bind("uLightColor", (v) => {
-      this.material.uniforms.uLightColor.value.set(v);
-    });
 
     lightFolder
       .add(state, "uLightRepetitions")
