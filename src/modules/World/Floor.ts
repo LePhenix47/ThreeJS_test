@@ -57,7 +57,7 @@ class Floor extends MeshEntity implements Destroyable {
     console.log("Floor");
   }
 
-  protected setGeometry = () => {
+  protected setGeometry(): void {
     const { subdivisions } = this.debugDefaults;
     this.geometry = new THREE.PlaneGeometry(
       this.FLOOR_SIZE,
@@ -65,9 +65,9 @@ class Floor extends MeshEntity implements Destroyable {
       subdivisions,
       subdivisions,
     );
-  };
+  }
 
-  protected setMaterial = () => {
+  protected setMaterial(): void {
     const { color, side, wireframe } = this.debugDefaults;
 
     this.material = new THREE.MeshStandardMaterial({
@@ -77,15 +77,15 @@ class Floor extends MeshEntity implements Destroyable {
       roughness: 0.4,
       side: SideEnum[side],
     });
-  };
+  }
 
-  protected setMesh = () => {
+  protected setMesh(): void {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.rotation.x = THREE.MathUtils.degToRad(-90);
     this.mesh.receiveShadow = true;
-  };
+  }
 
-  private addDebugFolders = () => {
+  private addDebugFolders(): void {
     const registry = new GUIStateRegistry<FloorState>(
       "floor-gui-state",
       this.debugDefaults,
@@ -130,14 +130,14 @@ class Floor extends MeshEntity implements Destroyable {
           );
         }),
       );
-  };
+  }
 
-  public destroy = () => {
+  public destroy(): void {
     this.mesh.geometry.dispose();
     this.material.dispose();
     this.scene.remove(this.mesh);
     this.guiRegistry?.dispose();
-  };
+  }
 }
 
 export default Floor;

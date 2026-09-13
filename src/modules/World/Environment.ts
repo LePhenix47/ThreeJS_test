@@ -56,14 +56,14 @@ class Environment implements Destroyable {
     console.log("Environment");
   }
 
-  protected updateMaterial = (): void => {};
+  protected updateMaterial(): void {}
 
-  private setAmbientLight = (): void => {
+  private setAmbientLight(): void {
     this.ambientLight = new THREE.AmbientLight("#ffffff", 1);
     this.scene.add(this.ambientLight);
-  };
+  }
 
-  private setSunLight = (withHelper = true): void => {
+  private setSunLight(withHelper = true): void {
     const sunLight = new THREE.DirectionalLight("#ffffff", 3);
 
     const size: number = 2 ** 10;
@@ -86,9 +86,9 @@ class Environment implements Destroyable {
     if (!withHelper) return;
     this.lightHelper = new THREE.DirectionalLightHelper(sunLight);
     this.scene.add(this.lightHelper);
-  };
+  }
 
-  private addDebugFolders = () => {
+  private addDebugFolders(): void {
     const registry = new GUIStateRegistry<EnvironmentState>(
       "environment-gui-state",
       this.debugDefaults,
@@ -113,15 +113,15 @@ class Environment implements Destroyable {
     registry.bind("lightHelper", (v) => {
       this.lightHelper.visible = v;
     });
-  };
+  }
 
-  public destroy = () => {
+  public destroy(): void {
     this.scene.remove(this.ambientLight, this.sunLight, this.lightHelper);
     this.ambientLight.dispose();
     this.sunLight.dispose();
     this.lightHelper?.dispose();
     this.guiRegistry?.dispose();
-  };
+  }
 }
 
 export default Environment;

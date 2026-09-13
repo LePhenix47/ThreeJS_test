@@ -51,7 +51,7 @@ class Camera implements Resizable, Updatable, Destroyable {
     console.log(`Camera instantiated ${persistence ? "with persistence" : ""}`);
   }
 
-  private setCamera = (): void => {
+  private setCamera(): void {
     const camera = new THREE.PerspectiveCamera(
       75,
       this.sizes.aspectRatio,
@@ -63,30 +63,30 @@ class Camera implements Resizable, Updatable, Destroyable {
     camera.position.set(1, 1, 1);
 
     this.instance = camera;
-  };
+  }
 
-  private setControls = (): void => {
+  private setControls(): void {
     const controls = new OrbitControls(this.instance, this.canvas);
     controls.enableDamping = true;
 
     this.controls = controls;
-  };
+  }
 
-  public resize = (): void => {
+  public resize(): void {
     this.instance.aspect = this.sizes.aspectRatio;
     this.instance.updateProjectionMatrix();
-  };
+  }
 
-  public update = (): void => {
+  public update(): void {
     this.controls.update();
-  };
+  }
 
-  public destroy = (): void => {
+  public destroy(): void {
     this.cleanupPersistence?.();
     this.controls.dispose();
-  };
+  }
 
-  public setupCameraStatePersistence = (): (() => void) => {
+  public setupCameraStatePersistence(): () => void {
     const savedCameraState = WebStorage.getKey<CameraState>(
       Camera.CAMERA_STATE_KEY,
       true,
@@ -125,7 +125,7 @@ class Camera implements Resizable, Updatable, Destroyable {
       debounce.cancel();
       this.controls.removeEventListener("change", saveCameraState);
     };
-  };
+  }
 }
 
 export default Camera;

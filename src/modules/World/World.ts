@@ -99,11 +99,11 @@ class World implements Updatable, Destroyable {
     this.updateHelperPosition("grid", position, gridHelper.yShift);
   };
 
-  private updateHelperPosition = (
+  private updateHelperPosition(
     helperType: "axis" | "grid",
     position: THREE.Vector3,
     offset: number = 0,
-  ): void => {
+  ): void {
     const newPosition: THREE.Vector3 = structuredClone(position);
     newPosition.y += offset;
 
@@ -120,16 +120,16 @@ class World implements Updatable, Destroyable {
       default:
         break;
     }
-  };
+  }
 
-  private setHelpers = (): void => {
+  private setHelpers(): void {
     this.setAxisHelper();
     this.setGridHelper();
 
     this.updateHelpersPositions();
 
     this.scene.add(this.axisHelper, this.gridHelper);
-  };
+  }
 
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<WorldState>(
@@ -193,20 +193,20 @@ class World implements Updatable, Destroyable {
       .name("Reset Camera Pivot");
   }
 
-  private removeHelpers = () => {
+  private removeHelpers(): void {
     this.scene.remove(this.axisHelper, this.gridHelper);
     this.axisHelper.dispose();
     this.gridHelper.dispose();
     this.guiRegistry?.dispose();
-  };
+  }
 
-  public update = () => {};
+  public update(): void {}
 
-  public destroy = () => {
+  public destroy(): void {
     this.floor?.destroy();
     this.environment?.destroy();
     this.removeHelpers();
-  };
+  }
 }
 
 export default World;

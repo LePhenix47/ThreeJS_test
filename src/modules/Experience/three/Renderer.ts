@@ -36,7 +36,7 @@ class Renderer implements Resizable, Updatable, Destroyable {
     console.log("Renderer instantiated");
   }
 
-  private setRenderer = (): void => {
+  private setRenderer(): void {
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       canvas: this.experience.canvas,
@@ -51,21 +51,21 @@ class Renderer implements Resizable, Updatable, Destroyable {
     renderer.setPixelRatio(this.sizes.pixelRatio);
 
     this.instance = renderer;
-  };
+  }
 
-  public resize = (): void => {
+  public resize(): void {
     this.instance.setSize(this.sizes.width, this.sizes.height);
 
     this.instance.setPixelRatio(this.sizes.pixelRatio);
-  };
+  }
 
-  public update = (): void => {
+  public update(): void {
     this.instance.render(this.scene, this.camera.instance);
-  };
+  }
 
-  public destroy = (): void => {
+  public destroy(): void {
     this.instance.dispose();
-  };
+  }
 }
 
 export default Renderer;

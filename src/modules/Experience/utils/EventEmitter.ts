@@ -19,7 +19,7 @@ abstract class EventEmitter<TEvents extends EventMap> {
     this.events = new Map();
   }
 
-  private log = (message: string): void => {
+  private log(message: string): void {
     if (!this.DEBUG_MODE) {
       return;
     }
@@ -27,7 +27,7 @@ abstract class EventEmitter<TEvents extends EventMap> {
       `%c${message}`,
       "background: blue; color: white; font-weight: bold",
     );
-  };
+  }
 
   /**
    * Registers an event listener
@@ -36,11 +36,11 @@ abstract class EventEmitter<TEvents extends EventMap> {
    * @param options - Configuration options (e.g., once: true for single execution)
    * @returns This EventEmitter instance for chaining
    */
-  public on = <K extends keyof TEvents & string>(
+  public on<K extends keyof TEvents & string>(
     event: K,
     callback: EventCallback<TEvents[K]>,
     options: EventOptions = {},
-  ): this => {
+  ): this {
     if (!this.events.has(event)) {
       this.events.set(event, []);
     }
@@ -53,26 +53,26 @@ abstract class EventEmitter<TEvents extends EventMap> {
     this.log(`[EventEmitter] Listener added for "${event}"`);
 
     return this;
-  };
+  }
 
   /**
    * Registers a one-time event listener (automatically removed after first execution)
    */
-  public once = <K extends keyof TEvents & string>(
+  public once<K extends keyof TEvents & string>(
     event: K,
     callback: EventCallback<TEvents[K]>,
-  ): this => {
+  ): this {
     return this.on(event, callback, { once: true });
-  };
+  }
 
   /**
    * Emits an event, spreading all args to every listener.
    * @returns True if the event had listeners, false otherwise
    */
-  protected emit = <K extends keyof TEvents & string>(
+  protected emit<K extends keyof TEvents & string>(
     event: K,
     ...args: TEvents[K]
-  ): boolean => {
+  ): boolean {
     const listeners = this.events.get(event);
 
     if (!listeners || listeners.length === 0) {
@@ -117,16 +117,16 @@ abstract class EventEmitter<TEvents extends EventMap> {
     );
 
     return true;
-  };
+  }
 
   /**
    * Removes a specific event listener
    * @returns True if the listener was removed, false if not found
    */
-  public off = <K extends keyof TEvents & string>(
+  public off<K extends keyof TEvents & string>(
     event: K,
     callback: EventCallback<TEvents[K]>,
-  ): boolean => {
+  ): boolean {
     const listeners = this.events.get(event);
 
     if (!listeners) {
@@ -149,13 +149,13 @@ abstract class EventEmitter<TEvents extends EventMap> {
     this.log(`[EventEmitter] Removed listener for "${event}"`);
 
     return true;
-  };
+  }
 
   /**
    * Removes all listeners for a specific event or all events
    * @param event - Optional event name. If not provided, removes all listeners
    */
-  public removeAllListeners = (event?: keyof TEvents & string): this => {
+  public removeAllListeners(event?: keyof TEvents & string): this {
     if (event) {
       this.events.delete(event);
       this.log(`[EventEmitter] Removed all listeners for "${event}"`);
@@ -164,14 +164,14 @@ abstract class EventEmitter<TEvents extends EventMap> {
       this.log(`[EventEmitter] Removed all listeners`);
     }
     return this;
-  };
+  }
 
   /**
    * Gets the number of listeners for a specific event
    */
-  public listenerCount = (event: keyof TEvents & string): number => {
+  public listenerCount(event: keyof TEvents & string): number {
     return this.events.get(event)?.length || 0;
-  };
+  }
 
   /**
    * Gets all registered event names

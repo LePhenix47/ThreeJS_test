@@ -101,16 +101,16 @@ class Resources extends EventEmitter<ResourcesEvents> {
     this.loadResources();
   }
 
-  private storeOriginalCallbacks = () => {
+  private storeOriginalCallbacks(): void {
     // * Since we overwrite the loadingManager (ex: handleLoadingManager method), we need to store the original callbacks
     this.originalOnStart = this.loadingManager.onStart;
     this.originalOnProgress = this.loadingManager.onProgress;
     this.originalOnLoad = this.loadingManager.onLoad;
 
     this.originalOnError = this.loadingManager.onError;
-  };
+  }
 
-  private handleLoadingManager = () => {
+  private handleLoadingManager(): void {
     this.loadingManager.onLoad = () => {
       /*
        * ! Do NOT emit "textures-loaded" here.
@@ -122,11 +122,9 @@ class Resources extends EventEmitter<ResourcesEvents> {
        */
       this.originalOnLoad?.();
     };
-  };
+  }
 
-  private setLoaders = (
-    opt?: Pick<ResourceOptions, "dracoDecoderPath">,
-  ): void => {
+  private setLoaders(opt?: Pick<ResourceOptions, "dracoDecoderPath">): void {
     const loadingManager = this.loadingManager;
 
     const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
@@ -150,7 +148,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
     } as const;
 
     this.loaders = loaders;
-  };
+  }
 
   private get totalToLoad(): number {
     return this.sources.reduce((total, source) => {
@@ -168,7 +166,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
     return Object.keys(this.items).length;
   }
 
-  public loadResources = () => {
+  public loadResources(): void {
     for (const source of this.sources) {
       switch (source.type) {
         case "texture":
@@ -221,13 +219,13 @@ class Resources extends EventEmitter<ResourcesEvents> {
         }
       }
     }
-  };
+  }
 
   /** Logs loaded item names of a given type to the console — called before throwing on a failed lookup. */
-  private logAvailableItems = (
+  private logAvailableItems(
     requestedName: string,
     type: keyof typeof this.typeFilters,
-  ): void => {
+  ): void {
     const available = Object.entries(this.items)
       .filter(([, item]) => this.typeFilters[type](item))
       .map(([key]) => key);
@@ -235,9 +233,9 @@ class Resources extends EventEmitter<ResourcesEvents> {
       `[Resources] "${requestedName}" not found. Available ${type}s:`,
       available.length ? available : "none",
     );
-  };
+  }
 
-  private getTextureByItemKey = (itemKey: string): THREE.Texture => {
+  private getTextureByItemKey(itemKey: string): THREE.Texture {
     const item = this.items[itemKey];
     const isTexture = this.typeFilters.texture(item);
     if (!isTexture) {
@@ -245,21 +243,21 @@ class Resources extends EventEmitter<ResourcesEvents> {
       throw new Error(`[Resources] "${itemKey}" is not a Texture`);
     }
     return item;
-  };
+  }
 
   /** Returns a loaded `THREE.Texture` by name. Pass `mapKey` for multi-map sources (e.g. `"dirtTexture", "color"`). Throws if not found or wrong type. */
-  public getTexture = <TName extends RegularTextureNames | LdrTextureNames>(
+  public getTexture<TName extends RegularTextureNames | LdrTextureNames>(
     name: TName,
     mapKey?: GetPathsFromName<TName>,
-  ): THREE.Texture => {
+  ): THREE.Texture {
     const itemKey = mapKey ? `${name}_${String(mapKey)}` : name;
     return this.getTextureByItemKey(itemKey);
-  };
+  }
 
   /** Returns all textures for a multi-map source as `{ mapKey: THREE.Texture, ... }`. Throws if the source is not a texture type. */
-  public getTextures = <TName extends RegularTextureNames | LdrTextureNames>(
+  public getTextures<TName extends RegularTextureNames | LdrTextureNames>(
     name: TName,
-  ): Record<GetPathsFromName<TName> & TextureName, THREE.Texture> => {
+  ): Record<GetPathsFromName<TName> & TextureName, THREE.Texture> {
     const source = this.sources.find((s) => s.name === name);
     if (
       !source ||
@@ -277,10 +275,10 @@ class Resources extends EventEmitter<ResourcesEvents> {
       Reflect.set(result, key, this.getTextureByItemKey(`${name}_${key}`));
     }
     return result;
-  };
+  }
 
   /** Returns a loaded `THREE.CubeTexture` by name. Throws if not found or wrong type. */
-  public getCubeTexture = (name: CubeTextureNames): THREE.CubeTexture => {
+  public getCubeTexture(name: CubeTextureNames): THREE.CubeTexture {
     const item = this.items[name];
 
     const isCubeTexture = this.typeFilters.cubeTexture(item);
@@ -289,10 +287,10 @@ class Resources extends EventEmitter<ResourcesEvents> {
       throw new Error(`[Resources] "${name}" is not a CubeTexture`);
     }
     return item;
-  };
+  }
 
   /** Returns a loaded `GLTF` model by name. Throws if not found or wrong type. */
-  public getGltf = (name: ModelNames): GLTF => {
+  public getGltf(name: ModelNames): GLTF {
     const item = this.items[name];
 
     const isGltf = this.typeFilters.gltf(item);
@@ -302,10 +300,10 @@ class Resources extends EventEmitter<ResourcesEvents> {
     }
 
     return item;
-  };
+  }
 
   /** Returns a loaded `THREE.DataTexture` by name. Throws if not found or wrong type. */
-  public getDataTexture = (name: HdrTextureNames): THREE.DataTexture => {
+  public getDataTexture(name: HdrTextureNames): THREE.DataTexture {
     const item = this.items[name];
 
     const isDataTexture = this.typeFilters.dataTexture(item);
@@ -315,10 +313,12 @@ class Resources extends EventEmitter<ResourcesEvents> {
     }
 
     return item;
-  };
+  }
 
   /** Returns all textures for a `"textureArray"` source as an ordered `T[]`. Throws if not found or wrong type. */
-  public getTextureArray = <T extends THREE.Texture = THREE.Texture>(name: TextureArrayNames): T[] => {
+  public getTextureArray<T extends THREE.Texture = THREE.Texture>(
+    name: TextureArrayNames,
+  ): T[] {
     const source = this.sources.find((s) => s.name === name);
     if (!source || source.type !== "textureArray") {
       this.logAvailableItems(name, "texture");
@@ -326,13 +326,13 @@ class Resources extends EventEmitter<ResourcesEvents> {
     }
 
     return source.paths.map((_, i) => this.getTextureByItemKey(`${name}_${i}`)) as T[];
-  };
+  }
 
-  private sourceLoaded = (
+  private sourceLoaded(
     source: Source,
     file: THREE.Texture<unknown> | GLTF | THREE.CubeTexture | THREE.DataTexture,
     key?: string,
-  ) => {
+  ): void {
     const itemKey = key ? `${source.name}_${key}` : source.name;
     this.items[itemKey] = file;
     console.log(`${itemKey} loaded`);
@@ -342,7 +342,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
       this.emit("textures-loaded");
       console.log("ALL TEXTURES LOADED !!!", this.items);
     }
-  };
+  }
 }
 
 export default Resources;

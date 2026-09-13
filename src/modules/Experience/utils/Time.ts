@@ -49,20 +49,21 @@ class Time extends EventEmitter<TimeEvents> {
     this.tick(); // ? Initial tick
   }
 
-  private init = (): void => {
+  private init(): void {
     this.startMs = performance.now();
     this.currentMs = this.startMs;
 
     this.elapsedMs = 0;
     this.deltaMs = Math.floor(1_000 / 60); // ? Avoids potential 1st frame bugs
-  };
+  }
 
+  // ? Arrow — recursively re-scheduled as its own rAF callback, must stay bound to `this`
   public tick = (): void => {
     try {
       this.updateTime();
       this.emitTickEvent();
 
-      this.animationFrameId = requestAnimationFrame(() => this.tick());
+      this.animationFrameId = requestAnimationFrame(this.tick);
     } catch (error) {
       console.error(error);
       console.error("Error in tick(), stopping animation loop");
@@ -71,7 +72,7 @@ class Time extends EventEmitter<TimeEvents> {
     }
   };
 
-  private emitTickEvent = (): void => {
+  private emitTickEvent(): void {
     const tickData = {
       currentMs: this.currentMs,
       elapsedMs: this.elapsedMs,
@@ -79,9 +80,9 @@ class Time extends EventEmitter<TimeEvents> {
     } as const;
 
     this.emit("tick", tickData);
-  };
+  }
 
-  private updateTime = (): void => {
+  private updateTime(): void {
     const currentMsTick: number = performance.now();
     const previousTick: number = this.currentMs;
 
@@ -90,16 +91,17 @@ class Time extends EventEmitter<TimeEvents> {
     this.elapsedMs = currentMsTick - this.startMs;
 
     this.currentMs = currentMsTick;
-  };
+  }
 
-  public cancelAnimationLoop = (): void =>
+  public cancelAnimationLoop(): void {
     cancelAnimationFrame(this.animationFrameId);
+  }
 
-  public destroy = (): void => {
+  public destroy(): void {
     this.cancelAnimationLoop();
 
     this.removeAllListeners();
-  };
+  }
 }
 
 export default Time;

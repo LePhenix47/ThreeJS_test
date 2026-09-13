@@ -125,7 +125,7 @@ class Experience implements Resizable, Updatable, Destroyable {
    * @param {InputCanvas} canvas - The canvas element, reference to it or a CSS selector
    * @returns {void}
    */
-  private initCanvas = (canvas: InputCanvas): void => {
+  private initCanvas(canvas: InputCanvas): void {
     // ? If canvas is a CSS selector
     if (typeof canvas === "string") {
       const selectedElement: Element | null = document.querySelector(canvas);
@@ -149,9 +149,9 @@ class Experience implements Resizable, Updatable, Destroyable {
     }
 
     this.canvas = canvas.current;
-  };
+  }
 
-  public setDebugMode = (debugMode: boolean): this => {
+  public setDebugMode(debugMode: boolean): this {
     const keyName = "DEBUG_EXPERIENCE" as const;
 
     if (!debugMode) {
@@ -165,9 +165,9 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.debug = new Debug({ title: "Experience debug", isActive: true });
 
     return this;
-  };
+  }
 
-  public destroy = (): void => {
+  public destroy(): void {
     this.sizes.destroy();
     this.time.destroy();
     this.camera.destroy();
@@ -196,7 +196,7 @@ class Experience implements Resizable, Updatable, Destroyable {
     }
 
     Experience.instance = null;
-  };
+  }
 }
 
 export default Experience;
