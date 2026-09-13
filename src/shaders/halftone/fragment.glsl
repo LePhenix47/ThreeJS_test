@@ -1,23 +1,12 @@
 uniform float uTime;
 uniform vec3 uColor;
 
-struct PointLight {
-  vec3 color;
-  float intensity;
-  vec3 position;
-  float specularPower;
-  float decayAttenuation;
-};
-
 struct DirectionalLight {
   vec3 color;
   float intensity;
   vec3 position;
   float specularPower;
 };
-
-uniform PointLight uPointLights[MAX_POINT_LIGHTS]; // MAX_POINT_LIGHTS injected via ShaderMaterial's `defines`
-uniform int uPointLightCount;
 
 uniform DirectionalLight uDirectionalLights[MAX_DIRECTIONAL_LIGHTS]; // MAX_DIRECTIONAL_LIGHTS injected via ShaderMaterial's `defines`
 uniform int uDirectionalLightCount;
@@ -51,16 +40,6 @@ vec3 addDirectionalLights(vec3 light, vec3 directionOfView) {
   return light;
 }
 
-vec3 addPointLights(vec3 light, vec3 directionOfView) {
-  for(int i = 0; i < MAX_POINT_LIGHTS; i++) {
-    if(i >= uPointLightCount)
-      break;
-    light += pointLight(uPointLights[i].color, uPointLights[i].intensity, vNormal, uPointLights[i].position, directionOfView, uPointLights[i].specularPower, vAbsolutePosition, uPointLights[i].decayAttenuation);
-  }
-
-  return light;
-}
-
 vec3 halftone(
   vec3 initialColor,
   float repetitions,
@@ -89,7 +68,7 @@ vec3 halftone(
 
   // * The height resize fix causes problem for x, so we want: gl_FragCoord.x / uResolution.x;
   // * For that we can take uv0.x = gl_FragCoord.x / uResolution.y, cancels the earlier divide-by-height, get following result:
-  uv0.x *= uResolution.y / uResolution.x;
+  uv0.x *= uResolution.y / uResolution.x; 
 
   // ? mix() on raw RGB cuts a straight line through the RGB cube, drags in off-hues at
   // ? the midpoint (e.g. blue-ish between purple and white) — OKLab is built so that
