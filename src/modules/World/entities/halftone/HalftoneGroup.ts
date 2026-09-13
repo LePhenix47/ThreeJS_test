@@ -65,15 +65,6 @@ class HalftoneGroup implements Updatable, Destroyable {
     maxDirectionalLights: 1,
     pointLightIdsStorageKey: "halftone-point-light-ids",
     directionalLightIdsStorageKey: "halftone-directional-light-ids",
-    defaultPointLightState: {
-      color: `#8e19b8`,
-      intensity: 1,
-      positionX: 0,
-      positionY: 2.5,
-      positionZ: 0,
-      specularPower: 20,
-      decayAttenuation: 0.25,
-    } satisfies PointLightState,
     defaultDirectionalLightState: {
       color: "#e5ffe0",
       intensity: 1,
@@ -91,7 +82,6 @@ class HalftoneGroup implements Updatable, Destroyable {
   private sphere: HalftoneSphere;
   private suzanne?: HalftoneSuzanne;
 
-  private pointLights: DynamicLightCollection<"point">;
   private directionalLights: DynamicLightCollection<"directional">;
   /** Set by `addDebugFolders()` when debug is active — stays null otherwise, so `restoreLightCollections()` knows whether lights get a GUI folder at all. */
   private debugFolder: GUI | null = null;
@@ -243,37 +233,17 @@ class HalftoneGroup implements Updatable, Destroyable {
       // blending: THREE.AdditiveBlending,
     }) as TypedShaderMaterial<HalftoneUniforms>;
 
-    this.sizes.on("resize", () => {
-      const { x, y } = this.sizes.resolution;
-      this.material.uniforms.uResolution.value.set(x, y);
-    });
+    this.sizes.on("resize", this.onResize);
   }
 
   private setLightCollections(): void {
     const {
-      maxPointLights,
-      pointLightIdsStorageKey,
-      defaultPointLightState,
       maxDirectionalLights,
       directionalLightIdsStorageKey,
       defaultDirectionalLightState,
     } = HalftoneGroup.CONFIG;
-    const {
-      uPointLights,
-      uPointLightCount,
-      uDirectionalLights,
-      uDirectionalLightCount,
-    } = this.material.uniforms;
-
-    this.pointLights = new DynamicLightCollection({
-      maxCount: maxPointLights,
-      storageIdsKey: pointLightIdsStorageKey,
-      defaults: defaultPointLightState,
-      createEntity: (params) => new PointLightEntity(params),
-      emptyUniformValue: "point",
-      uniformArray: uPointLights,
-      countUniform: uPointLightCount,
-    });
+    const { uDirectionalLights, uDirectionalLightCount } =
+      this.material.uniforms;
 
     this.directionalLights = new DynamicLightCollection({
       maxCount: maxDirectionalLights,
@@ -366,10 +336,7 @@ class HalftoneGroup implements Updatable, Destroyable {
 
   /** Builds and syncs both light collections regardless of debug mode — `debugFolder` is null outside debug, so lights get no GUI folder but still shade the scene. */
   private restoreLightCollections(): void {
-    const { debugFolder, pointLights, directionalLights } = this;
-
-    const pointLightsFolder = debugFolder?.addFolder("Point Lights") ?? null;
-    pointLights.restore(pointLightsFolder);
+    const { debugFolder, directionalLights } = this;
 
     const directionalLightsFolder =
       debugFolder?.addFolder("Directional Lights") ?? null;
@@ -387,14 +354,23 @@ class HalftoneGroup implements Updatable, Destroyable {
     this.suzanne?.setRotation(rotX, rotY);
   }
 
+  private onResize = (): void => {
+    const { x, y } = this.sizes.resolution;
+    this.material.uniforms.uResolution.value.set(x, y);
+  };
+
   public destroy(): void {
+    this.sizes.off("resize", this.onResize);
+
     this.torus.destroy();
     this.sphere.destroy();
     this.suzanne?.destroy();
-    this.pointLights.destroy();
+
     this.directionalLights.destroy();
+
     this.material.dispose();
     this.scene.remove(this.group);
+
     this.guiRegistry?.dispose();
   }
 }
