@@ -8,6 +8,15 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import glsl from "vite-plugin-glsl";
 import mkcert from "vite-plugin-mkcert";
 
+/**
+ * Accepts a base path with or without leading/trailing slashes
+ * (e.g. "ThreeJS_test", "/ThreeJS_test", "/ThreeJS_test/") and
+ * normalizes it to the "/segment/" form Vite expects.
+ */
+function normalizeBasePath(basePath: string): string {
+  return `/${basePath}/`.replaceAll(/\/{1,}/g, "/");
+}
+
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), "VITE_");
@@ -29,7 +38,7 @@ export default defineConfig(({ mode }) => {
       host: "0.0.0.0", // Allows access to your local IP address
       open: false, // Optional: Opens the browser automatically
     },
-    base: env.VITE_BASE_PATH || "/",
+    base: env.VITE_BASE_PATH ? normalizeBasePath(env.VITE_BASE_PATH) : "/",
     css: {
       postcss: {
         plugins: [autoprefixer()],
