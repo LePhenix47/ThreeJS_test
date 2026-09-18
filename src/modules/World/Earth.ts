@@ -70,7 +70,7 @@ class Earth
 
     this.scene.add(this.mesh);
 
-    if (!this.debug?.isActive) {
+    if (this.debug?.isActive) {
       this.addDebugFolders();
     }
 
