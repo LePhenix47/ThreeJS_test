@@ -3,7 +3,7 @@ import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { SideEnum } from "@/utils/enums/three";
 import Enum from "@/utils/enums";
-import { MeshEntity } from "./types/entity";
+import { MeshEntity } from "./types/mesh-entity";
 
 type FloorState = {
   color: string;
