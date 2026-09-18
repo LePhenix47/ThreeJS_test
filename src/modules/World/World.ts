@@ -24,7 +24,7 @@ class World implements Updatable, Destroyable {
       subdivisions: 10,
       yShift: 0.01, // ? To avoid z fighting
     },
-  };
+  } as const;
 
   private readonly experience: Experience | null;
   private axisHelper: THREE.AxesHelper;
