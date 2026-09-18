@@ -15,7 +15,12 @@ type EarthState = {
   wireframe: boolean;
 };
 
-type EarthUniforms = MapAsUniforms<{}>;
+type EarthUniforms = MapAsUniforms<{
+  uDayTexture: THREE.Texture;
+  uNightTexture: THREE.Texture;
+  uSpecularCloudsTexture: THREE.Texture;
+  // uSunOrientation: THREE.Vector3;
+}>;
 
 type EarthTextureKeys = GetPathsFromName<"earth">;
 class Earth
@@ -98,7 +103,13 @@ class Earth
 
   protected setMaterial(): void {
     const { wireframe } = this.debugDefaults;
-    const uniforms: EarthUniforms = {};
+
+    const { day, night, specularClouds } = this.textures;
+    const uniforms: EarthUniforms = {
+      uDayTexture: new THREE.Uniform(day),
+      uNightTexture: new THREE.Uniform(night),
+      uSpecularCloudsTexture: new THREE.Uniform(specularClouds),
+    };
 
     this.material = new THREE.ShaderMaterial({
       wireframe,
