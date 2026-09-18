@@ -22,7 +22,7 @@ type CameraConstructor = Partial<{
 class Camera implements Resizable, Updatable, Destroyable {
   public static readonly CONFIG = {
     CAMERA_STATE_KEY: "three-camera-state",
-    fov: 75,
+    fov: 25,
     near: 0.1,
     far: 100,
     position: {
