@@ -11,10 +11,37 @@ type EnvironmentState = {
   environmentColor: string;
 };
 
-class Environment implements Destroyable {
+class Environment extends EnvironmentEntity implements Destroyable {
+  public static readonly CONFIG = {
+    ambientLight: {
+      color: "#ffffff",
+      intensity: 1,
+    },
+    directionalLight: {
+      color: "#ffffff",
+      intensity: 3,
+      position: {
+        x: 0.25,
+        y: 2,
+        z: -2.25,
+      },
+      shadow: {
+        mapSize: 2 ** 10,
+        normalBias: 0.05,
+        camera: {
+          far: 15,
+          top: 7,
+          right: 7,
+          bottom: -7,
+          left: -7,
+        },
+      },
+    },
+  } as const;
+
   private readonly experience: Experience | null;
   private ambientLight: THREE.AmbientLight;
-  private sunLight: THREE.DirectionalLight;
+  private directionalLight: THREE.DirectionalLight;
   private lightHelper: THREE.DirectionalLightHelper;
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
@@ -30,10 +57,6 @@ class Environment implements Destroyable {
     return this.experience!.scene;
   }
 
-  private get resources() {
-    return this.experience!.resources;
-  }
-
   private get debug() {
     return this.experience!.debug;
   }
@@ -43,6 +66,7 @@ class Environment implements Destroyable {
   }
 
   constructor() {
+    super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
@@ -50,7 +74,7 @@ class Environment implements Destroyable {
     this.scene.environment = this.envMapTexture;
 
     this.setAmbientLight();
-    this.setSunLight();
+    this.setDirectionalLight();
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -61,33 +85,40 @@ class Environment implements Destroyable {
 
   protected updateMaterial(): void {}
 
+  protected setEnvMap(): void {}
+
   private setAmbientLight(): void {
-    this.ambientLight = new THREE.AmbientLight("#ffffff", 1);
+    const { color, intensity } = Environment.CONFIG.ambientLight;
+    this.ambientLight = new THREE.AmbientLight(color, intensity);
     this.scene.add(this.ambientLight);
   }
 
-  private setSunLight(withHelper = true): void {
-    const sunLight = new THREE.DirectionalLight("#ffffff", 3);
+  private setDirectionalLight(withHelper = true): void {
+    const { color, intensity } = Environment.CONFIG.directionalLight;
+    const directionalLight = new THREE.DirectionalLight(color, intensity);
 
-    const size: number = 2 ** 10;
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.set(size, size);
-    sunLight.shadow.normalBias = 0.05;
+    const { mapSize, normalBias } = Environment.CONFIG.directionalLight.shadow;
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.set(mapSize, mapSize);
+    directionalLight.shadow.normalBias = normalBias;
 
-    const { camera } = sunLight.shadow;
-    camera.far = 15;
-    camera.top = 7;
-    camera.right = 7;
-    camera.bottom = -7;
-    camera.left = -7;
+    const { far, top, right, bottom, left } =
+      Environment.CONFIG.directionalLight.shadow.camera;
+    const { camera } = directionalLight.shadow;
+    camera.far = far;
+    camera.top = top;
+    camera.right = right;
+    camera.bottom = bottom;
+    camera.left = left;
 
-    sunLight.position.set(0.25, 2, -2.25);
+    const { x, y, z } = Environment.CONFIG.directionalLight.position;
+    directionalLight.position.set(x, y, z);
 
-    this.sunLight = sunLight;
-    this.scene.add(sunLight);
+    this.directionalLight = directionalLight;
+    this.scene.add(directionalLight);
 
     if (!withHelper) return;
-    this.lightHelper = new THREE.DirectionalLightHelper(sunLight);
+    this.lightHelper = new THREE.DirectionalLightHelper(directionalLight);
     this.scene.add(this.lightHelper);
   }
 
@@ -119,10 +150,17 @@ class Environment implements Destroyable {
   }
 
   public destroy(): void {
-    this.scene.remove(this.ambientLight, this.sunLight, this.lightHelper);
+    this.scene.remove(
+      this.ambientLight,
+      this.directionalLight,
+      this.lightHelper,
+    );
+
     this.ambientLight.dispose();
-    this.sunLight.dispose();
+
+    this.directionalLight.dispose();
     this.lightHelper?.dispose();
+
     this.guiRegistry?.dispose();
   }
 }

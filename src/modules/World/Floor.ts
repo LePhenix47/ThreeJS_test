@@ -13,6 +13,16 @@ type FloorState = {
 };
 
 class Floor extends MeshEntity implements Destroyable {
+  public static readonly CONFIG = {
+    geometry: {
+      size: 2 ** 12,
+    },
+    material: {
+      metalness: 0.3,
+      roughness: 0.4,
+    },
+  } as const;
+
   private readonly experience: Experience | null;
 
   protected geometry: THREE.PlaneGeometry;
@@ -27,8 +37,6 @@ class Floor extends MeshEntity implements Destroyable {
     side: "double",
     subdivisions: 1,
   };
-
-  private readonly FLOOR_SIZE = 2 ** 12;
 
   private get scene() {
     return this.experience!.scene;
@@ -59,9 +67,11 @@ class Floor extends MeshEntity implements Destroyable {
 
   protected setGeometry(): void {
     const { subdivisions } = this.debugDefaults;
+    const { size } = Floor.CONFIG.geometry;
+
     this.geometry = new THREE.PlaneGeometry(
-      this.FLOOR_SIZE,
-      this.FLOOR_SIZE,
+      size,
+      size,
       subdivisions,
       subdivisions,
     );
@@ -69,12 +79,13 @@ class Floor extends MeshEntity implements Destroyable {
 
   protected setMaterial(): void {
     const { color, side, wireframe } = this.debugDefaults;
+    const { metalness, roughness } = Floor.CONFIG.material;
 
     this.material = new THREE.MeshStandardMaterial({
       color,
       wireframe,
-      metalness: 0.3,
-      roughness: 0.4,
+      metalness,
+      roughness,
       side: SideEnum[side],
     });
   }
@@ -121,10 +132,12 @@ class Floor extends MeshEntity implements Destroyable {
       .name("Subdivisions")
       .onFinishChange(
         registry.bindFinal("subdivisions", (segments) => {
+          const { size } = Floor.CONFIG.geometry;
+
           this.mesh.geometry.dispose();
           this.mesh.geometry = new THREE.PlaneGeometry(
-            this.FLOOR_SIZE,
-            this.FLOOR_SIZE,
+            size,
+            size,
             segments,
             segments,
           );

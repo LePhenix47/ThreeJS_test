@@ -6,6 +6,14 @@ import Experience, {
 } from "@modules/Experience/Experience";
 
 class Renderer implements Resizable, Updatable, Destroyable {
+  public static readonly CONFIG = {
+    toneMappingExposure: 1.75,
+    toneMapping: THREE.CineonToneMapping,
+    outputColorSpace: THREE.SRGBColorSpace,
+    shadowMap: {
+      type: THREE.PCFSoftShadowMap,
+    },
+  } as const;
   public instance: THREE.WebGLRenderer;
   private readonly experience: Experience;
 
@@ -42,23 +50,29 @@ class Renderer implements Resizable, Updatable, Destroyable {
       canvas: this.experience.canvas,
     });
 
-    renderer.toneMapping = THREE.CineonToneMapping;
-    renderer.toneMappingExposure = 1.75;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    const { toneMapping, toneMappingExposure, outputColorSpace } =
+      Renderer.CONFIG;
+    renderer.toneMapping = toneMapping;
+    renderer.toneMappingExposure = toneMappingExposure;
 
-    renderer.setSize(this.sizes.width, this.sizes.height);
+    const { type } = Renderer.CONFIG.shadowMap;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = type;
+
+    const { width, height } = this.sizes;
+    renderer.setSize(width, height);
     renderer.setPixelRatio(this.sizes.pixelRatio);
 
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.outputColorSpace = outputColorSpace;
 
     this.instance = renderer;
   }
 
   public resize(): void {
-    this.instance.setSize(this.sizes.width, this.sizes.height);
+    const { width, height, pixelRatio } = this.sizes;
+    this.instance.setSize(width, height);
 
-    this.instance.setPixelRatio(this.sizes.pixelRatio);
+    this.instance.setPixelRatio(pixelRatio);
   }
 
   public update(): void {

@@ -20,26 +20,34 @@ type CameraConstructor = Partial<{
 }>;
 
 class Camera implements Resizable, Updatable, Destroyable {
-  public static readonly CAMERA_STATE_KEY = "three-camera-state";
+  public static readonly CONFIG = {
+    CAMERA_STATE_KEY: "three-camera-state",
+    fov: 75,
+    near: 0.1,
+    far: 100,
+    position: {
+      x: 1,
+      y: 1,
+      z: 1,
+    },
+  } as const;
 
   public instance: THREE.PerspectiveCamera;
   public controls: OrbitControls;
-  private readonly experience: Experience;
+  private readonly experience: Experience | null;
   private cleanupPersistence: (() => void) | null = null;
 
   private get sizes() {
-    return this.experience.sizes;
+    return this.experience!.sizes;
   }
 
   private get canvas() {
-    return this.experience.canvas;
+    return this.experience!.canvas;
   }
 
   constructor({ persistence }: CameraConstructor = {}) {
-    if (!Experience.instance) {
-      throw new Error("Experience instance not found");
-    }
     this.experience = Experience.instance;
+    if (!this.experience) throw new Error("Experience instance not found");
 
     this.setCamera();
     this.setControls();
@@ -52,15 +60,16 @@ class Camera implements Resizable, Updatable, Destroyable {
   }
 
   private setCamera(): void {
+    const { fov, near, far, position } = Camera.CONFIG;
     const camera = new THREE.PerspectiveCamera(
-      75,
+      fov,
       this.sizes.aspectRatio,
-      0.1,
-      100,
+      near,
+      far,
     );
 
     // * We must set the position in order to use OrbitControls otherwise controls won't work (pos ≠ 0, 0, 0)
-    camera.position.set(1, 1, 1);
+    camera.position.copy(position);
 
     this.instance = camera;
   }
@@ -87,8 +96,9 @@ class Camera implements Resizable, Updatable, Destroyable {
   }
 
   public setupCameraStatePersistence(): () => void {
+    const { CAMERA_STATE_KEY } = Camera.CONFIG;
     const savedCameraState = WebStorage.getKey<CameraState>(
-      Camera.CAMERA_STATE_KEY,
+      CAMERA_STATE_KEY,
       true,
     );
 
@@ -109,7 +119,7 @@ class Camera implements Resizable, Updatable, Destroyable {
         const { x: tx, y: ty, z: tz } = this.controls.target;
 
         WebStorage.setKey(
-          Camera.CAMERA_STATE_KEY,
+          CAMERA_STATE_KEY,
           {
             position: { x: px, y: py, z: pz },
             target: { x: tx, y: ty, z: tz },
