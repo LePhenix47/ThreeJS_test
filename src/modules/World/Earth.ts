@@ -13,6 +13,8 @@ import fragmentShader from "@shaders/earth/fragment.glsl";
 
 type EarthState = {
   wireframe: boolean;
+  uPhi: number;
+  uTheta: number;
 };
 
 type EarthUniforms = MapAsUniforms<{
@@ -20,6 +22,8 @@ type EarthUniforms = MapAsUniforms<{
   uNightTexture: THREE.Texture;
   uSpecularCloudsTexture: THREE.Texture;
   // uSunOrientation: THREE.Vector3;
+  uPhi: EarthState["uPhi"];
+  uTheta: EarthState["uTheta"];
 }>;
 
 type EarthTextureKeys = GetPathsFromName<"earth">;
@@ -43,6 +47,8 @@ class Earth
 
   private readonly debugDefaults: EarthState = {
     wireframe: false,
+    uPhi: 0,
+    uTheta: 0,
   };
   private guiRegistry: GUIStateRegistry<EarthState> | null = null;
 
@@ -102,13 +108,15 @@ class Earth
   }
 
   protected setMaterial(): void {
-    const { wireframe } = this.debugDefaults;
+    const { wireframe, uTheta, uPhi } = this.debugDefaults;
 
     const { day, night, specularClouds } = this.textures;
     const uniforms: EarthUniforms = {
       uDayTexture: new THREE.Uniform(day),
       uNightTexture: new THREE.Uniform(night),
       uSpecularCloudsTexture: new THREE.Uniform(specularClouds),
+      uTheta: new THREE.Uniform(uTheta),
+      uPhi: new THREE.Uniform(uPhi),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -139,6 +147,19 @@ class Earth
     debugFolder.add(state, "wireframe").name("Wireframe");
     registry.bind("wireframe", (v) => {
       this.material.wireframe = v;
+    });
+
+    debugFolder.add(state, "uTheta").name("Theta").min(-180).max(180).step(0.1);
+    registry.bind("uTheta", (v) => {
+      const rad = THREE.MathUtils.degToRad(v);
+      this.material.uniforms.uTheta.value = rad;
+    });
+
+    debugFolder.add(state, "uPhi").name("Phi").min(-90).max(90).step(0.1);
+    registry.bind("uPhi", (v) => {
+      const normalized = v + 90;
+      const rad = THREE.MathUtils.degToRad(normalized);
+      this.material.uniforms.uPhi.value = rad;
     });
   }
 
