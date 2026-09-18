@@ -11,7 +11,9 @@ import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 import vertexShader from "@shaders/earth/vertex.glsl";
 import fragmentShader from "@shaders/earth/fragment.glsl";
 
-type EarthState = {};
+type EarthState = {
+  wireframe: boolean;
+};
 
 type EarthUniforms = MapAsUniforms<{}>;
 
@@ -34,7 +36,9 @@ class Earth
   protected material: TypedShaderMaterial<EarthUniforms>;
   protected mesh: THREE.Mesh;
 
-  private readonly debugDefaults: EarthState = {};
+  private readonly debugDefaults: EarthState = {
+    wireframe: false,
+  };
   private guiRegistry: GUIStateRegistry<EarthState> | null = null;
 
   private get debug() {
@@ -93,10 +97,11 @@ class Earth
   }
 
   protected setMaterial(): void {
-    const {} = this.debugDefaults;
+    const { wireframe } = this.debugDefaults;
     const uniforms: EarthUniforms = {};
 
     this.material = new THREE.ShaderMaterial({
+      wireframe,
       uniforms,
       transparent: true,
       depthWrite: true,
@@ -119,6 +124,11 @@ class Earth
     const { gui } = this.debug;
 
     const debugFolder = gui.addFolder("Earth");
+
+    debugFolder.add(state, "wireframe").name("Wireframe");
+    registry.bind("wireframe", (v) => {
+      this.material.wireframe = v;
+    });
   }
 
   // * 😭😭😭😭😭 Please don't
