@@ -4,6 +4,7 @@ import Experience, {
 } from "@modules/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import Earth from "@modules/World/Earth";
 
 type WorldState = {
   axisHelper: boolean;
@@ -39,6 +40,12 @@ class World implements Updatable, Destroyable {
     helpersPosZ: 0,
   };
 
+  public earth?: Earth;
+
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   private get scene() {
     return this.experience!.scene;
   }
@@ -54,6 +61,10 @@ class World implements Updatable, Destroyable {
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
+
+    this.resources.on("textures-loaded", () => {
+      this.earth = new Earth();
+    });
 
     this.setHelpers();
 
@@ -194,9 +205,13 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   }
 
-  public update(): void {}
+  public update(): void {
+    this.earth?.update();
+  }
 
   public destroy(): void {
+    this.earth?.destroy();
+
     this.removeHelpers();
   }
 }
