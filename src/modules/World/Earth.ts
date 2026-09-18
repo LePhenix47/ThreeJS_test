@@ -138,7 +138,7 @@ class Earth
   }
 
   public update(): void {
-    this.mesh.rotation.y = this.time.elapsedSeconds;
+    this.mesh.rotation.y = this.time.elapsedSeconds * 0.25;
   }
 
   public destroy(): void {
