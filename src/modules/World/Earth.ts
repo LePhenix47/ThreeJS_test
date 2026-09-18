@@ -22,9 +22,8 @@ class Earth
 {
   public static readonly CONFIG = {
     geometry: {
-      radius: 10,
-      widthSegments: 50,
-      heightSegments: 50,
+      radius: 2,
+      segments: 2 ** 6,
     },
   } as const;
 
@@ -85,12 +84,8 @@ class Earth
   }
 
   protected setGeometry(): void {
-    const { radius, widthSegments, heightSegments } = Earth.CONFIG.geometry;
-    this.geometry = new THREE.SphereGeometry(
-      radius,
-      widthSegments,
-      heightSegments,
-    );
+    const { radius, segments } = Earth.CONFIG.geometry;
+    this.geometry = new THREE.SphereGeometry(radius, segments, segments);
   }
 
   protected setMaterial(): void {
