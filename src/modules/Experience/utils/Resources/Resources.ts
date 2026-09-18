@@ -19,6 +19,7 @@ import {
   CubeTextureNames,
   HdrTextureNames,
   TextureArrayNames,
+  ShaderTextureNames,
   GetPathsFromName,
 } from "@modules/Experience/sources/textures";
 
@@ -152,7 +153,11 @@ class Resources extends EventEmitter<ResourcesEvents> {
 
   private get totalToLoad(): number {
     return this.sources.reduce((total, source) => {
-      if (source.type === "texture" || source.type === "ldrEnvTexture") {
+      if (
+        source.type === "texture" ||
+        source.type === "ldrEnvTexture" ||
+        source.type === "shaderTexture"
+      ) {
         return total + Object.keys(source.paths).length;
       }
       if (source.type === "textureArray") {
@@ -170,7 +175,8 @@ class Resources extends EventEmitter<ResourcesEvents> {
     for (const source of this.sources) {
       switch (source.type) {
         case "texture":
-        case "ldrEnvTexture": {
+        case "ldrEnvTexture":
+        case "shaderTexture": {
           for (const [key, path] of Object.entries(source.paths)) {
             this.loaders.texture.load(path, (textureLoaded) => {
               this.sourceLoaded(source, textureLoaded, key);
@@ -270,6 +276,32 @@ class Resources extends EventEmitter<ResourcesEvents> {
       GetPathsFromName<TName> & TextureName,
       THREE.Texture
     >;
+
+    for (const key of Object.keys(source.paths)) {
+      Reflect.set(result, key, this.getTextureByItemKey(`${name}_${key}`));
+    }
+    return result;
+  }
+
+  /** Returns a loaded shader-texture map by name. `mapKey` is that source's own uniform key (e.g. `"day"`, `"night"`), not a `THREE.Material` property. Throws if not found or wrong type. */
+  public getShaderTexture<TName extends ShaderTextureNames>(
+    name: TName,
+    mapKey: GetPathsFromName<TName>,
+  ): THREE.Texture {
+    const itemKey = `${name}_${String(mapKey)}`;
+    return this.getTextureByItemKey(itemKey);
+  }
+
+  /** Returns all shader-texture maps for a source as `{ uniformKey: THREE.Texture, ... }`. Throws if the source is not a shaderTexture type. */
+  public getShaderTextures<TName extends ShaderTextureNames>(
+    name: TName,
+  ): Record<GetPathsFromName<TName>, THREE.Texture> {
+    const source = this.sources.find((s) => s.name === name);
+    if (!source || source.type !== "shaderTexture") {
+      throw new Error(`[Resources] "${name}" is not a shaderTexture source`);
+    }
+
+    const result = {} as Record<GetPathsFromName<TName>, THREE.Texture>;
 
     for (const key of Object.keys(source.paths)) {
       Reflect.set(result, key, this.getTextureByItemKey(`${name}_${key}`));

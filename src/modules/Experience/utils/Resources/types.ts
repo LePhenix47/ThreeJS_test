@@ -62,12 +62,23 @@ const TextureArraySourceSchema = z.object({
   paths: z.array(z.string()),
 });
 
+// ? Open key set, unlike TexturePathsSchema — these keys are shader-uniform names, not
+// ? THREE.Material properties, so they never go through texturePropertyObject
+const ShaderTexturePathsSchema = z.record(z.string(), z.string());
+
+const ShaderTextureSourceSchema = z.object({
+  name: z.string(),
+  type: z.literal("shaderTexture"),
+  paths: ShaderTexturePathsSchema,
+});
+
 export const SourceSchema = z.discriminatedUnion("type", [
   TextureSourceSchema,
   CubeTextureSourceSchema,
   GltfSourceSchema,
   HdrSourceSchema,
   TextureArraySourceSchema,
+  ShaderTextureSourceSchema,
 ]);
 
 export const SourceArraySchema = z.array(SourceSchema);
@@ -79,10 +90,10 @@ export type TexturePaths = z.infer<typeof TexturePathsSchema>;
 export type TextureName = keyof TexturePaths;
 // After defining SourceSchema and inferring Source:
 export type Source = z.infer<typeof SourceSchema>;
-export type SourceType = Source["type"]; // "texture" | "ldrEnvTexture" | "cubeEnvTexture" | "gltf" | "hdrEnvTexture"
+export type SourceType = Source["type"]; // "texture" | "ldrEnvTexture" | "cubeEnvTexture" | "gltf" | "hdrEnvTexture" | "textureArray" | "shaderTexture"
 
 // Texture‑only types (exclude "gltf")
-export type TextureSourceType = Exclude<SourceType, "gltf">; // "texture" | "ldrEnvTexture" | "cubeEnvTexture" | "hdrEnvTexture"
+export type TextureSourceType = Exclude<SourceType, "gltf">; // "texture" | "ldrEnvTexture" | "cubeEnvTexture" | "hdrEnvTexture" | "textureArray" | "shaderTexture"
 
 // Texture‑only types (exclude "gltf")
 export type GltfSourceType = Extract<SourceType, "gltf">; // "texture" | "ldrEnvTexture" | "cubeEnvTexture" | "hdrEnvTexture"
