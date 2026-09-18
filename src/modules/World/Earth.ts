@@ -49,6 +49,10 @@ class Earth
     return this.experience!.resources;
   }
 
+  private get time() {
+    return this.experience!.time;
+  }
+
   constructor() {
     super();
 
@@ -123,7 +127,9 @@ class Earth
     this.geometry.dispose();
   }
 
-  public update(): void {}
+  public update(): void {
+    this.mesh.rotation.y = this.time.elapsedSeconds;
+  }
 
   public destroy(): void {
     this.scene.remove(this.mesh);
