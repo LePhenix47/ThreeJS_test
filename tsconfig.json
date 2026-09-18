@@ -30,7 +30,7 @@
         "./src/*"
       ],
       "@assets/*": [
-        "./src/assets/*"
+        "./assets/*"
       ],
       "@components/*": [
         "./src/components/*"
@@ -43,9 +43,6 @@
       ],
       "@pages/*": [
         "./src/pages/*"
-      ],
-      "@public/*": [
-        "./public/*"
       ],
       "@sass/*": [
         "./src/sass/*"
