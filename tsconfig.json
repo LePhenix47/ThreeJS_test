@@ -44,9 +44,6 @@
       "@pages/*": [
         "./src/pages/*"
       ],
-      "@public/*": [
-        "./public/*"
-      ],
       "@sass/*": [
         "./src/sass/*"
       ],
