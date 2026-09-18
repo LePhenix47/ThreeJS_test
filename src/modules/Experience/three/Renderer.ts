@@ -50,6 +50,8 @@ class Renderer implements Resizable, Updatable, Destroyable {
     renderer.setSize(this.sizes.width, this.sizes.height);
     renderer.setPixelRatio(this.sizes.pixelRatio);
 
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
     this.instance = renderer;
   }
 
