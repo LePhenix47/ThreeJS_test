@@ -5,9 +5,9 @@ type SizesEvents = {
 };
 
 class Sizes extends EventEmitter<SizesEvents> {
-  width: number = 0;
-  height: number = 0;
-  pixelRatio: number = 1;
+  public width: number = 0;
+  public height: number = 0;
+  public pixelRatio: number = 1;
 
   private readonly resizeObserver: ResizeObserver;
 
