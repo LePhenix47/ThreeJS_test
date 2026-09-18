@@ -23,3 +23,18 @@ export abstract class TexturedMeshEntity extends MeshEntity {
   /** Loads and assigns all textures into `textures`. Must run before `setMaterial`. */
   protected abstract setTextures(): void;
 }
+
+/**
+ * Extends `MeshEntity` with shader-uniform texture support — for entities loading textures via
+ * `Resources.getShaderTexture(s)()` (a `shaderTexture` source), not the fixed PBR material-map
+ * slots `TexturedMeshEntity` covers. `TKeys` is that source's own uniform-name union (e.g.
+ * `"day" | "night" | "specularClouds"` for Earth), all required — a shader's declared uniforms
+ * aren't optional the way a material's map slots are.
+ */
+export abstract class ShaderTexturedMeshEntity<
+  TKeys extends string,
+> extends MeshEntity {
+  protected abstract textures: Record<TKeys, THREE.Texture>;
+  /** Loads and assigns all textures into `textures`. Must run before `setMaterial`. */
+  protected abstract setTextures(): void;
+}
