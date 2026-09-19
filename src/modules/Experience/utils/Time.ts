@@ -1,3 +1,4 @@
+import { PlaybackSpeed } from "@/utils/enums/time";
 import EventEmitter from "./EventEmitter";
 // * Note: We're not using ThreeJS's clock because it's not as performant + we don't need all its features + we want more control
 
@@ -12,10 +13,18 @@ type TimeEvents = {
 };
 
 class Time extends EventEmitter<TimeEvents> {
+  /** `performance.now()` reading when `Time` was created. Milliseconds since page load, not a calendar time. */
   public startMs: number;
+  /** `performance.now()` reading at the latest tick. */
   public currentMs: number;
+  /** Milliseconds since `Time` was created (`currentMs - startMs`). */
   public elapsedMs: number;
+  /** Milliseconds since the previous tick. */
   public deltaMs: number;
+  /** Simulated time in ms since the Unix epoch. Advances by `deltaMs * timeScale` every tick. */
+  public simulatedMs: number;
+  /** Simulated seconds per real second. */
+  public timeScale: number = PlaybackSpeed.RealTime;
 
   get deltaSeconds() {
     return this.deltaMs / 1_000;
@@ -31,6 +40,16 @@ class Time extends EventEmitter<TimeEvents> {
 
   get startSeconds() {
     return this.startMs / 1_000;
+  }
+
+  get simulatedDate() {
+    return new Date(this.simulatedMs);
+  }
+
+  /** Current time in milliseconds since the Unix epoch (1970-01-01 UTC). */
+  private get epochMs() {
+    // ? timeOrigin is the epoch time at page load and now() the offset since, so this stays on the same monotonic clock as the rest of Time and doesn't jump if the OS clock is adjusted
+    return performance.timeOrigin + performance.now();
   }
 
   get fps() {
@@ -54,6 +73,7 @@ class Time extends EventEmitter<TimeEvents> {
     this.currentMs = this.startMs;
 
     this.elapsedMs = 0;
+    this.simulatedMs = this.epochMs;
     this.deltaMs = Math.floor(1_000 / 60); // ? Avoids potential 1st frame bugs
   }
 
@@ -71,6 +91,11 @@ class Time extends EventEmitter<TimeEvents> {
       this.cancelAnimationLoop();
     }
   };
+
+  /** Jumps the simulated time back to the real current time. */
+  public resetSimulatedTime(): void {
+    this.simulatedMs = this.epochMs;
+  }
 
   private emitTickEvent(): void {
     const tickData = {
