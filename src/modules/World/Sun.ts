@@ -1,15 +1,21 @@
 import * as THREE from "three";
+import { Controller } from "lil-gui";
 import { Lensflare, LensflareElement } from "three/examples/jsm/Addons.js";
-import Experience, { Destroyable } from "@modules/Experience/Experience";
+import Experience, {
+  Destroyable,
+  Updatable,
+} from "@modules/Experience/Experience";
 import { MeshEntity } from "./types/mesh-entity";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import { getSubsolarPoint } from "@/utils/geo/subsolar-point";
+import { getSphereFromGeographicCoordinates } from "@/utils/placement/geographic-placement";
 
 type SunState = {
   phi: number;
   theta: number;
 };
 
-class Sun extends MeshEntity implements Destroyable {
+class Sun extends MeshEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
     geometry: {
       radius: 0.1,
@@ -40,6 +46,11 @@ class Sun extends MeshEntity implements Destroyable {
   protected mesh: THREE.Mesh;
 
   private lensflare: Lensflare;
+
+  /** When on, the sun follows the real subsolar point instead of the phi/theta sliders. */
+  private realTime = false;
+  /** Slider controllers, disabled while `realTime` is on. Empty without debug. */
+  private readonly sliderControllers: Controller[] = [];
 
   /** Normalized direction from the origin to the sun. Mutated in place, so consumers can hold the reference as a uniform value. */
   public readonly direction = new THREE.Vector3();
@@ -122,8 +133,17 @@ class Sun extends MeshEntity implements Destroyable {
     this.lensflare = lensflare;
   }
 
-  /** Moves the sun mesh to the current `phi`/`theta `and refreshes `direction`. */
+  /** Moves the sun mesh to its current position (sliders or real time) and refreshes `direction`. */
   private updateSun = (): void => {
+    const { mesh, direction, realTime } = this;
+
+    if (realTime) this.placeAtSubsolarPoint();
+    else this.placeFromSliders();
+
+    direction.copy(mesh.position).normalize();
+  };
+
+  private placeFromSliders(): void {
     const { distance, phiOffset } = Sun.CONFIG.orbit;
     const { phi, theta } = this.guiRegistry?.state || this.debugDefaults;
 
@@ -132,9 +152,36 @@ class Sun extends MeshEntity implements Destroyable {
 
     // ? Spherical is y-up: phi = 0 sits on +Y, Earth's rotation axis. A z-up util would put the poles on the wrong axis.
     this.mesh.position.setFromSphericalCoords(distance, phiRad, thetaRad);
+  }
 
-    this.direction.copy(this.mesh.position).normalize();
-  };
+  private placeAtSubsolarPoint(): void {
+    const { distance } = Sun.CONFIG.orbit;
+    const { latitude, longitude } = getSubsolarPoint(new Date());
+
+    const position = getSphereFromGeographicCoordinates({
+      latitude,
+      longitude,
+      radius: distance,
+    });
+    this.mesh.position.copy(position);
+  }
+
+  /** Switches between slider-driven and real-time sun position. */
+  public setRealTime(enabled: boolean): void {
+    this.realTime = enabled;
+
+    for (const controller of this.sliderControllers) {
+      controller.disable(enabled);
+    }
+
+    this.updateSun();
+  }
+
+  public update(): void {
+    if (!this.realTime) return;
+
+    this.updateSun();
+  }
 
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<SunState>(
@@ -148,16 +195,23 @@ class Sun extends MeshEntity implements Destroyable {
 
     const folder = gui.addFolder("Sun");
 
-    folder.add(state, "theta").name("Theta").min(-180).max(180).step(0.1);
+    const thetaController = folder
+      .add(state, "theta")
+      .name("Theta")
+      .min(-180)
+      .max(180)
+      .step(0.1);
     registry.bind("theta", this.updateSun);
 
-    folder
+    const phiController = folder
       .add(state, "phi")
       .name("Phi (+90deg offset)")
       .min(-90)
       .max(90)
       .step(0.1);
     registry.bind("phi", this.updateSun);
+
+    this.sliderControllers.push(thetaController, phiController);
   }
 
   // * HEAT DEATH OF THE UNIVERSE ?????!!! 💀

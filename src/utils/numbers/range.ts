@@ -1,3 +1,5 @@
+import * as THREE from "three";
+
 type RangeMapping = {
   inputMin: number;
   inputMax: number;
@@ -96,4 +98,19 @@ function randomIncludeBoth(min: number, max: number): number {
 
 function getTinyOffset(reference: number): number {
   return Number.EPSILON * Math.max(1, Math.abs(reference));
+}
+
+/**
+ * Wraps a value into the range `[min, max)`.
+ *
+ * @param {number} value The value to wrap.
+ * @param {number} min The inclusive lower bound.
+ * @param {number} max The exclusive upper bound.
+ * @returns {number} The wrapped value.
+ *
+ * @example
+ * wrapToRange(190, -180, 180); // -170
+ */
+export function wrapToRange(value: number, min: number, max: number): number {
+  return min + THREE.MathUtils.euclideanModulo(value - min, max - min);
 }

@@ -13,6 +13,7 @@ type WorldState = {
   helpersPosX: number;
   helpersPosY: number;
   helpersPosZ: number;
+  realTime: boolean;
 };
 
 class World implements Updatable, Destroyable {
@@ -39,6 +40,7 @@ class World implements Updatable, Destroyable {
     helpersPosX: 0,
     helpersPosY: 0,
     helpersPosZ: 0,
+    realTime: false,
   };
 
   public sun?: Sun;
@@ -69,6 +71,9 @@ class World implements Updatable, Destroyable {
 
       const { direction } = this.sun;
       this.earth = new Earth(direction);
+
+      // ? The GUI bind fired before Sun/Earth existed, so apply the (possibly restored) real-time state now
+      this.applyRealTime();
     });
 
     this.setHelpers();
@@ -107,6 +112,13 @@ class World implements Updatable, Destroyable {
 
     this.updateHelperPosition("axis", position, axisHelper.yShift);
     this.updateHelperPosition("grid", position, gridHelper.yShift);
+  };
+
+  private applyRealTime = (): void => {
+    const { realTime } = this.guiRegistry?.state || this.debugDefaults;
+
+    this.sun?.setRealTime(realTime);
+    this.earth?.setSpin(!realTime);
   };
 
   private updateHelperPosition(
@@ -189,6 +201,9 @@ class World implements Updatable, Destroyable {
       .name("Helpers Z");
     registry.bind("helpersPosZ", this.updateHelpersPositions);
 
+    worldFolder.add(state, "realTime").name("Real time (sun + no spin)");
+    registry.bind("realTime", this.applyRealTime);
+
     worldFolder
       .add(
         {
@@ -211,6 +226,7 @@ class World implements Updatable, Destroyable {
   }
 
   public update(): void {
+    this.sun?.update();
     this.earth?.update();
   }
 

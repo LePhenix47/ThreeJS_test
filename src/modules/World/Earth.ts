@@ -51,6 +51,8 @@ class Earth
     atmosphere: {
       relativeScale: 1.04,
     },
+    /** Radians per second of the decorative spin around the Y axis. */
+    rotationSpeed: 0.25,
   } as const;
 
   private readonly experience: Experience | null;
@@ -64,6 +66,9 @@ class Earth
 
   private atmosphereMaterial: TypedShaderMaterial<AtmosphereUniforms>;
   private atmosphereMesh: THREE.Mesh;
+
+  /** Whether the decorative spin runs. Off in real-time mode, where the sun moves instead. */
+  private spinning = true;
 
   private readonly debugDefaults: EarthState = {
     wireframe: false,
@@ -234,13 +239,13 @@ class Earth
 
     const atmosphereFolder = debugFolder.addFolder("Atmosphere");
 
-    atmosphereFolder.add(state, "uAtmosphereDayColor").name("Day color");
+    atmosphereFolder.addColor(state, "uAtmosphereDayColor").name("Day color");
     registry.bind("uAtmosphereDayColor", (v) => {
       this.material.uniforms.uAtmosphereDayColor.value.set(v);
     });
 
     atmosphereFolder
-      .add(state, "uAtmosphereTwilightColor")
+      .addColor(state, "uAtmosphereTwilightColor")
       .name("Twilight color");
     registry.bind("uAtmosphereTwilightColor", (v) => {
       this.material.uniforms.uAtmosphereTwilightColor.value.set(v);
@@ -255,10 +260,21 @@ class Earth
     this.atmosphereMaterial.dispose();
   }
 
-  public update(): void {
-    this.mesh.rotation.y = this.time.elapsedSeconds * 0.25;
+  /** Turns the decorative spin on or off. Turning it off resets the Earth to its texture-aligned orientation. */
+  public setSpin(enabled: boolean): void {
+    this.spinning = enabled;
 
-    this.material.uniforms.uTime.value = this.time.elapsedSeconds;
+    // ? Rotation 0 keeps longitude 0 on +X, which is what latitudeLongitudeToVector3 assumes
+    if (!enabled) this.mesh.rotation.y = 0;
+  }
+
+  public update(): void {
+    const { rotationSpeed } = Earth.CONFIG;
+    const { elapsedSeconds } = this.time;
+
+    if (this.spinning) this.mesh.rotation.y = elapsedSeconds * rotationSpeed;
+
+    this.material.uniforms.uTime.value = elapsedSeconds;
   }
 
   public destroy(): void {
