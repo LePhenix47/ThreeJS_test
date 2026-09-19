@@ -34,7 +34,10 @@ type EarthUniforms = MapAsUniforms<{
   uCloudsParallaxShift: EarthState["uCloudsParallaxShift"];
 }>;
 
-type AtmosphereUniforms = MapAsUniforms<{}>;
+type AtmosphereUniforms = Pick<
+  EarthUniforms,
+  "uAtmosphereDayColor" | "uAtmosphereTwilightColor" | "uSunDirection"
+>;
 
 type EarthTextureKeys = GetPathsFromName<"earth">;
 class Earth
@@ -109,7 +112,21 @@ class Earth
   }
 
   setAtmosphere(): void {
+    const { uAtmosphereDayColor, uAtmosphereTwilightColor } =
+      this.debugDefaults;
+
+    const uniforms: AtmosphereUniforms = {
+      uAtmosphereDayColor: {
+        value: new THREE.Color(uAtmosphereDayColor),
+      },
+      uAtmosphereTwilightColor: {
+        value: new THREE.Color(uAtmosphereTwilightColor),
+      },
+      uSunDirection: new THREE.Uniform(this.sunDirection),
+    };
+
     this.atmosphereMaterial = new THREE.ShaderMaterial({
+      uniforms,
       vertexShader: atmosphereVertexShader,
       fragmentShader: atmosphereFragmentShader,
       side: THREE.BackSide,
@@ -117,7 +134,7 @@ class Earth
     }) as TypedShaderMaterial<AtmosphereUniforms>;
 
     this.atmosphereMesh = new THREE.Mesh(
-      this.geometry,
+      this.geometry, // ? Shared with the Earth
       this.atmosphereMaterial,
     );
     this.atmosphereMesh.scale.setScalar(1.04);
@@ -233,6 +250,8 @@ class Earth
   private destroyEarth(): void {
     this.material.dispose();
     this.geometry.dispose();
+
+    this.atmosphereMaterial.dispose();
   }
 
   public update(): void {
@@ -242,7 +261,7 @@ class Earth
   }
 
   public destroy(): void {
-    this.scene.remove(this.mesh);
+    this.scene.remove(this.mesh, this.atmosphereMesh);
 
     this.destroyEarth();
 
