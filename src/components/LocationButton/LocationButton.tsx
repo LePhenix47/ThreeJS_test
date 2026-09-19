@@ -24,7 +24,6 @@ const BUTTON_LABELS = new Map(
   Object.entries({
     requesting: "Locating...",
     error: "Try again",
-    granted: "Update location",
   }),
 );
 
@@ -69,7 +68,8 @@ function LocationButton() {
   }, [syncPermission]);
 
   const message = STATUS_MESSAGES.get(status);
-  const buttonLabel = BUTTON_LABELS.get(status) ?? "Use my location";
+  const defaultLabel = coords ? "Update location" : "Use my location";
+  const buttonLabel = BUTTON_LABELS.get(status) ?? defaultLabel;
   const isRequesting = status === "requesting";
   const isDenied = status === "denied";
 

@@ -1,11 +1,10 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
+/** The browser's permission state plus the outcomes of our own request. */
 export type LocationStatus =
-  | "idle"
+  | PermissionState
   | "requesting"
-  | "granted"
-  | "denied"
   | "unavailable"
   | "error";
 
@@ -46,18 +45,16 @@ function getStatusAfterPermissionChange(
   permission: PermissionState,
   currentStatus: LocationStatus,
 ): LocationStatus {
-  if (permission === "denied") return "denied";
+  // ? Answering the prompt fires a permission change before the position arrives, which would re-enable the button too early
+  if (currentStatus === "requesting") return currentStatus;
 
-  // ? The permission was reset in the browser settings, so the "denied" message no longer applies
-  if (currentStatus === "denied") return "idle";
-
-  return currentStatus;
+  return permission;
 }
 
 export const useLocationStore = create<LocationState>()(
   devtools(
     (set) => ({
-      status: "idle",
+      status: "prompt",
       coords: null,
       actions: {
         requestLocation: () => {
@@ -86,7 +83,7 @@ export const useLocationStore = create<LocationState>()(
           set(({ status }) => ({
             status: getStatusAfterPermissionChange(permission, status),
           })),
-        reset: () => set({ status: "idle", coords: null }),
+        reset: () => set({ status: "prompt", coords: null }),
       },
     }),
     { name: "LocationStore" },
