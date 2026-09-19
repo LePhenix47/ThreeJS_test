@@ -31,6 +31,8 @@ type EarthUniforms = MapAsUniforms<{
   uCloudsParallaxShift: EarthState["uCloudsParallaxShift"];
 }>;
 
+type AtmosphereUniforms = MapAsUniforms<{}>;
+
 type EarthTextureKeys = GetPathsFromName<"earth">;
 class Earth
   extends ShaderTexturedMeshEntity<EarthTextureKeys>
@@ -51,6 +53,9 @@ class Earth
   protected geometry: THREE.SphereGeometry;
   protected material: TypedShaderMaterial<EarthUniforms>;
   protected mesh: THREE.Mesh;
+
+  private atmosphereMaterial: TypedShaderMaterial<AtmosphereUniforms>;
+  private atmosphereMesh: THREE.Mesh;
 
   private readonly debugDefaults: EarthState = {
     wireframe: false,
@@ -90,11 +95,27 @@ class Earth
 
     this.scene.add(this.mesh);
 
+    this.setAtmosphere();
+    this.scene.add(this.atmosphereMesh);
+
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
 
     console.log("Earth");
+  }
+
+  setAtmosphere(): void {
+    this.atmosphereMaterial = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      transparent: true,
+    }) as TypedShaderMaterial<AtmosphereUniforms>;
+
+    this.atmosphereMesh = new THREE.Mesh(
+      this.geometry,
+      this.atmosphereMaterial,
+    );
+    this.atmosphereMesh.scale.setScalar(1.04);
   }
 
   protected setTextures(): void {
