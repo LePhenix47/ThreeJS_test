@@ -39,7 +39,7 @@ void main() {
 
     color = mix(earthNight, earthDay, dayMix);
 
-// ? Parallax with the clouds, very unrealistic since they don't co-rotate with planet but it looks cool AF
+// ? Parallax with the clouds, very unrealistic since it's the same at every latitude with planet but it looks cool AF
     vec2 cloudsUv = vUv;
     cloudsUv.x -= uTime * uCloudsParallaxShift;
 // ? We sample both textures, and since they're grayscaled we can take just one 
