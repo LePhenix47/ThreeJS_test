@@ -18,9 +18,12 @@ type EarthState = {
 };
 
 type EarthUniforms = MapAsUniforms<{
+  uTime: number;
   uDayTexture: THREE.Texture;
   uNightTexture: THREE.Texture;
   uSpecularCloudsTexture: THREE.Texture;
+  uSpecularTexture: THREE.Texture;
+  uCloudsTexture: THREE.Texture;
   uSunDirection: THREE.Vector3;
   uAtmosphereDayColor: THREE.Color;
   uAtmosphereTwilightColor: THREE.Color;
@@ -116,8 +119,9 @@ class Earth
     const { wireframe, uAtmosphereDayColor, uAtmosphereTwilightColor } =
       this.debugDefaults;
 
-    const { day, night, specularClouds } = this.textures;
+    const { day, night, specularClouds, clouds, specular } = this.textures;
     const uniforms: EarthUniforms = {
+      uTime: new THREE.Uniform(0),
       uAtmosphereDayColor: {
         value: new THREE.Color(uAtmosphereDayColor),
       },
@@ -128,6 +132,8 @@ class Earth
       uDayTexture: new THREE.Uniform(day),
       uNightTexture: new THREE.Uniform(night),
       uSpecularCloudsTexture: new THREE.Uniform(specularClouds),
+      uCloudsTexture: new THREE.Uniform(clouds),
+      uSpecularTexture: new THREE.Uniform(specular),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -185,6 +191,8 @@ class Earth
 
   public update(): void {
     this.mesh.rotation.y = this.time.elapsedSeconds * 0.25;
+
+    this.material.uniforms.uTime.value = this.time.elapsedSeconds;
   }
 
   public destroy(): void {

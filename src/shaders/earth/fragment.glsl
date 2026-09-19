@@ -1,6 +1,8 @@
 uniform sampler2D uDayTexture;
 uniform sampler2D uNightTexture;
-uniform sampler2D uSpecularCloudsTexture;
+uniform sampler2D uCloudsTexture;
+uniform sampler2D uSpecularTexture;
+uniform float uTime;
 
 uniform vec3 uSunDirection;
 uniform vec3 uAtmosphereDayColor;
@@ -36,10 +38,12 @@ void main() {
 
     color = mix(earthNight, earthDay, dayMix);
 
-    vec2 cloudAndReflection = textureRg(uSpecularCloudsTexture);
+// ? We sample both textures, and since the 
+    float cloudsTextureSampleColor = textureRgb(uCloudsTexture).r;
+    float specularTextureSampleColor = textureRgb(uSpecularTexture).r;
 
 // * Clouds
-    float cloudsMix = smoothstep(0.5, 1.0, cloudAndReflection.g);
+    float cloudsMix = smoothstep(0.5, 1.0, cloudsTextureSampleColor);
     cloudsMix *= dayMix; // ? Makes cloud dark on night side
 
     color = mix(color, vec3(1.0), cloudsMix);
@@ -56,7 +60,7 @@ void main() {
     color = mix(color, atmosphereColor, twilight);
 
 // * Specular reflection
-    float earthReflection = cloudAndReflection.r + 0.1;
+    float earthReflection = specularTextureSampleColor + 0.1;
 
 // ? reflect() wants the incident ray (light → surface); uSunDirection points surface → light
     vec3 reflection = -reflect(uSunDirection, normal);
