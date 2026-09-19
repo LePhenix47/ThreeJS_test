@@ -15,3 +15,14 @@ export abstract class PointsEntity {
   /** Instantiates and assigns `points` from `geometry` and `material`. */
   protected abstract setPoints(): void;
 }
+
+/** Extends `PointsEntity` with a single oversized debug point that previews the fragment shader output without zooming. */
+export abstract class PreviewablePointsEntity extends PointsEntity {
+  protected abstract previewGeometry: THREE.BufferGeometry | null;
+  protected abstract previewMaterial: THREE.ShaderMaterial | null;
+  protected abstract previewPoint: THREE.Points | null;
+  protected abstract setPreviewGeometry(): void;
+  protected abstract setPreviewMaterial(): void;
+  protected abstract setPreviewPoints(): void;
+  protected abstract destroyPreview(): void;
+}
