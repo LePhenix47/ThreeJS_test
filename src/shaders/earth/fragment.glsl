@@ -14,6 +14,10 @@ vec3 textureRgb(sampler2D inputTexture) {
     return texture(inputTexture, vUv).rgb;
 }
 
+vec2 textureRg(sampler2D inputTexture) {
+    return texture(inputTexture, vUv).rg;
+}
+
 void main() {
     vec3 color = vec3(0.0);
 
@@ -27,9 +31,18 @@ void main() {
 // * Textures
     vec3 earthDay = textureRgb(uDayTexture);
     vec3 earthNight = textureRgb(uNightTexture);
-    vec4 specularClouds = texture(uSpecularCloudsTexture, vUv);
 
     color = mix(earthNight, earthDay, dayMix);
+
+    vec2 cloudAndReflection = textureRg(uSpecularCloudsTexture);
+
+// * Clouds
+    float cloudsMix = smoothstep(0.5, 1.0, cloudAndReflection.g);
+    cloudsMix *= dayMix; // ? Makes cloud dark on night side
+
+    color = mix(color, vec3(1.0), cloudsMix);
+
+    float earthReflection = cloudAndReflection.r;
 
     gl_FragColor = vec4(color, 1.0);
 
