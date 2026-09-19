@@ -124,7 +124,7 @@ class Earth
       uSunDirection: new THREE.Uniform(this.sunDirection),
     };
 
-    const material = new THREE.ShaderMaterial({
+    this.atmosphereMaterial = new THREE.ShaderMaterial({
       uniforms,
       vertexShader: atmosphereVertexShader,
       fragmentShader: atmosphereFragmentShader,
@@ -134,13 +134,12 @@ class Earth
 
     const mesh = new THREE.Mesh(
       this.geometry, // ? Shared with the Earth
-      material,
+      this.atmosphereMaterial,
     );
 
     const { relativeScale } = Earth.CONFIG.atmosphere;
     mesh.scale.setScalar(relativeScale);
 
-    this.atmosphereMaterial = material;
     this.atmosphereMesh = mesh;
   }
 
