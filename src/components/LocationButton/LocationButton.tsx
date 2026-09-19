@@ -45,18 +45,22 @@ function LocationButton() {
       syncPermission(permissionStatus.state);
     };
 
-    navigator.permissions
-      .query({ name: "geolocation" })
-      .then((result) => {
+    const trackPermission = async () => {
+      try {
+        const result = await navigator.permissions.query({
+          name: "geolocation",
+        });
         if (!isActive) return;
 
         permissionStatus = result;
         syncPermission(result.state);
         result.addEventListener("change", handleChange);
-      })
-      .catch(() => {
+      } catch {
         // ? Some browsers reject the "geolocation" permission name, the click-time result is enough there
-      });
+      }
+    };
+
+    trackPermission();
 
     return () => {
       isActive = false;
