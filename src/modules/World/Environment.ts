@@ -8,10 +8,11 @@ import {
 
 type EnvironmentState = {
   backgroundIntensity: number;
-  backgroundBlurriness: number;
-  /** Degrees. Turns the map around the Y axis. */
+  /** Degrees. */
+  backgroundRotationX: number;
+  /** Degrees. */
   backgroundRotationY: number;
-  /** Degrees. Tilts the map, since the real Milky Way band crosses the sky at an angle. */
+  /** Degrees. */
   backgroundRotationZ: number;
 };
 
@@ -24,10 +25,9 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
   private readonly debugDefaults: EnvironmentState = {
-    // ? The map is very dark (mean luma about 4%), so it needs a boost to be visible
-    backgroundIntensity: 2,
-    // ? Any blurriness makes Three prefilter the map, which loses detail an already low resolution can't spare
-    backgroundBlurriness: 0,
+    // ? The panorama is bright, so it's dimmed to keep the Earth and the stars as the focus
+    backgroundIntensity: 0.2,
+    backgroundRotationX: 0,
     backgroundRotationY: 0,
     backgroundRotationZ: 0,
   };
@@ -60,7 +60,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
   }
 
   protected setEnvMap(): void {
-    const { backgroundIntensity, backgroundBlurriness } = this.debugDefaults;
+    const { backgroundIntensity } = this.debugDefaults;
 
     const texture = this.resources.getTexture("milkyWay", "color");
     // ? The map is an equirectangular projection, so it wraps around the whole sphere
@@ -70,22 +70,22 @@ class Environment extends EnvironmentEntity implements Destroyable {
     const { scene } = this;
     scene.background = texture;
     scene.backgroundIntensity = backgroundIntensity;
-    scene.backgroundBlurriness = backgroundBlurriness;
     this.updateOrientation();
 
     this.envMapTexture = texture;
-    this.envMapConfig = { backgroundIntensity, backgroundBlurriness };
+    this.envMapConfig = { backgroundIntensity };
   }
 
   // ? Nothing to update: the Earth is a ShaderMaterial, so no material reads scene.environment
   protected updateMaterial(): void {}
 
-  /** Applies the Y rotation and tilt from the GUI state to the background. */
+  /** Applies the X/Y/Z rotation from the GUI state to the background. */
   private updateOrientation = (): void => {
-    const { backgroundRotationY, backgroundRotationZ } =
+    const { backgroundRotationX, backgroundRotationY, backgroundRotationZ } =
       this.guiRegistry?.state || this.debugDefaults;
     const { backgroundRotation } = this.scene;
 
+    backgroundRotation.x = THREE.MathUtils.degToRad(backgroundRotationX);
     backgroundRotation.y = THREE.MathUtils.degToRad(backgroundRotationY);
     backgroundRotation.z = THREE.MathUtils.degToRad(backgroundRotationZ);
   };
@@ -105,7 +105,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
     folder
       .add(state, "backgroundIntensity")
       .min(0)
-      .max(5)
+      .max(2)
       .step(0.001)
       .name("Background intensity");
     registry.bind("backgroundIntensity", (v) => {
@@ -113,14 +113,12 @@ class Environment extends EnvironmentEntity implements Destroyable {
     });
 
     folder
-      .add(state, "backgroundBlurriness")
-      .min(0)
-      .max(1)
-      .step(0.001)
-      .name("Background blurriness");
-    registry.bind("backgroundBlurriness", (v) => {
-      this.scene.backgroundBlurriness = v;
-    });
+      .add(state, "backgroundRotationX")
+      .min(-180)
+      .max(180)
+      .step(0.1)
+      .name("Background rotation X");
+    registry.bind("backgroundRotationX", this.updateOrientation);
 
     folder
       .add(state, "backgroundRotationY")
@@ -132,10 +130,10 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
     folder
       .add(state, "backgroundRotationZ")
-      .min(-90)
-      .max(90)
+      .min(-180)
+      .max(180)
       .step(0.1)
-      .name("Background tilt");
+      .name("Background rotation Z");
     registry.bind("backgroundRotationZ", this.updateOrientation);
   }
 
