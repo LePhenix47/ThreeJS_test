@@ -49,6 +49,10 @@ class Earth
       radius: 2,
       segments: 2 ** 6,
     },
+
+    atmosphere: {
+      relativeScale: 1.04,
+    },
   } as const;
 
   private readonly experience: Experience | null;
@@ -137,7 +141,9 @@ class Earth
       this.geometry, // ? Shared with the Earth
       this.atmosphereMaterial,
     );
-    this.atmosphereMesh.scale.setScalar(1.04);
+
+    const { relativeScale } = Earth.CONFIG.atmosphere;
+    this.atmosphereMesh.scale.setScalar(relativeScale);
   }
 
   protected setTextures(): void {
