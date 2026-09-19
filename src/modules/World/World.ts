@@ -191,7 +191,9 @@ class World implements Updatable, Destroyable {
 
     this.enableFlyToMode();
 
-    this.camera.flyTo(() => earth.getSurfacePoint(latitude, longitude, distance));
+    this.camera.flyTo(() =>
+      earth.getSurfacePoint(latitude, longitude, distance),
+    );
   }
 
   private flyToMyLocation(): void {
@@ -331,7 +333,10 @@ class World implements Updatable, Destroyable {
       .step(0.01)
       .name("Longitude");
     locationFolder
-      .add({ fly: () => this.flyToLocation(state.latitude, state.longitude) }, "fly")
+      .add(
+        { fly: () => this.flyToLocation(state.latitude, state.longitude) },
+        "fly",
+      )
       .name("Fly to coordinates");
     locationFolder
       .add({ fly: () => this.flyToMyLocation() }, "fly")
@@ -385,6 +390,8 @@ class World implements Updatable, Destroyable {
   }
 
   public update(): void {
+    this.stars.update();
+
     this.sun?.update();
     this.earth?.update();
 
