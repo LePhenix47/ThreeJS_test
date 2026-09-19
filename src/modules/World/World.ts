@@ -8,6 +8,8 @@ import { PlaybackSpeed } from "@/utils/enums/time";
 import { useLocationStore } from "@/stores/useLocationStore";
 import Earth from "@modules/World/Earth";
 import Sun from "@modules/World/Sun";
+import Stars from "@modules/World/Stars";
+import Environment from "@modules/World/Environment";
 
 type CameraPov = "space" | "earth";
 
@@ -72,6 +74,8 @@ class World implements Updatable, Destroyable {
 
   public sun?: Sun;
   public earth?: Earth;
+  public environment?: Environment;
+  public stars: Stars;
 
   /** Earth's Y rotation on the previous frame, so the camera can turn by the same amount in the `earth` POV. Null until the first frame. */
   private previousEarthRotation: number | null = null;
@@ -100,11 +104,15 @@ class World implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
+    // ? No external assets, so it's built outside the resources gate
+    this.stars = new Stars();
+
     this.resources.on("textures-loaded", () => {
       this.sun = new Sun();
 
       const { direction } = this.sun;
       this.earth = new Earth(direction);
+      this.environment = new Environment();
 
       // ? The GUI bind fired before Sun/Earth existed, so apply the (possibly restored) real-time state now
       this.applyRealTime();
@@ -384,8 +392,10 @@ class World implements Updatable, Destroyable {
   }
 
   public destroy(): void {
+    this.environment?.destroy();
     this.earth?.destroy();
     this.sun?.destroy();
+    this.stars.destroy();
 
     this.removeHelpers();
   }
