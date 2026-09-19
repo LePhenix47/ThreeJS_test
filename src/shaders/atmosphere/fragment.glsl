@@ -20,9 +20,17 @@ void main() {
     float atmosphereDayMix = smoothstep(-0.5, 1.0, sunOrientation);
     vec3 atmosphereColor = mix(uAtmosphereTwilightColor, uAtmosphereDayColor, atmosphereDayMix);
 
-    color = mix(color, atmosphereColor, atmosphereDayMix);
+    color += atmosphereColor;
 
-    gl_FragColor = vec4(color, 1.0);
+    // * Alpha
+    float edgeAlpha = dot(viewDirection, normal);
+    edgeAlpha = smoothstep(0.0, 0.5, edgeAlpha); // ? same technique used in the hologram lesson
+
+    float dayAlpha = smoothstep(-0.5, 0.0, sunOrientation);
+
+    float alpha = edgeAlpha * dayAlpha;
+
+    gl_FragColor = vec4(color, alpha);
 
     // #include <tonemapping_fragment>
     #include <colorspace_fragment>
