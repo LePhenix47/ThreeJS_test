@@ -117,15 +117,12 @@ class Earth
 
   setAtmosphere(): void {
     const { uAtmosphereDayColor, uAtmosphereTwilightColor } =
-      this.debugDefaults;
+      this.material.uniforms;
 
+    // ? Same uniform objects as the Earth material, so one GUI write updates both. Requires setMaterial() to run first.
     const uniforms: AtmosphereUniforms = {
-      uAtmosphereDayColor: {
-        value: new THREE.Color(uAtmosphereDayColor),
-      },
-      uAtmosphereTwilightColor: {
-        value: new THREE.Color(uAtmosphereTwilightColor),
-      },
+      uAtmosphereDayColor,
+      uAtmosphereTwilightColor,
       uSunDirection: new THREE.Uniform(this.sunDirection),
     };
 
