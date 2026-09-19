@@ -3,6 +3,7 @@ uniform sampler2D uNightTexture;
 uniform sampler2D uCloudsTexture;
 uniform sampler2D uSpecularTexture;
 uniform float uTime;
+uniform float uCloudsParallaxShift;
 
 uniform vec3 uSunDirection;
 uniform vec3 uAtmosphereDayColor;
@@ -40,7 +41,7 @@ void main() {
 
 // ? Parallax with the clouds, very unrealistic since they don't co-rotate with planet but it looks cool AF
     vec2 cloudsUv = vUv;
-    cloudsUv.x -= uTime * 0.01;
+    cloudsUv.x -= uTime * uCloudsParallaxShift;
 // ? We sample both textures, and since they're grayscaled we can take just one 
     float cloudsTextureSampleColor = texture(uCloudsTexture, cloudsUv).r;
 

@@ -15,6 +15,7 @@ type EarthState = {
   wireframe: boolean;
   uAtmosphereDayColor: string;
   uAtmosphereTwilightColor: string;
+  uCloudsParallaxShift: number;
 };
 
 type EarthUniforms = MapAsUniforms<{
@@ -27,6 +28,7 @@ type EarthUniforms = MapAsUniforms<{
   uSunDirection: THREE.Vector3;
   uAtmosphereDayColor: THREE.Color;
   uAtmosphereTwilightColor: THREE.Color;
+  uCloudsParallaxShift: EarthState["uCloudsParallaxShift"];
 }>;
 
 type EarthTextureKeys = GetPathsFromName<"earth">;
@@ -54,6 +56,7 @@ class Earth
     wireframe: false,
     uAtmosphereDayColor: "#00aaff",
     uAtmosphereTwilightColor: "#ff6600",
+    uCloudsParallaxShift: 0,
   };
   private guiRegistry: GUIStateRegistry<EarthState> | null = null;
 
@@ -116,8 +119,12 @@ class Earth
   }
 
   protected setMaterial(): void {
-    const { wireframe, uAtmosphereDayColor, uAtmosphereTwilightColor } =
-      this.debugDefaults;
+    const {
+      wireframe,
+      uAtmosphereDayColor,
+      uAtmosphereTwilightColor,
+      uCloudsParallaxShift,
+    } = this.debugDefaults;
 
     const { day, night, specularClouds, clouds, specular } = this.textures;
     const uniforms: EarthUniforms = {
@@ -134,6 +141,7 @@ class Earth
       uSpecularCloudsTexture: new THREE.Uniform(specularClouds),
       uCloudsTexture: new THREE.Uniform(clouds),
       uSpecularTexture: new THREE.Uniform(specular),
+      uCloudsParallaxShift: new THREE.Uniform(uCloudsParallaxShift),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -166,6 +174,18 @@ class Earth
     debugFolder.add(state, "wireframe").name("Wireframe");
     registry.bind("wireframe", (v) => {
       this.material.wireframe = v;
+    });
+
+    const cloudsFolder = debugFolder.addFolder("Clouds");
+
+    cloudsFolder
+      .add(state, "uCloudsParallaxShift")
+      .name("Parallax shift")
+      .min(0)
+      .max(1)
+      .step(0.001);
+    registry.bind("uCloudsParallaxShift", (v) => {
+      this.material.uniforms.uCloudsParallaxShift.value = v;
     });
 
     const atmosphereFolder = debugFolder.addFolder("Atmosphere");
