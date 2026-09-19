@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { Controller } from "lil-gui";
+import { getSubsolarPoint } from "@/utils/geo/subsolar-point";
 import Experience, {
   Destroyable,
   Updatable,
@@ -67,8 +69,10 @@ class Earth
   private atmosphereMaterial: TypedShaderMaterial<AtmosphereUniforms>;
   private atmosphereMesh: THREE.Mesh;
 
-  /** Whether the decorative spin runs. Off in real-time mode, where the sun moves instead. */
-  private spinning = true;
+  /** When on, the Earth's rotation follows the real time of day and the cloud drift stops. */
+  private realTime = false;
+  /** Cloud drift slider, disabled while `realTime` is on. Null without debug. */
+  private cloudsShiftController: Controller | null = null;
 
   private readonly debugDefaults: EarthState = {
     wireframe: false,
@@ -207,6 +211,16 @@ class Earth
     this.mesh = new THREE.Mesh(this.geometry, this.material);
   }
 
+  /** Writes the cloud drift uniform from the slider, forced to 0 in real-time mode. */
+  private applyCloudsParallax = (): void => {
+    const { uCloudsParallaxShift } =
+      this.guiRegistry?.state || this.debugDefaults;
+
+    // ? At real-time speed any slider drift would race far ahead of the real sun, so the clouds stay still
+    const shift = this.realTime ? 0 : uCloudsParallaxShift;
+    this.material.uniforms.uCloudsParallaxShift.value = shift;
+  };
+
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<EarthState>(
       "earth-gui-state",
@@ -227,15 +241,13 @@ class Earth
 
     const cloudsFolder = debugFolder.addFolder("Clouds");
 
-    cloudsFolder
+    this.cloudsShiftController = cloudsFolder
       .add(state, "uCloudsParallaxShift")
       .name("Parallax shift")
       .min(0)
       .max(1)
       .step(0.001);
-    registry.bind("uCloudsParallaxShift", (v) => {
-      this.material.uniforms.uCloudsParallaxShift.value = v;
-    });
+    registry.bind("uCloudsParallaxShift", this.applyCloudsParallax);
 
     const atmosphereFolder = debugFolder.addFolder("Atmosphere");
 
@@ -260,19 +272,34 @@ class Earth
     this.atmosphereMaterial.dispose();
   }
 
-  /** Turns the decorative spin on or off. Turning it off resets the Earth to its texture-aligned orientation. */
-  public setSpin(enabled: boolean): void {
-    this.spinning = enabled;
+  /** Current rotation of the Earth mesh around the Y axis, in radians. */
+  public get rotationY(): number {
+    return this.mesh.rotation.y;
+  }
 
-    // ? Rotation 0 keeps longitude 0 on +X, which is what latitudeLongitudeToVector3 assumes
-    if (!enabled) this.mesh.rotation.y = 0;
+  /** Switches between the decorative spin and a rotation that follows the real time of day. */
+  public setRealTime(enabled: boolean): void {
+    this.realTime = enabled;
+
+    this.cloudsShiftController?.disable(enabled);
+    this.applyCloudsParallax();
+  }
+
+  /** Y rotation (radians) that brings the current subsolar longitude under the sun, which sits at longitude 0 in real-time mode. */
+  private getRealTimeRotation(): number {
+    const { longitude } = getSubsolarPoint(this.time.simulatedDate);
+
+    // ? A rotation of ψ around +Y moves longitude λ to λ + ψ, so ψ = -λ puts the subsolar point at longitude 0
+    return -THREE.MathUtils.degToRad(longitude);
   }
 
   public update(): void {
     const { rotationSpeed } = Earth.CONFIG;
     const { elapsedSeconds } = this.time;
 
-    if (this.spinning) this.mesh.rotation.y = elapsedSeconds * rotationSpeed;
+    this.mesh.rotation.y = this.realTime
+      ? this.getRealTimeRotation()
+      : elapsedSeconds * rotationSpeed;
 
     this.material.uniforms.uTime.value = elapsedSeconds;
   }

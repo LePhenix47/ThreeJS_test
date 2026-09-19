@@ -4,8 +4,11 @@ import Experience, {
 } from "@modules/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import { PlaybackSpeed } from "@/utils/enums/time";
 import Earth from "@modules/World/Earth";
 import Sun from "@modules/World/Sun";
+
+type CameraPov = "space" | "earth";
 
 type WorldState = {
   axisHelper: boolean;
@@ -14,6 +17,10 @@ type WorldState = {
   helpersPosY: number;
   helpersPosZ: number;
   realTime: boolean;
+  /** `space` keeps the camera still so the Earth visibly spins. `earth` turns the camera with the Earth so the sun appears to circle. */
+  pov: CameraPov;
+  /** Simulated seconds per real second. */
+  timeScale: PlaybackSpeed;
 };
 
 class World implements Updatable, Destroyable {
@@ -41,10 +48,15 @@ class World implements Updatable, Destroyable {
     helpersPosY: 0,
     helpersPosZ: 0,
     realTime: false,
+    pov: "space",
+    timeScale: PlaybackSpeed.RealTime,
   };
 
   public sun?: Sun;
   public earth?: Earth;
+
+  /** Earth's Y rotation on the previous frame, so the camera can turn by the same amount in the `earth` POV. Null until the first frame. */
+  private previousEarthRotation: number | null = null;
 
   private get resources() {
     return this.experience!.resources;
@@ -60,6 +72,10 @@ class World implements Updatable, Destroyable {
 
   private get camera() {
     return this.experience!.camera;
+  }
+
+  private get time() {
+    return this.experience!.time;
   }
 
   constructor() {
@@ -118,7 +134,7 @@ class World implements Updatable, Destroyable {
     const { realTime } = this.guiRegistry?.state || this.debugDefaults;
 
     this.sun?.setRealTime(realTime);
-    this.earth?.setSpin(!realTime);
+    this.earth?.setRealTime(realTime);
   };
 
   private updateHelperPosition(
@@ -201,8 +217,30 @@ class World implements Updatable, Destroyable {
       .name("Helpers Z");
     registry.bind("helpersPosZ", this.updateHelpersPositions);
 
-    worldFolder.add(state, "realTime").name("Real time (sun + no spin)");
+    worldFolder
+      .add(state, "realTime")
+      .name("Real time (Earth + sun follow the clock)");
     registry.bind("realTime", this.applyRealTime);
+
+    worldFolder
+      .add(state, "pov", {
+        "Space (Earth spins)": "space",
+        "Earth (sun circles)": "earth",
+      })
+      .name("Camera POV");
+
+    worldFolder
+      .add(state, "timeScale", {
+        "Real time": PlaybackSpeed.RealTime, // 1x
+        "1 minute per second": PlaybackSpeed.MinutePerSecond, // 60x
+        "10 minutes per second": PlaybackSpeed.TenMinutesPerSecond, // 600x
+        "1 hour per second": PlaybackSpeed.HourPerSecond, // 3600x
+        "1 day per second": PlaybackSpeed.DayPerSecond, // 86400x
+      })
+      .name("Playback speed");
+    registry.bind("timeScale", (v) => {
+      this.time.timeScale = v;
+    });
 
     worldFolder
       .add(
@@ -225,9 +263,25 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   }
 
+  /** In the `earth` POV, turns the camera by however much the Earth turned since the last frame. */
+  private followEarthRotation(): void {
+    const { earth, previousEarthRotation } = this;
+    if (!earth) return;
+
+    const { pov } = this.guiRegistry?.state || this.debugDefaults;
+    const rotation = earth.rotationY;
+    this.previousEarthRotation = rotation;
+
+    if (pov !== "earth" || previousEarthRotation === null) return;
+
+    this.camera.orbitAroundY(rotation - previousEarthRotation);
+  }
+
   public update(): void {
     this.sun?.update();
     this.earth?.update();
+
+    this.followEarthRotation();
   }
 
   public destroy(): void {

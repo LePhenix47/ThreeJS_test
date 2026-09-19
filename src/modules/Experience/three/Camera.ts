@@ -90,6 +90,14 @@ class Camera implements Resizable, Updatable, Destroyable {
     this.controls.update();
   }
 
+  /** Rotates the camera around the world Y axis by `angle` radians, keeping its height and distance. */
+  public orbitAroundY(angle: number): void {
+    const { instance, controls } = this;
+
+    instance.position.applyAxisAngle(THREE.Object3D.DEFAULT_UP, angle);
+    controls.update();
+  }
+
   public destroy(): void {
     this.cleanupPersistence?.();
     this.controls.dispose();

@@ -122,11 +122,11 @@ At the September equinox the declination is near 0. At 18:00 UTC the sun is over
 
 The point is turned into a position with `getSphereFromGeographicCoordinates` (see `GEOGRAPHIC-COORDINATES-FORMULA.md`). Two frames give the same picture.
 
-### Earth fixed (current implementation)
+### Earth fixed
 
-The Earth mesh stays at `rotation.y = 0`. The sun sits at the subsolar point, at a fixed distance from the origin, and circles the Earth once a day.
+The Earth mesh stays at `rotation.y = 0`. The sun sits at the subsolar point, at a fixed distance from the origin, and circles the Earth once a day. This is what you see from the ground, and it is the frame the formulas above are written in.
 
-### Earth rotating
+### Earth rotating (current implementation)
 
 The sun stays at longitude 0 with only the declination changing, so its direction is `(cos δ, sin δ, 0)`. The Earth mesh rotates instead. A rotation ψ about +Y moves longitude λ to λ + ψ (derived in `GEOGRAPHIC-COORDINATES-FORMULA.md`). To bring the subsolar longitude λ to longitude 0:
 
@@ -136,13 +136,26 @@ The sun stays at longitude 0 with only the declination changing, so its directio
 
 So `mesh.rotation.y = -degToRad(λ)`. The subsolar longitude decreases 15° per hour, so ψ increases 15° per hour. A positive rotation about +Y is counterclockwise seen from above the north pole, which is the real spin direction (west to east).
 
+In the code, `Sun` places itself at `(δ, 0)` (`placeAtSolarDeclination`) and `Earth` sets its own rotation (`getRealTimeRotation`). Each calls `getSubsolarPoint` and uses the half it needs.
+
 ### Why the two frames match
 
 The lighting only depends on the angle between each surface normal and the sun direction, both in world space (`dot(normal, sunDirection)` in the shader, using world-space normals). Rotating the Earth and the sun about Y by the same angle changes neither dot product.
 
+### Camera POV
+
+The two frames above are also two camera points of view. Real-time mode always simulates the Earth rotating. The `Camera POV` option picks what the camera is attached to.
+
+- `Space`: the camera stays still. The Earth visibly spins and the sun stays put.
+- `Earth`: each frame the camera turns around +Y by the same angle the Earth turned (`Camera.orbitAroundY`). Relative to the ground nothing moves, so the sun appears to circle, like the Earth fixed frame.
+
+The second one is what a fly-to needs, because a city stays under the camera.
+
 ### Why nothing seems to move in real time
 
 15° per hour is 0.25° per minute, or about 0.004° per second. A full turn takes 24 hours, in either frame. A time scale is needed to see the motion: at 3600x, one real second is one simulated hour, so 15° per second.
+
+The `Playback speed` option sets `Time.timeScale`. Each tick, `Time` adds `deltaMs * timeScale` to `simulatedMs` (which starts at `Date.now()`), and `Sun` and `Earth` read `time.simulatedDate` instead of the real clock. At 1x the simulated time follows the real clock, so real-time mode still shows the real sun.
 
 ### Why the sun is not the center
 

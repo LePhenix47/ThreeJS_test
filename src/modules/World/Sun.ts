@@ -25,6 +25,8 @@ class Sun extends MeshEntity implements Updatable, Destroyable {
       distance: 5,
       /** GUI phi is centered on the equator (0); spherical phi runs 0..180 from a pole. */
       phiOffset: 90,
+      /** Longitude the sun stays at in real-time mode. The Earth spins under it, so only the declination moves it. */
+      realTimeLongitude: 0,
     },
     lensflare: {
       /** Big soft halo centered on the sun (`lensFlares[0]`). Size is in screen pixels. */
@@ -47,7 +49,7 @@ class Sun extends MeshEntity implements Updatable, Destroyable {
 
   private lensflare: Lensflare;
 
-  /** When on, the sun follows the real subsolar point instead of the phi/theta sliders. */
+  /** When on, the sun follows the real solar declination instead of the phi/theta sliders. */
   private realTime = false;
   /** Slider controllers, disabled while `realTime` is on. Empty without debug. */
   private readonly sliderControllers: Controller[] = [];
@@ -71,6 +73,10 @@ class Sun extends MeshEntity implements Updatable, Destroyable {
 
   private get resources() {
     return this.experience!.resources;
+  }
+
+  private get time() {
+    return this.experience!.time;
   }
 
   constructor() {
@@ -137,7 +143,7 @@ class Sun extends MeshEntity implements Updatable, Destroyable {
   private updateSun = (): void => {
     const { mesh, direction, realTime } = this;
 
-    if (realTime) this.placeAtSubsolarPoint();
+    if (realTime) this.placeAtSolarDeclination();
     else this.placeFromSliders();
 
     direction.copy(mesh.position).normalize();
@@ -154,13 +160,13 @@ class Sun extends MeshEntity implements Updatable, Destroyable {
     this.mesh.position.setFromSphericalCoords(distance, phiRad, thetaRad);
   }
 
-  private placeAtSubsolarPoint(): void {
-    const { distance } = Sun.CONFIG.orbit;
-    const { latitude, longitude } = getSubsolarPoint(new Date());
+  private placeAtSolarDeclination(): void {
+    const { distance, realTimeLongitude } = Sun.CONFIG.orbit;
+    const { latitude } = getSubsolarPoint(this.time.simulatedDate);
 
     const position = getSphereFromGeographicCoordinates({
       latitude,
-      longitude,
+      longitude: realTimeLongitude,
       radius: distance,
     });
     this.mesh.position.copy(position);
