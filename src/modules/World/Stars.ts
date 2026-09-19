@@ -3,7 +3,7 @@ import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/Experience/Experience";
-import { PointsEntity } from "./types/points-entity";
+import { PointsEntity, PreviewablePointsEntity } from "./types/points-entity";
 import Enum from "@/utils/enums";
 import { SpaceEnum } from "@/utils/enums/space-color";
 import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placement";
@@ -17,7 +17,7 @@ type StarsUniforms = MapAsUniforms<{
   uSize: number;
 }>;
 
-class Stars extends PointsEntity implements Updatable, Destroyable {
+class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
     count: 5_000,
     // ? Camera.CONFIG.far is 100, so the stars have to stay inside it or they get clipped
