@@ -5,6 +5,7 @@ import Experience, {
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import Earth from "@modules/World/Earth";
+import Sun from "@modules/World/Sun";
 
 type WorldState = {
   axisHelper: boolean;
@@ -40,6 +41,7 @@ class World implements Updatable, Destroyable {
     helpersPosZ: 0,
   };
 
+  public sun: Sun;
   public earth?: Earth;
 
   private get resources() {
@@ -62,8 +64,12 @@ class World implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
+    // ? No external assets, so it's built outside the resources gate — Earth needs its direction on construction
+    this.sun = new Sun();
+
     this.resources.on("textures-loaded", () => {
-      this.earth = new Earth();
+      const { direction } = this.sun;
+      this.earth = new Earth(direction);
     });
 
     this.setHelpers();
@@ -211,6 +217,7 @@ class World implements Updatable, Destroyable {
 
   public destroy(): void {
     this.earth?.destroy();
+    this.sun.destroy();
 
     this.removeHelpers();
   }

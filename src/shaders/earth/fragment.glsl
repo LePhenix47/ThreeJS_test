@@ -4,9 +4,6 @@ uniform sampler2D uSpecularCloudsTexture;
 
 uniform vec3 uSunDirection;
 
-uniform float uPhi;
-uniform float uTheta;
-
 varying vec3 vPosition;
 varying vec3 vNormal;
 varying vec2 vUv;
