@@ -133,6 +133,9 @@ class World implements Updatable, Destroyable {
   private applyRealTime = (): void => {
     const { realTime } = this.guiRegistry?.state || this.debugDefaults;
 
+    // ? The simulated clock keeps running while real time is off, so start from the actual current time
+    if (realTime) this.time.resetSimulatedTime();
+
     this.sun?.setRealTime(realTime);
     this.earth?.setRealTime(realTime);
   };
@@ -239,6 +242,9 @@ class World implements Updatable, Destroyable {
       })
       .name("Playback speed");
     registry.bind("timeScale", (v) => {
+      // ? "Real time" means the actual current time, not wherever a faster speed left the clock
+      if (v === PlaybackSpeed.RealTime) this.time.resetSimulatedTime();
+
       this.time.timeScale = v;
     });
 

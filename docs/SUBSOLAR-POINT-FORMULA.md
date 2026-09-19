@@ -155,7 +155,7 @@ The second one is what a fly-to needs, because a city stays under the camera.
 
 15° per hour is 0.25° per minute, or about 0.004° per second. A full turn takes 24 hours, in either frame. A time scale is needed to see the motion: at 3600x, one real second is one simulated hour, so 15° per second.
 
-The `Playback speed` option sets `Time.timeScale`. Each tick, `Time` adds `deltaMs * timeScale` to `simulatedMs` (which starts at `Date.now()`), and `Sun` and `Earth` read `time.simulatedDate` instead of the real clock. At 1x the simulated time follows the real clock, so real-time mode still shows the real sun.
+The `Playback speed` option sets `Time.timeScale`. Each tick, `Time` adds `deltaMs * timeScale` to `simulatedMs` (which starts at the real current time), and `Sun` and `Earth` read `time.simulatedDate` instead of the real clock. At 1x the simulated time follows the real clock, so real-time mode still shows the real sun. The simulated clock keeps running while real-time mode is off, so it is reset to the real current time when real-time mode is switched on and when the speed goes back to `Real time`. Otherwise it would show wherever a faster speed had left the clock.
 
 ### Why the sun is not the center
 
