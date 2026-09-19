@@ -1,12 +1,14 @@
 import { TextureSourceType } from "@modules/Experience/utils/Resources/types";
 import earth from "./earth/earth";
 import lensFlares from "./sun/lens-flare";
+import milkyWay from "./env-map/milky-way";
 
 // prettier-ignore
 const textures = [
   earth,
-  lensFlares
-  ] as const;
+  lensFlares,
+  milkyWay,
+] as const;
 
 type RawTextures = typeof textures;
 type TextureUnion = RawTextures[number];

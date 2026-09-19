@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { Angle } from "@/utils/enums/angles";
+import { randomInRange } from "@/utils/numbers/range";
 
 type SphereCoordinates = {
   rho: number;
@@ -41,4 +43,20 @@ export function getSphereFromCoordinates({
     y,
     z,
   };
+}
+
+/**
+ * Random point in a spherical shell, evenly spread over the sphere's surface.
+ * Picking phi uniformly would crowd points at the poles, so its cosine is picked instead.
+ */
+export function getRandomUniformSpherePlacement(
+  minRadius: number,
+  maxRadius: number,
+): THREE.Vector3Like {
+  const rho: number = randomInRange(minRadius, maxRadius);
+  const cosPhi: number = randomInRange(-1, 1, "both");
+  const phi: number = THREE.MathUtils.radToDeg(Math.acos(cosPhi));
+  const theta: number = randomInRange(0, Angle.FullTurn);
+
+  return getSphereFromCoordinates({ rho, phi, theta });
 }
