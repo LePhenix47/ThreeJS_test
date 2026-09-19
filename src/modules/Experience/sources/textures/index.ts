@@ -1,10 +1,12 @@
 import { TextureSourceType } from "@modules/Experience/utils/Resources/types";
 import earth from "./earth/earth";
+import lensFlares from "./sun/lens-flare";
 
 // prettier-ignore
 const textures = [
   earth,
-] as const;
+  lensFlares
+  ] as const;
 
 type RawTextures = typeof textures;
 type TextureUnion = RawTextures[number];
