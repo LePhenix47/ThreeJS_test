@@ -10,7 +10,18 @@ export enum TimeUnit {
   MinutesPerHour = 60,
   HoursPerDay = 24,
   DaysPerYear = 365,
+  SecondsPerHour = SecondsPerMinute * MinutesPerHour,
+  SecondsPerDay = SecondsPerHour * HoursPerDay,
   MillisecondsPerMinute = MillisecondsPerSecond * SecondsPerMinute,
   MillisecondsPerHour = MillisecondsPerMinute * MinutesPerHour,
   MillisecondsPerDay = MillisecondsPerHour * HoursPerDay,
+}
+
+/** Simulated seconds that pass per real second. */
+export enum PlaybackSpeed {
+  RealTime = 1, // 1x
+  MinutePerSecond = TimeUnit.SecondsPerMinute, // 60x
+  TenMinutesPerSecond = 10 * TimeUnit.SecondsPerMinute, // 600x
+  HourPerSecond = TimeUnit.SecondsPerHour, // 3600x
+  DayPerSecond = TimeUnit.SecondsPerDay, // 86400x
 }
