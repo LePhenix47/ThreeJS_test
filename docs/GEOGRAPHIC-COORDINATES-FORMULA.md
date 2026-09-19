@@ -110,3 +110,41 @@ So a rotation of ψ about +Y moves every point from longitude λ to longitude λ
 ## Validation
 
 The function throws a `TypeError` if any input is not finite, and a `RangeError` if the latitude is outside -90° to 90°. Longitude is not checked, since sine and cosine are periodic.
+
+---
+
+## Flying the camera to a place
+
+Implementation: `Camera.flyTo` and `Earth.getSurfacePoint`.
+
+### Where to end up
+
+The destination is the point above the place, at `k` times the Earth's radius (`World.CONFIG.flyTo.distanceMultiplier`). It comes from the formula above, then goes through the mesh's world matrix so the current rotation is included:
+
+```
+local = getSphereFromGeographicCoordinates(latitude, longitude, r·k)
+world = mesh.matrixWorld × local
+```
+
+The orbit controls target stays at the origin, so a camera on that ray looks straight at the place.
+
+### The path
+
+Moving the camera in a straight line from A to B would cut through the globe when the two are on opposite sides. Instead, the direction and the distance are interpolated separately:
+
+```
+directionA = normalize(start position)        directionB = normalize(target)
+rotation   = the rotation that turns directionA into directionB
+partial    = slerp(identity, rotation, t)
+direction  = partial × directionA
+distance   = lerp(distanceA, distanceB, t)
+position   = direction · distance
+```
+
+A slerp of the rotation sweeps directionA along the great circle to directionB, at constant angular speed. `t` is eased by GSAP (`power2.inOut`), so the flight starts and ends gently.
+
+### A target that moves
+
+In real-time mode the Earth keeps turning during the flight. `flyTo` takes a function instead of a fixed point, and recomputes `directionB` and `distanceB` every frame from the Earth's current rotation. The camera therefore ends above the place even if it moved while the camera was travelling.
+
+While the flight runs, the `Earth` POV that normally turns the camera with the Earth is paused, because the flight already places the camera in world space each frame. Grabbing the camera with the mouse cancels the flight.

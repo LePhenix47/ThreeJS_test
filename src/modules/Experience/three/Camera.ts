@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import gsap from "gsap";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 
 import Experience, {
@@ -30,12 +31,24 @@ class Camera implements Resizable, Updatable, Destroyable {
       y: 1,
       z: 1,
     },
+    flight: {
+      duration: 2.5,
+      ease: "power2.inOut",
+    },
   } as const;
 
   public instance: THREE.PerspectiveCamera;
   public controls: OrbitControls;
   private readonly experience: Experience | null;
   private cleanupPersistence: (() => void) | null = null;
+
+  private flightTween: gsap.core.Tween | null = null;
+  /** Returns the world-space point the current flight is heading to. Called every frame because the target can move. */
+  private getFlightTarget: (() => THREE.Vector3) | null = null;
+  private readonly flightStartDirection = new THREE.Vector3();
+  private flightStartDistance = 0;
+  /** Eased 0..1 progress of the current flight, tweened by GSAP. */
+  private readonly flightProgress = { value: 0 };
 
   private get sizes() {
     return this.experience!.sizes;
@@ -51,6 +64,8 @@ class Camera implements Resizable, Updatable, Destroyable {
 
     this.setCamera();
     this.setControls();
+
+    this.controls.addEventListener("start", this.cancelFlight);
 
     if (persistence) {
       this.cleanupPersistence = this.setupCameraStatePersistence();
@@ -90,6 +105,72 @@ class Camera implements Resizable, Updatable, Destroyable {
     this.controls.update();
   }
 
+  /** Whether a fly-to is currently moving the camera. */
+  public get isFlying(): boolean {
+    return this.flightTween !== null;
+  }
+
+  /** Moves the camera along an arc around the origin to `getTargetPosition()`, following it if it moves. */
+  public flyTo(getTargetPosition: () => THREE.Vector3): void {
+    const { duration, ease } = Camera.CONFIG.flight;
+    const { flightProgress, flightStartDirection } = this;
+
+    this.cancelFlight();
+
+    const startPosition = this.instance.position.clone();
+    flightStartDirection.copy(startPosition).normalize();
+    this.flightStartDistance = startPosition.length();
+    flightProgress.value = 0;
+
+    this.getFlightTarget = getTargetPosition;
+    this.flightTween = gsap.to(flightProgress, {
+      value: 1,
+      duration,
+      ease,
+      onUpdate: this.updateFlight,
+      onComplete: this.cancelFlight,
+    });
+  }
+
+  /** Stops the current flight, leaving the camera where it is. */
+  private cancelFlight = (): void => {
+    this.flightTween?.kill();
+    this.flightTween = null;
+    this.getFlightTarget = null;
+  };
+
+  private updateFlight = (): void => {
+    const { getFlightTarget, flightStartDirection, flightStartDistance } = this;
+    if (!getFlightTarget) return;
+
+    const { value: progress } = this.flightProgress;
+
+    const target = getFlightTarget();
+    const targetDirection = target.clone().normalize();
+    const targetDistance = target.length();
+
+    // ? Slerping the direction sweeps an arc around the origin, a straight line to the far side of the globe would cut through it
+    const fullRotation = new THREE.Quaternion().setFromUnitVectors(
+      flightStartDirection,
+      targetDirection,
+    );
+    const partialRotation = new THREE.Quaternion().slerp(
+      fullRotation,
+      progress,
+    );
+    const distance = THREE.MathUtils.lerp(
+      flightStartDistance,
+      targetDistance,
+      progress,
+    );
+
+    this.instance.position
+      .copy(flightStartDirection)
+      .applyQuaternion(partialRotation)
+      .multiplyScalar(distance);
+    this.controls.update();
+  };
+
   /** Rotates the camera around the world Y axis by `angle` radians, keeping its height and distance. */
   public orbitAroundY(angle: number): void {
     const { instance, controls } = this;
@@ -99,6 +180,9 @@ class Camera implements Resizable, Updatable, Destroyable {
   }
 
   public destroy(): void {
+    this.cancelFlight();
+    this.controls.removeEventListener("start", this.cancelFlight);
+
     this.cleanupPersistence?.();
     this.controls.dispose();
   }

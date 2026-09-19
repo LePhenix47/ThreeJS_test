@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Controller } from "lil-gui";
 import { getSubsolarPoint } from "@/utils/geo/subsolar-point";
+import { getSphereFromGeographicCoordinates } from "@/utils/placement/geographic-placement";
 import Experience, {
   Destroyable,
   Updatable,
@@ -275,6 +276,22 @@ class Earth
   /** Current rotation of the Earth mesh around the Y axis, in radians. */
   public get rotationY(): number {
     return this.mesh.rotation.y;
+  }
+
+  /** World-space point at `radius` from the Earth's center, above the given latitude/longitude, at the Earth's current rotation. */
+  public getSurfacePoint(
+    latitude: number,
+    longitude: number,
+    radius: number,
+  ): THREE.Vector3 {
+    const localPoint = getSphereFromGeographicCoordinates({
+      latitude,
+      longitude,
+      radius,
+    });
+    const point = new THREE.Vector3().copy(localPoint);
+
+    return this.mesh.localToWorld(point);
   }
 
   /** Switches between the decorative spin and a rotation that follows the real time of day. */

@@ -5,6 +5,7 @@ import Experience, {
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { PlaybackSpeed } from "@/utils/enums/time";
+import { useLocationStore } from "@/stores/useLocationStore";
 import Earth from "@modules/World/Earth";
 import Sun from "@modules/World/Sun";
 
@@ -21,6 +22,10 @@ type WorldState = {
   pov: CameraPov;
   /** Simulated seconds per real second. */
   timeScale: PlaybackSpeed;
+  /** Degrees. Target of the "Fly to coordinates" button. */
+  latitude: number;
+  /** Degrees. Target of the "Fly to coordinates" button. */
+  longitude: number;
 };
 
 class World implements Updatable, Destroyable {
@@ -33,6 +38,17 @@ class World implements Updatable, Destroyable {
       size: 10,
       subdivisions: 10,
       yShift: 0.01, // ? To avoid z fighting
+    },
+    flyTo: {
+      /** Camera distance from the Earth's center at the end of a fly-to, as a multiple of the Earth's radius. */
+      distanceMultiplier: 1.6,
+      cities: {
+        Paris: { latitude: 48.8566, longitude: 2.3522 },
+        "New York": { latitude: 40.7128, longitude: -74.006 },
+        Tokyo: { latitude: 35.6762, longitude: 139.6503 },
+        Sydney: { latitude: -33.8688, longitude: 151.2093 },
+        "Rio de Janeiro": { latitude: -22.9068, longitude: -43.1729 },
+      },
     },
   } as const;
 
@@ -50,6 +66,8 @@ class World implements Updatable, Destroyable {
     realTime: false,
     pov: "space",
     timeScale: PlaybackSpeed.RealTime,
+    latitude: 0,
+    longitude: 0,
   };
 
   public sun?: Sun;
@@ -139,6 +157,48 @@ class World implements Updatable, Destroyable {
     this.sun?.setRealTime(realTime);
     this.earth?.setRealTime(realTime);
   };
+
+  /** Puts the sim in the mode where a fly-to makes sense: real time, with the camera turning with the Earth. */
+  private enableFlyToMode(): void {
+    const state = this.guiRegistry?.state;
+    if (!state) return;
+
+    // ? Only switch real time on if it's off, because switching it on resets the simulated clock to now
+    if (!state.realTime) state.realTime = true;
+    state.pov = "earth";
+
+    const { gui } = this.debug;
+    for (const controller of gui.controllersRecursive()) {
+      controller.updateDisplay();
+    }
+  }
+
+  private flyToLocation(latitude: number, longitude: number): void {
+    const { earth } = this;
+    if (!earth) return;
+
+    const { distanceMultiplier } = World.CONFIG.flyTo;
+    const { radius } = Earth.CONFIG.geometry;
+    const distance: number = radius * distanceMultiplier;
+
+    this.enableFlyToMode();
+
+    this.camera.flyTo(() => earth.getSurfacePoint(latitude, longitude, distance));
+  }
+
+  private flyToMyLocation(): void {
+    const { coords } = useLocationStore.getState();
+
+    if (!coords) {
+      console.warn(
+        "[World] No location yet, click 'Use my location' in the page first",
+      );
+      return;
+    }
+
+    const { latitude, longitude } = coords;
+    this.flyToLocation(latitude, longitude);
+  }
 
   private updateHelperPosition(
     helperType: "axis" | "grid",
@@ -248,6 +308,36 @@ class World implements Updatable, Destroyable {
       this.time.timeScale = v;
     });
 
+    const locationFolder = worldFolder.addFolder("Location");
+
+    locationFolder
+      .add(state, "latitude")
+      .min(-90)
+      .max(90)
+      .step(0.01)
+      .name("Latitude");
+    locationFolder
+      .add(state, "longitude")
+      .min(-180)
+      .max(180)
+      .step(0.01)
+      .name("Longitude");
+    locationFolder
+      .add({ fly: () => this.flyToLocation(state.latitude, state.longitude) }, "fly")
+      .name("Fly to coordinates");
+    locationFolder
+      .add({ fly: () => this.flyToMyLocation() }, "fly")
+      .name("Fly to my location");
+
+    const citiesFolder = locationFolder.addFolder("Cities");
+    for (const [name, { latitude, longitude }] of Object.entries(
+      World.CONFIG.flyTo.cities,
+    )) {
+      citiesFolder
+        .add({ fly: () => this.flyToLocation(latitude, longitude) }, "fly")
+        .name(name);
+    }
+
     worldFolder
       .add(
         {
@@ -279,6 +369,9 @@ class World implements Updatable, Destroyable {
     this.previousEarthRotation = rotation;
 
     if (pov !== "earth" || previousEarthRotation === null) return;
+
+    // ? A flight recomputes the camera position itself every frame, turning it here too would double up
+    if (this.camera.isFlying) return;
 
     this.camera.orbitAroundY(rotation - previousEarthRotation);
   }
