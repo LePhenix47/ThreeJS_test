@@ -82,15 +82,14 @@ class Sun extends MeshEntity implements Destroyable {
   private updateSun = (): void => {
     const { distance, phiOffset } = Sun.CONFIG.orbit;
     const { phi, theta } = this.guiRegistry?.state || this.debugDefaults;
-    const { mesh, direction } = this;
 
     const phiRad: number = THREE.MathUtils.degToRad(phi + phiOffset);
     const thetaRad: number = THREE.MathUtils.degToRad(theta);
 
     // ? Spherical is y-up: phi = 0 sits on +Y, Earth's rotation axis. A z-up util would put the poles on the wrong axis.
-    mesh.position.setFromSphericalCoords(distance, phiRad, thetaRad);
+    this.mesh.position.setFromSphericalCoords(distance, phiRad, thetaRad);
 
-    direction.copy(mesh.position).normalize();
+    this.direction.copy(this.mesh.position).normalize();
   };
 
   private addDebugFolders(): void {
