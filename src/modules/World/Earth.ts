@@ -94,6 +94,8 @@ class Earth
 
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
+
+      texture.anisotropy = 8; // ? makes texture less blurry, sharper
     }
 
     this.textures = earthTextures;
