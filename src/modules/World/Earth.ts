@@ -11,6 +11,9 @@ import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 import vertexShader from "@shaders/earth/vertex.glsl";
 import fragmentShader from "@shaders/earth/fragment.glsl";
 
+import atmosphereVertexShader from "@shaders/atmosphere/vertex.glsl";
+import atmosphereFragmentShader from "@shaders/atmosphere/fragment.glsl";
+
 type EarthState = {
   wireframe: boolean;
   uAtmosphereDayColor: string;
@@ -107,6 +110,8 @@ class Earth
 
   setAtmosphere(): void {
     this.atmosphereMaterial = new THREE.ShaderMaterial({
+      vertexShader: atmosphereVertexShader,
+      fragmentShader: atmosphereFragmentShader,
       side: THREE.BackSide,
       transparent: true,
     }) as TypedShaderMaterial<AtmosphereUniforms>;
