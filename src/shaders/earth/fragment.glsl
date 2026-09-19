@@ -3,6 +3,8 @@ uniform sampler2D uNightTexture;
 uniform sampler2D uSpecularCloudsTexture;
 
 uniform vec3 uSunDirection;
+uniform vec3 uAtmosphereDayColor;
+uniform vec3 uAtmosphereTwilightColor;
 
 varying vec3 vPosition;
 varying vec3 vNormal;

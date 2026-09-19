@@ -13,6 +13,8 @@ import fragmentShader from "@shaders/earth/fragment.glsl";
 
 type EarthState = {
   wireframe: boolean;
+  uAtmosphereDayColor: string;
+  uAtmosphereTwilightColor: string;
 };
 
 type EarthUniforms = MapAsUniforms<{
@@ -20,6 +22,8 @@ type EarthUniforms = MapAsUniforms<{
   uNightTexture: THREE.Texture;
   uSpecularCloudsTexture: THREE.Texture;
   uSunDirection: THREE.Vector3;
+  uAtmosphereDayColor: THREE.Color;
+  uAtmosphereTwilightColor: THREE.Color;
 }>;
 
 type EarthTextureKeys = GetPathsFromName<"earth">;
@@ -45,6 +49,8 @@ class Earth
 
   private readonly debugDefaults: EarthState = {
     wireframe: false,
+    uAtmosphereDayColor: "#00aaff",
+    uAtmosphereTwilightColor: "#ff6600",
   };
   private guiRegistry: GUIStateRegistry<EarthState> | null = null;
 
@@ -107,10 +113,17 @@ class Earth
   }
 
   protected setMaterial(): void {
-    const { wireframe } = this.debugDefaults;
+    const { wireframe, uAtmosphereDayColor, uAtmosphereTwilightColor } =
+      this.debugDefaults;
 
     const { day, night, specularClouds } = this.textures;
     const uniforms: EarthUniforms = {
+      uAtmosphereDayColor: {
+        value: new THREE.Color(uAtmosphereDayColor),
+      },
+      uAtmosphereTwilightColor: {
+        value: new THREE.Color(uAtmosphereTwilightColor),
+      },
       uSunDirection: new THREE.Uniform(this.sunDirection),
       uDayTexture: new THREE.Uniform(day),
       uNightTexture: new THREE.Uniform(night),
@@ -147,6 +160,20 @@ class Earth
     debugFolder.add(state, "wireframe").name("Wireframe");
     registry.bind("wireframe", (v) => {
       this.material.wireframe = v;
+    });
+
+    const atmosphereFolder = debugFolder.addFolder("Atmosphere");
+
+    atmosphereFolder.add(state, "uAtmosphereDayColor").name("Day color");
+    registry.bind("uAtmosphereDayColor", (v) => {
+      this.material.uniforms.uAtmosphereDayColor.value.set(v);
+    });
+
+    atmosphereFolder
+      .add(state, "uAtmosphereTwilightColor")
+      .name("Twilight color");
+    registry.bind("uAtmosphereTwilightColor", (v) => {
+      this.material.uniforms.uAtmosphereTwilightColor.value.set(v);
     });
   }
 
