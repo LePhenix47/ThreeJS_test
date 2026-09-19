@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Lensflare, LensflareElement } from "three/examples/jsm/Addons.js";
 import Experience, { Destroyable } from "@modules/Experience/Experience";
 import { MeshEntity } from "./types/mesh-entity";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
@@ -19,6 +20,17 @@ class Sun extends MeshEntity implements Destroyable {
       /** GUI phi is centered on the equator (0); spherical phi runs 0..180 from a pole. */
       phiOffset: 90,
     },
+    lensflare: {
+      /** Big soft halo centered on the sun (`lensFlares[0]`). Size is in screen pixels. */
+      glow: { size: 700, distance: 0 },
+      /** Small ghosts (`lensFlares[1]`) strung along the line from the sun through the screen center. `distance` is 0..1 along that line. */
+      ghosts: [
+        { size: 60, distance: 0.6 },
+        { size: 70, distance: 0.7 },
+        { size: 120, distance: 0.9 },
+        { size: 70, distance: 1 },
+      ],
+    },
   } as const;
 
   private readonly experience: Experience | null;
@@ -26,6 +38,8 @@ class Sun extends MeshEntity implements Destroyable {
   protected geometry: THREE.IcosahedronGeometry;
   protected material: THREE.MeshBasicMaterial;
   protected mesh: THREE.Mesh;
+
+  private lensflare: Lensflare;
 
   /** Normalized direction from the origin to the sun. Mutated in place, so consumers can hold the reference as a uniform value. */
   public readonly direction = new THREE.Vector3();
@@ -44,6 +58,10 @@ class Sun extends MeshEntity implements Destroyable {
     return this.experience!.scene;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     super();
 
@@ -53,6 +71,7 @@ class Sun extends MeshEntity implements Destroyable {
     this.setGeometry();
     this.setMaterial();
     this.setMesh();
+    this.setLensflare();
 
     this.scene.add(this.mesh);
 
@@ -71,14 +90,39 @@ class Sun extends MeshEntity implements Destroyable {
   }
 
   protected setMaterial(): void {
-    this.material = new THREE.MeshBasicMaterial();
+    // ? Lensflare tests occlusion against the depth buffer at the sun's center; a depth-writing sphere would occlude its own flare
+    this.material = new THREE.MeshBasicMaterial({ depthWrite: false });
   }
 
   protected setMesh(): void {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
   }
 
-  /** Moves the sun mesh to the current phi/theta and refreshes `direction`. */
+  /** Builds the lens flare (halo + ghosts) and attaches it to the sun mesh. */
+  private setLensflare(): void {
+    const { glow, ghosts } = Sun.CONFIG.lensflare;
+    const [glowTexture, ghostTexture] =
+      this.resources.getTextureArray("lensFlares");
+
+    const lensflare = new Lensflare();
+
+    const glowElement = new LensflareElement(
+      glowTexture,
+      glow.size,
+      glow.distance,
+    );
+    lensflare.addElement(glowElement);
+
+    for (const { size, distance } of ghosts) {
+      const ghostElement = new LensflareElement(ghostTexture, size, distance);
+      lensflare.addElement(ghostElement);
+    }
+
+    this.mesh.add(lensflare);
+    this.lensflare = lensflare;
+  }
+
+  /** Moves the sun mesh to the current `phi`/`theta `and refreshes `direction`. */
   private updateSun = (): void => {
     const { distance, phiOffset } = Sun.CONFIG.orbit;
     const { phi, theta } = this.guiRegistry?.state || this.debugDefaults;
@@ -118,6 +162,9 @@ class Sun extends MeshEntity implements Destroyable {
 
   // * HEAT DEATH OF THE UNIVERSE ?????!!! 💀
   private destroySun(): void {
+    this.mesh.remove(this.lensflare);
+    this.lensflare.dispose();
+
     this.geometry.dispose();
     this.material.dispose();
   }
