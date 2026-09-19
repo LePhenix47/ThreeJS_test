@@ -44,10 +44,35 @@ void main() {
 
     color = mix(color, vec3(1.0), cloudsMix);
 
-    float earthReflection = cloudAndReflection.r;
+// * Twilight + Fresnel
+    float atmosphereDayMix = smoothstep(-0.5, 1.0, sunOrientation);
+    vec3 atmosphereColor = mix(uAtmosphereTwilightColor, uAtmosphereDayColor, atmosphereDayMix);
+
+    float fresnel = dot(viewDirection, normal) + 1.0;
+    fresnel = pow(fresnel, 2.0);
+
+    float twilight = atmosphereDayMix * fresnel;
+
+    color = mix(color, atmosphereColor, twilight);
+
+// * Specular reflection
+    float earthReflection = cloudAndReflection.r + 0.1;
+
+// ? reflect() wants the incident ray (light → surface); uSunDirection points surface → light
+    vec3 reflection = -reflect(uSunDirection, normal);
+
+// ? viewDirection points camera → fragment; the highlight needs R aligned with fragment → camera
+    float specular = -dot(reflection, viewDirection);
+    specular = max(0.0, specular);
+    specular = pow(specular, 32.0);
+    specular *= earthReflection;
+
+    vec3 specularColor = mix(vec3(1.0), atmosphereColor, fresnel);
+
+    color += specular * specularColor;
 
     gl_FragColor = vec4(color, 1.0);
 
-    #include <tonemapping_fragment>
+    // #include <tonemapping_fragment>
     #include <colorspace_fragment>
 }
