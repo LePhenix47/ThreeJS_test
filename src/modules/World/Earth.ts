@@ -26,8 +26,6 @@ type EarthUniforms = MapAsUniforms<{
   uDayTexture: THREE.Texture;
   uNightTexture: THREE.Texture;
   uSpecularCloudsTexture: THREE.Texture;
-  uSpecularTexture: THREE.Texture;
-  uCloudsTexture: THREE.Texture;
   uSunDirection: THREE.Vector3;
   uAtmosphereDayColor: THREE.Color;
   uAtmosphereTwilightColor: THREE.Color;
@@ -175,7 +173,7 @@ class Earth
       uCloudsParallaxShift,
     } = this.debugDefaults;
 
-    const { day, night, specularClouds, clouds, specular } = this.textures;
+    const { day, night, specularClouds } = this.textures;
     const uniforms: EarthUniforms = {
       uTime: new THREE.Uniform(0),
       uAtmosphereDayColor: {
@@ -188,8 +186,6 @@ class Earth
       uDayTexture: new THREE.Uniform(day),
       uNightTexture: new THREE.Uniform(night),
       uSpecularCloudsTexture: new THREE.Uniform(specularClouds),
-      uCloudsTexture: new THREE.Uniform(clouds),
-      uSpecularTexture: new THREE.Uniform(specular),
       uCloudsParallaxShift: new THREE.Uniform(uCloudsParallaxShift),
     };
 

@@ -1,7 +1,6 @@
 uniform sampler2D uDayTexture;
 uniform sampler2D uNightTexture;
-uniform sampler2D uCloudsTexture;
-uniform sampler2D uSpecularTexture;
+uniform sampler2D uSpecularCloudsTexture;
 uniform float uTime;
 uniform float uCloudsParallaxShift;
 
@@ -42,10 +41,10 @@ void main() {
 // ? Parallax with the clouds, very unrealistic since it's the same at every latitude with planet but it looks cool AF
     vec2 cloudsUv = vUv;
     cloudsUv.x -= uTime * uCloudsParallaxShift;
-// ? We sample both textures, and since they're grayscaled we can take just one 
-    float cloudsTextureSampleColor = texture(uCloudsTexture, cloudsUv).r;
+// ? R = specular mask, G = clouds. Only the clouds read uses the shifted UV, so the specular mask stays pinned to the ground
+    float cloudsTextureSampleColor = texture(uSpecularCloudsTexture, cloudsUv).g;
 
-    float specularTextureSampleColor = textureRgb(uSpecularTexture).r;
+    float specularTextureSampleColor = textureRg(uSpecularCloudsTexture).r;
 
 // * Clouds
     float cloudsMix = smoothstep(0.5, 1.0, cloudsTextureSampleColor);
