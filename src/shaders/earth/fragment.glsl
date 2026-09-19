@@ -38,8 +38,12 @@ void main() {
 
     color = mix(earthNight, earthDay, dayMix);
 
-// ? We sample both textures, and since the 
-    float cloudsTextureSampleColor = textureRgb(uCloudsTexture).r;
+// ? Parallax with the clouds, very unrealistic since they don't co-rotate with planet but it looks cool AF
+    vec2 cloudsUv = vUv;
+    cloudsUv.x -= uTime * 0.01;
+// ? We sample both textures, and since they're grayscaled we can take just one 
+    float cloudsTextureSampleColor = texture(uCloudsTexture, cloudsUv).r;
+
     float specularTextureSampleColor = textureRgb(uSpecularTexture).r;
 
 // * Clouds
