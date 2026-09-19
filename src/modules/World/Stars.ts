@@ -7,10 +7,13 @@ import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placem
 
 class Stars extends PointsEntity implements Destroyable {
   public static readonly CONFIG = {
-    count: 4_000,
+    count: 20_000,
     // ? Camera.CONFIG.far is 100, so the stars have to stay inside it or they get clipped
     minRadius: 60,
-    maxRadius: 90,
+    maxRadius: 150,
+    geometry: {
+      size: 2,
+    },
   } as const;
 
   private readonly experience: Experience | null;
@@ -62,8 +65,10 @@ class Stars extends PointsEntity implements Destroyable {
 
   // ? Placeholder until the star shaders exist, swap this for a ShaderMaterial
   protected setMaterial(): void {
+    const { size } = Stars.CONFIG.geometry;
+
     this.material = new THREE.PointsMaterial({
-      size: 2,
+      size,
       sizeAttenuation: false,
       depthWrite: false,
     });
