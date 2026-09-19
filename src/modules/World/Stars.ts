@@ -7,10 +7,10 @@ import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placem
 
 class Stars extends PointsEntity implements Destroyable {
   public static readonly CONFIG = {
-    count: 20_000,
+    count: 5_000,
     // ? Camera.CONFIG.far is 100, so the stars have to stay inside it or they get clipped
     minRadius: 60,
-    maxRadius: 150,
+    maxRadius: Experience.instance?.camera.instance.far!,
     geometry: {
       size: 2,
     },
