@@ -115,7 +115,7 @@ class Earth
     console.log("Earth");
   }
 
-  setAtmosphere(): void {
+  private setAtmosphere(): void {
     const { uAtmosphereDayColor, uAtmosphereTwilightColor } =
       this.material.uniforms;
 
@@ -126,7 +126,7 @@ class Earth
       uSunDirection: new THREE.Uniform(this.sunDirection),
     };
 
-    this.atmosphereMaterial = new THREE.ShaderMaterial({
+    const material = new THREE.ShaderMaterial({
       uniforms,
       vertexShader: atmosphereVertexShader,
       fragmentShader: atmosphereFragmentShader,
@@ -134,13 +134,16 @@ class Earth
       transparent: true,
     }) as TypedShaderMaterial<AtmosphereUniforms>;
 
-    this.atmosphereMesh = new THREE.Mesh(
+    const mesh = new THREE.Mesh(
       this.geometry, // ? Shared with the Earth
-      this.atmosphereMaterial,
+      material,
     );
 
     const { relativeScale } = Earth.CONFIG.atmosphere;
-    this.atmosphereMesh.scale.setScalar(relativeScale);
+    mesh.scale.setScalar(relativeScale);
+
+    this.atmosphereMaterial = material;
+    this.atmosphereMesh = mesh;
   }
 
   protected setTextures(): void {
