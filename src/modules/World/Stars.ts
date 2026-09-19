@@ -1,29 +1,49 @@
 import * as THREE from "three";
-import Experience, { Destroyable } from "@modules/Experience/Experience";
+import Experience, {
+  Destroyable,
+  Updatable,
+} from "@modules/Experience/Experience";
 import { PointsEntity } from "./types/points-entity";
 import Enum from "@/utils/enums";
 import { SpaceEnum } from "@/utils/enums/space-color";
 import { getRandomUniformSpherePlacement } from "@/utils/placement/sphere-placement";
+import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
-class Stars extends PointsEntity implements Destroyable {
+import vertexShader from "@shaders/stars/vertex.glsl";
+import fragmentShader from "@shaders/stars/fragment.glsl";
+
+type StarsUniforms = MapAsUniforms<{
+  uTime: number;
+  uSize: number;
+}>;
+
+class Stars extends PointsEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
     count: 5_000,
     // ? Camera.CONFIG.far is 100, so the stars have to stay inside it or they get clipped
     minRadius: 60,
-    maxRadius: Experience.instance?.camera.instance.far!,
+    maxRadius: 90,
     geometry: {
-      size: 2,
+      size: 2000,
     },
   } as const;
 
   private readonly experience: Experience | null;
 
   protected geometry: THREE.BufferGeometry;
-  protected material: THREE.PointsMaterial | THREE.ShaderMaterial;
+  protected material: TypedShaderMaterial<StarsUniforms>;
   protected points: THREE.Points;
 
   private get scene() {
     return this.experience!.scene;
+  }
+
+  private get time() {
+    return this.experience!.time;
+  }
+
+  private get renderer() {
+    return this.experience!.renderer;
   }
 
   constructor() {
@@ -43,6 +63,7 @@ class Stars extends PointsEntity implements Destroyable {
 
   protected setGeometry(): void {
     const { count, minRadius, maxRadius } = Stars.CONFIG;
+    const geometry = new THREE.BufferGeometry();
 
     const stride: number = Enum.length(SpaceEnum);
     const positions = new Float32Array(count * stride);
@@ -58,7 +79,6 @@ class Stars extends PointsEntity implements Destroyable {
 
     const positionAttribute = new THREE.BufferAttribute(positions, stride);
 
-    const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", positionAttribute);
     this.geometry = geometry;
   }
@@ -67,15 +87,27 @@ class Stars extends PointsEntity implements Destroyable {
   protected setMaterial(): void {
     const { size } = Stars.CONFIG.geometry;
 
-    this.material = new THREE.PointsMaterial({
-      size,
-      sizeAttenuation: false,
+    const uniforms: StarsUniforms = {
+      uTime: new THREE.Uniform(0),
+      uSize: new THREE.Uniform(size * this.renderer.pixelRatio),
+    };
+
+    this.material = new THREE.ShaderMaterial({
       depthWrite: false,
-    });
+      blending: THREE.AdditiveBlending,
+      vertexColors: true,
+      vertexShader,
+      fragmentShader,
+      uniforms,
+    }) as TypedShaderMaterial<StarsUniforms>;
   }
 
   protected setPoints(): void {
     this.points = new THREE.Points(this.geometry, this.material);
+  }
+
+  public update(): void {
+    this.material.uniforms.uTime.value = this.time.elapsedSeconds;
   }
 
   public destroy(): void {
