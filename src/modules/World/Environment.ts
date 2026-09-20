@@ -1,10 +1,7 @@
 import * as THREE from "three";
 import Experience, { Destroyable } from "@modules/Experience/Experience";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-import {
-  EnvironmentEntity,
-  EnvironmentMapConfig,
-} from "./types/environment-entity";
+import { EnvironmentEntity } from "./types/environment-entity";
 
 type EnvironmentState = {
   backgroundIntensity: number;
@@ -27,7 +24,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private readonly experience: Experience | null;
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
-  protected envMapConfig: EnvironmentMapConfig = {};
 
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
@@ -81,9 +77,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.updateOrientation();
 
     this.envMapTexture = color;
-    this.envMapConfig = {
-      backgroundIntensity,
-    };
   }
 
   // ? Nothing to update: the Earth is a ShaderMaterial, so no material reads scene.environment
