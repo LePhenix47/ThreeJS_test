@@ -2,7 +2,7 @@ uniform sampler2D uDayTexture;
 uniform sampler2D uNightTexture;
 uniform sampler2D uSpecularCloudsTexture;
 uniform float uTime;
-uniform float uCloudsParallaxShift;
+uniform float uCloudsParallaxSpeed;
 
 uniform vec3 uSunDirection;
 uniform vec3 uAtmosphereDayColor;
@@ -40,7 +40,7 @@ void main() {
 
 // ? Parallax with the clouds, very unrealistic since it's the same at every latitude with planet but it looks cool AF
     vec2 cloudsUv = vUv;
-    cloudsUv.x -= uTime * uCloudsParallaxShift;
+    cloudsUv.x -= uTime * uCloudsParallaxSpeed;
 // ? R = specular mask, G = clouds. Only the clouds read uses the shifted UV, so the specular mask stays pinned to the ground
     float cloudsTextureSampleColor = texture(uSpecularCloudsTexture, cloudsUv).g;
 

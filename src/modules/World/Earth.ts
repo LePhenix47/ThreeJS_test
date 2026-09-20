@@ -21,7 +21,7 @@ type EarthState = {
   wireframe: boolean;
   uAtmosphereDayColor: string;
   uAtmosphereTwilightColor: string;
-  uCloudsParallaxShift: number;
+  uCloudsParallaxSpeed: number;
 };
 
 type EarthUniforms = MapAsUniforms<{
@@ -32,7 +32,7 @@ type EarthUniforms = MapAsUniforms<{
   uSunDirection: THREE.Vector3;
   uAtmosphereDayColor: THREE.Color;
   uAtmosphereTwilightColor: THREE.Color;
-  uCloudsParallaxShift: EarthState["uCloudsParallaxShift"];
+  uCloudsParallaxSpeed: EarthState["uCloudsParallaxSpeed"];
 }>;
 
 type AtmosphereUniforms = Pick<
@@ -79,7 +79,7 @@ class Earth
     wireframe: false,
     uAtmosphereDayColor: "#00aaff",
     uAtmosphereTwilightColor: "#ff6600",
-    uCloudsParallaxShift: 0,
+    uCloudsParallaxSpeed: 0.01,
   };
   private guiRegistry: GUIStateRegistry<EarthState> | null = null;
 
@@ -179,7 +179,7 @@ class Earth
       wireframe,
       uAtmosphereDayColor,
       uAtmosphereTwilightColor,
-      uCloudsParallaxShift,
+      uCloudsParallaxSpeed,
     } = this.debugDefaults;
 
     const { day, night, specularClouds } = this.textures;
@@ -195,7 +195,7 @@ class Earth
       uDayTexture: new THREE.Uniform(day),
       uNightTexture: new THREE.Uniform(night),
       uSpecularCloudsTexture: new THREE.Uniform(specularClouds),
-      uCloudsParallaxShift: new THREE.Uniform(uCloudsParallaxShift),
+      uCloudsParallaxSpeed: new THREE.Uniform(uCloudsParallaxSpeed),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -214,12 +214,12 @@ class Earth
 
   /** Writes the cloud drift uniform from the slider, forced to 0 in real-time mode. */
   private applyCloudsParallax = (): void => {
-    const { uCloudsParallaxShift } =
+    const { uCloudsParallaxSpeed } =
       this.guiRegistry?.state || this.debugDefaults;
 
     // ? At real-time speed any slider drift would race far ahead of the real sun, so the clouds stay still
-    const shift = this.realTime ? 0 : uCloudsParallaxShift;
-    this.material.uniforms.uCloudsParallaxShift.value = shift;
+    const shift = this.realTime ? 0 : uCloudsParallaxSpeed;
+    this.material.uniforms.uCloudsParallaxSpeed.value = shift;
   };
 
   private addDebugFolders(): void {
@@ -243,12 +243,12 @@ class Earth
     const cloudsFolder = debugFolder.addFolder("Clouds");
 
     this.cloudsShiftController = cloudsFolder
-      .add(state, "uCloudsParallaxShift")
+      .add(state, "uCloudsParallaxSpeed")
       .name("Parallax shift")
       .min(0)
       .max(1)
       .step(0.001);
-    registry.bind("uCloudsParallaxShift", this.applyCloudsParallax);
+    registry.bind("uCloudsParallaxSpeed", this.applyCloudsParallax);
 
     const atmosphereFolder = debugFolder.addFolder("Atmosphere");
 
