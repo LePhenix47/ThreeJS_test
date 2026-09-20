@@ -71,7 +71,7 @@ Otherwise, it renders as a THREE.Mesh:
 - Use when the GLTF's embedded material is replaced or heavily modified at runtime
 
 ### EnvironmentEntity
-- Abstract properties: `envMapTexture: THREE.Texture | THREE.CubeTexture | null`, `envMapConfig` (subset of scene env props. Blurriness, intensity, rotation X/Y/Z)
+- Abstract property: `envMapTexture: THREE.Texture | THREE.CubeTexture | null`
 - Abstract methods: `setEnvMap()`, `updateMaterial()`. `updateMaterial()` may legally be a no-op if nothing needs a per-material env update
 - Use for the one entity responsible for `scene.background`/`scene.environment`
 
