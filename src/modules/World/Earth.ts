@@ -201,7 +201,6 @@ class Earth
     this.material = new THREE.ShaderMaterial({
       wireframe,
       uniforms,
-      transparent: true,
       depthWrite: true,
       vertexShader,
       fragmentShader,
