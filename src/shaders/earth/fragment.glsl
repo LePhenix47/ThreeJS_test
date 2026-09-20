@@ -47,7 +47,9 @@ void main() {
     float specularTextureSampleColor = textureRg(uSpecularCloudsTexture).r;
 
 // * Clouds
-    float cloudsMix = smoothstep(0.5, 1.0, cloudsTextureSampleColor);
+    float phase = texture(uSpecularCloudsTexture, cloudsUv * 0.5).g * 6.0;
+    float threshold = 0.5 + 0.2 * sin(uTime + phase);
+    float cloudsMix = smoothstep(threshold, 1.0, cloudsTextureSampleColor);
     cloudsMix *= dayMix; // ? Makes cloud dark on night side
 
     color = mix(color, vec3(1.0), cloudsMix);
