@@ -17,6 +17,13 @@ type EnvironmentState = {
 };
 
 class Environment extends EnvironmentEntity implements Destroyable {
+  public static readonly CONFIG = {
+    envMap: {
+      mapping: THREE.EquirectangularReflectionMapping,
+      colorSpace: THREE.SRGBColorSpace,
+    },
+  } as const;
+
   private readonly experience: Experience | null;
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
@@ -62,18 +69,21 @@ class Environment extends EnvironmentEntity implements Destroyable {
   protected setEnvMap(): void {
     const { backgroundIntensity } = this.debugDefaults;
 
-    const texture = this.resources.getTexture("milkyWay", "color");
-    // ? The map is an equirectangular projection, so it wraps around the whole sphere
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    texture.colorSpace = THREE.SRGBColorSpace;
+    const { color } = this.resources.getTextures("milkyWay");
 
-    const { scene } = this;
-    scene.background = texture;
-    scene.backgroundIntensity = backgroundIntensity;
+    const { mapping, colorSpace } = Environment.CONFIG.envMap;
+    // ? The map is an equirectangular projection, so it wraps around the whole sphere
+    color.mapping = mapping;
+    color.colorSpace = colorSpace;
+
+    this.scene.background = color;
+    this.scene.backgroundIntensity = backgroundIntensity;
     this.updateOrientation();
 
-    this.envMapTexture = texture;
-    this.envMapConfig = { backgroundIntensity };
+    this.envMapTexture = color;
+    this.envMapConfig = {
+      backgroundIntensity,
+    };
   }
 
   // ? Nothing to update: the Earth is a ShaderMaterial, so no material reads scene.environment
