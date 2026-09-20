@@ -15,12 +15,13 @@ import fragmentShader from "@shaders/stars/fragment.glsl";
 
 type StarsState = {
   previewVisible: boolean;
+  uSharpness: number;
 };
 
 type StarsUniforms = MapAsUniforms<{
   uTime: number;
   uSize: number;
-  uSharpness: number;
+  uSharpness: StarsState["uSharpness"];
 }>;
 
 class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
@@ -31,8 +32,6 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
     maxRadius: 90,
     geometry: {
       size: 200,
-      /** Strength of the 1/dist falloff. Higher = a bigger, softer glow around each star. */
-      sharpness: 0.08,
     },
     preview: {
       size: 1_500,
@@ -53,6 +52,7 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
 
   private readonly debugDefaults: StarsState = {
     previewVisible: false,
+    uSharpness: 0.08,
   };
 
   private get scene() {
@@ -113,12 +113,14 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
   }
 
   protected setMaterial(): void {
-    const { size, sharpness } = Stars.CONFIG.geometry;
+    const { size } = Stars.CONFIG.geometry;
+
+    const { uSharpness } = this.debugDefaults;
 
     const uniforms: StarsUniforms = {
       uTime: new THREE.Uniform(0),
       uSize: new THREE.Uniform(size * this.renderer.pixelRatio),
-      uSharpness: new THREE.Uniform(sharpness),
+      uSharpness: new THREE.Uniform(uSharpness),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -170,14 +172,18 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
   }
 
   protected setPreviewPoints(): void {
-    const { previewGeometry, previewMaterial } = this;
-    if (!previewGeometry || !previewMaterial) return;
+    if (!this.previewGeometry || !this.previewMaterial) return;
 
-    const previewPoint = new THREE.Points(previewGeometry, previewMaterial);
+    const { previewVisible } = this.debugDefaults;
 
-    // ? The Earth is drawn in the transparent pass too, so this has to sort after it or the Earth would cover the preview
+    const previewPoint = new THREE.Points(
+      this.previewGeometry,
+      this.previewMaterial,
+    );
+
+    // ? The atmosphere shell is transparent too and sits at the same distance, so this has to sort after it or the shell would paint over the preview
     previewPoint.renderOrder = 1;
-    previewPoint.visible = this.debugDefaults.previewVisible;
+    previewPoint.visible = previewVisible;
 
     this.previewPoint = previewPoint;
   }
@@ -194,18 +200,29 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
 
     const folder = gui.addFolder("Stars");
 
+    folder
+      .add(state, "uSharpness")
+      .name("Sharpness")
+      .min(0.0)
+      .max(1)
+      .step(0.01);
+    registry.bind("uSharpness", (v) => {
+      this.material.uniforms.uSharpness.value = v;
+    });
+
     this.setPreviewGeometry();
     this.setPreviewMaterial();
     this.setPreviewPoints();
 
-    const { previewPoint } = this;
-    if (!previewPoint) return;
+    if (!this.previewPoint) return;
 
-    this.scene.add(previewPoint);
+    this.scene.add(this.previewPoint);
 
     folder.add(state, "previewVisible").name("Show preview");
     registry.bind("previewVisible", (v) => {
-      previewPoint.visible = v;
+      if (!this.previewPoint) return;
+
+      this.previewPoint.visible = v;
     });
   }
 
@@ -214,11 +231,9 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
   }
 
   protected destroyPreview(): void {
-    const { previewPoint, previewGeometry, previewMaterial } = this;
-
-    if (previewPoint) this.scene.remove(previewPoint);
-    previewGeometry?.dispose();
-    previewMaterial?.dispose();
+    if (this.previewPoint) this.scene.remove(this.previewPoint);
+    this.previewGeometry?.dispose();
+    this.previewMaterial?.dispose();
 
     this.previewPoint = null;
     this.previewGeometry = null;
