@@ -74,6 +74,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
     this.scene.background = color;
     this.scene.backgroundIntensity = backgroundIntensity;
+    this.scene.environment = color;
     this.updateOrientation();
 
     this.envMapTexture = color;
@@ -84,13 +85,16 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   /** Applies the X/Y/Z rotation from the GUI state to the background. */
   private updateOrientation = (): void => {
-    const { backgroundRotationX, backgroundRotationY, backgroundRotationZ } =
-      this.guiRegistry?.state || this.debugDefaults;
+    const {
+      backgroundRotationX: x,
+      backgroundRotationY: y,
+      backgroundRotationZ: z,
+    } = this.guiRegistry?.state || this.debugDefaults;
     const { backgroundRotation } = this.scene;
 
-    backgroundRotation.x = THREE.MathUtils.degToRad(backgroundRotationX);
-    backgroundRotation.y = THREE.MathUtils.degToRad(backgroundRotationY);
-    backgroundRotation.z = THREE.MathUtils.degToRad(backgroundRotationZ);
+    backgroundRotation.x = THREE.MathUtils.degToRad(x);
+    backgroundRotation.y = THREE.MathUtils.degToRad(y);
+    backgroundRotation.z = THREE.MathUtils.degToRad(z);
   };
 
   private addDebugFolders(): void {
