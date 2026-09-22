@@ -108,9 +108,10 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
       positions[i3 + SpaceEnum.Z] = z;
     }
 
-    const positionAttribute = new THREE.BufferAttribute(positions, stride);
-
-    geometry.setAttribute("position", positionAttribute);
+    geometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(positions, stride),
+    );
     this.geometry = geometry;
   }
 
