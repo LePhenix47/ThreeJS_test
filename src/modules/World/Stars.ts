@@ -84,6 +84,8 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
     this.scene.add(this.points);
 
     if (this.debug?.isActive) {
+      this.addPreview();
+
       this.addDebugFolders();
     }
 
@@ -134,6 +136,15 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
 
   protected setPoints(): void {
     this.points = new THREE.Points(this.geometry, this.material);
+  }
+
+  private addPreview(): void {
+    this.setPreviewGeometry();
+    this.setPreviewMaterial();
+    this.setPreviewPoints();
+
+    if (!this.previewPoint) return;
+    this.scene.add(this.previewPoint);
   }
 
   protected setPreviewGeometry(): void {
@@ -209,14 +220,6 @@ class Stars extends PreviewablePointsEntity implements Updatable, Destroyable {
     registry.bind("uSharpness", (v) => {
       this.material.uniforms.uSharpness.value = v;
     });
-
-    this.setPreviewGeometry();
-    this.setPreviewMaterial();
-    this.setPreviewPoints();
-
-    if (!this.previewPoint) return;
-
-    this.scene.add(this.previewPoint);
 
     folder.add(state, "previewVisible").name("Show preview");
     registry.bind("previewVisible", (v) => {
