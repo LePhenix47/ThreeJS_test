@@ -73,7 +73,7 @@ export function getRandomUniformSpherePlacement(
   const xyRadius: number = rho * sinPhi;
   const x: number = xyRadius * Math.cos(theta);
   const y: number = xyRadius * Math.sin(theta);
-  const z: number = rho * cosPhi;
+  const z: number = rho * cosPhi; // ? φ ∈ [0, π], z = ρ·cos(φ) = ρ·cos(arccos(v)) = ρ·v
 
   return { x, y, z };
 }
