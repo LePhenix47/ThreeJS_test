@@ -53,15 +53,18 @@ export function getSphereFromCoordinates({
 }
 
 /**
- * Random point in a spherical shell, evenly spread over the sphere's surface.
+ * Random point in a spherical shell, evenly spread by volume through the shell
+ * and evenly spread over each sphere's surface.
  * Picking phi uniformly would crowd points at the poles, so its cosine is picked instead.
- *
  */
 export function getRandomUniformSpherePlacement(
   minRadius: number,
   maxRadius: number,
 ): THREE.Vector3Like {
-  const rho: number = randomInRange(minRadius, maxRadius);
+  // ? V = 4π/3 · ρ³, so uniform-by-volume needs ρ = ∛(ρmin³ + u·(ρmax³ - ρmin³)), not a uniform ρ.
+  // ? randomInRange(min, max) is already min + u·(max - min), so cubing the bounds gets that
+  // ? formula for free — no need for a separate getRandomRho/getValueFromNewRange.
+  const rho: number = Math.cbrt(randomInRange(minRadius ** 3, maxRadius ** 3));
   const cosPhi: number = randomInRange(-1, 1, "both");
   // * cos²φ + sin²φ = 1² ⇔ sin(phi) = ±√(1 - cos²φ). Positive root: phi ∈ [0, π], where sin ≥ 0
   const sinPhi: number = Math.sqrt(1 - cosPhi ** 2);
