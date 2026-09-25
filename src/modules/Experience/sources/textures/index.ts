@@ -1,5 +1,4 @@
 import { TextureSourceType } from "@modules/Experience/utils/Resources/types";
-
 // prettier-ignore
 const textures = [
 ] as const;
@@ -17,6 +16,7 @@ export type LdrTextureNames = TextureNamesByType<"ldrEnvTexture">; // never (no 
 export type CubeTextureNames = TextureNamesByType<"cubeEnvTexture">; // never
 export type HdrTextureNames = TextureNamesByType<"hdrEnvTexture">; // never
 export type TextureArrayNames = TextureNamesByType<"textureArray">; // never (until registered)
+export type ShaderTextureNames = TextureNamesByType<"shaderTexture">;
 
 // ? Creates an object with the "name" property value as the key and its whole obj as the value
 type TextureByName = {
