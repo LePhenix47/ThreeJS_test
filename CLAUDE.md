@@ -80,7 +80,7 @@ If you modify code without reading ALL relevant skills first, you WILL:
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite
+- **Frontend**: React 19 + TypeScript + Vite
 - **State**: Zustand
 - **Styling**: SCSS with BEM naming convention
 - **3D**: Three.js
@@ -91,8 +91,9 @@ If you modify code without reading ALL relevant skills first, you WILL:
 src/
 ├── components/         # React components (.tsx + .scss)
 ├── modules/
-│   ├── Experience/     # Three.js core (singleton, resources, utils)
-│   └── World/          # World entities (Firework, Galaxy, Environment, ...)
+│   └── webgl/
+│       ├── Experience/ # Three.js core (singleton, resources, utils)
+│       └── World/      # World entities (Firework, Galaxy, Environment, ...)
 ├── routes/              # TanStack Router routes
 ├── sass/                # Global SCSS (variables, mixins, themes)
 ├── stores/              # Zustand stores
@@ -104,7 +105,7 @@ src/
 ## Environment Variables
 
 See [.env.example](.env.example) for required variables.
-- `VITE_BASE_PATH`: Required for routing
+- `VITE_BASE_PATH`: Required for routing (read in code as `env.BASE_PATH`, see the `env-variables` skill)
 
 ## Core Principles
 

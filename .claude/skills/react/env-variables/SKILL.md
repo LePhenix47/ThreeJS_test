@@ -17,9 +17,17 @@ function MyComponent() {
     console.log("Development mode");
   }
 
-  return <div>Version: {env.VITE_APP_VERSION}</div>;
+  return <div>Version: {env.APP_VERSION}</div>;
 }
 ```
+
+## The VITE_ prefix
+
+Vite only exposes variables that start with `VITE_`, so the prefix stays everywhere Vite or the schema sees the variable: `.env`, `vite-env.d.ts` and the Zod schema in `env.ts`. `env.ts` strips it from the exported object, so code reads the bare name (`VITE_API_URL` in `.env` is `env.API_URL` in code).
+
+- Vite's built-ins (`BASE_URL`, `DEV`, `MODE`, `PROD`, `SSR`) have no prefix and are exported as they are.
+- `env.ts` throws at startup if a stripped name collides with another key (a `VITE_MODE` would clash with the built-in `MODE`), so pick a different name.
+- `BASE_URL` (Vite's built-in base, like `/ThreeJS_test/`) and `BASE_PATH` (from `VITE_BASE_PATH`, like `ThreeJS_test`) are different values.
 
 ## ❌ Bad (Direct import.meta.env)
 ```tsx
@@ -81,5 +89,5 @@ const EnvSchema = z.object({
 import env from "@env";
 
 ...
-console.log(env.VITE_API_URL)
+console.log(env.API_URL) // ? Prefix stripped, see "The VITE_ prefix"
 ```

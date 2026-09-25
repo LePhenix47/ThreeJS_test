@@ -16,6 +16,7 @@ export interface ImportMetaEnv {
    *   Vite value. Never read import.meta.env.VITE_STRICT_MODE directly for
    *   that reason — always go through the validated `env` default export. */
   readonly VITE_STRICT_MODE: boolean;
+  readonly VITE_TANSTACK_QUERY_TOOLS: boolean;
 
   // Add more custom variables here following the VITE_ prefix convention
   // Example:
