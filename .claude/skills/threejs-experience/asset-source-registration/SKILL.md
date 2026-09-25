@@ -96,3 +96,21 @@ export default models;
 ## Assets go in `assets/`
 
 Files must be copied to `assets/models/<name>/` or `assets/textures/<name>/` before they can be imported. The `@assets/*` alias maps to `assets/`.
+
+## Multi-file glTF stays in `public/`
+
+`assets/` files are imported through Vite, which hashes their names. A `.gltf` finds its `.bin` and textures by relative filename, so importing the `.gltf` breaks those references. Prefer a single-file `.glb`, which works with `?url` above. If you must keep a `.gltf` + `.bin`, put them in `public/models/<name>/` and reference them by URL:
+
+```typescript
+import env from "@env";
+
+const burger = {
+  name: "burger",
+  type: "gltf",
+  path: `${env.BASE_URL}models/burger/burger.gltf`,
+} as const satisfies Source;
+```
+
+## Draco-compressed models
+
+`Resources` always attaches a `DRACOLoader`, and three bundles its own WASM decoders (base-path aware, emitted by Vite). No `public/draco/` folder or `setDecoderPath` is needed, so a Draco `.glb` loads like any other model.
