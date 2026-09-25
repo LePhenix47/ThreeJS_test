@@ -34,8 +34,8 @@ class World implements Updatable, Destroyable {
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
 
   private readonly debugDefaults: WorldState = {
-    axisHelper: true,
-    gridHelper: true,
+    axisHelper: false,
+    gridHelper: false,
     helpersPosX: 0,
     helpersPosY: 0,
     helpersPosZ: 0,
