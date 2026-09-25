@@ -135,7 +135,7 @@ public/textures/<asset-name>/<file>.png
 
 ```ts
 import { Source } from "@modules/webgl/Experience/utils/Resources/types";
-import myModel from "@public/models/<asset-name>/<file>.glb?url";
+import myModel from "@assets/models/<asset-name>/<file>.glb?url";
 
 const myAsset = {
   name: "<asset-name>",
@@ -150,7 +150,7 @@ export default myAsset;
 
 ```ts
 import { Source } from "@modules/webgl/Experience/utils/Resources/types";
-import colorMap from "@public/textures/<asset-name>/<file>.png";
+import colorMap from "@assets/textures/<asset-name>/<file>.png";
 
 const myTextures = {
   name: "<asset-name>",

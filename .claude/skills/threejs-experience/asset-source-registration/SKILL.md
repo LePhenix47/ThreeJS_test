@@ -27,7 +27,7 @@ One asset = one subfolder = one `.ts` file. Never inline source objects directly
 
 ```typescript
 import { Source } from "@modules/webgl/Experience/utils/Resources/types";
-import coffeeSmokeModel from "@public/models/coffee-smoke/bakedModel.glb?url";
+import coffeeSmokeModel from "@assets/models/coffee-smoke/bakedModel.glb?url";
 
 const coffeeSmoke = {
   name: "coffee-smoke",
@@ -42,7 +42,7 @@ export default coffeeSmoke;
 
 ```typescript
 import { Source } from "@modules/webgl/Experience/utils/Resources/types";
-import perlin from "@public/textures/coffee-smoke/perlin.png";
+import perlin from "@assets/textures/coffee-smoke/perlin.png";
 
 const coffeeSmokeTextures = {
   name: "coffee-smoke",
@@ -59,8 +59,8 @@ For a pool of interchangeable texture variants an entity picks from at runtime (
 
 ```typescript
 import { Source } from "@modules/webgl/Experience/utils/Resources/types";
-import tex1 from "@public/textures/particles/1.png";
-import tex2 from "@public/textures/particles/2.png";
+import tex1 from "@assets/textures/particles/1.png";
+import tex2 from "@assets/textures/particles/2.png";
 
 const particles = {
   name: "particles",
@@ -75,8 +75,8 @@ Retrieve it as an ordered array via `resources.getTextureArray<T>(name): THREE.T
 
 ## Vite import rules
 
-- GLB files: **must use `?url` suffix** → `import model from "@public/models/foo/bar.glb?url"`
-- Images/textures: **direct import** → `import tex from "@public/textures/foo/bar.png"`
+- GLB files: **must use `?url` suffix** → `import model from "@assets/models/foo/bar.glb?url"`
+- Images/textures: **direct import** → `import tex from "@assets/textures/foo/bar.png"`
 
 ## index.ts (update after adding source file)
 
@@ -95,4 +95,4 @@ export default models;
 
 ## Assets go in `public/`
 
-Files must be copied to `public/models/<name>/` or `public/textures/<name>/` before they can be imported. The `@public/*` alias maps to `public/`.
+Files must be copied to `public/models/<name>/` or `public/textures/<name>/` before they can be imported. The `@assets/*` alias maps to `public/`.
