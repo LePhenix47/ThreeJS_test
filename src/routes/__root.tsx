@@ -10,7 +10,8 @@ import { createPortal } from "react-dom";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useAppStore } from "@/stores/useAppStore";
 import env from "@env";
-import ThemeToggle from "@/components/ThemeToggle/ThemeToggle";
+import Header from "@/components/Header/Header";
+import Footer from "@/components/Footer/Footer";
 
 function NotFound() {
   return (
@@ -163,30 +164,13 @@ function RootComponent() {
       {/* Portal HeadContent into the document head */}
       {createPortal(<HeadContent />, document.querySelector("head")!)}
 
-      <header className="header" data-element="header">
-        <svg className="hide header__svg-filters"></svg>
-        <h1 className="header__title" title="Title">
-          THREE.js Test
-        </h1>
-      </header>
+      <Header />
 
       <main className="index" data-element="index">
         <Outlet />
       </main>
 
-      <footer className="footer" data-element="footer">
-        <p className="footer__paragraph">
-          Made by:{" "}
-          <a
-            href="https://younes-portfolio-dev.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Younes Lahouiti
-          </a>
-        </p>
-        <ThemeToggle />
-      </footer>
+      <Footer />
 
       <Scripts />
       {env.DEV && <TanStackRouterDevtools position="bottom-right" />}
