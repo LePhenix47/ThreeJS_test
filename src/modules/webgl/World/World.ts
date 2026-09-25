@@ -8,8 +8,8 @@ import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 type WorldState = {
-  axisHelper: boolean;
-  gridHelper: boolean;
+  axisHelperVisible: boolean;
+  gridHelperVisible: boolean;
   helpersPosX: number;
   helpersPosY: number;
   helpersPosZ: number;
@@ -36,8 +36,8 @@ class World implements Updatable, Destroyable {
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
 
   private readonly debugDefaults: WorldState = {
-    axisHelper: true,
-    gridHelper: true,
+    axisHelperVisible: true,
+    gridHelperVisible: true,
     helpersPosX: 0,
     helpersPosY: 0,
     helpersPosZ: 0,
@@ -74,12 +74,18 @@ class World implements Updatable, Destroyable {
     const { size } = World.CONFIG.axisHelper;
     const axisHelper = new THREE.AxesHelper(size);
 
+    const { axisHelperVisible } = this.debugDefaults;
+    axisHelper.visible = axisHelperVisible;
+
     this.axisHelper = axisHelper;
   }
 
   private setGridHelper() {
     const { size, subdivisions } = World.CONFIG.gridHelper;
     const gridHelper = new THREE.GridHelper(size, subdivisions);
+
+    const { gridHelperVisible } = this.debugDefaults;
+    gridHelper.visible = gridHelperVisible;
 
     this.gridHelper = gridHelper;
   }
@@ -145,13 +151,13 @@ class World implements Updatable, Destroyable {
 
     const helpersFolder = worldFolder.addFolder("Helpers");
 
-    helpersFolder.add(state, "axisHelper").name("Axis Helper");
-    registry.bind("axisHelper", (v) => {
+    helpersFolder.add(state, "axisHelperVisible").name("Axis Helper");
+    registry.bind("axisHelperVisible", (v) => {
       this.axisHelper.visible = v;
     });
 
-    helpersFolder.add(state, "gridHelper").name("Grid Helper");
-    registry.bind("gridHelper", (v) => {
+    helpersFolder.add(state, "gridHelperVisible").name("Grid Helper");
+    registry.bind("gridHelperVisible", (v) => {
       this.gridHelper.visible = v;
     });
 
