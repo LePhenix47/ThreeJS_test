@@ -5,7 +5,7 @@ import Experience, {
   Destroyable,
   Resizable,
   Updatable,
-} from "@modules/Experience/Experience";
+} from "@/modules/webgl/Experience/Experience";
 
 import { WebStorage } from "@lephenix47/webstorage-utility";
 import Debounce from "@/utils/classes/debounce";

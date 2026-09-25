@@ -1,5 +1,5 @@
 import GUI from "lil-gui";
-import { Destroyable } from "@modules/Experience/Experience";
+import { Destroyable } from "@/modules/webgl/Experience/Experience";
 
 import LEVA_CSS from "./lil-gui-debug.css?inline";
 

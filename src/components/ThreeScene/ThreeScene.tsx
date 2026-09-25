@@ -5,10 +5,10 @@ import * as THREE from "three";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 
 import "./ThreeScene.scss";
-import Experience from "@/modules/Experience/Experience";
+import Experience from "@/modules/webgl/Experience/Experience";
 
-import textures from "@/modules/Experience/sources/textures";
-import models from "@/modules/Experience/sources/models";
+import textures from "@/modules/webgl/Experience/sources/textures";
+import models from "@/modules/webgl/Experience/sources/models";
 
 type ThreeSceneProps = {
   className?: string;

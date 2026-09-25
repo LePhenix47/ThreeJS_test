@@ -21,9 +21,9 @@ import {
   TextureArrayNames,
   ShaderTextureNames,
   GetPathsFromName,
-} from "@modules/Experience/sources/textures";
+} from "@/modules/webgl/Experience/sources/textures";
 
-import { ModelNames } from "@modules/Experience/sources/models";
+import { ModelNames } from "@/modules/webgl/Experience/sources/models";
 
 export const texturePropertyObject = {
   color: "map",
@@ -357,7 +357,9 @@ class Resources extends EventEmitter<ResourcesEvents> {
       throw new Error(`[Resources] "${name}" is not a textureArray source`);
     }
 
-    return source.paths.map((_, i) => this.getTextureByItemKey(`${name}_${i}`)) as T[];
+    return source.paths.map((_, i) =>
+      this.getTextureByItemKey(`${name}_${i}`),
+    ) as T[];
   }
 
   private sourceLoaded(
