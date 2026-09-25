@@ -65,7 +65,7 @@ class Galaxy extends PreviewablePointsEntity implements Updatable, Destroyable {
 
   private readonly debugDefaults: GalaxyState = {
     count: 200_000,
-    size: 0.005,
+    size: 2,
     radius: 5,
     branches: 3,
     spin: 1,
