@@ -69,8 +69,8 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.scene.background = this.envMapTexture;
     this.scene.environment = this.envMapTexture;
 
-    // ? Seeded from the defaults, the GUI bind only runs with ?debug=true
-    this.renderer.instance.setClearColor(this.debugDefaults.environmentColor);
+    // ? Applied here too, the GUI bind below only runs with ?debug=true
+    this.applyEnvironmentColor();
 
     this.setAmbientLight();
     this.setDirectionalLight();
@@ -121,6 +121,14 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.scene.add(this.lightHelper);
   }
 
+  /** Sets the renderer clear color from the current state. */
+  private applyEnvironmentColor = (): void => {
+    const { environmentColor } = this.guiRegistry?.state || this.debugDefaults;
+    const threeColor = new THREE.Color(environmentColor);
+
+    this.renderer.instance.setClearColor(threeColor);
+  };
+
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<EnvironmentState>(
       "environment-gui-state",
@@ -135,10 +143,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
     environmentFolder
       .addColor(state, "environmentColor")
       .name("Renderer clear color");
-    registry.bind("environmentColor", (v) => {
-      const threeColor = new THREE.Color(v);
-      this.renderer.instance.setClearColor(threeColor);
-    });
+    registry.bind("environmentColor", this.applyEnvironmentColor);
 
     const helpersFolder = environmentFolder.addFolder("Helpers");
 
