@@ -1,7 +1,5 @@
 import * as THREE from "three";
-import Experience, {
-  Destroyable,
-} from "@modules/webgl/Experience/Experience";
+import Experience, { Destroyable } from "@modules/webgl/Experience/Experience";
 import { PointsEntity } from "./types/points-entity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
@@ -15,10 +13,10 @@ type ParticlesUniforms = MapAsUniforms<{
 class Particles extends PointsEntity implements Destroyable {
   public static readonly CONFIG = {
     geometry: {
-      width: 10,
-      height: 10,
-      widthSegments: 32,
-      heightSegments: 32,
+      width: 5,
+      height: 5,
+      widthSegments: 2 ** 4,
+      heightSegments: 2 ** 4,
     },
   } as const;
 
@@ -67,10 +65,11 @@ class Particles extends PointsEntity implements Destroyable {
 
   protected setMaterial(): void {
     const { x, y } = this.sizes.resolution;
-    const resolution = new THREE.Vector2(x, y);
 
     const uniforms: ParticlesUniforms = {
-      uResolution: { value: resolution },
+      uResolution: {
+        value: new THREE.Vector2(x, y),
+      },
     };
 
     this.material = new THREE.ShaderMaterial({
