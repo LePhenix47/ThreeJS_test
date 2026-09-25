@@ -12,7 +12,7 @@ import { routeTree } from "./routeTree.gen";
 // Create a new router instance
 const router = createRouter({
   routeTree,
-  basepath: env.VITE_BASE_PATH,
+  basepath: env.BASE_PATH,
 });
 
 // Register the router instance for type safety
