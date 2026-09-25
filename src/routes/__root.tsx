@@ -189,7 +189,9 @@ function RootComponent() {
       <Footer />
 
       <Scripts />
-      {env.DEV && <TanStackRouterDevtools position="top-left" />}
+      {env.DEV && env.TANSTACK_QUERY_TOOLS && (
+        <TanStackRouterDevtools position="top-left" />
+      )}
     </>
   );
 }

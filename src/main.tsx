@@ -42,7 +42,7 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <RouterProvider router={router} />
-    {env.DEV && (
+    {env.DEV && env.TANSTACK_QUERY_TOOLS && (
       <ReactQueryDevtools
         initialIsOpen={false}
         position="left"
