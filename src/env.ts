@@ -80,19 +80,19 @@ function stripEnvVitePrefixKeys(parsedEnv: EnvType): EnvTypeNoPrefix {
 
   for (const [key, value] of Object.entries(parsedEnv)) {
     if (!key.startsWith(VITE_PREFIX)) {
-      Reflect.set(newParsedEnv, key, value);
+      newParsedEnv[key] = value;
       continue;
     }
 
     const noPrefixKey: string = key.slice(VITE_PREFIX.length);
 
-    if (Reflect.has(parsedEnv, noPrefixKey)) {
+    if (Object.hasOwn(parsedEnv, noPrefixKey)) {
       throw new Error(
         `${key} conflicts with Vite's built-in ${noPrefixKey}, please use a slightly different name`,
       );
     }
 
-    Reflect.set(newParsedEnv, noPrefixKey, value);
+    newParsedEnv[noPrefixKey] = value;
   }
 
   return newParsedEnv as EnvTypeNoPrefix;
