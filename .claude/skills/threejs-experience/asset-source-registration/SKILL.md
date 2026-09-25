@@ -93,6 +93,6 @@ export default models;
 - `as const` locks `name` to its literal type (`"coffee-smoke"` not `string`), so the index type can derive `ModelNames` as a string-literal union. Which is what `resources.getGltf()` / `resources.getTextures()` use for type-safe key lookup
 - `satisfies Source` validates the shape at compile time without widening the type
 
-## Assets go in `public/`
+## Assets go in `assets/`
 
-Files must be copied to `public/models/<name>/` or `public/textures/<name>/` before they can be imported. The `@assets/*` alias maps to `public/`.
+Files must be copied to `assets/models/<name>/` or `assets/textures/<name>/` before they can be imported. The `@assets/*` alias maps to `assets/`.

@@ -122,11 +122,11 @@ resources.getGltf("foxModel");                     // → GLTF
 
 Each asset gets its own source file. Never inline source objects directly in the index arrays.
 
-### 1. Copy the asset to `public/`
+### 1. Copy the asset to `assets/`
 
 ```text
-public/models/<asset-name>/<file>.glb
-public/textures/<asset-name>/<file>.png
+assets/models/<asset-name>/<file>.glb
+assets/textures/<asset-name>/<file>.png
 ```
 
 ### 2. Create a source file
