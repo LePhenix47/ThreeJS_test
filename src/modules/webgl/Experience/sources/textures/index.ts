@@ -1,4 +1,4 @@
-import { TextureSourceType } from "@/modules/webgl/Experience/utils/Resources/types";
+import { TextureSourceType } from "@modules/webgl/Experience/utils/Resources/types";
 // prettier-ignore
 const textures = [
 ] as const;

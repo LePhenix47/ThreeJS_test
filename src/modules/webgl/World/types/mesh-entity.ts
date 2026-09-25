@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { TextureName } from "@/modules/webgl/Experience/utils/Resources/types";
+import type { TextureName } from "@modules/webgl/Experience/utils/Resources/types";
 
 /** Full map of all possible texture slots to their loaded THREE.Texture instances. */
 export type EntityTexture = Record<TextureName, THREE.Texture>;

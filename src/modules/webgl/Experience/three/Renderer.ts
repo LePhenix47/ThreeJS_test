@@ -3,7 +3,7 @@ import Experience, {
   Destroyable,
   Resizable,
   Updatable,
-} from "@/modules/webgl/Experience/Experience";
+} from "@modules/webgl/Experience/Experience";
 
 class Renderer implements Resizable, Updatable, Destroyable {
   public static readonly CONFIG = {

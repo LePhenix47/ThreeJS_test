@@ -21,9 +21,9 @@ import {
   TextureArrayNames,
   ShaderTextureNames,
   GetPathsFromName,
-} from "@/modules/webgl/Experience/sources/textures";
+} from "@modules/webgl/Experience/sources/textures";
 
-import { ModelNames } from "@/modules/webgl/Experience/sources/models";
+import { ModelNames } from "@modules/webgl/Experience/sources/models";
 
 export const texturePropertyObject = {
   color: "map",

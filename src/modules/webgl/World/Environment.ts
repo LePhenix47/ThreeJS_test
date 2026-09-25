@@ -1,4 +1,4 @@
-import Experience, { Destroyable } from "@/modules/webgl/Experience/Experience";
+import Experience, { Destroyable } from "@modules/webgl/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { EnvironmentEntity } from "./types/environment-entity";

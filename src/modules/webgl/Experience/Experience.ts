@@ -1,4 +1,4 @@
-import World from "@/modules/webgl/World/World";
+import World from "@modules/webgl/World/World";
 import Camera from "./three/Camera";
 import Renderer from "./three/Renderer";
 import Sizes from "./utils/Sizes";

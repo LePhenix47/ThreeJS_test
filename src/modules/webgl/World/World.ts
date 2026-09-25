@@ -1,7 +1,7 @@
 import Experience, {
   Destroyable,
   Updatable,
-} from "@/modules/webgl/Experience/Experience";
+} from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
 import Floor from "./Floor";
 import * as THREE from "three";
