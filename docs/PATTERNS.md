@@ -131,10 +131,10 @@ public/textures/<asset-name>/<file>.png
 
 ### 2. Create a source file
 
-**Model** — `src/modules/Experience/sources/models/<asset-name>/<asset-name>.ts`:
+**Model** — `src/modules/webgl/Experience/sources/models/<asset-name>/<asset-name>.ts`:
 
 ```ts
-import { Source } from "@modules/Experience/utils/Resources/types";
+import { Source } from "@modules/webgl/Experience/utils/Resources/types";
 import myModel from "@public/models/<asset-name>/<file>.glb?url";
 
 const myAsset = {
@@ -146,10 +146,10 @@ const myAsset = {
 export default myAsset;
 ```
 
-**Texture** — `src/modules/Experience/sources/textures/<asset-name>/<asset-name>.ts`:
+**Texture** — `src/modules/webgl/Experience/sources/textures/<asset-name>/<asset-name>.ts`:
 
 ```ts
-import { Source } from "@modules/Experience/utils/Resources/types";
+import { Source } from "@modules/webgl/Experience/utils/Resources/types";
 import colorMap from "@public/textures/<asset-name>/<file>.png";
 
 const myTextures = {
@@ -169,7 +169,7 @@ export default myTextures;
 
 ### 3. Register in the index
 
-`src/modules/Experience/sources/models/index.ts`:
+`src/modules/webgl/Experience/sources/models/index.ts`:
 
 ```ts
 import myAsset from "./<asset-name>/<asset-name>";
@@ -177,7 +177,7 @@ import myAsset from "./<asset-name>/<asset-name>";
 const models = [myAsset] as const;
 ```
 
-`src/modules/Experience/sources/textures/index.ts`:
+`src/modules/webgl/Experience/sources/textures/index.ts`:
 
 ```ts
 import myTextures from "./<asset-name>/<asset-name>";

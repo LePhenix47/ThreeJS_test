@@ -77,4 +77,4 @@ Otherwise, it renders as a THREE.Mesh:
 
 ## Location
 
-`src/modules/World/types/entity.ts`
+`src/modules/webgl/World/types/entity.ts`

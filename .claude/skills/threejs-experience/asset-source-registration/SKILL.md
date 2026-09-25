@@ -10,7 +10,7 @@ metadata:
 ## File Structure
 
 ```
-src/modules/Experience/sources/
+src/modules/webgl/Experience/sources/
   models/
     <asset-name>/
       <asset-name>.ts     ← one file per asset
@@ -26,7 +26,7 @@ One asset = one subfolder = one `.ts` file. Never inline source objects directly
 ## Model source file
 
 ```typescript
-import { Source } from "@modules/Experience/utils/Resources/types";
+import { Source } from "@modules/webgl/Experience/utils/Resources/types";
 import coffeeSmokeModel from "@public/models/coffee-smoke/bakedModel.glb?url";
 
 const coffeeSmoke = {
@@ -41,7 +41,7 @@ export default coffeeSmoke;
 ## Texture source file
 
 ```typescript
-import { Source } from "@modules/Experience/utils/Resources/types";
+import { Source } from "@modules/webgl/Experience/utils/Resources/types";
 import perlin from "@public/textures/coffee-smoke/perlin.png";
 
 const coffeeSmokeTextures = {
@@ -58,7 +58,7 @@ export default coffeeSmokeTextures;
 For a pool of interchangeable texture variants an entity picks from at runtime (e.g. random particle sprites), `paths` is an **array**, not a keyed object:
 
 ```typescript
-import { Source } from "@modules/Experience/utils/Resources/types";
+import { Source } from "@modules/webgl/Experience/utils/Resources/types";
 import tex1 from "@public/textures/particles/1.png";
 import tex2 from "@public/textures/particles/2.png";
 

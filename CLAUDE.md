@@ -91,8 +91,9 @@ If you modify code without reading ALL relevant skills first, you WILL:
 src/
 ├── components/         # React components (.tsx + .scss)
 ├── modules/
-│   ├── Experience/     # Three.js core (singleton, resources, utils)
-│   └── World/          # World entities (Firework, Galaxy, Environment, ...)
+│   └── webgl/
+│       ├── Experience/ # Three.js core (singleton, resources, utils)
+│       └── World/      # World entities (Firework, Galaxy, Environment, ...)
 ├── routes/              # TanStack Router routes
 ├── sass/                # Global SCSS (variables, mixins, themes)
 ├── stores/              # Zustand stores
