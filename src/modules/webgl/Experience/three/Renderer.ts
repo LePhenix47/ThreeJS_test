@@ -11,7 +11,7 @@ class Renderer implements Resizable, Updatable, Destroyable {
     toneMapping: THREE.CineonToneMapping,
     outputColorSpace: THREE.SRGBColorSpace,
     shadowMap: {
-      type: THREE.PCFSoftShadowMap,
+      type: THREE.PCFShadowMap,
     },
   } as const;
   public instance: THREE.WebGLRenderer;

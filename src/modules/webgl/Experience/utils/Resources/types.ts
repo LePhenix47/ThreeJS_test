@@ -105,6 +105,5 @@ export type MaterialMapName = {
 
 // * Not Zod-validated (contains class instance)
 export type ResourceOptions = Partial<{
-  dracoDecoderPath: string;
   loadingManager: THREE.LoadingManager;
 }>;

@@ -85,7 +85,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
     }
     this.sources = parsed.data;
 
-    const { loadingManager, dracoDecoderPath } = options;
+    const { loadingManager } = options;
     this.loadingManager = loadingManager ?? new THREE.LoadingManager();
     if (loadingManager) {
       this.storeOriginalCallbacks();
@@ -93,9 +93,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
 
     this.handleLoadingManager();
 
-    this.setLoaders({
-      dracoDecoderPath: dracoDecoderPath,
-    });
+    this.setLoaders();
 
     console.log("Resources instantiated");
 
@@ -125,7 +123,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
     };
   }
 
-  private setLoaders(opt?: Pick<ResourceOptions, "dracoDecoderPath">): void {
+  private setLoaders(): void {
     const loadingManager = this.loadingManager;
 
     const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
@@ -135,10 +133,8 @@ class Resources extends EventEmitter<ResourcesEvents> {
 
     const hdrLoader = new HDRLoader(loadingManager);
 
-    if (opt?.dracoDecoderPath) {
-      dracoLoader.setDecoderPath(opt.dracoDecoderPath);
-      gltfLoader.setDRACOLoader(dracoLoader);
-    }
+    // ? No setDecoderPath needed: DRACOLoader defaults to WASM decoders bundled by Vite (base-path aware), so nothing to copy into public/
+    gltfLoader.setDRACOLoader(dracoLoader);
 
     const loaders = {
       cubeTexture: cubeTextureLoader,
