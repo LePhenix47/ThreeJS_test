@@ -1,10 +1,7 @@
 import Experience, { Destroyable } from "@modules/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-import {
-  EnvironmentEntity,
-  EnvironmentMapConfig,
-} from "./types/environment-entity";
+import { EnvironmentEntity } from "./types/environment-entity";
 
 type EnvironmentState = {
   lightHelper: boolean;
@@ -51,7 +48,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
-  protected envMapConfig: EnvironmentMapConfig = {};
 
   private get scene() {
     return this.experience!.scene;
