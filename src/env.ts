@@ -38,6 +38,7 @@ const EnvSchema = z.object({
    *   inferred output still errors as "missing", same as any other
    *   required field. */
   VITE_STRICT_MODE: EnvCoercion.boolean.default(false),
+  VITE_TANSTACK_QUERY_TOOLS: EnvCoercion.boolean.default(true),
   // Add more custom variables here
   // IMPORTANT: Also add them to ImportMetaEnv in vite-env.d.ts
   // Example:
