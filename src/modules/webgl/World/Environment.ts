@@ -44,7 +44,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   private readonly debugDefaults: EnvironmentState = {
     lightHelper: true,
-    environmentColor: "black",
+    environmentColor: "#181818",
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
@@ -68,6 +68,9 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
     this.scene.background = this.envMapTexture;
     this.scene.environment = this.envMapTexture;
+
+    // ? Seeded from the defaults, the GUI bind only runs with ?debug=true
+    this.renderer.instance.setClearColor(this.debugDefaults.environmentColor);
 
     this.setAmbientLight();
     this.setDirectionalLight();
