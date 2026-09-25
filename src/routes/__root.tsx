@@ -91,7 +91,10 @@ export const Route = createRootRoute({
         property: "og:description",
         content: "Project to learn a thing or two about THREE.js",
       },
-      { property: "og:image", content: `${import.meta.env.BASE_URL}img/ico/threejs_white.ico` },
+      {
+        property: "og:image",
+        content: `${import.meta.env.BASE_URL}img/ico/threejs_white.ico`,
+      },
       { property: "og:image:width", content: "512" },
       { property: "og:image:height", content: "512" },
       {
@@ -105,11 +108,24 @@ export const Route = createRootRoute({
         name: "twitter:description",
         content: "Project to learn a thing or two about THREE.js",
       },
-      { name: "twitter:image", content: `${import.meta.env.BASE_URL}img/ico/threejs_white.ico` },
+      {
+        name: "twitter:image",
+        content: `${import.meta.env.BASE_URL}img/ico/threejs_white.ico`,
+      },
     ],
     links: [
-      { rel: "icon", type: "image/x-icon", media: "(prefers-color-scheme: light)", href: `${import.meta.env.BASE_URL}img/ico/threejs_black.ico` },
-      { rel: "icon", type: "image/x-icon", media: "(prefers-color-scheme: dark)", href: `${import.meta.env.BASE_URL}img/ico/threejs_white.ico` },
+      {
+        rel: "icon",
+        type: "image/x-icon",
+        media: "(prefers-color-scheme: light)",
+        href: `${import.meta.env.BASE_URL}img/ico/threejs_black.ico`,
+      },
+      {
+        rel: "icon",
+        type: "image/x-icon",
+        media: "(prefers-color-scheme: dark)",
+        href: `${import.meta.env.BASE_URL}img/ico/threejs_white.ico`,
+      },
     ],
     scripts: [
       {
@@ -173,7 +189,7 @@ function RootComponent() {
       <Footer />
 
       <Scripts />
-      {env.DEV && <TanStackRouterDevtools position="bottom-right" />}
+      {env.DEV && <TanStackRouterDevtools position="top-left" />}
     </>
   );
 }
