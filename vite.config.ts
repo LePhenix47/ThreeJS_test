@@ -3,7 +3,6 @@ import path from "path";
 import autoprefixer from "autoprefixer";
 import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 import glsl from "vite-plugin-glsl";
 import mkcert from "vite-plugin-mkcert";
@@ -25,7 +24,6 @@ export default defineConfig(({ mode }) => {
     plugins: [
       tanstackRouter(),
       react(),
-      tsconfigPaths(),
       glsl({
         removeDuplicatedImports: true,
       }),
@@ -48,13 +46,14 @@ export default defineConfig(({ mode }) => {
       outDir: "dist",
       emptyOutDir: true,
       minify: "terser",
-      rollupOptions: {
+      rolldownOptions: {
         input: {
-          main: path.resolve(__dirname, "index.html"),
+          main: path.resolve(import.meta.dirname, "index.html"),
         },
       },
     },
     resolve: {
+      tsconfigPaths: true, // ? Native in Vite 8, replaces the vite-tsconfig-paths plugin
       extensions: [".ts", ".tsx", ".js", ".jsx"],
     },
   };
