@@ -38,6 +38,7 @@ const EnvSchema = z.object({
    *   inferred output still errors as "missing", same as any other
    *   required field. */
   VITE_STRICT_MODE: EnvCoercion.boolean.default(false),
+  VITE_TANSTACK_QUERY_TOOLS: EnvCoercion.boolean.default(true),
   // Add more custom variables here
   // IMPORTANT: Also add them to ImportMetaEnv in vite-env.d.ts
   // Example:
@@ -53,22 +54,74 @@ const EnvSchema = z.object({
 export type EnvType = z.infer<typeof EnvSchema>;
 
 /**
+ * Rewrites each key of T by stripping the `VITE_` prefix.
+ * Keys without the prefix are kept as-is.
+ */
+type StripViteEnvPrefixKeys<T extends EnvType> = {
+  [K in keyof T as K extends `${typeof VITE_PREFIX}${infer RestKeyName}`
+    ? RestKeyName
+    : K]: T[K];
+};
+
+/**
+ * EnvType with every `VITE_`-prefixed key renamed to its bare form,
+ * so consumers read `STRICT_MODE` instead of `VITE_STRICT_MODE`.
+ */
+type EnvTypeNoPrefix = StripViteEnvPrefixKeys<EnvType>;
+
+const VITE_PREFIX = "VITE_" as const;
+
+/**
+ * Returns a shallow copy of the parsed env with `VITE_` stripped from
+ * every key. Keys that don't start with `VITE_` are copied unchanged.
+ */
+function stripEnvVitePrefixKeys(parsedEnv: EnvType): EnvTypeNoPrefix {
+  const newParsedEnv = {};
+
+  for (const [key, value] of Object.entries(parsedEnv)) {
+    if (!key.startsWith(VITE_PREFIX)) {
+      newParsedEnv[key] = value;
+      continue;
+    }
+
+    const noPrefixKey: string = key.slice(VITE_PREFIX.length);
+
+    if (Object.hasOwn(parsedEnv, noPrefixKey)) {
+      throw new Error(
+        `${key} conflicts with Vite's built-in ${noPrefixKey}, please use a slightly different name`,
+      );
+    }
+
+    newParsedEnv[noPrefixKey] = value;
+  }
+
+  return newParsedEnv as EnvTypeNoPrefix;
+}
+
+/**
  * Parse and validate environment variables at runtime
  */
-function validateEnv(): EnvType {
+function validateEnv(): EnvTypeNoPrefix {
   try {
     const parsed = EnvSchema.parse(import.meta.env);
 
     if (parsed.MODE === "development") {
-      console.log("Parsed ENV", parsed);
+      console.log(
+        "Parsed ENV",
+        parsed,
+        "(VITE_ prefixes will be stripped on usage)",
+      );
     }
 
-    return parsed;
+    const noPrefixEnv: EnvTypeNoPrefix = stripEnvVitePrefixKeys(parsed);
+
+    return noPrefixEnv;
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error("❌ Environment variable validation failed:");
       console.error(error.format());
     }
+    console.log(error);
     throw new Error(
       "Failed to validate environment variables. Check console for details.",
     );

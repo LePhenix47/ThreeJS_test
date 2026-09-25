@@ -50,7 +50,7 @@ Both compile to the exact same shape (`THREE.Uniform` is just `{ value }` with a
 
 ## Type-Safe Uniforms with TypedShaderMaterial
 
-`THREE.ShaderMaterial` isn't generic over its `uniforms` shape, so `material.uniforms.uColor.value` has no autocomplete or type-checking by default. Use the two generic helpers in `src/modules/World/types/uniforms.ts`:
+`THREE.ShaderMaterial` isn't generic over its `uniforms` shape, so `material.uniforms.uColor.value` has no autocomplete or type-checking by default. Use the two generic helpers in `src/modules/webgl/World/types/uniforms.ts`:
 
 ```typescript
 export type MapAsUniforms<T extends object> = {

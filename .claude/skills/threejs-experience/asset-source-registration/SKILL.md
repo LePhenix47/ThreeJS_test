@@ -10,7 +10,7 @@ metadata:
 ## File Structure
 
 ```
-src/modules/Experience/sources/
+src/modules/webgl/Experience/sources/
   models/
     <asset-name>/
       <asset-name>.ts     ← one file per asset
@@ -26,8 +26,8 @@ One asset = one subfolder = one `.ts` file. Never inline source objects directly
 ## Model source file
 
 ```typescript
-import { Source } from "@modules/Experience/utils/Resources/types";
-import coffeeSmokeModel from "@public/models/coffee-smoke/bakedModel.glb?url";
+import { Source } from "@modules/webgl/Experience/utils/Resources/types";
+import coffeeSmokeModel from "@assets/models/coffee-smoke/bakedModel.glb?url";
 
 const coffeeSmoke = {
   name: "coffee-smoke",
@@ -41,8 +41,8 @@ export default coffeeSmoke;
 ## Texture source file
 
 ```typescript
-import { Source } from "@modules/Experience/utils/Resources/types";
-import perlin from "@public/textures/coffee-smoke/perlin.png";
+import { Source } from "@modules/webgl/Experience/utils/Resources/types";
+import perlin from "@assets/textures/coffee-smoke/perlin.png";
 
 const coffeeSmokeTextures = {
   name: "coffee-smoke",
@@ -58,9 +58,9 @@ export default coffeeSmokeTextures;
 For a pool of interchangeable texture variants an entity picks from at runtime (e.g. random particle sprites), `paths` is an **array**, not a keyed object:
 
 ```typescript
-import { Source } from "@modules/Experience/utils/Resources/types";
-import tex1 from "@public/textures/particles/1.png";
-import tex2 from "@public/textures/particles/2.png";
+import { Source } from "@modules/webgl/Experience/utils/Resources/types";
+import tex1 from "@assets/textures/particles/1.png";
+import tex2 from "@assets/textures/particles/2.png";
 
 const particles = {
   name: "particles",
@@ -75,8 +75,8 @@ Retrieve it as an ordered array via `resources.getTextureArray<T>(name): THREE.T
 
 ## Vite import rules
 
-- GLB files: **must use `?url` suffix** → `import model from "@public/models/foo/bar.glb?url"`
-- Images/textures: **direct import** → `import tex from "@public/textures/foo/bar.png"`
+- GLB files: **must use `?url` suffix** → `import model from "@assets/models/foo/bar.glb?url"`
+- Images/textures: **direct import** → `import tex from "@assets/textures/foo/bar.png"`
 
 ## index.ts (update after adding source file)
 
@@ -93,6 +93,24 @@ export default models;
 - `as const` locks `name` to its literal type (`"coffee-smoke"` not `string`), so the index type can derive `ModelNames` as a string-literal union. Which is what `resources.getGltf()` / `resources.getTextures()` use for type-safe key lookup
 - `satisfies Source` validates the shape at compile time without widening the type
 
-## Assets go in `public/`
+## Assets go in `assets/`
 
-Files must be copied to `public/models/<name>/` or `public/textures/<name>/` before they can be imported. The `@public/*` alias maps to `public/`.
+Files must be copied to `assets/models/<name>/` or `assets/textures/<name>/` before they can be imported. The `@assets/*` alias maps to `assets/`.
+
+## Multi-file glTF stays in `public/`
+
+`assets/` files are imported through Vite, which hashes their names. A `.gltf` finds its `.bin` and textures by relative filename, so importing the `.gltf` breaks those references. Prefer a single-file `.glb`, which works with `?url` above. If you must keep a `.gltf` + `.bin`, put them in `public/models/<name>/` and reference them by URL:
+
+```typescript
+import env from "@env";
+
+const burger = {
+  name: "burger",
+  type: "gltf",
+  path: `${env.BASE_URL}models/burger/burger.gltf`,
+} as const satisfies Source;
+```
+
+## Draco-compressed models
+
+`Resources` always attaches a `DRACOLoader`, and three bundles its own WASM decoders (base-path aware, emitted by Vite). No `public/draco/` folder or `setDecoderPath` is needed, so a Draco `.glb` loads like any other model.
