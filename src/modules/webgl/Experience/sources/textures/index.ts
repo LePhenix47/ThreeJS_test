@@ -1,8 +1,11 @@
 import { TextureSourceType } from "@modules/webgl/Experience/utils/Resources/types";
 import pictureTextures from "./particles/pictures";
+import glowTextures from "./particles/glow";
 // prettier-ignore
 const textures = [
-  pictureTextures
+  pictureTextures,
+  glowTextures
+
 ] as const;
 
 type RawTextures = typeof textures;
