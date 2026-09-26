@@ -39,7 +39,7 @@ class World implements Updatable, Destroyable {
     axisHelperVisible: true,
     gridHelperVisible: true,
     helpersPosX: 0,
-    helpersPosY: 0,
+    helpersPosY: -5,
     helpersPosZ: 0,
   };
 
