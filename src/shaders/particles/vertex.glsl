@@ -16,7 +16,7 @@ void main() {
     float pictureIntensity = textureGrayScale(uPictureTexture, uv);
 
     // * Point size
-    gl_PointSize = 0.3 * uResolution.y * pictureIntensity;
+    gl_PointSize = 0.15 * uResolution.y * pictureIntensity;
     gl_PointSize *= -1.0 / viewPosition.z;
 
     // * Varyings
