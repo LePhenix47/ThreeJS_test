@@ -2,6 +2,7 @@ uniform vec2 uResolution;
 uniform sampler2D uPictureTexture;
 
 varying vec2 vGlobalUv;
+varying float vPictureIntensity;
 
 #include ../utils/textures/textureGrayScale
 
@@ -20,4 +21,5 @@ void main() {
 
     // * Varyings
     vGlobalUv = uv;
+    vPictureIntensity = pictureIntensity;
 }

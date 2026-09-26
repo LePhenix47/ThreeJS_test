@@ -1,4 +1,5 @@
 varying vec2 vGlobalUv;
+varying float vPictureIntensity;
 
 void main() {
     vec2 localUv = gl_PointCoord;
@@ -9,7 +10,9 @@ void main() {
         discard; // ? ignores instruction to render pixel
     }
 
-    gl_FragColor = vec4(vec3(1.0), 1.0);
+    vec3 color = vec3(vPictureIntensity);
+
+    gl_FragColor = vec4(color, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
 }
