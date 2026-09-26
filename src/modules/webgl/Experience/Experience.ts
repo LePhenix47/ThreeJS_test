@@ -3,6 +3,7 @@ import Camera from "./three/Camera";
 import Renderer from "./three/Renderer";
 import Sizes from "./utils/Sizes";
 import Time from "./utils/Time";
+import Pointer from "./utils/Pointer";
 
 import GUI from "lil-gui";
 import * as THREE from "three";
@@ -37,6 +38,7 @@ class Experience implements Resizable, Updatable, Destroyable {
 
   public sizes: Sizes;
   public time: Time;
+  public pointer: Pointer;
   public scene: THREE.Scene<THREE.Object3DEventMap>;
 
   public resources: Resources;
@@ -76,6 +78,9 @@ class Experience implements Resizable, Updatable, Destroyable {
     // * Time
     this.time = new Time();
     this.time.on("tick", this.update);
+
+    // * Pointer
+    this.pointer = new Pointer(this.canvas);
 
     // * Resources (texture loading)
     this.resources = new Resources(sources, { loadingManager });
@@ -137,6 +142,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public destroy(): void {
     this.sizes.destroy();
     this.time.destroy();
+    this.pointer.destroy();
     this.camera.destroy();
     this.renderer.destroy();
     this.world.destroy();
