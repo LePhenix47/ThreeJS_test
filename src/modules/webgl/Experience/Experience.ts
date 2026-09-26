@@ -19,8 +19,8 @@ import type {
 
 type ExperienceConstructor = {
   canvas: InputCanvas;
-  /** Fixed-size 2D canvas that the displacement texture gets drawn on. */
-  displacementCanvas: InputCanvas;
+  /** Extra 2D canvas for the entities that draw on one. */
+  canvas2D: InputCanvas;
   debugMode?: boolean;
   loadingManager: THREE.LoadingManager;
   sources?: Source[];
@@ -33,7 +33,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public static instance: Experience | null = null;
 
   public canvas: HTMLCanvasElement;
-  public displacementCanvas: HTMLCanvasElement;
+  public canvas2D: HTMLCanvasElement;
   public debug: Debug;
 
   public sizes: Sizes;
@@ -48,7 +48,7 @@ class Experience implements Resizable, Updatable, Destroyable {
 
   constructor({
     canvas,
-    displacementCanvas,
+    canvas2D,
     debugMode = false,
     loadingManager,
     sources = [],
@@ -63,7 +63,7 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     console.log("Let us commence fourth");
     this.canvas = resolveCanvas(canvas);
-    this.displacementCanvas = resolveCanvas(displacementCanvas);
+    this.canvas2D = resolveCanvas(canvas2D);
     this.setDebugMode(debugMode);
 
     // *  ⚠ ORDER MATTERS, CALLS MUST BE MADE IN THE CORRECT ORDER

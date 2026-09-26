@@ -65,8 +65,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.time;
   }
 
-  private get displacementCanvasElement() {
-    return this.experience!.displacementCanvas;
+  private get canvas2D() {
+    return this.experience!.canvas2D;
   }
 
   private get pointer() {
@@ -88,7 +88,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     this.scene.add(this.points);
 
     this.displacementCanvas = new DisplacementCanvas({
-      canvas: this.displacementCanvasElement,
+      canvas: this.canvas2D,
     });
 
     this.sizes.on("resize", this.onResize);

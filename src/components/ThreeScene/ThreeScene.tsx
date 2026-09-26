@@ -16,7 +16,7 @@ type ThreeSceneProps = {
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const displacementCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvas2DRef = useRef<HTMLCanvasElement>(null);
 
   function createLoadingManager(): THREE.LoadingManager {
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
@@ -47,7 +47,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }
 
   const setupThreeScene = useCallback(
-    (canvas: HTMLCanvasElement, displacementCanvas: HTMLCanvasElement) => {
+    (canvas: HTMLCanvasElement, canvas2D: HTMLCanvasElement) => {
       const loadingManager = createLoadingManager();
 
       const url = new URL(location.href);
@@ -56,7 +56,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
       const experience = new Experience({
         canvas,
-        displacementCanvas,
+        canvas2D,
         debugMode: hasDebugUrlParamEnabled,
         loadingManager,
         sources: [...textures, ...models],
@@ -71,16 +71,16 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   useEffect(() => {
     const { current: canvas } = canvasRef;
-    const { current: displacementCanvas } = displacementCanvasRef;
-    if (!canvas || !displacementCanvas) return;
+    const { current: canvas2D } = canvas2DRef;
+    if (!canvas || !canvas2D) return;
 
-    return setupThreeScene(canvas, displacementCanvas) || undefined;
+    return setupThreeScene(canvas, canvas2D) || undefined;
   }, [setupThreeScene]);
 
   return (
     <>
       <canvas
-        ref={displacementCanvasRef}
+        ref={canvas2DRef}
         className={`three-scene__debug-canvas square`}
       ></canvas>
       <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
