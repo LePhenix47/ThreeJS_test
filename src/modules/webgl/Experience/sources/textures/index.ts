@@ -1,6 +1,8 @@
 import { TextureSourceType } from "@modules/webgl/Experience/utils/Resources/types";
+import pictureTextures from "./particles/pictures";
 // prettier-ignore
 const textures = [
+  pictureTextures
 ] as const;
 
 type RawTextures = typeof textures;
