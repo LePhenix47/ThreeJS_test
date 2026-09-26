@@ -84,10 +84,6 @@ class Particles extends PointsEntity implements Destroyable {
         "particlePictures",
       );
 
-    for (const texture of texturesArray) {
-      texture.flipY = false;
-    }
-
     this.texturesArray = texturesArray;
   }
 
