@@ -61,6 +61,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.resources;
   }
 
+  private get time() {
+    return this.experience!.time;
+  }
+
   private get displacementCanvasElement() {
     return this.experience!.displacementCanvas;
   }
@@ -180,6 +184,15 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   public update(): void {
     this.displacementCanvas.update();
+
+    this.displacementCanvas.drawCircle(
+      Math.sin(this.time.elapsedSeconds * 10.0) * 10.0 + 64,
+      Math.sin(this.time.elapsedSeconds * 10.0) * 10.0 + 64,
+      10,
+      {
+        fill: "red",
+      },
+    );
   }
 
   public destroy(): void {
