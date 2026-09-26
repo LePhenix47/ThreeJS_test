@@ -9,33 +9,30 @@ import * as THREE from "three";
 import Resources from "./utils/Resources/Resources";
 import { Source } from "./utils/Resources/types";
 import Debug from "./utils/Debug/Debug";
-
-type InputCanvas =
-  | React.RefObject<HTMLCanvasElement>
-  | HTMLCanvasElement
-  | string;
+import { InputCanvas, resolveCanvas } from "@utils/dom/canvas";
+import type {
+  Resizable,
+  Updatable,
+  Destroyable,
+} from "@utils/types/lifecycle.type";
 
 type ExperienceConstructor = {
   canvas: InputCanvas;
+  /** Fixed-size 2D canvas that the displacement texture gets drawn on. */
+
   debugMode?: boolean;
   loadingManager: THREE.LoadingManager;
   sources?: Source[];
 };
 
-export interface Resizable {
-  resize(): void;
-}
-export interface Updatable {
-  update(): void;
-}
-export interface Destroyable {
-  destroy(): void;
-}
+// ? Defined in utils so that modules outside of webgl/ can use them, re-exported to keep the existing imports working
+export type { Resizable, Updatable, Destroyable };
 
 class Experience implements Resizable, Updatable, Destroyable {
   public static instance: Experience | null = null;
 
   public canvas: HTMLCanvasElement;
+
   public debug: Debug;
 
   public sizes: Sizes;
@@ -62,7 +59,8 @@ class Experience implements Resizable, Updatable, Destroyable {
     Experience.instance = this;
 
     console.log("Let us commence fourth");
-    this.initCanvas(canvas);
+    this.canvas = resolveCanvas(canvas);
+
     this.setDebugMode(debugMode);
 
     // *  ⚠ ORDER MATTERS, CALLS MUST BE MADE IN THE CORRECT ORDER
@@ -118,38 +116,6 @@ class Experience implements Resizable, Updatable, Destroyable {
       this.time.off("tick", this.update);
     }
   };
-
-  /**
-   * Initializes the canvas property
-   *
-   * @param {InputCanvas} canvas - The canvas element, reference to it or a CSS selector
-   * @returns {void}
-   */
-  private initCanvas(canvas: InputCanvas): void {
-    // ? If canvas is a CSS selector
-    if (typeof canvas === "string") {
-      const selectedElement: Element | null = document.querySelector(canvas);
-
-      if (!(selectedElement instanceof HTMLCanvasElement)) {
-        throw new Error("Canvas is not an HTMLCanvasElement");
-      }
-
-      this.canvas = selectedElement;
-      return;
-    }
-
-    // ? If canvas is an HTMLCanvasElement
-    if (canvas instanceof HTMLCanvasElement) {
-      this.canvas = canvas;
-      return;
-    }
-
-    if (!(canvas.current instanceof HTMLCanvasElement)) {
-      throw new Error("Canvas is not an HTMLCanvasElement");
-    }
-
-    this.canvas = canvas.current;
-  }
 
   public setDebugMode(debugMode: boolean): this {
     const keyName = "DEBUG_EXPERIENCE" as const;
