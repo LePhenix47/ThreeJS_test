@@ -33,7 +33,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public static instance: Experience | null = null;
 
   public canvas: HTMLCanvasElement;
-  public displacementCanvas: HTMLCanvasElement | null = null;
+  public displacementCanvas: HTMLCanvasElement;
   public debug: Debug;
 
   public sizes: Sizes;

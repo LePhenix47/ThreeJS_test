@@ -5,6 +5,7 @@ import Experience, {
 } from "@modules/webgl/Experience/Experience";
 import { PointsEntity } from "./types/points-entity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
+import DisplacementCanvas from "@modules/2d/DisplacementCanvas";
 
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
@@ -33,6 +34,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   private texturesArray: THREE.Texture<HTMLImageElement>[];
 
+  private displacementCanvas: DisplacementCanvas;
+
   private readonly DEBUG_DEFAULTS: ParticlesState = {
     chosenPictureIndex: 0,
   };
@@ -58,6 +61,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.resources;
   }
 
+  private get displacementCanvasElement() {
+    return this.experience!.displacementCanvas;
+  }
+
   constructor() {
     super();
 
@@ -71,6 +78,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     this.setPoints();
 
     this.scene.add(this.points);
+
+    this.displacementCanvas = new DisplacementCanvas({
+      canvas: this.displacementCanvasElement,
+    });
 
     this.sizes.on("resize", this.onResize);
 
@@ -167,10 +178,14 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     });
   }
 
-  public update(): void {}
+  public update(): void {
+    this.displacementCanvas.update();
+  }
 
   public destroy(): void {
     this.sizes.off("resize", this.onResize);
+
+    this.displacementCanvas.destroy();
 
     this.geometry.dispose();
     this.material.dispose();
