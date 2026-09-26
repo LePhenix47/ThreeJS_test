@@ -190,8 +190,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     this.displacementCanvas.update();
 
     this.displacementCanvas.drawCircle(
-      this.pointer.normalizedX * 128,
-      this.pointer.normalizedY * 128,
+      this.pointer.normalizedX * DisplacementCanvas.CONFIG.size,
+      this.pointer.normalizedY * DisplacementCanvas.CONFIG.size,
       10,
       {
         fill: "red",
