@@ -69,6 +69,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.displacementCanvas;
   }
 
+  private get pointer() {
+    return this.experience!.pointer;
+  }
+
   constructor() {
     super();
 
@@ -186,8 +190,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     this.displacementCanvas.update();
 
     this.displacementCanvas.drawCircle(
-      Math.sin(this.time.elapsedSeconds * 10.0) * 10.0 + 64,
-      Math.sin(this.time.elapsedSeconds * 10.0) * 10.0 + 64,
+      this.pointer.normalizedX * 128,
+      this.pointer.normalizedY * 128,
       10,
       {
         fill: "red",
