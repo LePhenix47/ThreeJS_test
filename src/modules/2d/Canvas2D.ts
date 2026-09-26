@@ -115,15 +115,22 @@ abstract class Canvas2D implements Destroyable {
     this.paintPath(style);
   }
 
-  /** Draws an image from its top-left corner. */
+  /** Draws an image so that its `origin` point lands on `(x, y)`. The origin is a fraction of the image size: (0, 0) is the top-left corner, (0.5, 0.5) the center. */
   public drawImage(
     image: CanvasImageSource,
     x: number,
     y: number,
     width: number,
     height: number,
+    origin: Point = { x: 0, y: 0 },
   ): void {
-    this.context.drawImage(image, x, y, width, height);
+    this.context.drawImage(
+      image,
+      x - width * origin.x,
+      y - height * origin.y,
+      width,
+      height,
+    );
   }
 
   /** Draws an image around its center. */
@@ -134,7 +141,7 @@ abstract class Canvas2D implements Destroyable {
     width: number,
     height: number,
   ): void {
-    this.drawImage(image, x - width / 2, y - height / 2, width, height);
+    this.drawImage(image, x, y, width, height, { x: 0.5, y: 0.5 });
   }
 
   /** Runs `draw` with the canvas translated then rotated, and restores the previous transform after. */
