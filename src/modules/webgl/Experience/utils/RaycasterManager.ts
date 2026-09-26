@@ -19,7 +19,7 @@ type IntersectionCallback<T extends THREE.Object3D> = (
  * };
  *
  * // In the animation loop:
- * manager.updatePointer(pointer.normalized.x, pointer.normalized.y);
+ * manager.updatePointer(pointer.normalizedX, pointer.normalizedY);
  * manager.checkIntersections(meshes, camera);
  * ```
  */

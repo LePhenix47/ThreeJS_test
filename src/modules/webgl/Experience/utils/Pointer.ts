@@ -11,14 +11,24 @@ type PointerEvents = {
 };
 
 class Pointer extends EventEmitter<PointerEvents> implements Destroyable {
-  /** Position over the element from 0 (left, top) to 1 (right, bottom). NaN until the first pointer move. */
-  public readonly normalized: PointerPosition = { x: NaN, y: NaN };
+  /** Position over the element, in CSS pixels. NaN until the first pointer move. */
+  public readonly position: PointerPosition = { x: NaN, y: NaN };
 
   /** Position over the element, in CSS pixels, at the latest pointer down. */
   public readonly lastPointerDown: PointerPosition = { x: 0, y: 0 };
 
   private readonly abortController = new AbortController();
   private readonly element: HTMLElement;
+
+  /** Horizontal position as a fraction of the element width, from 0 (left) to 1 (right). */
+  public get normalizedX(): number {
+    return this.position.x / this.element.offsetWidth;
+  }
+
+  /** Vertical position as a fraction of the element height, from 0 (top) to 1 (bottom). */
+  public get normalizedY(): number {
+    return this.position.y / this.element.offsetHeight;
+  }
 
   constructor(element: HTMLElement) {
     super();
@@ -43,11 +53,9 @@ class Pointer extends EventEmitter<PointerEvents> implements Destroyable {
   }
 
   private onPointerMove = (e: PointerEvent): void => {
-    const { offsetWidth, offsetHeight } = this.element;
-
     // ? offsetX and offsetY are relative to the event target, which is the element itself since a canvas has no children
-    this.normalized.x = e.offsetX / offsetWidth;
-    this.normalized.y = e.offsetY / offsetHeight;
+    this.position.x = e.offsetX;
+    this.position.y = e.offsetY;
   };
 
   private onPointerDown = (e: PointerEvent): void => {
