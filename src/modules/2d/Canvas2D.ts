@@ -46,6 +46,19 @@ abstract class Canvas2D implements Destroyable {
     this.context = context;
   }
 
+  /** Sets the drawing buffer size in pixels, which also clears the canvas and resets its drawing state. */
+  public setSize(width: number, height: number): void {
+    const { width: currentWidth, height: currentHeight } = this.canvasSizes;
+
+    // ? Assigning width or height wipes the canvas even when the value is the same, so skip when nothing changes
+    const hasSameSize: boolean =
+      width === currentWidth && height === currentHeight;
+    if (hasSameSize) return;
+
+    this.instance.width = width;
+    this.instance.height = height;
+  }
+
   /** Erases the whole canvas to transparent. */
   public clear(): void {
     const { width, height } = this.canvasSizes;
