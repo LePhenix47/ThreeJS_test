@@ -13,7 +13,15 @@ class DisplacementCanvas extends Canvas2D implements Updatable {
     this.setSize(size, size);
   }
 
-  public update(): void {}
+  public drawOnOldPaint(): void {
+    const { width, height } = this.canvasSizes;
+    this.context.fillStyle = "rgba(0,0,0,10%)";
+    this.context.fillRect(0, 0, width, height);
+  }
+
+  public update(): void {
+    this.drawOnOldPaint();
+  }
 }
 
 export default DisplacementCanvas;
