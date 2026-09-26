@@ -6,6 +6,7 @@ import Experience, {
 import { PointsEntity } from "./types/points-entity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 import DisplacementCanvas from "@modules/2d/DisplacementCanvas";
+import RaycasterManager from "@modules/webgl/Experience/utils/RaycasterManager";
 
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
@@ -19,6 +20,11 @@ type ParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
   uPictureTexture: THREE.Texture;
 }>;
+
+type InteractivePlane = THREE.Mesh<
+  THREE.PlaneGeometry,
+  THREE.MeshBasicMaterial
+>;
 
 class Particles extends PointsEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
@@ -49,7 +55,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   protected material: TypedShaderMaterial<ParticlesUniforms>;
   protected points: THREE.Points;
 
-  private interactivePlane: THREE.Mesh;
+  private interactivePlane: InteractivePlane;
+  private readonly raycasterManager = new RaycasterManager<InteractivePlane>();
 
   private get debug() {
     return this.experience!.debug;
@@ -77,6 +84,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   private get pointer() {
     return this.experience!.pointer;
+  }
+
+  private get camera() {
+    return this.experience!.camera;
   }
 
   constructor() {
@@ -108,14 +119,19 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
     console.log("Particles");
   }
+
   private setInteractivePlane(): void {
+    const { width, height } = Particles.CONFIG.geometry;
+
+    // ? Its own 2-triangle geometry, the particles' one has ~32k triangles that the raycaster would test every frame
+    const interactivePlaneGeometry = new THREE.PlaneGeometry(width, height);
     const interactivePlaneMaterial = new THREE.MeshBasicMaterial({
       color: "red",
       wireframe: true,
     });
 
     this.interactivePlane = new THREE.Mesh(
-      this.geometry,
+      interactivePlaneGeometry,
       interactivePlaneMaterial,
     );
   }
@@ -219,13 +235,27 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   public update(): void {
     this.displacementCanvas.update();
 
+    this.raycasterManager.updatePointer(
+      this.pointer.normalizedX,
+      this.pointer.normalizedY,
+    );
+
+    const intersection: THREE.Intersection<InteractivePlane> | null =
+      this.raycasterManager.checkIntersections(
+        [this.interactivePlane],
+        this.camera.instance,
+      );
+    if (!intersection?.uv) return;
+
+    const { uv } = intersection;
     const canvas2dSize: number = DisplacementCanvas.CONFIG.size;
 
     this.displacementCanvas.setAlpha(Particles.CONFIG.glow.alpha);
     this.displacementCanvas.drawImageCentered(
       this.displacementCanvasGlow,
-      this.pointer.normalizedX * canvas2dSize,
-      this.pointer.normalizedY * canvas2dSize,
+      uv.x * canvas2dSize,
+      // ? uv starts at the bottom-left like a texture, the canvas starts at the top-left
+      (1 - uv.y) * canvas2dSize,
       20,
       20,
     );
@@ -241,7 +271,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     this.geometry.dispose();
     this.material.dispose();
 
-    this.scene.remove(this.points);
+    this.interactivePlane.geometry.dispose();
+    this.interactivePlane.material.dispose();
+
+    this.scene.remove(this.points, this.interactivePlane);
   }
 }
 
