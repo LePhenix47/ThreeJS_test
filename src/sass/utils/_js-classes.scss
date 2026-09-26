@@ -73,3 +73,12 @@
         animation-iteration-count: 1;
     }
 }
+
+.stack {
+    display: grid;
+    grid-template-areas: "stack";
+
+    &>* {
+        grid-area: stack;
+    }
+}

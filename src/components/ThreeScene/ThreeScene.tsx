@@ -71,7 +71,9 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
   }, [setupThreeScene]);
 
   return (
-    <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
+    <>
+      <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
+    </>
   );
 }
 

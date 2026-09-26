@@ -34,7 +34,7 @@ export const Route = createFileRoute("/")({
 function IndexComponent() {
   return (
     <div className="index-page">
-      <div className="index-page__scene-container">
+      <div className="index-page__scene-container stack">
         <ThreeScene />
         <LoadingSpinner />
       </div>
