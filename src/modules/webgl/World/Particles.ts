@@ -21,8 +21,8 @@ class Particles extends PointsEntity implements Destroyable {
     geometry: {
       width: 5,
       height: 5,
-      widthSegments: 2 ** 4, // ? 16 + 1 squares on each plane column
-      heightSegments: 2 ** 4, // ? 16 + 1 squares on plane row
+      widthSegments: 2 ** 5, // ? 32 + 1 squares on each plane column
+      heightSegments: 2 ** 5, // ? 32 + 1 squares on each plane row
     },
   } as const;
 
