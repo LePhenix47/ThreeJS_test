@@ -1,17 +1,22 @@
 uniform vec2 uResolution;
+uniform sampler2D uPictureTexture;
 
 varying vec2 vGlobalUv;
 
+#include ../utils/textures/textureGrayScale
+
 void main() {
-    // Final position
+    // * Final position
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
     vec4 viewPosition = viewMatrix * modelPosition;
     vec4 projectedPosition = projectionMatrix * viewPosition;
     gl_Position = projectedPosition;
 
-    // Point size
-    gl_PointSize = 0.3 * uResolution.y;
-    gl_PointSize *= (1.0 / -viewPosition.z);
+    float pictureIntensity = textureGrayScale(uPictureTexture, uv);
+
+    // * Point size
+    gl_PointSize = 0.3 * uResolution.y * pictureIntensity;
+    gl_PointSize *= -1.0 / viewPosition.z;
 
     // * Varyings
     vGlobalUv = uv;
