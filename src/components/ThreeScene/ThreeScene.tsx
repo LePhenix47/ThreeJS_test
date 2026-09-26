@@ -72,6 +72,7 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
 
   return (
     <>
+      <canvas className={`three-scene__debug-canvas square`}></canvas>
       <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
     </>
   );

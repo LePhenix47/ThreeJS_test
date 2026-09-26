@@ -72,13 +72,19 @@
             timestamp-reset-flash 0.6s ease-in-out;
         animation-iteration-count: 1;
     }
-}
 
-.stack {
-    display: grid;
-    grid-template-areas: "stack";
+    .stack {
+        display: grid;
+        grid-template-areas: "stack";
 
-    &>* {
-        grid-area: stack;
+        &>* {
+            grid-area: stack;
+        }
+    }
+
+    .square {
+        --_size: 150px;
+        width: var(--_size);
+        height: var(--_size);
     }
 }

@@ -8,3 +8,11 @@
   height: 100%;
   overflow: hidden;
 }
+
+.three-scene__debug-canvas {
+  z-index: 1;
+
+  --_size: 128px;
+
+  background: #000;
+}
