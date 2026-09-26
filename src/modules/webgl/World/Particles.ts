@@ -28,6 +28,9 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       widthSegments: 2 ** 7, // ? 128 + 1 squares on each plane column
       heightSegments: 2 ** 7, // ? 128 + 1 squares on each plane row
     },
+    glow: {
+      alpha: 0.2, // ? Low on purpose, the glow is drawn every frame so it stacks up quickly
+    },
   } as const;
 
   private readonly experience: Experience | null;
@@ -218,6 +221,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
     const canvas2dSize: number = DisplacementCanvas.CONFIG.size;
 
+    this.displacementCanvas.setAlpha(Particles.CONFIG.glow.alpha);
     this.displacementCanvas.drawImageCentered(
       this.displacementCanvasGlow,
       this.pointer.normalizedX * canvas2dSize,
@@ -225,6 +229,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       20,
       20,
     );
+    // ? Back to opaque, otherwise the fade in displacementCanvas.update() would run at a fraction of its strength
+    this.displacementCanvas.setAlpha(1);
   }
 
   public destroy(): void {
