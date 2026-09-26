@@ -1,7 +1,7 @@
 import { InputCanvas, resolveCanvas } from "@utils/dom/canvas";
 import { Destroyable } from "@utils/types/lifecycle.type";
 
-type Canvas2DConstructor = {
+export type Canvas2DConstructor = {
   canvas: InputCanvas;
 };
 

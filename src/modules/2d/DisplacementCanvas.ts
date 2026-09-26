@@ -1,17 +1,12 @@
-import { InputCanvas, resolveCanvas } from "@utils/dom/canvas";
-import Canvas2D from "@modules/2d/Canvas2D";
+import Canvas2D, { Canvas2DConstructor } from "@modules/2d/Canvas2D";
 import { Updatable } from "@utils/types/lifecycle.type";
-
-type DisplacementCanvasParams = {
-  canvas: InputCanvas;
-};
 
 class DisplacementCanvas extends Canvas2D implements Updatable {
   public static readonly CONFIG = {
     size: 128,
   } as const;
 
-  constructor({ canvas }: DisplacementCanvasParams) {
+  constructor({ canvas }: Canvas2DConstructor) {
     super({ canvas });
 
     const { size } = DisplacementCanvas.CONFIG;
