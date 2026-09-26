@@ -35,6 +35,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   private texturesArray: THREE.Texture<HTMLImageElement>[];
 
   private displacementCanvas: DisplacementCanvas;
+  private displacementCanvasGlow: HTMLImageElement;
 
   private readonly DEBUG_DEFAULTS: ParticlesState = {
     chosenPictureIndex: 0,
@@ -123,6 +124,16 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       );
 
     this.texturesArray = texturesArray;
+
+    const { canvas2d } = this.resources.getShaderTextures("glow");
+    const { image } = canvas2d;
+
+    // ? The loaded texture's image is typed unknown, a check narrows it without a cast
+    if (!(image instanceof HTMLImageElement)) {
+      throw new Error("[Particles] The glow texture is not an image");
+    }
+
+    this.displacementCanvasGlow = image;
   }
 
   protected setGeometry(): void {
@@ -205,13 +216,14 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   public update(): void {
     this.displacementCanvas.update();
 
-    this.displacementCanvas.drawCircle(
-      this.pointer.normalizedX * DisplacementCanvas.CONFIG.size,
-      this.pointer.normalizedY * DisplacementCanvas.CONFIG.size,
-      10,
-      {
-        fill: "red",
-      },
+    const canvas2dSize: number = DisplacementCanvas.CONFIG.size;
+
+    this.displacementCanvas.drawImage(
+      this.displacementCanvasGlow,
+      this.pointer.normalizedX * canvas2dSize,
+      this.pointer.normalizedY * canvas2dSize,
+      20,
+      20,
     );
   }
 
