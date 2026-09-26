@@ -218,7 +218,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
     const canvas2dSize: number = DisplacementCanvas.CONFIG.size;
 
-    this.displacementCanvas.drawImage(
+    this.displacementCanvas.drawImageCentered(
       this.displacementCanvasGlow,
       this.pointer.normalizedX * canvas2dSize,
       this.pointer.normalizedY * canvas2dSize,
