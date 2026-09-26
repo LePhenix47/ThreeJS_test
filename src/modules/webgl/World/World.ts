@@ -29,7 +29,7 @@ class World implements Updatable, Destroyable {
   } as const;
 
   private readonly experience: Experience | null;
-  public environment?: Environment;
+  public environment: Environment;
   public particles?: Particles;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
@@ -55,12 +55,20 @@ class World implements Updatable, Destroyable {
     return this.experience!.camera;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.environment = new Environment();
-    this.particles = new Particles();
+
+    this.resources.on("textures-loaded", () => {
+      this.particles = new Particles();
+    });
+
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -210,7 +218,7 @@ class World implements Updatable, Destroyable {
 
   public destroy(): void {
     this.particles?.destroy();
-    this.environment?.destroy();
+    this.environment.destroy();
     this.removeHelpers();
   }
 }

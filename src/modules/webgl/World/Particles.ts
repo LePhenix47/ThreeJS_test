@@ -22,6 +22,8 @@ class Particles extends PointsEntity implements Destroyable {
 
   private readonly experience: Experience | null;
 
+  private texturesArray: THREE.Texture[];
+
   protected geometry: THREE.PlaneGeometry;
   protected material: TypedShaderMaterial<ParticlesUniforms>;
   protected points: THREE.Points;
@@ -34,11 +36,17 @@ class Particles extends PointsEntity implements Destroyable {
     return this.experience!.sizes;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     super();
 
     if (!Experience.instance) throw new Error("Experience instance not found");
     this.experience = Experience.instance;
+
+    this.setTextures();
 
     this.setGeometry();
     this.setMaterial();
@@ -49,6 +57,16 @@ class Particles extends PointsEntity implements Destroyable {
     this.sizes.on("resize", this.onResize);
 
     console.log("Particles");
+  }
+
+  private setTextures(): void {
+    const texturesArray = this.resources.getTextureArray("particlePictures");
+
+    for (const texture of texturesArray) {
+      texture.flipY = false;
+    }
+
+    this.texturesArray = texturesArray;
   }
 
   protected setGeometry(): void {
