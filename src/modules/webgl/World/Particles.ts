@@ -45,6 +45,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   protected material: TypedShaderMaterial<ParticlesUniforms>;
   protected points: THREE.Points;
 
+  private interactivePlane: THREE.Mesh;
+
   private get debug() {
     return this.experience!.debug;
   }
@@ -87,6 +89,9 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
     this.scene.add(this.points);
 
+    this.setInteractivePlane();
+    this.scene.add(this.interactivePlane);
+
     this.displacementCanvas = new DisplacementCanvas({
       canvas: this.canvas2D,
     });
@@ -98,6 +103,17 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     }
 
     console.log("Particles");
+  }
+  private setInteractivePlane(): void {
+    const interactivePlaneMaterial = new THREE.MeshBasicMaterial({
+      color: "red",
+      wireframe: true,
+    });
+
+    this.interactivePlane = new THREE.Mesh(
+      this.geometry,
+      interactivePlaneMaterial,
+    );
   }
 
   private setTextures(): void {
