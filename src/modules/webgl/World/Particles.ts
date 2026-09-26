@@ -1,5 +1,8 @@
 import * as THREE from "three";
-import Experience, { Destroyable } from "@modules/webgl/Experience/Experience";
+import Experience, {
+  Destroyable,
+  Updatable,
+} from "@modules/webgl/Experience/Experience";
 import { PointsEntity } from "./types/points-entity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
@@ -16,7 +19,7 @@ type ParticlesUniforms = MapAsUniforms<{
   uPictureTexture: THREE.Texture;
 }>;
 
-class Particles extends PointsEntity implements Destroyable {
+class Particles extends PointsEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
     geometry: {
       width: 10,
@@ -163,6 +166,8 @@ class Particles extends PointsEntity implements Destroyable {
       this.material.uniforms.uPictureTexture.value = this.texturesArray[v];
     });
   }
+
+  public update(): void {}
 
   public destroy(): void {
     this.sizes.off("resize", this.onResize);
