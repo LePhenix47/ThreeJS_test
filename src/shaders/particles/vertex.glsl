@@ -1,5 +1,7 @@
 uniform vec2 uResolution;
 
+varying vec2 vGlobalUv;
+
 void main() {
     // Final position
     vec4 modelPosition = modelMatrix * vec4(position, 1.0);
@@ -9,5 +11,8 @@ void main() {
 
     // Point size
     gl_PointSize = 0.3 * uResolution.y;
-    gl_PointSize *= (1.0 / - viewPosition.z);
+    gl_PointSize *= (1.0 / -viewPosition.z);
+
+    // * Varyings
+    vGlobalUv = uv;
 }

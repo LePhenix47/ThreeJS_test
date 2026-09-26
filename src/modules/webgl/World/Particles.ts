@@ -75,6 +75,7 @@ class Particles extends PointsEntity implements Destroyable {
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
+      transparent: true,
       uniforms,
     }) as TypedShaderMaterial<ParticlesUniforms>;
   }
