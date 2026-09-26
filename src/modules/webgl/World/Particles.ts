@@ -232,22 +232,23 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     });
   }
 
-  public update(): void {
-    this.displacementCanvas.update();
-
+  /** UV of the point of the interactive plane under the pointer, null when the pointer isn't over it. */
+  private getPointerUV(): THREE.Vector2 | null {
     this.raycasterManager.updatePointer(
       this.pointer.normalizedX,
       this.pointer.normalizedY,
     );
 
-    const intersection: THREE.Intersection<InteractivePlane> | null =
-      this.raycasterManager.checkIntersections(
-        [this.interactivePlane],
-        this.camera.instance,
-      );
-    if (!intersection?.uv) return;
+    const intersection = this.raycasterManager.checkIntersections(
+      [this.interactivePlane],
+      this.camera.instance,
+    );
 
-    const { uv } = intersection;
+    return intersection?.uv ?? null;
+  }
+
+  /** Draws the glow on the 2D canvas at the given UV of the plane. */
+  private drawGlowAt(uv: THREE.Vector2): void {
     const canvas2dSize: number = DisplacementCanvas.CONFIG.size;
 
     this.displacementCanvas.setAlpha(Particles.CONFIG.glow.alpha);
@@ -261,6 +262,15 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     );
     // ? Back to opaque, otherwise the fade in displacementCanvas.update() would run at a fraction of its strength
     this.displacementCanvas.setAlpha(1);
+  }
+
+  public update(): void {
+    this.displacementCanvas.update();
+
+    const uv = this.getPointerUV();
+    if (!uv) return;
+
+    this.drawGlowAt(uv);
   }
 
   public destroy(): void {
