@@ -5,9 +5,15 @@ import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
+import GUIStateRegistry from "@utils/classes/gui-state-registry";
+
+type ParticlesState = {
+  chosenPictureIndex: number;
+};
 
 type ParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
+  uPictureTexture: THREE.Texture;
 }>;
 
 class Particles extends PointsEntity implements Destroyable {
@@ -22,11 +28,20 @@ class Particles extends PointsEntity implements Destroyable {
 
   private readonly experience: Experience | null;
 
-  private texturesArray: THREE.Texture[];
+  private texturesArray: THREE.Texture<HTMLImageElement>[];
+
+  private readonly DEBUG_DEFAULTS: ParticlesState = {
+    chosenPictureIndex: 0,
+  };
+  private guiRegistry: GUIStateRegistry<ParticlesState>;
 
   protected geometry: THREE.PlaneGeometry;
   protected material: TypedShaderMaterial<ParticlesUniforms>;
   protected points: THREE.Points;
+
+  private get debug() {
+    return this.experience!.debug;
+  }
 
   private get scene() {
     return this.experience!.scene;
@@ -56,11 +71,18 @@ class Particles extends PointsEntity implements Destroyable {
 
     this.sizes.on("resize", this.onResize);
 
+    if (this.debug?.isActive) {
+      this.addDebugFolders();
+    }
+
     console.log("Particles");
   }
 
   private setTextures(): void {
-    const texturesArray = this.resources.getTextureArray("particlePictures");
+    const texturesArray =
+      this.resources.getTextureArray<THREE.Texture<HTMLImageElement>>(
+        "particlePictures",
+      );
 
     for (const texture of texturesArray) {
       texture.flipY = false;
@@ -84,9 +106,23 @@ class Particles extends PointsEntity implements Destroyable {
   protected setMaterial(): void {
     const { x, y } = this.sizes.resolution;
 
+    const { chosenPictureIndex } = this.DEBUG_DEFAULTS;
+
+    const clampedChosenPicture: number = THREE.MathUtils.clamp(
+      chosenPictureIndex,
+      0,
+      this.texturesArray.length - 1,
+    );
+
+    const chosenTexture: THREE.Texture =
+      this.texturesArray[clampedChosenPicture];
+
     const uniforms: ParticlesUniforms = {
       uResolution: {
         value: new THREE.Vector2(x, y),
+      },
+      uPictureTexture: {
+        value: chosenTexture,
       },
     };
 
@@ -107,6 +143,30 @@ class Particles extends PointsEntity implements Destroyable {
 
     this.material.uniforms.uResolution.value.set(x, y);
   };
+
+  private addDebugFolders(): void {
+    const registry = new GUIStateRegistry<ParticlesState>(
+      "particles-gui-state",
+      this.DEBUG_DEFAULTS,
+    );
+    this.guiRegistry = registry;
+
+    const { state } = registry;
+    const { gui } = this.debug;
+
+    const particlesFolder = gui.addFolder("Particles");
+
+    const textureIndexArray: number[] = Array.from({
+      length: this.texturesArray.length,
+    }).map((_, i) => i);
+
+    particlesFolder
+      .add(state, "chosenPictureIndex", textureIndexArray)
+      .name("Chosen picture");
+    registry.bind("chosenPictureIndex", (v) => {
+      this.material.uniforms.uPictureTexture.value = this.texturesArray[v];
+    });
+  }
 
   public destroy(): void {
     this.sizes.off("resize", this.onResize);
