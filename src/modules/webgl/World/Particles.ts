@@ -19,8 +19,8 @@ type ParticlesUniforms = MapAsUniforms<{
 class Particles extends PointsEntity implements Destroyable {
   public static readonly CONFIG = {
     geometry: {
-      width: 5,
-      height: 5,
+      width: 10,
+      height: 10,
       widthSegments: 2 ** 5, // ? 32 + 1 squares on each plane column
       heightSegments: 2 ** 5, // ? 32 + 1 squares on each plane row
     },
