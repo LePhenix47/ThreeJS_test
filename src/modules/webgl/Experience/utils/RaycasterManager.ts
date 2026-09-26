@@ -27,7 +27,7 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
   private readonly raycaster = new THREE.Raycaster();
 
   // ? NaN until the first update, so the ray can't hit anything before the pointer has moved
-  private readonly pointer = new THREE.Vector2(NaN, NaN);
+  private readonly position = new THREE.Vector2(NaN, NaN);
 
   /** Nearest intersection found by the latest check, null when the ray hits nothing. */
   private currentIntersect: THREE.Intersection<T> | null = null;
@@ -43,7 +43,7 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
 
   /** Sets the pointer from canvas percentages (0 to 1, Y going down) into Three's coordinates (-1 to 1, Y going up). */
   public updatePointer(xPercent: number, yPercent: number): void {
-    this.pointer.set(xPercent * 2 - 1, 1 - yPercent * 2);
+    this.position.set(xPercent * 2 - 1, 1 - yPercent * 2);
   }
 
   /** Casts the ray through the pointer, then fires `onLeave` and `onEnter` if the nearest object changed. Call it every frame. */
@@ -52,7 +52,7 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
     camera: THREE.Camera,
     recursive: boolean = true,
   ): void {
-    this.raycaster.setFromCamera(this.pointer, camera);
+    this.raycaster.setFromCamera(this.position, camera);
 
     const intersects = this.raycaster.intersectObjects<T>(objects, recursive);
 
