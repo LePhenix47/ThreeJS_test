@@ -46,12 +46,12 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
     this.position.set(xPercent * 2 - 1, 1 - yPercent * 2);
   }
 
-  /** Casts the ray through the pointer, then fires `onLeave` and `onEnter` if the nearest object changed. Call it every frame. */
+  /** Casts the ray through the pointer, fires `onLeave` and `onEnter` if the nearest object changed, and returns the nearest intersection. Call it every frame. */
   public checkIntersections(
     objects: T[],
     camera: THREE.Camera,
     recursive: boolean = true,
-  ): void {
+  ): THREE.Intersection<T> | null {
     this.raycaster.setFromCamera(this.position, camera);
 
     const intersects = this.raycaster.intersectObjects<T>(objects, recursive);
@@ -66,7 +66,7 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
 
     const hasChanged: boolean =
       nearestIntersect?.object !== previousIntersect?.object;
-    if (!hasChanged) return;
+    if (!hasChanged) return nearestIntersect;
 
     if (previousIntersect) {
       this.onLeave?.(previousIntersect);
@@ -75,6 +75,8 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
     if (nearestIntersect) {
       this.onEnter?.(nearestIntersect);
     }
+
+    return nearestIntersect;
   }
 
   /** Reports a click to `onClick` when the ray is currently over an object. */
