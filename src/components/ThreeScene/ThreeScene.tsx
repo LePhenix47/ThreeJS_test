@@ -81,8 +81,6 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     <>
       <canvas
         ref={displacementCanvasRef}
-        width={128}
-        height={128}
         className={`three-scene__debug-canvas square`}
       ></canvas>
       <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>

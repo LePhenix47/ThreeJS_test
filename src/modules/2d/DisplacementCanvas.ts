@@ -1,32 +1,22 @@
+import { InputCanvas, resolveCanvas } from "@utils/dom/canvas";
 import Canvas2D from "@modules/2d/Canvas2D";
 import { Updatable } from "@utils/types/lifecycle.type";
 
+type DisplacementCanvasParams = {
+  canvas: InputCanvas;
+};
+
 class DisplacementCanvas extends Canvas2D implements Updatable {
-  /*
-  public createGradient(
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-    arrayOfColors: string[]
-  ): CanvasGradient {
-    // Create a linear gradient for a canvas
-    const canvasGradient: CanvasGradient = this.context.createLinearGradient(
-      startX,
-      startY,
-      endX,
-      endY
-    );
+  public static readonly CONFIG = {
+    size: 128,
+  } as const;
 
-    for (let i = 0; i < arrayOfColors.length; i++) {
-      const color: string = arrayOfColors[i];
+  constructor({ canvas }: DisplacementCanvasParams) {
+    super({ canvas });
 
-      canvasGradient.addColorStop(i, color);
-    }
-
-    return canvasGradient;
+    const { size } = DisplacementCanvas.CONFIG;
+    this.setSize(size, size);
   }
-  */
 
   public update(): void {}
 }
