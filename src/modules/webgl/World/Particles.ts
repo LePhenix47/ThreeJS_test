@@ -76,6 +76,7 @@ class Particles extends PointsEntity implements Destroyable {
       vertexShader,
       fragmentShader,
       transparent: true,
+      depthWrite: false,
       uniforms,
     }) as TypedShaderMaterial<ParticlesUniforms>;
   }
