@@ -16,6 +16,7 @@ type ThreeSceneProps = {
 
 function ThreeScene({ className = "" }: ThreeSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const displacementCanvasRef = useRef<HTMLCanvasElement>(null);
 
   function createLoadingManager(): THREE.LoadingManager {
     const { setLoading, setProgress } = useLoadingStore.getState().actions;
@@ -45,34 +46,45 @@ function ThreeScene({ className = "" }: ThreeSceneProps) {
     return loadingManager;
   }
 
-  const setupThreeScene = useCallback((canvas: HTMLCanvasElement) => {
-    const loadingManager = createLoadingManager();
+  const setupThreeScene = useCallback(
+    (canvas: HTMLCanvasElement, displacementCanvas: HTMLCanvasElement) => {
+      const loadingManager = createLoadingManager();
 
-    const url = new URL(location.href);
-    const hasDebugUrlParamEnabled: boolean =
-      url.searchParams.get("debug") === "true"; // ? debug=true
+      const url = new URL(location.href);
+      const hasDebugUrlParamEnabled: boolean =
+        url.searchParams.get("debug") === "true"; // ? debug=true
 
-    const experience = new Experience({
-      canvas,
-      debugMode: hasDebugUrlParamEnabled,
-      loadingManager,
-      sources: [...textures, ...models],
-    });
+      const experience = new Experience({
+        canvas,
+        displacementCanvas,
+        debugMode: hasDebugUrlParamEnabled,
+        loadingManager,
+        sources: [...textures, ...models],
+      });
 
-    return () => {
-      experience.destroy();
-    };
-  }, []);
+      return () => {
+        experience.destroy();
+      };
+    },
+    [],
+  );
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    const { current: canvas } = canvasRef;
+    const { current: displacementCanvas } = displacementCanvasRef;
+    if (!canvas || !displacementCanvas) return;
 
-    return setupThreeScene(canvasRef.current) || undefined;
+    return setupThreeScene(canvas, displacementCanvas) || undefined;
   }, [setupThreeScene]);
 
   return (
     <>
-      <canvas className={`three-scene__debug-canvas square`}></canvas>
+      <canvas
+        ref={displacementCanvasRef}
+        width={128}
+        height={128}
+        className={`three-scene__debug-canvas square`}
+      ></canvas>
       <canvas ref={canvasRef} className={`three-scene ${className}`}></canvas>
     </>
   );
