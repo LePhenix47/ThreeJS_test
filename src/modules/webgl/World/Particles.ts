@@ -294,7 +294,12 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       height * sizeRatio,
     );
     // ? Back to opaque, otherwise the fade in displacementCanvas.update() would run at a fraction of its strength
-    this.displacementCanvas.setAlpha(1);
+    const cursorSpeedAlpha: number = Math.min(
+      this.pointer.distanceFromPreviousPosition * 0.1,
+      1,
+    );
+
+    this.displacementCanvas.setAlpha(cursorSpeedAlpha);
   }
 
   public update(): void {
