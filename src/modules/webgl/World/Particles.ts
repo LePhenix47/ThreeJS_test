@@ -128,8 +128,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     // ? Its own 2-triangle geometry, the particles' one has ~32k triangles that the raycaster would test every frame
     const interactivePlaneGeometry = new THREE.PlaneGeometry(width, height);
     const interactivePlaneMaterial = new THREE.MeshBasicMaterial({
-      color: "red",
-      wireframe: true,
+      visible: false,
     });
 
     this.interactivePlane = new THREE.Mesh(
