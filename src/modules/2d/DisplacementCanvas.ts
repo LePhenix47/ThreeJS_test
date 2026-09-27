@@ -3,6 +3,8 @@ import { Updatable } from "@utils/types/lifecycle.type";
 
 class DisplacementCanvas extends Canvas2D implements Updatable {
   private readonly resizeObserver: ResizeObserver;
+  /** How much alpha the fade removes each frame, 0 to 1. */
+  private fadeAlpha = 0.01;
 
   constructor({ canvas }: Canvas2DConstructor) {
     super({ canvas });
@@ -22,11 +24,16 @@ class DisplacementCanvas extends Canvas2D implements Updatable {
     this.setSize(width, height);
   };
 
+  /** Sets how much alpha the fade removes each frame, 0 to 1. */
+  public setFadeAlpha(alpha: number): void {
+    this.fadeAlpha = alpha;
+  }
+
   public drawOnOldPaint(): void {
     this.context.save();
 
     this.setCompositeOperation("destination-out");
-    this.fillCanvas("rgba(0, 0, 0, 0.01)"); // ? Only the alpha counts here, it's how much of the old paint gets erased
+    this.fillCanvas(`rgba(0, 0, 0, ${this.fadeAlpha})`); // ? Only the alpha counts here, it's how much of the old paint gets erased
 
     this.context.restore();
   }

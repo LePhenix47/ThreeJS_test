@@ -15,12 +15,15 @@ import { randomInRange } from "@/utils/numbers/range";
 
 type ParticlesState = {
   chosenPictureIndex: number;
+  /** How much alpha the displacement canvas fade removes each frame, as a percent (1 to 10). */
+  fadeAlphaPercent: number;
 };
 
 type ParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
   uPictureTexture: THREE.Texture;
   uDisplacementTexture: THREE.Texture;
+  uDisplacementThreshold: number;
 }>;
 
 type InteractivePlane = THREE.Mesh<
@@ -40,6 +43,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       /** Fraction of the 2D canvas's own size, applied per axis so an oblong canvas keeps a proportioned glow. */
       sizeRatio: 0.25,
     },
+    displacement: {
+      /** Safety margin above the theoretical stuck floor (1/(510×fadeAlpha)), so the clamp doesn't sit right on the boundary. */
+      thresholdMargin: 1.5,
+    },
   } as const;
 
   private readonly experience: Experience | null;
@@ -52,8 +59,9 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   private readonly DEBUG_DEFAULTS: ParticlesState = {
     chosenPictureIndex: 0,
+    fadeAlphaPercent: 1,
   };
-  private guiRegistry: GUIStateRegistry<ParticlesState>;
+  private guiRegistry: GUIStateRegistry<ParticlesState> | null = null;
 
   protected geometry: THREE.PlaneGeometry;
   protected material: TypedShaderMaterial<ParticlesUniforms>;
@@ -129,6 +137,35 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     this.displacementCanvasTexture = new THREE.CanvasTexture(this.canvas2D);
   }
 
+  /**
+   * Sets the 2D canvas fade rate and derives the shader's clamp threshold from it, so the two can't drift apart.
+   * A slower fade (lower alpha) leaves a bigger stuck floor (1/(510×alpha)), so the threshold has to rise to match.
+   */
+  private applyFadeAlpha = (): void => {
+    const { fadeAlphaPercent } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+    const alpha: number = fadeAlphaPercent / 100;
+    this.displacementCanvas.setFadeAlpha(alpha);
+
+    /*
+     * ? Step 1: GCO "destination-out" makes a fill SUBTRACT alpha instead of drawing over it.
+     * ? a_new = a_old * (1 - alpha). Canvas alpha is an 8-bit integer (0-255), so really:
+     * ? a_new_255 = round(a_old_255 * (1 - alpha)) = round(a_old_255 - a_old_255 * alpha)
+     *
+     * ? Step 2: the problem. round() sends any leftover fraction < 0.5 back down, so once the
+     * ? removed amount (a_old_255 * alpha) drops under 0.5, the value rounds right back to
+     * ? itself, forever. Example: round(128 - 0.3) = round(127.7) = 128
+     *
+     * ? Step 3: the fix. Solve a_old_255 * alpha < 0.5 for the stuck floor:
+     * ? a_old_255 < 0.5 / alpha        (in 0-255 terms)
+     * ? a_old     < 1 / (510 * alpha)  (as the 0-1 fraction the shader reads)
+     * ? smoothstep's lower edge must clear that floor, hence the margin below.
+     */
+    const { thresholdMargin } = Particles.CONFIG.displacement;
+    const threshold: number = (1 / (510 * alpha)) * thresholdMargin;
+
+    this.material.uniforms.uDisplacementThreshold.value = threshold;
+  };
+
   private setInteractivePlane(): void {
     const { width, height } = Particles.CONFIG.geometry;
 
@@ -202,7 +239,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   protected setMaterial(): void {
     const { x, y } = this.sizes.resolution;
 
-    const { chosenPictureIndex } = this.DEBUG_DEFAULTS;
+    const { chosenPictureIndex, fadeAlphaPercent } = this.DEBUG_DEFAULTS;
 
     const clampedChosenPicture: number = THREE.MathUtils.clamp(
       chosenPictureIndex,
@@ -219,6 +256,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       },
       uPictureTexture: new THREE.Uniform(chosenTexture),
       uDisplacementTexture: new THREE.Uniform(this.displacementCanvasTexture),
+      uDisplacementThreshold: new THREE.Uniform(fadeAlphaPercent), // ? Real value set right after by applyFadeAlpha
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -262,6 +300,14 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     registry.bind("chosenPictureIndex", (v) => {
       this.material.uniforms.uPictureTexture.value = this.texturesArray[v];
     });
+
+    particlesFolder
+      .add(state, "fadeAlphaPercent")
+      .min(1)
+      .max(10)
+      .step(1)
+      .name("Fade alpha %");
+    registry.bind("fadeAlphaPercent", this.applyFadeAlpha);
   }
 
   /** UV of the point of the interactive plane under the pointer, null when the pointer isn't over it. */

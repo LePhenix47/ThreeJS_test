@@ -1,6 +1,7 @@
 uniform vec2 uResolution;
 uniform sampler2D uPictureTexture;
 uniform sampler2D uDisplacementTexture;
+uniform float uDisplacementThreshold;
 
 attribute float aIntensity;
 attribute float aAngles;
@@ -9,7 +10,9 @@ varying float vPictureIntensity;
 
 void main() {
     float displacementIntensity = texture(uDisplacementTexture, uv).a;
-    displacementIntensity = smoothstep(0.2, 0.5, displacementIntensity);
+    // ? Upper edge is a fixed ramp width above the lower edge, which Particles computes from the fade alpha so the two can't drift apart
+    float displacementThresholdMax = uDisplacementThreshold + 0.25;
+    displacementIntensity = smoothstep(uDisplacementThreshold, displacementThresholdMax, displacementIntensity);
 
     vec3 displacement = vec3(
         // 
