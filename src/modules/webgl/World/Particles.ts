@@ -233,7 +233,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   }
 
   /** UV of the point of the interactive plane under the pointer, null when the pointer isn't over it. */
-  private getPointerUV(): THREE.Vector2 | null {
+  private getPlanePointerUv(): THREE.Vector2 | null {
     this.raycasterManager.updatePointer(
       this.pointer.normalizedX,
       this.pointer.normalizedY,
@@ -267,7 +267,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   public update(): void {
     this.displacementCanvas.update();
 
-    const uv = this.getPointerUV();
+    const uv = this.getPlanePointerUv();
     if (!uv) return;
 
     this.drawGlowAt(uv);
