@@ -9,7 +9,7 @@ varying float vPictureIntensity;
 
 void main() {
     float displacementIntensity = texture(uDisplacementTexture, uv).a;
-    displacementIntensity = smoothstep(0.1, 0.3, displacementIntensity);
+    displacementIntensity = smoothstep(0.2, 0.5, displacementIntensity);
 
     vec3 displacement = vec3(
         // 
