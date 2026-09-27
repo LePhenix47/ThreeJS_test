@@ -5,14 +5,13 @@ uniform sampler2D uDisplacementTexture;
 attribute float aIntensity;
 attribute float aAngles;
 
-varying vec2 vGlobalUv;
 varying float vPictureIntensity;
 
 #include ../utils/textures/textureGrayScale
 
 void main() {
     float displacementIntensity = texture(uDisplacementTexture, uv).a;
-    displacementIntensity = smoothstep(0.05, 1.0, displacementIntensity);
+    displacementIntensity = smoothstep(0.1, 0.3, displacementIntensity);
 
     vec3 displacement = vec3(
         // 
@@ -42,6 +41,5 @@ void main() {
     gl_PointSize *= -1.0 / viewPosition.z;
 
     // * Varyings
-    vGlobalUv = uv;
     vPictureIntensity = pictureIntensity;
 }
