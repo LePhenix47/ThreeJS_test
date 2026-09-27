@@ -32,7 +32,7 @@ type DrawImageCroppedParams = {
   source: Rect;
   /** Box on the canvas the crop is scaled into. */
   destination: Rect;
-  /** Point of `destination` that lands on `(destination.x, destination.y)`, as a fraction of its size. (0, 0) is its top-left corner, (0.5, 0.5) its center. Defaults to the top-left corner. */
+  /** Point of `destination` that lands on `(destination.x, destination.y)`, as a fraction of its size. (0, 0) is its top-left corner, (0.5, 0.5) its center, (1,1) bottom-right. Defaults to the top-left corner. */
   origin?: Point;
 };
 
