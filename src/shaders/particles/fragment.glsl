@@ -1,3 +1,5 @@
+uniform sampler2D uDisplacementTexture;
+
 varying vec2 vGlobalUv;
 varying float vPictureIntensity;
 

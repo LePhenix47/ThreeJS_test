@@ -1,5 +1,6 @@
 uniform vec2 uResolution;
 uniform sampler2D uPictureTexture;
+uniform sampler2D uDisplacementTexture;
 
 varying vec2 vGlobalUv;
 varying float vPictureIntensity;

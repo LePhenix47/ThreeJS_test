@@ -19,6 +19,7 @@ type ParticlesState = {
 type ParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
   uPictureTexture: THREE.Texture;
+  uDisplacementTexture: THREE.Texture;
 }>;
 
 type InteractivePlane = THREE.Mesh<
@@ -47,6 +48,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   private displacementCanvas: DisplacementCanvas;
   private displacementCanvasGlow: HTMLImageElement;
+  private displacementCanvasTexture: THREE.Texture<HTMLCanvasElement>;
 
   private readonly DEBUG_DEFAULTS: ParticlesState = {
     chosenPictureIndex: 0,
@@ -100,18 +102,19 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
     this.setTextures();
 
-    this.setGeometry();
-    this.setMaterial();
-    this.setPoints();
-
-    this.scene.add(this.points);
-
     this.setInteractivePlane();
     this.scene.add(this.interactivePlane);
 
     this.displacementCanvas = new DisplacementCanvas({
       canvas: this.canvas2D,
     });
+    this.setDisplacementTexture();
+
+    this.setGeometry();
+    this.setMaterial();
+    this.setPoints();
+
+    this.scene.add(this.points);
 
     this.sizes.on("resize", this.onResize);
 
@@ -120,6 +123,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     }
 
     console.log("Particles");
+  }
+
+  private setDisplacementTexture(): void {
+    this.displacementCanvasTexture = new THREE.CanvasTexture(this.canvas2D);
   }
 
   private setInteractivePlane(): void {
@@ -186,9 +193,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       uResolution: {
         value: new THREE.Vector2(x, y),
       },
-      uPictureTexture: {
-        value: chosenTexture,
-      },
+      uPictureTexture: new THREE.Uniform(chosenTexture),
+      uDisplacementTexture: new THREE.Uniform(this.displacementCanvasTexture),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -268,6 +274,9 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   public update(): void {
     this.displacementCanvas.update();
+
+    // ? Required to always send what's currently on 2D canvas
+    this.displacementCanvasTexture.needsUpdate = true;
 
     const uv = this.getPlanePointerUv();
     if (!uv) return;
