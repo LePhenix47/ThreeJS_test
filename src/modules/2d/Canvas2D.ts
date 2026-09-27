@@ -25,6 +25,17 @@ type Rect = {
   height: number;
 };
 
+type DrawImageCroppedParams = {
+  /** Source image to crop from. */
+  image: CanvasImageSource;
+  /** Crop rectangle in the source image's own pixels. */
+  source: Rect;
+  /** Box on the canvas the crop is scaled into. */
+  destination: Rect;
+  /** Point of `destination` that lands on `(destination.x, destination.y)`, as a fraction of its size. (0, 0) is its top-left corner, (0.5, 0.5) its center. Defaults to the top-left corner. */
+  origin?: Point;
+};
+
 abstract class Canvas2D implements Destroyable {
   /**
    * The HTML canvas element.
@@ -131,7 +142,7 @@ abstract class Canvas2D implements Destroyable {
     height: number,
     origin: Point = { x: 0, y: 0 },
   ): void {
-    const topLeft = this.topLeftFromOrigin(x, y, width, height, origin);
+    const topLeft: Point = this.topLeftFromOrigin(x, y, width, height, origin);
 
     this.context.drawImage(image, topLeft.x, topLeft.y, width, height);
   }
@@ -147,17 +158,21 @@ abstract class Canvas2D implements Destroyable {
     this.drawImage(image, x, y, width, height, { x: 0.5, y: 0.5 });
   }
 
-  /** Draws a `source` rectangle cropped out of an image, scaled into `width`x`height`, so `origin` lands on `(x, y)`. E.g. one frame of a sprite sheet. */
-  public drawImageCropped(
-    image: CanvasImageSource,
-    source: Rect,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    origin: Point = { x: 0, y: 0 },
-  ): void {
-    const topLeft = this.topLeftFromOrigin(x, y, width, height, origin);
+  /** Draws a `source` rectangle cropped out of an image, scaled into `destination`. E.g. one frame of a sprite sheet. */
+  public drawImageCropped({
+    image,
+    source,
+    destination,
+    origin = { x: 0, y: 0 },
+  }: DrawImageCroppedParams): void {
+    const { width, height } = destination;
+    const topLeft = this.topLeftFromOrigin(
+      destination.x,
+      destination.y,
+      width,
+      height,
+      origin,
+    );
 
     this.context.drawImage(
       image,
