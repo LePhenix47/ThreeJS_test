@@ -181,7 +181,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
     for (let i = 0; i < intensitiesArray.length; i++) {
       intensitiesArray[i] = Math.random();
-      anglesArray[i] = randomInRange(0, Math.PI * 2);
+      anglesArray[i] = randomInRange(0, Math.PI * 2, "both");
     }
 
     geometry.setAttribute(
