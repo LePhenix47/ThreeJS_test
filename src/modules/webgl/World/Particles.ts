@@ -36,6 +36,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     },
     glow: {
       alpha: 0.2, // ? Low on purpose, the glow is drawn every frame so it stacks up quickly
+      size: 20,
     },
   } as const;
 
@@ -249,16 +250,17 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   /** Draws the glow on the 2D canvas at the given UV of the plane. */
   private drawGlowAt(uv: THREE.Vector2): void {
-    const canvas2dSize: number = DisplacementCanvas.CONFIG.size;
+    const { alpha, size: glowSize } = Particles.CONFIG.glow;
+    this.displacementCanvas.setAlpha(alpha);
 
-    this.displacementCanvas.setAlpha(Particles.CONFIG.glow.alpha);
+    const { size: canvas2dSize } = DisplacementCanvas.CONFIG;
     this.displacementCanvas.drawImageCentered(
       this.displacementCanvasGlow,
       uv.x * canvas2dSize,
       // ? uv starts at the bottom-left like a texture, the canvas starts at the top-left
       (1 - uv.y) * canvas2dSize,
-      20,
-      20,
+      glowSize,
+      glowSize,
     );
     // ? Back to opaque, otherwise the fade in displacementCanvas.update() would run at a fraction of its strength
     this.displacementCanvas.setAlpha(1);
