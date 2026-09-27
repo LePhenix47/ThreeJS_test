@@ -175,6 +175,11 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       heightSegments,
     );
 
+    // * Performance improvers
+    geometry.setIndex(null); // ? avoids creating duplicate particles
+    geometry.deleteAttribute("normal"); // ? useless in our case
+
+    // * Attributes
     const { count } = geometry.attributes.position;
     const intensitiesArray = new Float32Array(count);
     const anglesArray = new Float32Array(count);
