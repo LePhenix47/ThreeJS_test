@@ -1,5 +1,6 @@
 import { Destroyable } from "@utils/types/lifecycle.type";
 import EventEmitter from "./EventEmitter";
+import { distance } from "@/utils/numbers/math";
 
 type PointerPosition = {
   x: number;
@@ -13,9 +14,10 @@ type PointerEvents = {
 class Pointer extends EventEmitter<PointerEvents> implements Destroyable {
   /** Position over the element, in CSS pixels. NaN until the first pointer move. */
   public readonly position: PointerPosition = { x: NaN, y: NaN };
+  public readonly previousPosition: PointerPosition = { x: NaN, y: NaN };
 
   /** Position over the element, in CSS pixels, at the latest pointer down. */
-  public readonly lastPointerDown: PointerPosition = { x: 0, y: 0 };
+  public readonly exitPointerLastPosition: PointerPosition = { x: 0, y: 0 };
 
   private readonly abortController = new AbortController();
   private readonly element: HTMLElement;
@@ -38,6 +40,14 @@ class Pointer extends EventEmitter<PointerEvents> implements Destroyable {
   /** Vertical position remapped from [0, 1] to [-1, 1], top to bottom. Negate for Three's Y-up clip space, where top is +1. */
   public get clipSpaceY(): number {
     return this.normalizedY * 2 - 1;
+  }
+
+  public get distanceFromPreviousPosition(): number {
+    const dx: number = this.position.x - this.previousPosition.x;
+    const dy: number = this.position.y - this.previousPosition.y;
+
+    const dist: number = distance(dx, dy);
+    return dist;
   }
 
   constructor(element: HTMLElement) {
@@ -64,13 +74,16 @@ class Pointer extends EventEmitter<PointerEvents> implements Destroyable {
 
   private onPointerMove = (e: PointerEvent): void => {
     // ? offsetX and offsetY are relative to the event target, which is the element itself since a canvas has no children
+    this.previousPosition.x = this.position.x;
+    this.previousPosition.y = this.position.y;
+
     this.position.x = e.offsetX;
     this.position.y = e.offsetY;
   };
 
   private onPointerDown = (e: PointerEvent): void => {
-    this.lastPointerDown.x = e.offsetX;
-    this.lastPointerDown.y = e.offsetY;
+    this.exitPointerLastPosition.x = e.offsetX;
+    this.exitPointerLastPosition.y = e.offsetY;
   };
 
   private onClick = (e: MouseEvent): void => {
