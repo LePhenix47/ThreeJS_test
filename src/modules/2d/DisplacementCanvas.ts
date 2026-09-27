@@ -26,7 +26,7 @@ class DisplacementCanvas extends Canvas2D implements Updatable {
     this.context.save();
 
     this.setCompositeOperation("destination-out");
-    this.fillCanvas("rgba(0, 0, 0, 0.1)"); // ? Only the alpha counts here, it's how much of the old paint gets erased
+    this.fillCanvas("rgba(0, 0, 0, 0.01)"); // ? Only the alpha counts here, it's how much of the old paint gets erased
 
     this.context.restore();
   }

@@ -8,8 +8,17 @@ varying float vPictureIntensity;
 #include ../utils/textures/textureGrayScale
 
 void main() {
+    float displacementIntensity = texture(uDisplacementTexture, uv).a;
+    displacementIntensity = smoothstep(0.05, 1.0, displacementIntensity);
+
+    vec3 displacement = vec3(0.0, 0.0, 1.0);
+    displacement *= vec3(displacementIntensity);
+
+    vec3 newPosition = position;
+    newPosition += displacement;
+
     // * Final position
-    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+    vec4 modelPosition = modelMatrix * vec4(newPosition, 1.0);
     vec4 viewPosition = viewMatrix * modelPosition;
     vec4 projectedPosition = projectionMatrix * viewPosition;
     gl_Position = projectedPosition;
