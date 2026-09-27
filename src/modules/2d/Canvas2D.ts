@@ -18,6 +18,13 @@ type PaintStyle = {
   strokeWidth?: number;
 };
 
+type Rect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 abstract class Canvas2D implements Destroyable {
   /**
    * The HTML canvas element.
@@ -124,13 +131,9 @@ abstract class Canvas2D implements Destroyable {
     height: number,
     origin: Point = { x: 0, y: 0 },
   ): void {
-    this.context.drawImage(
-      image,
-      x - width * origin.x,
-      y - height * origin.y,
-      width,
-      height,
-    );
+    const topLeft = this.topLeftFromOrigin(x, y, width, height, origin);
+
+    this.context.drawImage(image, topLeft.x, topLeft.y, width, height);
   }
 
   /** Draws an image around its center. */
@@ -142,6 +145,45 @@ abstract class Canvas2D implements Destroyable {
     height: number,
   ): void {
     this.drawImage(image, x, y, width, height, { x: 0.5, y: 0.5 });
+  }
+
+  /** Draws a `source` rectangle cropped out of an image, scaled into `width`x`height`, so `origin` lands on `(x, y)`. E.g. one frame of a sprite sheet. */
+  public drawImageCropped(
+    image: CanvasImageSource,
+    source: Rect,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    origin: Point = { x: 0, y: 0 },
+  ): void {
+    const topLeft = this.topLeftFromOrigin(x, y, width, height, origin);
+
+    this.context.drawImage(
+      image,
+      source.x,
+      source.y,
+      source.width,
+      source.height,
+      topLeft.x,
+      topLeft.y,
+      width,
+      height,
+    );
+  }
+
+  /** Top-left corner of a `width`x`height` box so that its `origin` point lands on `(x, y)`. */
+  private topLeftFromOrigin(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    origin: Point,
+  ): Point {
+    return {
+      x: x - width * origin.x,
+      y: y - height * origin.y,
+    };
   }
 
   /** Runs `draw` with the canvas translated then rotated, and restores the previous transform after. */
