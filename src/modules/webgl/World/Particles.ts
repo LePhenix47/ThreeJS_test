@@ -37,7 +37,6 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       heightSegments: 2 ** 7, // ? 128 + 1 squares on each plane row
     },
     glow: {
-      alpha: 0.2, // ? Low on purpose, the glow is drawn every frame so it stacks up quickly
       /** Fraction of the 2D canvas's own size, applied per axis so an oblong canvas keeps a proportioned glow. */
       sizeRatio: 0.25,
     },
@@ -226,6 +225,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       vertexShader,
       fragmentShader,
       transparent: true,
+      blending: THREE.AdditiveBlending,
       uniforms,
     }) as TypedShaderMaterial<ParticlesUniforms>;
   }
@@ -281,10 +281,16 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   /** Draws the glow on the 2D canvas at the given UV of the plane. Sized as a fraction of the canvas's own (possibly non-square) size. */
   private drawGlowAt(uv: THREE.Vector2): void {
-    const { alpha, sizeRatio } = Particles.CONFIG.glow;
+    const { sizeRatio } = Particles.CONFIG.glow;
     const { width, height } = this.displacementCanvas.canvasSizes;
 
-    this.displacementCanvas.setAlpha(alpha);
+    // ? A still cursor draws at 0 alpha (nothing), a fast one draws bright, so holding still can't stack the glow up
+    const cursorSpeedAlpha: number = Math.min(
+      this.pointer.distanceFromPreviousPosition * 0.1,
+      1,
+    );
+
+    this.displacementCanvas.setAlpha(cursorSpeedAlpha);
     this.displacementCanvas.drawImageCentered(
       this.displacementCanvasGlow,
       uv.x * width,
@@ -294,12 +300,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       height * sizeRatio,
     );
     // ? Back to opaque, otherwise the fade in displacementCanvas.update() would run at a fraction of its strength
-    const cursorSpeedAlpha: number = Math.min(
-      this.pointer.distanceFromPreviousPosition * 0.1,
-      1,
-    );
-
-    this.displacementCanvas.setAlpha(cursorSpeedAlpha);
+    this.displacementCanvas.setAlpha(1);
   }
 
   public update(): void {
