@@ -30,6 +30,16 @@ class Pointer extends EventEmitter<PointerEvents> implements Destroyable {
     return this.position.y / this.element.offsetHeight;
   }
 
+  /** Horizontal position remapped from [0, 1] to [-1, 1], left to right. */
+  public get clipSpaceX(): number {
+    return this.normalizedX * 2 - 1;
+  }
+
+  /** Vertical position remapped from [0, 1] to [-1, 1], top to bottom. Negate for Three's Y-up clip space, where top is +1. */
+  public get clipSpaceY(): number {
+    return this.normalizedY * 2 - 1;
+  }
+
   constructor(element: HTMLElement) {
     super();
 
