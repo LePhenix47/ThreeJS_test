@@ -2,16 +2,25 @@ import Canvas2D, { Canvas2DConstructor } from "@modules/2d/Canvas2D";
 import { Updatable } from "@utils/types/lifecycle.type";
 
 class DisplacementCanvas extends Canvas2D implements Updatable {
-  public static readonly CONFIG = {
-    size: 128,
-  } as const;
+  private readonly resizeObserver: ResizeObserver;
 
   constructor({ canvas }: Canvas2DConstructor) {
     super({ canvas });
 
-    const { size } = DisplacementCanvas.CONFIG;
-    this.setSize(size, size);
+    // ? Synchronous initial read: the observer's first callback only fires before the next paint, which can be after this frame's update() already ran
+    const { width, height } = this.instance.getBoundingClientRect();
+    this.setSize(width, height);
+
+    this.resizeObserver = new ResizeObserver(this.onResize);
+    this.resizeObserver.observe(this.instance);
   }
+
+  // ? --_size in the element's own CSS drives the buffer size, CSS stays the single source of truth
+  private onResize = ([entry]: ResizeObserverEntry[]): void => {
+    const { width, height } = entry.contentRect;
+
+    this.setSize(width, height);
+  };
 
   public drawOnOldPaint(): void {
     this.context.save();
@@ -24,6 +33,12 @@ class DisplacementCanvas extends Canvas2D implements Updatable {
 
   public update(): void {
     this.drawOnOldPaint();
+  }
+
+  public destroy(): void {
+    this.resizeObserver.disconnect();
+
+    super.destroy();
   }
 }
 

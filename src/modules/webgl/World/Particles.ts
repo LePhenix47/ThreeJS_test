@@ -36,7 +36,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     },
     glow: {
       alpha: 0.2, // ? Low on purpose, the glow is drawn every frame so it stacks up quickly
-      size: 20,
+      /** Fraction of the 2D canvas's own size, applied per axis so an oblong canvas keeps a proportioned glow. */
+      sizeRatio: 0.25,
     },
   } as const;
 
@@ -248,19 +249,19 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     return intersection?.uv ?? null;
   }
 
-  /** Draws the glow on the 2D canvas at the given UV of the plane. */
+  /** Draws the glow on the 2D canvas at the given UV of the plane. Sized as a fraction of the canvas's own (possibly non-square) size. */
   private drawGlowAt(uv: THREE.Vector2): void {
-    const { alpha, size: glowSize } = Particles.CONFIG.glow;
-    this.displacementCanvas.setAlpha(alpha);
+    const { alpha, sizeRatio } = Particles.CONFIG.glow;
+    const { width, height } = this.displacementCanvas.canvasSizes;
 
-    const { size: canvas2dSize } = DisplacementCanvas.CONFIG;
+    this.displacementCanvas.setAlpha(alpha);
     this.displacementCanvas.drawImageCentered(
       this.displacementCanvasGlow,
-      uv.x * canvas2dSize,
+      uv.x * width,
       // ? uv starts at the bottom-left like a texture, the canvas starts at the top-left
-      (1 - uv.y) * canvas2dSize,
-      glowSize,
-      glowSize,
+      (1 - uv.y) * height,
+      width * sizeRatio,
+      height * sizeRatio,
     );
     // ? Back to opaque, otherwise the fade in displacementCanvas.update() would run at a fraction of its strength
     this.displacementCanvas.setAlpha(1);
