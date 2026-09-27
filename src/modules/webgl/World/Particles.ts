@@ -11,6 +11,7 @@ import RaycasterManager from "@modules/webgl/Experience/utils/RaycasterManager";
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
+import { randomInRange } from "@/utils/numbers/range";
 
 type ParticlesState = {
   chosenPictureIndex: number;
@@ -176,15 +177,19 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
     const { count } = geometry.attributes.position;
     const intensitiesArray = new Float32Array(count);
+    const anglesArray = new Float32Array(count);
 
     for (let i = 0; i < intensitiesArray.length; i++) {
       intensitiesArray[i] = Math.random();
+      anglesArray[i] = randomInRange(0, Math.PI * 2);
     }
 
     geometry.setAttribute(
       "aIntensity",
       new THREE.BufferAttribute(intensitiesArray, 1),
     );
+
+    geometry.setAttribute("aAngles", new THREE.BufferAttribute(anglesArray, 1));
 
     this.geometry = geometry;
   }

@@ -2,6 +2,9 @@ uniform vec2 uResolution;
 uniform sampler2D uPictureTexture;
 uniform sampler2D uDisplacementTexture;
 
+attribute float aIntensity;
+attribute float aAngle;
+
 varying vec2 vGlobalUv;
 varying float vPictureIntensity;
 
@@ -11,8 +14,16 @@ void main() {
     float displacementIntensity = texture(uDisplacementTexture, uv).a;
     displacementIntensity = smoothstep(0.05, 1.0, displacementIntensity);
 
-    vec3 displacement = vec3(0.0, 0.0, 1.0);
-    displacement *= vec3(displacementIntensity);
+    vec3 displacement = vec3(
+        // 
+    cos(aAngle), 
+    // 
+    sin(aAngle), 
+    //  
+    1.0);
+    displacement *= displacementIntensity;
+    displacement *= 3.0;
+    displacement *= aIntensity;
 
     vec3 newPosition = position;
     newPosition += displacement;
