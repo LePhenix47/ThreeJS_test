@@ -16,11 +16,12 @@ void main() {
 
     vec3 displacement = vec3(
         // 
-    cos(aAngles), 
+    cos(aAngles) * 0.2, 
     // 
-    sin(aAngles), 
+    sin(aAngles) * 0.2, 
     //  
     1.0);
+    displacement = normalize(displacement);
     displacement *= displacementIntensity;
     displacement *= 3.0;
     displacement *= aIntensity;
