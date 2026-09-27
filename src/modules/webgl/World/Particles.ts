@@ -167,12 +167,26 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     const { width, height, widthSegments, heightSegments } =
       Particles.CONFIG.geometry;
 
-    this.geometry = new THREE.PlaneGeometry(
+    const geometry = new THREE.PlaneGeometry(
       width,
       height,
       widthSegments,
       heightSegments,
     );
+
+    const { count } = geometry.attributes.position;
+    const intensitiesArray = new Float32Array(count);
+
+    for (let i = 0; i < intensitiesArray.length; i++) {
+      intensitiesArray[i] = Math.random();
+    }
+
+    geometry.setAttribute(
+      "aIntensity",
+      new THREE.BufferAttribute(intensitiesArray, 1),
+    );
+
+    this.geometry = geometry;
   }
 
   protected setMaterial(): void {
