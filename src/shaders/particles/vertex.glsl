@@ -7,8 +7,6 @@ attribute float aAngles;
 
 varying float vPictureIntensity;
 
-#include ../utils/textures/textureGrayScale
-
 void main() {
     float displacementIntensity = texture(uDisplacementTexture, uv).a;
     displacementIntensity = smoothstep(0.1, 0.3, displacementIntensity);
@@ -34,7 +32,7 @@ void main() {
     vec4 projectedPosition = projectionMatrix * viewPosition;
     gl_Position = projectedPosition;
 
-    float pictureIntensity = textureGrayScale(uPictureTexture, uv);
+    float pictureIntensity = texture(uPictureTexture, uv).r;
 
     // * Point size
     gl_PointSize = 0.15 * uResolution.y * pictureIntensity;
