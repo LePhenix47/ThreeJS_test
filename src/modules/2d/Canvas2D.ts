@@ -247,6 +247,28 @@ abstract class Canvas2D implements Destroyable {
     // ? reset() clears the bitmap and the drawing state but keeps the canvas size. The element itself belongs to whoever created it.
     this.context.reset();
   }
+
+  /**
+   * Smallest fraction (0-1) a per-frame `fadeAlpha` decay can reach on this canvas before 8-bit
+   * rounding gets it stuck. A consumer reading a decaying channel from this canvas (e.g. a shader
+   * sampling it as a texture) needs its own clamp above this floor, or the leftover residue never
+   * rounds down to a true, exact 0.
+   *
+   * Step 1: repeated compositing (e.g. GCO `"destination-out"`) does `new_a = old_a * (1 - fadeAlpha)`
+   * on the canvas's 8-bit (0-255) storage, so really:
+   * `a_new_255 = round(a_old_255 * (1 - fadeAlpha)) = round(a_old_255 - a_old_255 * fadeAlpha)`
+   
+   * Step 2: the problem. `round()` sends any leftover fraction `< 0.5` back down, so once the
+   * removed amount (`a_old_255 * fadeAlpha`) drops under `0.5`, the value rounds right back to
+   * itself, forever. Example: `round(128 - 0.3) = round(127.7) = 128`
+   
+   * Step 3: the floor. Solve `a_old_255 * fadeAlpha < 0.5`:
+   * `a_old_255 < 0.5 / fadeAlpha `       (in 0-255 terms)
+   * `a_old     < 1 / (510 * fadeAlpha)`  (as the 0-1 fraction a shader reads)
+   */
+  public static getFadeResidueFloor(fadeAlpha: number): number {
+    return 1 / (510 * fadeAlpha);
+  }
 }
 
 export default Canvas2D;

@@ -146,22 +146,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     const alpha: number = fadeAlphaPercent / 100;
     this.displacementCanvas.setFadeAlpha(alpha);
 
-    /*
-     * ? Step 1: GCO "destination-out" makes a fill SUBTRACT alpha instead of drawing over it.
-     * ? a_new = a_old * (1 - alpha). Canvas alpha is an 8-bit integer (0-255), so really:
-     * ? a_new_255 = round(a_old_255 * (1 - alpha)) = round(a_old_255 - a_old_255 * alpha)
-     *
-     * ? Step 2: the problem. round() sends any leftover fraction < 0.5 back down, so once the
-     * ? removed amount (a_old_255 * alpha) drops under 0.5, the value rounds right back to
-     * ? itself, forever. Example: round(128 - 0.3) = round(127.7) = 128
-     *
-     * ? Step 3: the fix. Solve a_old_255 * alpha < 0.5 for the stuck floor:
-     * ? a_old_255 < 0.5 / alpha        (in 0-255 terms)
-     * ? a_old     < 1 / (510 * alpha)  (as the 0-1 fraction the shader reads)
-     * ? smoothstep's lower edge must clear that floor, hence the margin below.
-     */
+    // ? See Canvas2D.getFadeResidueFloor for the derivation. smoothstep's lower edge must clear that floor, hence the margin.
     const { thresholdMargin } = Particles.CONFIG.displacement;
-    const threshold: number = (1 / (510 * alpha)) * thresholdMargin;
+    const threshold: number =
+      DisplacementCanvas.getFadeResidueFloor(alpha) * thresholdMargin;
 
     this.material.uniforms.uDisplacementThreshold.value = threshold;
   };
