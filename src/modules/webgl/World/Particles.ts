@@ -137,6 +137,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     const interactivePlaneGeometry = new THREE.PlaneGeometry(width, height);
     const interactivePlaneMaterial = new THREE.MeshBasicMaterial({
       visible: false,
+      side: THREE.DoubleSide,
     });
 
     this.interactivePlane = new THREE.Mesh(
