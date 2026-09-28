@@ -13,6 +13,14 @@ class Webcam implements Destroyable {
   private readonly video: HTMLVideoElement;
   private stream: MediaStream | null = null;
 
+  /** Video frame width / height. 1 (square) until the stream's metadata loads. */
+  public get aspectRatio(): number {
+    const { videoWidth, videoHeight } = this.video;
+    if (!videoWidth || !videoHeight) return 1;
+
+    return videoWidth / videoHeight;
+  }
+
   constructor({ video }: WebcamConstructor) {
     this.video = video;
     this.configureVideo();
