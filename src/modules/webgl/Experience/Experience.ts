@@ -4,6 +4,7 @@ import Renderer from "./three/Renderer";
 import Sizes from "./utils/Sizes";
 import Time from "./utils/Time";
 import Pointer from "./utils/Pointer";
+import Webcam from "./utils/Webcam";
 
 import GUI from "lil-gui";
 import * as THREE from "three";
@@ -21,6 +22,8 @@ type ExperienceConstructor = {
   canvas: InputCanvas;
   /** Extra 2D canvas for the entities that draw on one. */
   canvas2D: InputCanvas;
+  /** Video element the webcam stream plays into. Belongs to the caller, `destroy()` never removes it. */
+  video: HTMLVideoElement;
   debugMode?: boolean;
   loadingManager: THREE.LoadingManager;
   sources?: Source[];
@@ -39,6 +42,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public sizes: Sizes;
   public time: Time;
   public pointer: Pointer;
+  public webcam: Webcam;
   public scene: THREE.Scene<THREE.Object3DEventMap>;
 
   public resources: Resources;
@@ -49,6 +53,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   constructor({
     canvas,
     canvas2D,
+    video,
     debugMode = false,
     loadingManager,
     sources = [],
@@ -81,6 +86,9 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     // * Pointer
     this.pointer = new Pointer(this.canvas);
+
+    // * Webcam
+    this.webcam = new Webcam({ video });
 
     // * Resources (texture loading)
     this.resources = new Resources(sources, { loadingManager });
@@ -143,6 +151,7 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.sizes.destroy();
     this.time.destroy();
     this.pointer.destroy();
+    this.webcam.destroy();
     this.camera.destroy();
     this.renderer.destroy();
     this.world.destroy();

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import ThreeScene from "@/components/ThreeScene/ThreeScene";
 import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
+import WebcamButton from "@/components/WebcamButton/WebcamButton";
 import "./index.scss";
 
 export const Route = createFileRoute("/")({
@@ -37,6 +38,7 @@ function IndexComponent() {
       <div className="index-page__scene-container stack">
         <ThreeScene />
         <LoadingSpinner />
+        <WebcamButton />
       </div>
     </div>
   );

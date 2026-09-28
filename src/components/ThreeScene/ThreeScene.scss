@@ -9,15 +9,32 @@
   overflow: hidden;
 }
 
-.three-scene__debug-canvas {
+.three-scene__debug {
+  --_debug-size: 128px;
+
   position: absolute;
   top: 0;
   left: 0;
 
   z-index: 1;
 
-  --_size: 128px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 
   pointer-events: none;
   user-select: none;
+
+  &--hidden {
+    visibility: hidden;
+  }
+}
+
+.three-scene__debug-canvas {
+  // ? Needed to beat the .square utility, which sets its own --_size on the element
+  --_size: var(--_debug-size);
+}
+
+.three-scene__debug-video {
+  height: var(--_debug-size);
 }
