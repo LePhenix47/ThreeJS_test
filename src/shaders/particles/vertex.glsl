@@ -2,6 +2,8 @@ uniform vec2 uResolution;
 uniform sampler2D uPictureTexture;
 uniform sampler2D uDisplacementTexture;
 uniform float uDisplacementThreshold;
+uniform float uPictureAspect;
+uniform float uFlipPictureX;
 
 attribute float aIntensity;
 attribute float aAngles;
@@ -37,8 +39,26 @@ void main() {
     vec4 projectedPosition = projectionMatrix * viewPosition;
     gl_Position = projectedPosition;
 
+    vec2 pictureUv = uv;
+
+    // ? Mirrors the webcam so it reads as a selfie, a no-op (0.0) for the static pictures
+    if(uFlipPictureX > 0.5) {
+        pictureUv.x = 1.0 - pictureUv.x;
+    }
+
+    /*
+      ? "Cover" style crop: the plane is square (aspect 1.0), so a wider-than-tall source (aspect > 1,
+      ? e.g. a 16:9 webcam) needs its sides cropped, and a taller-than-wide one needs its top/bottom
+      ? cropped, instead of being stretched to fill the square. A square source (aspect 1.0) is a no-op.
+    */
+    if(uPictureAspect > 1.0) {
+        pictureUv.x = (pictureUv.x - 0.5) / uPictureAspect + 0.5;
+    } else {
+        pictureUv.y = (pictureUv.y - 0.5) * uPictureAspect + 0.5;
+    }
+
     // ? Luminance, not .r: the webcam is in color while the pictures are already gray, and both give the same result here
-    float pictureIntensity = getLuminance(texture(uPictureTexture, uv).rgb);
+    float pictureIntensity = getLuminance(texture(uPictureTexture, pictureUv).rgb);
 
     // * Point size
     gl_PointSize = 0.15 * uResolution.y * pictureIntensity;

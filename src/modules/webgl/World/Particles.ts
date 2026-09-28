@@ -26,6 +26,10 @@ type ParticlesUniforms = MapAsUniforms<{
   uPictureTexture: THREE.Texture;
   uDisplacementTexture: THREE.Texture;
   uDisplacementThreshold: number;
+  /** Current picture's width / height, so it's cropped to fit the square plane instead of stretched. */
+  uPictureAspect: number;
+  /** 1 mirrors the picture so the webcam reads as a selfie, 0 for the static pictures. */
+  uFlipPictureX: number;
 }>;
 
 type InteractivePlane = THREE.Mesh<
@@ -252,6 +256,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       uPictureTexture: new THREE.Uniform(chosenTexture),
       uDisplacementTexture: new THREE.Uniform(this.displacementCanvasTexture),
       uDisplacementThreshold: new THREE.Uniform(fadeAlphaPercent), // ? Real value set right after by applyFadeAlpha
+      uPictureAspect: new THREE.Uniform(1), // ? Real value set right after by applyPictureTexture
+      uFlipPictureX: new THREE.Uniform(0),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -284,7 +290,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       texture = this.webcam.texture;
     }
 
-    this.material.uniforms.uPictureTexture.value = texture;
+    const { uniforms } = this.material;
+    uniforms.uPictureTexture.value = texture;
+    uniforms.uPictureAspect.value = useWebcam ? this.webcam.aspectRatio : 1;
+    uniforms.uFlipPictureX.value = useWebcam ? 1 : 0;
   };
 
   private addDebugFolders(): void {
@@ -364,6 +373,12 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
     // ? Required to always send what's currently on 2D canvas
     this.displacementCanvasTexture.needsUpdate = true;
+
+    // ? The stream's real dimensions only arrive once its metadata loads, possibly after the toggle already ran
+    const { useWebcam } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+    if (useWebcam) {
+      this.material.uniforms.uPictureAspect.value = this.webcam.aspectRatio;
+    }
 
     const uv = this.getPlanePointerUv();
     if (!uv) return;
