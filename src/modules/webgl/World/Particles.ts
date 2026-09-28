@@ -28,8 +28,8 @@ type ParticlesUniforms = MapAsUniforms<{
   uDisplacementThreshold: number;
   /** Current picture's width / height, so it's cropped to fit the square plane instead of stretched. */
   uPictureAspect: number;
-  /** 1 mirrors the picture so the webcam reads as a selfie, 0 for the static pictures. */
-  uFlipPictureX: number;
+  /** Mirrors the picture so the webcam reads as a selfie, false for the static pictures. */
+  uFlipPictureX: boolean;
 }>;
 
 type InteractivePlane = THREE.Mesh<
@@ -257,7 +257,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
       uDisplacementTexture: new THREE.Uniform(this.displacementCanvasTexture),
       uDisplacementThreshold: new THREE.Uniform(fadeAlphaPercent), // ? Real value set right after by applyFadeAlpha
       uPictureAspect: new THREE.Uniform(1), // ? Real value set right after by applyPictureTexture
-      uFlipPictureX: new THREE.Uniform(0),
+      uFlipPictureX: new THREE.Uniform(false),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -293,7 +293,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     const { uniforms } = this.material;
     uniforms.uPictureTexture.value = texture;
     uniforms.uPictureAspect.value = useWebcam ? this.webcam.aspectRatio : 1;
-    uniforms.uFlipPictureX.value = useWebcam ? 1 : 0;
+    uniforms.uFlipPictureX.value = useWebcam;
   };
 
   private addDebugFolders(): void {

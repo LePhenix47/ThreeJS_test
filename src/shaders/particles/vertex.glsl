@@ -3,7 +3,7 @@ uniform sampler2D uPictureTexture;
 uniform sampler2D uDisplacementTexture;
 uniform float uDisplacementThreshold;
 uniform float uPictureAspect;
-uniform float uFlipPictureX;
+uniform bool uFlipPictureX;
 
 attribute float aIntensity;
 attribute float aAngles;
@@ -42,8 +42,8 @@ void main() {
 
     vec2 pictureUv = uv;
 
-    // ? Mirrors the webcam so it reads as a selfie, a no-op (0.0) for the static pictures
-    if(uFlipPictureX > 0.5) {
+    // ? Mirrors the webcam so it reads as a selfie, false for the static pictures
+    if(uFlipPictureX) {
         pictureUv.x = 1.0 - pictureUv.x;
     }
 
