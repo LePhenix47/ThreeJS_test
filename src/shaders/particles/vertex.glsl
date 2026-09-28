@@ -11,6 +11,7 @@ attribute float aAngles;
 varying float vPictureIntensity;
 
 #include ../utils/color/getLuminance
+#include ../utils/uv/coverUv
 
 void main() {
     float displacementIntensity = texture(uDisplacementTexture, uv).a;
@@ -46,16 +47,7 @@ void main() {
         pictureUv.x = 1.0 - pictureUv.x;
     }
 
-    /*
-      ? "Cover" style crop: the plane is square (aspect 1.0), so a wider-than-tall source (aspect > 1,
-      ? e.g. a 16:9 webcam) needs its sides cropped, and a taller-than-wide one needs its top/bottom
-      ? cropped, instead of being stretched to fill the square. A square source (aspect 1.0) is a no-op.
-    */
-    if(uPictureAspect > 1.0) {
-        pictureUv.x = (pictureUv.x - 0.5) / uPictureAspect + 0.5;
-    } else {
-        pictureUv.y = (pictureUv.y - 0.5) * uPictureAspect + 0.5;
-    }
+    pictureUv = coverUv(pictureUv, uPictureAspect);
 
     // ? Luminance, not .r: the webcam is in color while the pictures are already gray, and both give the same result here
     float pictureIntensity = getLuminance(texture(uPictureTexture, pictureUv).rgb);
