@@ -1,4 +1,4 @@
-import { Destroyable } from "@utils/types/lifecycle.type";
+import { Destroyable, Updatable } from "@utils/types/lifecycle.type";
 import EventEmitter from "./EventEmitter";
 import { distance } from "@/utils/numbers/math";
 
@@ -11,7 +11,10 @@ type PointerEvents = {
   click: [MouseEvent];
 };
 
-class Pointer extends EventEmitter<PointerEvents> implements Destroyable {
+class Pointer
+  extends EventEmitter<PointerEvents>
+  implements Destroyable, Updatable
+{
   /** Position over the element, in CSS pixels. NaN until the first pointer move. */
   public readonly position: PointerPosition = { x: NaN, y: NaN };
   public readonly previousPosition: PointerPosition = { x: NaN, y: NaN };
@@ -74,9 +77,6 @@ class Pointer extends EventEmitter<PointerEvents> implements Destroyable {
 
   private onPointerMove = (e: PointerEvent): void => {
     // ? offsetX and offsetY are relative to the event target, which is the element itself since a canvas has no children
-    this.previousPosition.x = this.position.x;
-    this.previousPosition.y = this.position.y;
-
     this.position.x = e.offsetX;
     this.position.y = e.offsetY;
   };
@@ -89,6 +89,20 @@ class Pointer extends EventEmitter<PointerEvents> implements Destroyable {
   private onClick = (e: MouseEvent): void => {
     this.emit("click", e);
   };
+
+  public update(): void {
+    this.syncPreviousPosition();
+  }
+
+  /*
+    ? Synced once per frame, not per pointermove event: readers only see distanceFromPreviousPosition
+    ? once per frame anyway, and syncing here means a truly idle cursor reads a real 0 the very next
+    ? frame instead of staying stuck at whatever the last DOM event's delta happened to be.
+  */
+  private syncPreviousPosition(): void {
+    this.previousPosition.x = this.position.x;
+    this.previousPosition.y = this.position.y;
+  }
 
   public destroy(): void {
     this.abortController.abort();

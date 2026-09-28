@@ -124,6 +124,8 @@ class Experience implements Resizable, Updatable, Destroyable {
       this.camera.update();
       this.renderer.update();
       this.world.update();
+      // ? After world.update(): Particles reads distanceFromPreviousPosition before it's synced for the next frame
+      this.pointer.update();
     } catch (error) {
       console.error(error);
       console.error("Tick has been stopped due to an error");
