@@ -15,6 +15,8 @@ import { randomInRange } from "@/utils/numbers/range";
 
 type ParticlesState = {
   chosenPictureIndex: number;
+  /** Shows the live webcam instead of the chosen picture. */
+  useWebcam: boolean;
   /** How much alpha the displacement canvas fade removes each frame, as a percent (1 to 10). */
   fadeAlphaPercent: number;
 };
@@ -59,6 +61,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   private readonly DEBUG_DEFAULTS: ParticlesState = {
     chosenPictureIndex: 0,
+    useWebcam: false,
     fadeAlphaPercent: 1,
   };
   private guiRegistry: GUIStateRegistry<ParticlesState> | null = null;
@@ -100,6 +103,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   private get camera() {
     return this.experience!.camera;
+  }
+
+  private get webcam() {
+    return this.experience!.webcam;
   }
 
   constructor() {
@@ -266,6 +273,20 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     this.material.uniforms.uResolution.value.set(x, y);
   };
 
+  /** Points the shader at the webcam or at the chosen picture, from the current state. */
+  private applyPictureTexture = (): void => {
+    const { chosenPictureIndex, useWebcam } =
+      this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+
+    let texture: THREE.Texture = this.texturesArray[chosenPictureIndex];
+
+    if (useWebcam) {
+      texture = this.webcam.texture;
+    }
+
+    this.material.uniforms.uPictureTexture.value = texture;
+  };
+
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<ParticlesState>(
       "particles-gui-state",
@@ -285,9 +306,10 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     particlesFolder
       .add(state, "chosenPictureIndex", textureIndexArray)
       .name("Chosen picture");
-    registry.bind("chosenPictureIndex", (v) => {
-      this.material.uniforms.uPictureTexture.value = this.texturesArray[v];
-    });
+    registry.bind("chosenPictureIndex", this.applyPictureTexture);
+
+    particlesFolder.add(state, "useWebcam").name("Use webcam");
+    registry.bind("useWebcam", this.applyPictureTexture);
 
     particlesFolder
       .add(state, "fadeAlphaPercent")

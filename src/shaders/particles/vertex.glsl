@@ -8,6 +8,8 @@ attribute float aAngles;
 
 varying float vPictureIntensity;
 
+#include ../utils/color/getLuminance
+
 void main() {
     float displacementIntensity = texture(uDisplacementTexture, uv).a;
     // ? Upper edge is a fixed ramp width above the lower edge, which Particles computes from the fade alpha so the two can't drift apart
@@ -35,7 +37,8 @@ void main() {
     vec4 projectedPosition = projectionMatrix * viewPosition;
     gl_Position = projectedPosition;
 
-    float pictureIntensity = texture(uPictureTexture, uv).r;
+    // ? Luminance, not .r: the webcam is in color while the pictures are already gray, and both give the same result here
+    float pictureIntensity = getLuminance(texture(uPictureTexture, uv).rgb);
 
     // * Point size
     gl_PointSize = 0.15 * uResolution.y * pictureIntensity;
