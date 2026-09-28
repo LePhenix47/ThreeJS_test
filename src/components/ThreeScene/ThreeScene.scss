@@ -37,4 +37,7 @@
 
 .three-scene__debug-video {
   height: var(--_debug-size);
+
+  // ? Mirrors the preview so it feels like a normal selfie view, not a flipped raw camera feed
+  scale: -1 1;
 }
