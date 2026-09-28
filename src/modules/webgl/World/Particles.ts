@@ -146,7 +146,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     const alpha: number = fadeAlphaPercent / 100;
     this.displacementCanvas.setFadeAlpha(alpha);
 
-    // ? See Canvas2D.getFadeResidueFloor for the derivation. smoothstep's lower edge must clear that floor, hence the margin.
+    // ? See DisplacementCanvas.getFadeResidueFloor for the derivation. smoothstep's lower edge must clear that floor, hence the margin.
     const { thresholdMargin } = Particles.CONFIG.displacement;
     const threshold: number =
       DisplacementCanvas.getFadeResidueFloor(alpha) * thresholdMargin;
