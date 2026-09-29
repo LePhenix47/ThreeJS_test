@@ -59,7 +59,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
 
   private texturesArray: THREE.Texture<HTMLImageElement>[];
 
-  private displacementCanvas: DisplacementCanvas;
+  private readonly displacementCanvas: DisplacementCanvas;
   private displacementCanvasGlow: HTMLImageElement;
   private displacementCanvasTexture: THREE.Texture<HTMLCanvasElement>;
 
