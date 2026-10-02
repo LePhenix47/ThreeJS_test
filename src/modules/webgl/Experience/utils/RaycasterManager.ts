@@ -19,7 +19,7 @@ type IntersectionCallback<T extends THREE.Object3D> = (
  * };
  *
  * // In the animation loop:
- * manager.updatePointer(pointer.normalizedX, pointer.normalizedY);
+ * manager.updatePointer(pointer.clipSpaceX, -pointer.clipSpaceY);
  * manager.checkIntersections(meshes, camera);
  * ```
  */
@@ -41,9 +41,9 @@ class RaycasterManager<T extends THREE.Object3D = THREE.Object3D> {
   /** Called on a click while the ray is over an object. */
   public onClick: IntersectionCallback<T> | null = null;
 
-  /** Sets the pointer from canvas percentages (0 to 1, Y going down) into Three's coordinates (-1 to 1, Y going up). */
-  public updatePointer(xPercent: number, yPercent: number): void {
-    this.position.set(xPercent * 2 - 1, 1 - yPercent * 2);
+  /** Sets the pointer from Three's clip-space coordinates (-1 to 1, Y going up). */
+  public updatePointer(x: number, y: number): void {
+    this.position.set(x, y);
   }
 
   /** Casts the ray through the pointer, fires `onLeave` and `onEnter` if the nearest object changed, and returns the nearest intersection. Call it every frame. */

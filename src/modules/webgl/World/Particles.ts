@@ -332,8 +332,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   /** UV of the point of the interactive plane under the pointer, null when the pointer isn't over it. */
   private getPlanePointerUv(): THREE.Vector2 | null {
     this.raycasterManager.updatePointer(
-      this.pointer.normalizedX,
-      this.pointer.normalizedY,
+      this.pointer.clipSpaceX,
+      -1 * this.pointer.clipSpaceY,
     );
 
     const intersection = this.raycasterManager.checkIntersections(
