@@ -51,7 +51,7 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     },
     displacement: {
       /** Safety margin above the theoretical stuck floor (1/(510×fadeAlpha)), so the clamp doesn't sit right on the boundary. */
-      thresholdMargin: 1.5,
+      thresholdMargin: 1.25,
     },
   } as const;
 
@@ -161,6 +161,8 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     const { thresholdMargin } = Particles.CONFIG.displacement;
     const threshold: number =
       DisplacementCanvas.getFadeResidueFloor(alpha) * thresholdMargin;
+
+    console.log({ threshold });
 
     this.material.uniforms.uDisplacementThreshold.value = threshold;
   };
