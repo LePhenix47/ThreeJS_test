@@ -25,6 +25,15 @@ type Rect = {
   height: number;
 };
 
+type DrawImageParams = {
+  /** Image to draw. */
+  image: CanvasImageSource;
+  /** Box on the canvas the image is scaled into. */
+  destination: Rect;
+  /** Point of `destination` that lands on `(destination.x, destination.y)`, as a fraction of its size. (0, 0) is its top-left corner, (0.5, 0.5) its center, (1,1) bottom-right. Defaults to the top-left corner. */
+  origin?: Point;
+};
+
 type DrawImageCroppedParams = {
   /** Source image to crop from. */
   image: CanvasImageSource;
@@ -34,6 +43,13 @@ type DrawImageCroppedParams = {
   destination: Rect;
   /** Point of `destination` that lands on `(destination.x, destination.y)`, as a fraction of its size. (0, 0) is its top-left corner, (0.5, 0.5) its center, (1,1) bottom-right. Defaults to the top-left corner. */
   origin?: Point;
+};
+
+type DrawWithTransformParams = {
+  /** Offset applied to the canvas before `draw` runs. */
+  translate: Point;
+  rotationRad: number;
+  draw: () => void;
 };
 
 abstract class Canvas2D implements Destroyable {
@@ -88,17 +104,13 @@ abstract class Canvas2D implements Destroyable {
   public fillCanvas(color: string): void {
     const { width, height } = this.canvasSizes;
 
-    this.drawRect(0, 0, width, height, { fill: color });
+    this.drawRect({ x: 0, y: 0, width, height }, { fill: color });
   }
 
   /** Draws a rectangle from its top-left corner. */
-  public drawRect(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    style: PaintStyle,
-  ): void {
+  public drawRect(rect: Rect, style: PaintStyle): void {
+    const { x, y, width, height } = rect;
+
     this.context.beginPath();
     this.context.rect(x, y, width, height);
 
@@ -106,14 +118,9 @@ abstract class Canvas2D implements Destroyable {
   }
 
   /** Draws a circle around its center. */
-  public drawCircle(
-    x: number,
-    y: number,
-    radius: number,
-    style: PaintStyle,
-  ): void {
+  public drawCircle(center: Point, radius: number, style: PaintStyle): void {
     this.context.beginPath();
-    this.context.arc(x, y, radius, 0, Math.PI * 2);
+    this.context.arc(center.x, center.y, radius, 0, Math.PI * 2);
 
     this.paintPath(style);
   }
@@ -133,29 +140,24 @@ abstract class Canvas2D implements Destroyable {
     this.paintPath(style);
   }
 
-  /** Draws an image so that its `origin` point lands on `(x, y)`. The origin is a fraction of the image size: (0, 0) is the top-left corner, (0.5, 0.5) the center. */
-  public drawImage(
-    image: CanvasImageSource,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    origin: Point = { x: 0, y: 0 },
-  ): void {
-    const topLeft: Point = this.topLeftFromOrigin(x, y, width, height, origin);
+  /** Draws an image so that its `origin` point lands on `destination`'s `(x, y)`. The origin is a fraction of `destination`'s size: (0, 0) is the top-left corner, (0.5, 0.5) the center. */
+  public drawImage({
+    image,
+    destination,
+    origin = { x: 0, y: 0 },
+  }: DrawImageParams): void {
+    const { width, height } = destination;
+    const topLeft: Point = this.topLeftFromOrigin(destination, origin);
 
     this.context.drawImage(image, topLeft.x, topLeft.y, width, height);
   }
 
   /** Draws an image around its center. */
-  public drawImageCentered(
-    image: CanvasImageSource,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-  ): void {
-    this.drawImage(image, x, y, width, height, { x: 0.5, y: 0.5 });
+  public drawImageCentered({
+    image,
+    destination,
+  }: Omit<DrawImageParams, "origin">): void {
+    this.drawImage({ image, destination, origin: { x: 0.5, y: 0.5 } });
   }
 
   /** Draws a `source` rectangle cropped out of an image, scaled into `destination`. E.g. one frame of a sprite sheet. */
@@ -166,13 +168,7 @@ abstract class Canvas2D implements Destroyable {
     origin = { x: 0, y: 0 },
   }: DrawImageCroppedParams): void {
     const { width, height } = destination;
-    const topLeft = this.topLeftFromOrigin(
-      destination.x,
-      destination.y,
-      width,
-      height,
-      origin,
-    );
+    const topLeft = this.topLeftFromOrigin(destination, origin);
 
     this.context.drawImage(
       image,
@@ -187,31 +183,24 @@ abstract class Canvas2D implements Destroyable {
     );
   }
 
-  /** Top-left corner of a `width`x`height` box so that its `origin` point lands on `(x, y)`. */
-  private topLeftFromOrigin(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    origin: Point,
-  ): Point {
+  /** Top-left corner of `rect` so that its `origin` point lands on `(rect.x, rect.y)`. */
+  private topLeftFromOrigin(rect: Rect, origin: Point): Point {
     return {
-      x: x - width * origin.x,
-      y: y - height * origin.y,
+      x: rect.x - rect.width * origin.x,
+      y: rect.y - rect.height * origin.y,
     };
   }
 
   /** Runs `draw` with the canvas translated then rotated, and restores the previous transform after. */
-  public drawWithTransform(
-    translateX: number,
-    translateY: number,
-    rotationRad: number,
-    draw: () => void,
-  ): void {
+  public drawWithTransform({
+    translate,
+    rotationRad,
+    draw,
+  }: DrawWithTransformParams): void {
     this.context.save();
 
     try {
-      this.context.translate(translateX, translateY);
+      this.context.translate(translate.x, translate.y);
       this.context.rotate(rotationRad);
 
       draw();
