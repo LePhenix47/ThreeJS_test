@@ -358,14 +358,16 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     );
 
     this.displacementCanvas.setAlpha(cursorSpeedAlpha);
-    this.displacementCanvas.drawImageCentered(
-      this.displacementCanvasGlow,
-      uv.x * width,
-      // ? uv starts at the bottom-left like a texture, the canvas starts at the top-left
-      (1 - uv.y) * height,
-      width * sizeRatio,
-      height * sizeRatio,
-    );
+    this.displacementCanvas.drawImageCentered({
+      image: this.displacementCanvasGlow,
+      destination: {
+        x: uv.x * width,
+        // ? uv starts at the bottom-left like a texture, the canvas starts at the top-left
+        y: (1 - uv.y) * height,
+        width: width * sizeRatio,
+        height: height * sizeRatio,
+      },
+    });
     // ? Back to opaque, otherwise the fade in displacementCanvas.update() would run at a fraction of its strength
     this.displacementCanvas.setAlpha(1);
   }
