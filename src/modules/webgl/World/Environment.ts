@@ -12,7 +12,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private readonly experience: Experience | null;
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
-  private readonly debugDefaults: EnvironmentState = {
+  private readonly DEBUG_DEFAULTS: EnvironmentState = {
     lightHelper: true,
     environmentColor: "#160920",
   };
@@ -53,7 +53,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<EnvironmentState>(
       "environment-gui-state",
-      this.debugDefaults,
+      this.DEBUG_DEFAULTS,
     );
     this.guiRegistry = registry;
 
