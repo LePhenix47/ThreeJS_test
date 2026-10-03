@@ -9,6 +9,10 @@ type EnvironmentState = {
 };
 
 class Environment extends EnvironmentEntity implements Destroyable {
+  public static readonly CONFIG = {
+    guiKey: "environment-gui-state",
+  } as const;
+
   private readonly experience: Experience | null;
   protected guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
@@ -51,8 +55,9 @@ class Environment extends EnvironmentEntity implements Destroyable {
   protected setEnvMap(): void {}
 
   protected override addDebugFolders(): void {
+    const { guiKey } = Environment.CONFIG;
     const registry = new GUIStateRegistry<EnvironmentState>(
-      "environment-gui-state",
+      guiKey,
       this.DEBUG_DEFAULTS,
     );
     this.guiRegistry = registry;

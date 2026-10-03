@@ -16,6 +16,7 @@ type MorphParticlesUniforms = MapAsUniforms<{
 
 class MorphParticles extends PointsEntity implements Destroyable {
   public static readonly CONFIG = {
+    guiKey: "morph-particles-gui-state",
     geometry: {
       radius: 3,
     },
@@ -101,10 +102,8 @@ class MorphParticles extends PointsEntity implements Destroyable {
   };
 
   protected override addDebugFolders() {
-    const registry = new GUIStateRegistry(
-      "morph-particles-state-registry",
-      this.DEBUG_DEFAULTS,
-    );
+    const { guiKey } = MorphParticles.CONFIG;
+    const registry = new GUIStateRegistry(guiKey, this.DEBUG_DEFAULTS);
 
     this.guiRegistry = registry;
 
