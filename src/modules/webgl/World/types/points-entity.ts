@@ -14,6 +14,8 @@ export abstract class PointsEntity {
   protected readonly DEBUG_DEFAULTS?: Record<string, Primitive>;
   /** A subclass with debug GUI state overrides this with `GUIStateRegistry<ItsOwnState> | null`. */
   protected guiRegistry?: GUIStateRegistry<Record<string, Primitive>> | null;
+  /** A subclass with debug GUI state overrides this to build its debug folder. Called from its own constructor, not driven by the base class. */
+  protected addDebugFolders?(): void;
   /** Instantiates and assigns `geometry`. */
   protected abstract setGeometry(): void;
   /** Instantiates and assigns `material`. */
