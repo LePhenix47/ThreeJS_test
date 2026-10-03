@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { GLTF } from "three/examples/jsm/Addons.js";
+import type { Primitive } from "@utils/types/helper.type";
+import type GUIStateRegistry from "@utils/classes/gui-state-registry";
 
 /** Generic animation state bag for GLTF entities with named clips. */
 export type AnimationState<TAnimations extends string> = {
@@ -16,6 +18,10 @@ export abstract class GltfEntity {
   /** Loads the GLTF asset and assigns the scene root to `model`. */
   protected abstract setModel(): void;
   protected animation?: AnimationState<string>;
+  /** A subclass with debug GUI state overrides this with its own state type. */
+  protected readonly DEBUG_DEFAULTS?: Record<string, Primitive>;
+  /** A subclass with debug GUI state overrides this with `GUIStateRegistry<ItsOwnState> | null`. */
+  protected guiRegistry?: GUIStateRegistry<Record<string, Primitive>> | null;
 
   /*
    * NOTE, we use regular method syntax: lives on the prototype
