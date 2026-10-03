@@ -5,6 +5,9 @@ import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
+import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+
+type MorphParticlesState = {};
 
 type MorphParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
@@ -27,12 +30,19 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected material: TypedShaderMaterial<MorphParticlesUniforms>;
   protected points: THREE.Points;
 
+  protected override readonly DEBUG_DEFAULTS: MorphParticlesState = {};
+  protected guiRegistry: GUIStateRegistry<MorphParticlesState> | null = null;
+
   private get scene() {
     return this.experience!.scene;
   }
 
   private get sizes() {
     return this.experience!.sizes;
+  }
+
+  private get debug() {
+    return this.experience!.debug;
   }
 
   constructor() {
@@ -48,6 +58,10 @@ class MorphParticles extends PointsEntity implements Destroyable {
     this.scene.add(this.points);
 
     this.sizes.on("resize", this.onResize);
+
+    if (this.debug?.isActive) {
+      this.addDebugFolders();
+    }
 
     console.log("MorphParticles");
   }
@@ -85,6 +99,20 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
     this.material.uniforms.uResolution.value.set(x, y);
   };
+
+  private addDebugFolders() {
+    const registry = new GUIStateRegistry(
+      "morph-particles-state-registry",
+      this.DEBUG_DEFAULTS,
+    );
+
+    this.guiRegistry = registry;
+
+    const { gui } = this.debug;
+    const folder = gui.addFolder("Morph particles");
+
+    const { state } = registry;
+  }
 
   public destroy(): void {
     this.sizes.off("resize", this.onResize);
