@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import type { TextureName } from "@modules/webgl/Experience/utils/Resources/types";
+import type { Primitive } from "@utils/types/helper.type";
+import type GUIStateRegistry from "@utils/classes/gui-state-registry";
 
 /** Full map of all possible texture slots to their loaded THREE.Texture instances. */
 export type EntityTexture = Record<TextureName, THREE.Texture>;
@@ -9,6 +11,10 @@ export abstract class MeshEntity {
   protected abstract geometry: THREE.BufferGeometry;
   protected abstract material: THREE.Material;
   protected abstract mesh: THREE.Mesh;
+  /** A subclass with debug GUI state overrides this with its own state type. */
+  protected readonly DEBUG_DEFAULTS?: Record<string, Primitive>;
+  /** A subclass with debug GUI state overrides this with `GUIStateRegistry<ItsOwnState> | null`. */
+  protected guiRegistry?: GUIStateRegistry<Record<string, Primitive>> | null;
   /** Instantiates and assigns `geometry`. */
   protected abstract setGeometry(): void;
   /** Instantiates and assigns `material`. */
