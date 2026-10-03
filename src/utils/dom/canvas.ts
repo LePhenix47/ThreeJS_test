@@ -24,7 +24,7 @@ export function resolveCanvas(canvas: InputCanvas): HTMLCanvasElement {
 
   // ? React ref
   if (!(canvas.current instanceof HTMLCanvasElement)) {
-    throw new Error("Canvas is not an HTMLCanvasElement");
+    throw new Error("Canvas reference is not of an HTMLCanvasElement");
   }
 
   return canvas.current;
