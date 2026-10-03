@@ -50,7 +50,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   protected setEnvMap(): void {}
 
-  private addDebugFolders(): void {
+  protected override addDebugFolders(): void {
     const registry = new GUIStateRegistry<EnvironmentState>(
       "environment-gui-state",
       this.DEBUG_DEFAULTS,

@@ -100,7 +100,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
     this.material.uniforms.uResolution.value.set(x, y);
   };
 
-  private addDebugFolders() {
+  protected override addDebugFolders() {
     const registry = new GUIStateRegistry(
       "morph-particles-state-registry",
       this.DEBUG_DEFAULTS,
