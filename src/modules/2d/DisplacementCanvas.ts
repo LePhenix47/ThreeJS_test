@@ -11,7 +11,7 @@ class DisplacementCanvas extends Canvas2D implements Updatable {
 
     // ? Synchronous initial read: the observer's first callback only fires before the next paint, which can be after this frame's update() already ran
     const { width, height } = this.instance.getBoundingClientRect();
-    this.setSize(width, height);
+    super.setSize(width, height);
 
     this.resizeObserver = new ResizeObserver(this.onResize);
     this.resizeObserver.observe(this.instance);
@@ -21,7 +21,7 @@ class DisplacementCanvas extends Canvas2D implements Updatable {
   private onResize = ([entry]: ResizeObserverEntry[]): void => {
     const { width, height } = entry.contentRect;
 
-    this.setSize(width, height);
+    super.setSize(width, height);
   };
 
   /** Sets how much alpha the fade removes each frame, 0 to 1. */
@@ -32,8 +32,8 @@ class DisplacementCanvas extends Canvas2D implements Updatable {
   public drawOnOldPaint(): void {
     this.context.save();
 
-    this.setCompositeOperation("destination-out");
-    this.fillCanvas(`rgba(0, 0, 0, ${this.fadeAlpha})`); // ? Only the alpha counts here, it's how much of the old paint gets erased
+    super.setCompositeOperation("destination-out");
+    super.fillCanvas(`rgba(0, 0, 0, ${this.fadeAlpha})`); // ? Only the alpha counts here, it's how much of the old paint gets erased
 
     this.context.restore();
   }
