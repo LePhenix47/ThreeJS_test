@@ -4,6 +4,7 @@ import Experience, {
 } from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
 import Floor from "./Floor";
+import MorphParticles from "./MorphParticles";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -31,6 +32,7 @@ class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment?: Environment;
   public floor?: Floor;
+  public particles?: MorphParticles;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -55,6 +57,10 @@ class World implements Updatable, Destroyable {
     return this.experience!.camera;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
@@ -62,6 +68,10 @@ class World implements Updatable, Destroyable {
     this.floor = new Floor();
     this.environment = new Environment();
     this.setHelpers();
+
+    this.resources.on("textures-loaded", () => {
+      this.particles = new MorphParticles();
+    });
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -211,6 +221,7 @@ class World implements Updatable, Destroyable {
   public destroy(): void {
     this.floor?.destroy();
     this.environment?.destroy();
+    this.particles?.destroy();
     this.removeHelpers();
   }
 }
