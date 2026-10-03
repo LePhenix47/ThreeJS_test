@@ -369,7 +369,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
 
     if (this.loadedCount === this.totalToLoad) {
       this.allLoaded = true;
-      this.emit("textures-loaded");
+      super.emit("textures-loaded");
       console.log("ALL TEXTURES LOADED !!!", this.items);
     }
   }

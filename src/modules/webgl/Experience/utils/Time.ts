@@ -104,7 +104,7 @@ class Time extends EventEmitter<TimeEvents> {
       deltaMs: this.deltaMs,
     } as const;
 
-    this.emit("tick", tickData);
+    super.emit("tick", tickData);
   }
 
   private updateTime(): void {
@@ -125,7 +125,7 @@ class Time extends EventEmitter<TimeEvents> {
   public destroy(): void {
     this.cancelAnimationLoop();
 
-    this.removeAllListeners();
+    super.removeAllListeners();
   }
 }
 
