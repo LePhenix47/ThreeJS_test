@@ -29,9 +29,9 @@ class Floor extends MeshEntity implements Destroyable {
   protected material: THREE.MeshStandardMaterial;
   protected mesh: THREE.Mesh;
 
-  private guiRegistry: GUIStateRegistry<FloorState> | null = null;
+  protected override guiRegistry: GUIStateRegistry<FloorState> | null = null;
 
-  private readonly debugDefaults: FloorState = {
+  protected readonly DEBUG_DEFAULTS: FloorState = {
     color: "#777777",
     wireframe: false,
     side: "double",
@@ -66,7 +66,7 @@ class Floor extends MeshEntity implements Destroyable {
   }
 
   protected setGeometry(): void {
-    const { subdivisions } = this.debugDefaults;
+    const { subdivisions } = this.DEBUG_DEFAULTS;
     const { size } = Floor.CONFIG.geometry;
 
     this.geometry = new THREE.PlaneGeometry(
@@ -78,7 +78,7 @@ class Floor extends MeshEntity implements Destroyable {
   }
 
   protected setMaterial(): void {
-    const { color, side, wireframe } = this.debugDefaults;
+    const { color, side, wireframe } = this.DEBUG_DEFAULTS;
     const { metalness, roughness } = Floor.CONFIG.material;
 
     this.material = new THREE.MeshStandardMaterial({
@@ -99,7 +99,7 @@ class Floor extends MeshEntity implements Destroyable {
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<FloorState>(
       "floor-gui-state",
-      this.debugDefaults,
+      this.DEBUG_DEFAULTS,
     );
     this.guiRegistry = registry;
 

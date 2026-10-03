@@ -40,11 +40,12 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private ambientLight: THREE.AmbientLight;
   private directionalLight: THREE.DirectionalLight;
   private lightHelper: THREE.DirectionalLightHelper;
-  private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
+  protected override guiRegistry: GUIStateRegistry<EnvironmentState> | null =
+    null;
 
-  private readonly debugDefaults: EnvironmentState = {
+  protected readonly DEBUG_DEFAULTS: EnvironmentState = {
     lightHelper: true,
-    environmentColor: "black",
+    environmentColor: "#160920",
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
@@ -121,7 +122,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<EnvironmentState>(
       "environment-gui-state",
-      this.debugDefaults,
+      this.DEBUG_DEFAULTS,
     );
     this.guiRegistry = registry;
 
