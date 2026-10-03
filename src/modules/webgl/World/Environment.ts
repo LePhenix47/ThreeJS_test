@@ -12,7 +12,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private readonly experience: Experience | null;
   protected guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
-  protected override DEBUG_DEFAULTS: EnvironmentState = {
+  protected override readonly DEBUG_DEFAULTS: EnvironmentState = {
     lightHelper: true,
     environmentColor: "#160920",
   };
