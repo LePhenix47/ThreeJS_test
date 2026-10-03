@@ -87,7 +87,7 @@ class Pointer
   };
 
   private onClick = (e: MouseEvent): void => {
-    this.emit("click", e);
+    super.emit("click", e);
   };
 
   public update(): void {
@@ -106,7 +106,7 @@ class Pointer
 
   public destroy(): void {
     this.abortController.abort();
-    this.removeAllListeners();
+    super.removeAllListeners();
   }
 }
 
