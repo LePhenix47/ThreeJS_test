@@ -10,6 +10,7 @@ type EnvironmentState = {
 
 class Environment extends EnvironmentEntity implements Destroyable {
   public static readonly CONFIG = {
+    guiKey: "environment-gui-state",
     ambientLight: {
       color: "#ffffff",
       intensity: 1,
@@ -120,8 +121,9 @@ class Environment extends EnvironmentEntity implements Destroyable {
   }
 
   protected override addDebugFolders(): void {
+    const { guiKey } = Environment.CONFIG;
     const registry = new GUIStateRegistry<EnvironmentState>(
-      "environment-gui-state",
+      guiKey,
       this.DEBUG_DEFAULTS,
     );
     this.guiRegistry = registry;

@@ -14,6 +14,7 @@ type FloorState = {
 
 class Floor extends MeshEntity implements Destroyable {
   public static readonly CONFIG = {
+    guiKey: "floor-gui-state",
     geometry: {
       size: 2 ** 12,
     },
@@ -97,8 +98,9 @@ class Floor extends MeshEntity implements Destroyable {
   }
 
   protected override addDebugFolders(): void {
+    const { guiKey } = Floor.CONFIG;
     const registry = new GUIStateRegistry<FloorState>(
-      "floor-gui-state",
+      guiKey,
       this.DEBUG_DEFAULTS,
     );
     this.guiRegistry = registry;

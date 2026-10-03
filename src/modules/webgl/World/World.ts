@@ -17,6 +17,7 @@ type WorldState = {
 
 class World implements Updatable, Destroyable {
   public static readonly CONFIG = {
+    guiKey: "world-gui-state",
     axisHelper: {
       size: 3,
       yShift: 0.02, // ? To avoid z fighting
@@ -138,8 +139,9 @@ class World implements Updatable, Destroyable {
   }
 
   private addDebugFolders(): void {
+    const { guiKey } = World.CONFIG;
     const registry = new GUIStateRegistry<WorldState>(
-      "world-gui-state",
+      guiKey,
       this.debugDefaults,
     );
     this.guiRegistry = registry;
