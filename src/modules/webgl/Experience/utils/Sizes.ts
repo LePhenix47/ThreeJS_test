@@ -46,7 +46,7 @@ class Sizes extends EventEmitter<SizesEvents> {
 
       this.setSize(width, height);
 
-      this.emit("resize", { width, height });
+      super.emit("resize", { width, height });
     }
   };
 
@@ -61,7 +61,7 @@ class Sizes extends EventEmitter<SizesEvents> {
   destroy(): void {
     this.resizeObserver.disconnect();
 
-    this.removeAllListeners();
+    super.removeAllListeners();
   }
 }
 
