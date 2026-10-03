@@ -96,7 +96,7 @@ class Floor extends MeshEntity implements Destroyable {
     this.mesh.receiveShadow = true;
   }
 
-  private addDebugFolders(): void {
+  protected override addDebugFolders(): void {
     const registry = new GUIStateRegistry<FloorState>(
       "floor-gui-state",
       this.DEBUG_DEFAULTS,
