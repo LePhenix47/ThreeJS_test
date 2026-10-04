@@ -176,7 +176,17 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
     geometry.setAttribute(
       "aPositionTarget",
-      this.modelPositionsArrayAttributes[initIndex + 2],
+      this.modelPositionsArrayAttributes[initIndex + 1],
+    );
+
+    const randomSizesArray = new Float32Array(this.particlesMaxCount);
+    for (let i = 0; i < this.particlesMaxCount; i++) {
+      randomSizesArray[i] = Math.random();
+    }
+
+    geometry.setAttribute(
+      "aScale",
+      new THREE.BufferAttribute(randomSizesArray, 1),
     );
 
     this.geometry = geometry;

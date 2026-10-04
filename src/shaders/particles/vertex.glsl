@@ -3,6 +3,7 @@ uniform float uSize;
 uniform float uProgress;
 
 attribute vec3 aPositionTarget;
+attribute float aScale;
 
 varying vec2 vUv;
 varying float vNoise;
@@ -30,7 +31,7 @@ void main() {
     gl_Position = projectedPosition;
 
     // * Point size
-    gl_PointSize = uSize * uResolution.y;
+    gl_PointSize = uSize * uResolution.y * aScale;
     gl_PointSize *= -1.0 / viewPosition.z;
 
     // * Varyings
