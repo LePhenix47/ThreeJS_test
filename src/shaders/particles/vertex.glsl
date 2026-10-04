@@ -10,7 +10,9 @@ varying float vNoise;
 #include ../utils/perlin-noise/simplexNoise3d
 
 void main() {
-    float noise = simplexNoise3d(position);
+    float noiseOrigin = simplexNoise3d(position);
+    float noiseTarget = simplexNoise3d(aPositionTarget);
+    float noise = mix(noiseOrigin, noiseTarget, uProgress);
     noise = smoothstep(-1.0, 1.0, noise);
 
     float duration = 0.4; // ? each particle's own transition takes 40% of the full uProgress range
