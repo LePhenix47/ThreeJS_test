@@ -1,12 +1,14 @@
 uniform vec2 uResolution;
 uniform float uSize;
 uniform float uProgress;
+uniform vec3 uColorStart;
+uniform vec3 uColorEnd;
 
 attribute vec3 aPositionTarget;
 attribute float aScale;
 
 varying vec2 vUv;
-varying float vNoise;
+varying vec3 vColor;
 
 #include ../utils/perlin-noise/simplexNoise3d
 
@@ -36,5 +38,5 @@ void main() {
 
     // * Varyings
     vUv = uv;
-    vNoise = noise;
+    vColor = mix(uColorStart, uColorEnd, noise);
 }
