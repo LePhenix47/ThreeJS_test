@@ -274,7 +274,20 @@ class MorphParticles extends PointsEntity implements Destroyable {
     gsap.fromTo(
       this.material.uniforms.uProgress,
       { value: 0 },
-      { value: 1, duration: morphDuration, ease: "linear" }, // ? we already have a smoothstep as an easing for the progress on the GLSL
+      {
+        value: 1,
+        duration: morphDuration,
+        ease: "linear",
+        onUpdate: () => {
+          if (!this.guiRegistry) return;
+
+          const { state } = this.guiRegistry;
+
+          const v: number = this.material.uniforms.uProgress.value;
+
+          state.uProgress = v;
+        },
+      }, // ? we already have a smoothstep as an easing for the progress on the GLSL
     );
 
     this.chosenModelIndex = index;
