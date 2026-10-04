@@ -1,5 +1,6 @@
 uniform float uSharpness;
 
+// * Creating the color with the noise is more efficient if it's done on the vertex ?? 
 uniform vec3 uColorStart;
 uniform vec3 uColorEnd;
 
