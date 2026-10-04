@@ -23,7 +23,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
   public static readonly CONFIG = {
     guiKey: "morph-particles-gui-state",
     geometry: {
-      radius: 3,
+      initIndex: 1,
     },
     material: {
       size: 0.4,
@@ -32,7 +32,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
   private readonly experience: Experience | null;
 
-  protected geometry: THREE.SphereGeometry;
+  protected geometry: THREE.BufferGeometry;
   protected material: TypedShaderMaterial<MorphParticlesUniforms>;
   protected points: THREE.Points;
 
@@ -160,12 +160,13 @@ class MorphParticles extends PointsEntity implements Destroyable {
   private setPositions() {}
 
   protected setGeometry(): void {
-    const { radius } = MorphParticles.CONFIG.geometry;
+    const { initIndex } = MorphParticles.CONFIG.geometry;
 
-    const geometry = new THREE.SphereGeometry(radius);
-
-    // * See previous lesson: shader-particles-cursor-animation, we have many particles on the same location
-    geometry.setIndex(null);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+      "position",
+      this.modelsPositionsBufferAttributeArray[initIndex],
+    );
 
     this.geometry = geometry;
   }
