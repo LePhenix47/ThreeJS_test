@@ -5,13 +5,16 @@ import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
-import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import GUIStateRegistry from "@utils/classes/gui-state-registry";
 
-type MorphParticlesState = {};
+type MorphParticlesState = {
+  uSharpness: number;
+};
 
 type MorphParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
   uSize: number;
+  uSharpness: MorphParticlesState["uSharpness"];
 }>;
 
 class MorphParticles extends PointsEntity implements Destroyable {
@@ -31,7 +34,9 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected material: TypedShaderMaterial<MorphParticlesUniforms>;
   protected points: THREE.Points;
 
-  protected override readonly DEBUG_DEFAULTS: MorphParticlesState = {};
+  protected override readonly DEBUG_DEFAULTS: MorphParticlesState = {
+    uSharpness: 1.0,
+  };
   protected guiRegistry: GUIStateRegistry<MorphParticlesState> | null = null;
 
   private get scene() {
@@ -70,23 +75,34 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected setGeometry(): void {
     const { radius } = MorphParticles.CONFIG.geometry;
 
-    this.geometry = new THREE.SphereGeometry(radius);
+    const geometry = new THREE.SphereGeometry(radius);
+
+    // * See previous lesson: shader-particles-cursor-animation, we have many particles on the same location
+    geometry.setIndex(null);
+
+    this.geometry = geometry;
   }
 
   protected setMaterial(): void {
     const { x, y } = this.sizes.resolution;
     const { size } = MorphParticles.CONFIG.material;
 
+    const { uSharpness } = this.DEBUG_DEFAULTS;
+
     const uniforms: MorphParticlesUniforms = {
       uResolution: {
         value: new THREE.Vector2(x, y),
       },
       uSize: new THREE.Uniform(size),
+      uSharpness: new THREE.Uniform(uSharpness),
     };
 
     this.material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
       uniforms,
     }) as TypedShaderMaterial<MorphParticlesUniforms>;
   }
@@ -111,10 +127,17 @@ class MorphParticles extends PointsEntity implements Destroyable {
     const folder = gui.addFolder("Morph particles");
 
     const { state } = registry;
+
+    folder.add(state, "uSharpness").min(0).max(0.5).step(10e-6);
+    registry.bind("uSharpness", (v) => {
+      this.material.uniforms.uSharpness.value = v;
+    });
   }
 
   public destroy(): void {
     this.sizes.off("resize", this.onResize);
+
+    this.guiRegistry?.dispose();
 
     this.geometry.dispose();
     this.material.dispose();
