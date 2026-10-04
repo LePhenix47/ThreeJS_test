@@ -6,6 +6,8 @@ import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
+import { SpaceEnum } from "@/utils/enums/space-color";
+import Enum from "@/utils/enums";
 
 type MorphParticlesState = {
   uSharpness: number;
@@ -34,8 +36,11 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected material: TypedShaderMaterial<MorphParticlesUniforms>;
   protected points: THREE.Points;
 
-  private modelPositionsAttributes: THREE.BufferAttribute[];
+  private readonly modelsPositionsBufferAttributeArray: THREE.Float32BufferAttribute[] =
+    [];
   private chosenModelIndex: number = 0;
+
+  private particlesMaxCount = 0;
 
   protected override readonly DEBUG_DEFAULTS: MorphParticlesState = {
     uSharpness: 0.05,
@@ -65,6 +70,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
     this.experience = Experience.instance;
 
     this.setModels();
+    this.setPositions();
 
     this.setGeometry();
     this.setMaterial();
@@ -87,7 +93,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
     const { children } = model.scene;
 
     // * const [donut, suzanne, sphere, text] = children;
-    this.modelPositionsAttributes = children.map((childMesh) => {
+    const positions = children.map((childMesh) => {
       const { position } = (childMesh as THREE.Mesh).geometry.attributes;
 
       if (!(position instanceof THREE.BufferAttribute)) {
@@ -98,7 +104,52 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
       return position;
     });
+
+    for (const position of positions) {
+      if (position.count <= this.particlesMaxCount) continue;
+      this.particlesMaxCount = position.count;
+    }
+
+    const stride: number = Enum.length(SpaceEnum);
+
+    for (const position of positions) {
+      const originalArray: THREE.TypedArray = position.array;
+      const newArray = new Float32Array(this.particlesMaxCount * stride);
+
+      // * uh not sure I know wtf we're doing, why not use a while loop ?
+      // * why ain't we stopping once we've reached the limit of the original array ? I guess for padding the array ?
+      for (let i = 0; i < this.particlesMaxCount; i++) {
+        const i3: number = i * 3;
+
+        let x: number = 0;
+        let y: number = 0;
+        let z: number = 0;
+
+        if (i3 < originalArray.length) {
+          x = originalArray[i3 + SpaceEnum.X];
+          y = originalArray[i3 + SpaceEnum.Y];
+          z = originalArray[i3 + SpaceEnum.Z];
+        }
+
+        newArray[i3 + SpaceEnum.X] = x;
+        newArray[i3 + SpaceEnum.Y] = y;
+        newArray[i3 + SpaceEnum.Z] = z;
+      }
+
+      const modelPositionAttributeBuffer = new THREE.Float32BufferAttribute(
+        newArray,
+        stride,
+      );
+
+      this.modelsPositionsBufferAttributeArray.push(
+        modelPositionAttributeBuffer,
+      );
+    }
+
+    console.log(this.modelsPositionsBufferAttributeArray);
   }
+
+  private setPositions() {}
 
   protected setGeometry(): void {
     const { radius } = MorphParticles.CONFIG.geometry;
