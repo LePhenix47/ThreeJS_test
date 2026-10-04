@@ -8,6 +8,7 @@ import fragmentShader from "@shaders/particles/fragment.glsl";
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
 import { SpaceEnum } from "@/utils/enums/space-color";
 import Enum from "@/utils/enums";
+import gsap from "gsap";
 
 type MorphParticlesState = {
   uSharpness: number;
@@ -30,6 +31,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
     material: {
       uSize: 0.2,
     },
+    morphDuration: 3,
   } as const;
 
   private readonly experience: Experience | null;
@@ -38,7 +40,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected material: TypedShaderMaterial<MorphParticlesUniforms>;
   protected points: THREE.Points;
 
-  private modelsPositionsBufferAttributeArray: THREE.Float32BufferAttribute[];
+  private modelPositionsArrayAttributes: THREE.Float32BufferAttribute[];
 
   private chosenModelIndex: number = 0;
   private particlesMaxCount = 0;
@@ -88,15 +90,14 @@ class MorphParticles extends PointsEntity implements Destroyable {
     console.log("MorphParticles");
   }
 
-  private setPositions() {
+  private setPositions(): void {
     const model = this.resources.getGltf("particlesModels");
 
     // * const [donut, suzanne, sphere, text] = children;
     const positions = this.getModelPositions(model.scene.children);
 
     this.particlesMaxCount = this.getMaxParticlesCount(positions);
-    this.modelsPositionsBufferAttributeArray =
-      this.padModelPositions(positions);
+    this.modelPositionsArrayAttributes = this.padModelPositions(positions);
   }
 
   private getModelPositions(
@@ -170,12 +171,12 @@ class MorphParticles extends PointsEntity implements Destroyable {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(
       "position",
-      this.modelsPositionsBufferAttributeArray[initIndex],
+      this.modelPositionsArrayAttributes[initIndex],
     );
 
     geometry.setAttribute(
       "aPositionTarget",
-      this.modelsPositionsBufferAttributeArray[initIndex + 2],
+      this.modelPositionsArrayAttributes[initIndex + 2],
     );
 
     this.geometry = geometry;
@@ -216,7 +217,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
     this.material.uniforms.uResolution.value.set(x, y);
   };
 
-  protected override addDebugFolders() {
+  protected override addDebugFolders(): void {
     const { guiKey } = MorphParticles.CONFIG;
     const registry = new GUIStateRegistry(guiKey, this.DEBUG_DEFAULTS);
 
@@ -232,10 +233,41 @@ class MorphParticles extends PointsEntity implements Destroyable {
       this.material.uniforms.uSharpness.value = v;
     });
 
-    folder.add(state, "uProgress").min(0).max(1).step(0.001);
+    folder.add(state, "uProgress").min(0).max(1).step(0.001).listen();
     registry.bind("uProgress", (v) => {
       this.material.uniforms.uProgress.value = v;
     });
+
+    for (let i = 0; i < this.modelPositionsArrayAttributes.length; i++) {
+      const morphKey = `Morph_${i}` as const;
+      const morphObj = {
+        [morphKey]: () => this.morph(i),
+      };
+      folder.add(morphObj, morphKey);
+    }
+  }
+
+  private morph(index: number): void {
+    const { attributes } = this.geometry;
+
+    const previousModelPos: THREE.Float32BufferAttribute =
+      this.modelPositionsArrayAttributes[this.chosenModelIndex];
+
+    const newModelPos: THREE.Float32BufferAttribute =
+      this.modelPositionsArrayAttributes[index];
+
+    attributes.position = previousModelPos;
+    attributes.aPositionTarget = newModelPos;
+
+    const { morphDuration } = MorphParticles.CONFIG;
+
+    gsap.fromTo(
+      this.material.uniforms.uProgress,
+      { value: 0 },
+      { value: 1, duration: morphDuration, ease: "linear" }, // ? we already have a smoothstep as an easing for the progress on the GLSL
+    );
+
+    this.chosenModelIndex = index;
   }
 
   public destroy(): void {
