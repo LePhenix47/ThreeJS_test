@@ -1,5 +1,8 @@
 uniform float uSharpness;
 
+uniform vec3 uColorStart;
+uniform vec3 uColorEnd;
+
 // varying vec2 vUv;
 varying float vNoise;
 
@@ -10,6 +13,8 @@ void main() {
     float alpha = uSharpness * (1.0 / dist) - 0.1;
 
     vec3 color = vec3(vNoise);
+
+    color = mix(uColorStart, uColorEnd, vNoise);
 
     gl_FragColor = vec4(color, alpha);
     // #include <tonemapping_fragment>

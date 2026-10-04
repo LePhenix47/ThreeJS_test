@@ -13,6 +13,8 @@ import gsap from "gsap";
 type MorphParticlesState = {
   uSharpness: number;
   uProgress: number;
+  uColorStart: string;
+  uColorEnd: string;
 };
 
 type MorphParticlesUniforms = MapAsUniforms<{
@@ -20,6 +22,8 @@ type MorphParticlesUniforms = MapAsUniforms<{
   uSize: number;
   uProgress: MorphParticlesState["uProgress"];
   uSharpness: MorphParticlesState["uSharpness"];
+  uColorStart: THREE.Color;
+  uColorEnd: THREE.Color;
 }>;
 
 class MorphParticles extends PointsEntity implements Destroyable {
@@ -48,6 +52,8 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected override readonly DEBUG_DEFAULTS: MorphParticlesState = {
     uSharpness: 0.05,
     uProgress: 0,
+    uColorStart: "#ff7300",
+    uColorEnd: "#0091ff",
   };
   protected guiRegistry: GUIStateRegistry<MorphParticlesState> | null = null;
 
@@ -196,7 +202,8 @@ class MorphParticles extends PointsEntity implements Destroyable {
     const { x, y } = this.sizes.resolution;
     const { uSize } = MorphParticles.CONFIG.material;
 
-    const { uSharpness, uProgress } = this.DEBUG_DEFAULTS;
+    const { uSharpness, uProgress, uColorStart, uColorEnd } =
+      this.DEBUG_DEFAULTS;
 
     const uniforms: MorphParticlesUniforms = {
       uResolution: {
@@ -205,6 +212,12 @@ class MorphParticles extends PointsEntity implements Destroyable {
       uSize: new THREE.Uniform(uSize),
       uProgress: new THREE.Uniform(uProgress),
       uSharpness: new THREE.Uniform(uSharpness),
+      uColorStart: {
+        value: new THREE.Color(uColorStart),
+      },
+      uColorEnd: {
+        value: new THREE.Color(uColorEnd),
+      },
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -237,6 +250,16 @@ class MorphParticles extends PointsEntity implements Destroyable {
     const folder = gui.addFolder("Morph particles");
 
     const { state } = registry;
+
+    folder.addColor(state, "uColorStart");
+    registry.bind("uColorStart", (v) => {
+      this.material.uniforms.uColorStart.value.set(v);
+    });
+
+    folder.addColor(state, "uColorEnd");
+    registry.bind("uColorEnd", (v) => {
+      this.material.uniforms.uColorEnd.value.set(v);
+    });
 
     folder.add(state, "uSharpness").min(0).max(0.25).step(10e-6);
     registry.bind("uSharpness", (v) => {
