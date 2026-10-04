@@ -36,10 +36,9 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected material: TypedShaderMaterial<MorphParticlesUniforms>;
   protected points: THREE.Points;
 
-  private readonly modelsPositionsBufferAttributeArray: THREE.Float32BufferAttribute[] =
-    [];
-  private chosenModelIndex: number = 0;
+  private modelsPositionsBufferAttributeArray: THREE.Float32BufferAttribute[];
 
+  private chosenModelIndex: number = 0;
   private particlesMaxCount = 0;
 
   protected override readonly DEBUG_DEFAULTS: MorphParticlesState = {
@@ -90,10 +89,20 @@ class MorphParticles extends PointsEntity implements Destroyable {
   private setModels(): void {
     const model = this.resources.getGltf("particlesModels");
 
-    const { children } = model.scene;
-
     // * const [donut, suzanne, sphere, text] = children;
-    const positions = children.map((childMesh) => {
+    const positions = this.getModelPositions(model.scene.children);
+
+    this.particlesMaxCount = this.getMaxParticlesCount(positions);
+    this.modelsPositionsBufferAttributeArray =
+      this.padModelPositions(positions);
+
+    console.log(this.modelsPositionsBufferAttributeArray);
+  }
+
+  private getModelPositions(
+    children: THREE.Object3D[],
+  ): THREE.BufferAttribute[] {
+    return children.map((childMesh) => {
       const { position } = (childMesh as THREE.Mesh).geometry.attributes;
 
       if (!(position instanceof THREE.BufferAttribute)) {
@@ -104,15 +113,23 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
       return position;
     });
+  }
 
-    for (const position of positions) {
-      if (position.count <= this.particlesMaxCount) continue;
-      this.particlesMaxCount = position.count;
-    }
+  private getMaxParticlesCount(positions: THREE.BufferAttribute[]): number {
+    const positionCountsArray: number[] = positions.map(
+      (position) => position.count,
+    );
 
+    return Math.max(...positionCountsArray);
+  }
+
+  /** Pads every position attribute to `particlesMaxCount` so all models share the same particle count, required for morphing between them. */
+  private padModelPositions(
+    positions: THREE.BufferAttribute[],
+  ): THREE.Float32BufferAttribute[] {
     const stride: number = Enum.length(SpaceEnum);
 
-    for (const position of positions) {
+    return positions.map((position) => {
       const originalArray: THREE.TypedArray = position.array;
       const newArray = new Float32Array(this.particlesMaxCount * stride);
 
@@ -136,17 +153,8 @@ class MorphParticles extends PointsEntity implements Destroyable {
         newArray[i3 + SpaceEnum.Z] = z;
       }
 
-      const modelPositionAttributeBuffer = new THREE.Float32BufferAttribute(
-        newArray,
-        stride,
-      );
-
-      this.modelsPositionsBufferAttributeArray.push(
-        modelPositionAttributeBuffer,
-      );
-    }
-
-    console.log(this.modelsPositionsBufferAttributeArray);
+      return new THREE.Float32BufferAttribute(newArray, stride);
+    });
   }
 
   private setPositions() {}
