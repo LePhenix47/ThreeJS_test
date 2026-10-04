@@ -2,6 +2,7 @@ import * as THREE from "three";
 import Experience, { Destroyable } from "@modules/webgl/Experience/Experience";
 import { PointsEntity } from "./types/points-entity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
+import { MapAsAttributes, TypedBufferGeometry } from "./types/attributes";
 
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
@@ -26,6 +27,10 @@ type MorphParticlesUniforms = MapAsUniforms<{
   uColorEnd: THREE.Color;
 }>;
 
+type MorphParticlesAttributes = MapAsAttributes<
+  "position" | "aPositionTarget" | "aScale"
+>;
+
 class MorphParticles extends PointsEntity implements Destroyable {
   public static readonly CONFIG = {
     guiKey: "morph-particles-gui-state",
@@ -40,7 +45,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
   private readonly experience: Experience | null;
 
-  protected geometry: THREE.BufferGeometry;
+  protected geometry: TypedBufferGeometry<MorphParticlesAttributes>;
   protected material: TypedShaderMaterial<MorphParticlesUniforms>;
   protected points: THREE.Points;
 
@@ -174,7 +179,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected setGeometry(): void {
     const { initIndex } = MorphParticles.CONFIG.geometry;
 
-    const geometry = new THREE.BufferGeometry();
+    const geometry = new THREE.BufferGeometry<MorphParticlesAttributes>();
     geometry.setAttribute(
       "position",
       this.modelPositionsArrayAttributes[initIndex],
