@@ -12,11 +12,13 @@ import { randomInRange } from "@/utils/numbers/range";
 
 type MorphParticlesState = {
   uSharpness: number;
+  uProgress: number;
 };
 
 type MorphParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
   uSize: number;
+  uProgress: MorphParticlesState["uProgress"];
   uSharpness: MorphParticlesState["uSharpness"];
 }>;
 
@@ -44,6 +46,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
   protected override readonly DEBUG_DEFAULTS: MorphParticlesState = {
     uSharpness: 0.05,
+    uProgress: 0,
   };
   protected guiRegistry: GUIStateRegistry<MorphParticlesState> | null = null;
 
@@ -69,7 +72,6 @@ class MorphParticles extends PointsEntity implements Destroyable {
     if (!Experience.instance) throw new Error("Experience instance not found");
     this.experience = Experience.instance;
 
-    this.setModels();
     this.setPositions();
 
     this.setGeometry();
@@ -87,7 +89,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
     console.log("MorphParticles");
   }
 
-  private setModels(): void {
+  private setPositions() {
     const model = this.resources.getGltf("particlesModels");
 
     // * const [donut, suzanne, sphere, text] = children;
@@ -96,8 +98,6 @@ class MorphParticles extends PointsEntity implements Destroyable {
     this.particlesMaxCount = this.getMaxParticlesCount(positions);
     this.modelsPositionsBufferAttributeArray =
       this.padModelPositions(positions);
-
-    console.log(this.modelsPositionsBufferAttributeArray);
   }
 
   private getModelPositions(
@@ -165,8 +165,6 @@ class MorphParticles extends PointsEntity implements Destroyable {
     });
   }
 
-  private setPositions() {}
-
   protected setGeometry(): void {
     const { initIndex } = MorphParticles.CONFIG.geometry;
 
@@ -176,6 +174,11 @@ class MorphParticles extends PointsEntity implements Destroyable {
       this.modelsPositionsBufferAttributeArray[initIndex],
     );
 
+    geometry.setAttribute(
+      "aPositionTarget",
+      this.modelsPositionsBufferAttributeArray[initIndex + 2],
+    );
+
     this.geometry = geometry;
   }
 
@@ -183,13 +186,14 @@ class MorphParticles extends PointsEntity implements Destroyable {
     const { x, y } = this.sizes.resolution;
     const { uSize } = MorphParticles.CONFIG.material;
 
-    const { uSharpness } = this.DEBUG_DEFAULTS;
+    const { uSharpness, uProgress } = this.DEBUG_DEFAULTS;
 
     const uniforms: MorphParticlesUniforms = {
       uResolution: {
         value: new THREE.Vector2(x, y),
       },
       uSize: new THREE.Uniform(uSize),
+      uProgress: new THREE.Uniform(uProgress),
       uSharpness: new THREE.Uniform(uSharpness),
     };
 
@@ -224,9 +228,14 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
     const { state } = registry;
 
-    folder.add(state, "uSharpness").min(0).max(0.5).step(10e-6);
+    folder.add(state, "uSharpness").min(0).max(0.25).step(10e-6);
     registry.bind("uSharpness", (v) => {
       this.material.uniforms.uSharpness.value = v;
+    });
+
+    folder.add(state, "uProgress").min(0).max(1).step(0.001);
+    registry.bind("uProgress", (v) => {
+      this.material.uniforms.uProgress.value = v;
     });
   }
 
