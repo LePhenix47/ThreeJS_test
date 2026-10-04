@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+type StandardAttributeKeys = "position" | "color" | "uv" | "normal";
+
 /**
  * Minimal, hand-maintained map of the standard/built-in Three.js attribute names this codebase
  * actually touches as values (read or write), to their `THREE.BufferAttribute` type.
@@ -15,32 +17,30 @@ import * as THREE from "three";
  * unioned with that entity's own custom attribute names. Mirrors `EntityTexture` in `mesh-entity.ts`.
  */
 export type StandardAttributes = Record<
-  "position" | "color" | "uv",
+  StandardAttributeKeys,
   THREE.BufferAttribute
 >;
 
 /**
- * Wraps every key of a plain name map in `THREE.BufferAttribute`, so `geometry.attributes.x` /
+ * Maps a union of attribute names to `THREE.BufferAttribute`, so `geometry.attributes.x` /
  * `geometry.setAttribute("x", ...)` autocompletes and type-checks against a closed set of names
  * instead of falling back to `THREE.BufferGeometry`'s default `NormalBufferAttributes`
  * (`Record<string, BufferAttribute | InterleavedBufferAttribute>`).
  *
  * Unlike {@link MapAsUniforms "uniforms.ts"}, an attribute's stored value is always a plain
  * `THREE.BufferAttribute` regardless of itemSize — there's no per-key value-shape distinction to
- * preserve (TS can't encode itemSize at the type level), so this is a flat mapped type with no
- * union/array/struct machinery.
+ * preserve (TS can't encode itemSize at the type level), so this takes a plain name union, not a
+ * value-map, there's nothing for per-key values to carry.
  *
  * @example
- * type MorphParticlesAttributes = MapAsAttributes<{
- *   position: unknown;
- *   aPositionTarget: unknown;
- * }>;
+ * type MorphParticlesAttributes = MapAsAttributes<"position" | "aPositionTarget">;
  *
  * protected geometry: TypedBufferGeometry<MorphParticlesAttributes>;
  */
-export type MapAsAttributes<T extends Record<string, unknown>> = {
-  [K in keyof T]: THREE.BufferAttribute;
-};
+export type MapAsAttributes<TKeys extends string> = Record<
+  TKeys,
+  THREE.BufferAttribute
+>;
 
 /**
  * A `THREE.BufferGeometry` with `attributes`/`setAttribute`/`getAttribute` narrowed to a specific,
@@ -49,5 +49,5 @@ export type MapAsAttributes<T extends Record<string, unknown>> = {
  * generic over its attributes map.
  */
 export type TypedBufferGeometry<
-  TAttributes extends MapAsAttributes<Record<string, unknown>>,
+  TAttributes extends Record<string, THREE.BufferAttribute>,
 > = THREE.BufferGeometry<TAttributes>;
