@@ -142,6 +142,11 @@ class MorphParticles extends PointsEntity implements Destroyable {
     const stride: number = Enum.length(SpaceEnum);
 
     return positions.map((position) => {
+      // ? Already the max count, no padding needed, skip the array copy entirely
+      if (position.count === this.particlesMaxCount) {
+        return position as THREE.Float32BufferAttribute;
+      }
+
       const originalArray: THREE.TypedArray = position.array;
       const newArray = new Float32Array(this.particlesMaxCount * stride);
 
@@ -237,6 +242,10 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
   protected setPoints(): void {
     this.points = new THREE.Points(this.geometry, this.material);
+
+    // ? The bounding sphere is only ever computed for the first model's positions, morphing to a
+    // ? wider model (e.g. the text) would get wrongly culled once the camera moves past that stale bound
+    this.points.frustumCulled = false;
   }
 
   private onResize = (): void => {
