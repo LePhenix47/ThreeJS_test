@@ -35,7 +35,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected points: THREE.Points;
 
   protected override readonly DEBUG_DEFAULTS: MorphParticlesState = {
-    uSharpness: 1.0,
+    uSharpness: 0.05,
   };
   protected guiRegistry: GUIStateRegistry<MorphParticlesState> | null = null;
 
