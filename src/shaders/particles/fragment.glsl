@@ -9,7 +9,7 @@ void main() {
 
     float alpha = uSharpness * (1.0 / dist) - 0.1;
 
-    vec3 color = (vec3(vNoise) + 1.0) / 2.0; // ? [-1,1] → [0,1]
+    vec3 color = vec3(vNoise);
 
     gl_FragColor = vec4(color, alpha);
     // #include <tonemapping_fragment>

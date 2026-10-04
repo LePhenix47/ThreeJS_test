@@ -11,7 +11,15 @@ varying float vNoise;
 
 void main() {
     float noise = simplexNoise3d(position);
-    vec3 interpolatedPosition = mix(position, aPositionTarget, uProgress);
+    noise = smoothstep(-1.0, 1.0, noise);
+
+    float duration = 0.4; // ? each particle's own transition takes 40% of the full uProgress range
+    float delay = (1.0 - duration) * noise; // ? noise (0–1) scaled so delay never exceeds (1 - duration)
+    float end = delay + duration;
+
+    float progress = smoothstep(delay, end, uProgress);
+
+    vec3 interpolatedPosition = mix(position, aPositionTarget, progress);
 
     // * Final position
     vec4 modelPosition = modelMatrix * vec4(interpolatedPosition, 1.0);
