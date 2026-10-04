@@ -34,6 +34,9 @@ class MorphParticles extends PointsEntity implements Destroyable {
   protected material: TypedShaderMaterial<MorphParticlesUniforms>;
   protected points: THREE.Points;
 
+  private modelPositionsAttributes: THREE.BufferAttribute[];
+  private chosenModelIndex: number = 0;
+
   protected override readonly DEBUG_DEFAULTS: MorphParticlesState = {
     uSharpness: 0.05,
   };
@@ -51,11 +54,17 @@ class MorphParticles extends PointsEntity implements Destroyable {
     return this.experience!.debug;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     super();
 
     if (!Experience.instance) throw new Error("Experience instance not found");
     this.experience = Experience.instance;
+
+    this.setModels();
 
     this.setGeometry();
     this.setMaterial();
@@ -70,6 +79,25 @@ class MorphParticles extends PointsEntity implements Destroyable {
     }
 
     console.log("MorphParticles");
+  }
+
+  private setModels(): void {
+    const model = this.resources.getGltf("particlesModels");
+
+    const { children } = model.scene;
+
+    // * const [donut, suzanne, sphere, text] = children;
+    this.modelPositionsAttributes = children.map((childMesh) => {
+      const { position } = (childMesh as THREE.Mesh).geometry.attributes;
+
+      if (!(position instanceof THREE.BufferAttribute)) {
+        throw new Error(
+          "[MorphParticles] Unexpected interleaved position attribute",
+        );
+      }
+
+      return position;
+    });
   }
 
   protected setGeometry(): void {
