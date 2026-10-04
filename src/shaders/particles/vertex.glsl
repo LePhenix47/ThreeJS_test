@@ -5,8 +5,12 @@ uniform float uProgress;
 attribute vec3 aPositionTarget;
 
 varying vec2 vUv;
+varying float vNoise;
+
+#include ../utils/perlin-noise/simplexNoise3d
 
 void main() {
+    float noise = simplexNoise3d(position);
     vec3 interpolatedPosition = mix(position, aPositionTarget, uProgress);
 
     // * Final position
@@ -21,4 +25,5 @@ void main() {
 
     // * Varyings
     vUv = uv;
+    vNoise = noise;
 }
