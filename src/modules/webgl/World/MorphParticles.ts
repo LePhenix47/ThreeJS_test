@@ -8,6 +8,7 @@ import fragmentShader from "@shaders/particles/fragment.glsl";
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
 import { SpaceEnum } from "@/utils/enums/space-color";
 import Enum from "@/utils/enums";
+import { randomInRange } from "@/utils/numbers/range";
 
 type MorphParticlesState = {
   uSharpness: number;
@@ -26,7 +27,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
       initIndex: 1,
     },
     material: {
-      size: 0.4,
+      uSize: 0.2,
     },
   } as const;
 
@@ -146,6 +147,13 @@ class MorphParticles extends PointsEntity implements Destroyable {
           x = originalArray[i3 + SpaceEnum.X];
           y = originalArray[i3 + SpaceEnum.Y];
           z = originalArray[i3 + SpaceEnum.Z];
+        } else {
+          const randomIndex: number =
+            Math.floor(Math.random() * position.count) * stride;
+
+          x = originalArray[randomIndex + SpaceEnum.X];
+          y = originalArray[randomIndex + SpaceEnum.Y];
+          z = originalArray[randomIndex + SpaceEnum.Z];
         }
 
         newArray[i3 + SpaceEnum.X] = x;
@@ -173,7 +181,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
 
   protected setMaterial(): void {
     const { x, y } = this.sizes.resolution;
-    const { size } = MorphParticles.CONFIG.material;
+    const { uSize } = MorphParticles.CONFIG.material;
 
     const { uSharpness } = this.DEBUG_DEFAULTS;
 
@@ -181,7 +189,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
       uResolution: {
         value: new THREE.Vector2(x, y),
       },
-      uSize: new THREE.Uniform(size),
+      uSize: new THREE.Uniform(uSize),
       uSharpness: new THREE.Uniform(uSharpness),
     };
 
