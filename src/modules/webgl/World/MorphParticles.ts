@@ -144,7 +144,7 @@ class MorphParticles extends PointsEntity implements Destroyable {
     return positions.map((position) => {
       // ? Already the max count, no padding needed, skip the array copy entirely
       if (position.count === this.particlesMaxCount) {
-        return position as THREE.Float32BufferAttribute;
+        return position;
       }
 
       const originalArray: THREE.TypedArray = position.array;
