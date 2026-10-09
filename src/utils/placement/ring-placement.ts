@@ -6,24 +6,22 @@ export type Position2D = Pick<THREE.Vector3, "x" | "z">;
 const ONE_REVOLUTION: number = 2 * Math.PI;
 
 /**
- * Generates a random position within an annulus (ring) using equal area distribution.
+ * Generates a random position within a ring using equal area distribution.
  * This prevents clustering near the inner circle by sampling area-uniformly.
  *
- * @param {number} minRadius - The inner radius of the annulus (exclusion zone).
- * @param {number} maxRadius - The outer radius of the annulus (boundary).
- * @returns {Position2D} A random (x, z) position within the annulus.
- *
- * @see EQUAL_AREA_DISTRIBUTION.md for the mathematical derivation.
+ * @param {number} minRadius - The inner radius of the ring (exclusion zone).
+ * @param {number} maxRadius - The outer radius of the ring (boundary).
+ * @returns {Position2D} A random (x, z) position within the ring.
  */
-export function generateRandomAnnulusPosition(
+export function generateRandomRingPosition(
   minRadius: number,
   maxRadius: number,
 ): Position2D {
-  const randomAngle: number = randomInRange(0, ONE_REVOLUTION);
+  const randomAngle: number = randomInRange({ max: ONE_REVOLUTION });
 
-  // ? Equal area distribution, see EQUAL_AREA_DISTRIBUTION.md for details
+  // ? Equal area distribution: sample radius² uniformly, then sqrt, so area (not radius) is uniform
   const randomRadius: number = Math.sqrt(
-    randomInRange(minRadius ** 2, maxRadius ** 2),
+    randomInRange({ min: minRadius ** 2, max: maxRadius ** 2 }),
   );
 
   return {
@@ -56,13 +54,13 @@ export function hasOverlapWithPlaced(
 }
 
 /**
- * Finds a non-overlapping position within an annulus using brute force rejection.
+ * Finds a non-overlapping position within a ring using brute force rejection.
  * Generates random candidates and retries until one doesn't overlap with existing positions.
  *
  * @param {Position2D[]} placedPositions - Array of already-placed positions.
  * @param {number} objectBoundingRadius - The bounding circle radius of a single item.
- * @param {number} minRadius - The inner radius of the annulus.
- * @param {number} maxRadius - The outer radius of the annulus.
+ * @param {number} minRadius - The inner radius of the ring.
+ * @param {number} maxRadius - The outer radius of the ring.
  * @param {number} itemIndex - The index of the current item (used for warning messages).
  * @returns {Position2D} A non-overlapping (x, z) position, or a random one if max retries exceeded.
  */
@@ -84,7 +82,7 @@ export function findPositionBruteForce(
 
   let hasOverlap = true;
   while (hasOverlap && retries < maxRetries) {
-    candidate = generateRandomAnnulusPosition(minRadius, maxRadius);
+    candidate = generateRandomRingPosition(minRadius, maxRadius);
     hasOverlap = hasOverlapWithPlaced(candidate, placedPositions, minDistance);
 
     retries++;
@@ -100,7 +98,7 @@ export function findPositionBruteForce(
 }
 
 /**
- * Finds a position within an annulus using a simplified Mitchell's Best Candidate algorithm.
+ * Finds a position within a ring using a simplified Mitchell's Best Candidate algorithm.
  * Generates K random candidates and picks the one with the most breathing room
  * (largest minimum distance to all already-placed positions).
  *
@@ -111,8 +109,8 @@ export function findPositionBruteForce(
  *
  * @param {Position2D[]} placedPositions - Array of already-placed positions.
  * @param {number} candidateCount - Number of candidates to generate (K). Higher = better spacing, more computation.
- * @param {number} minRadius - The inner radius of the annulus.
- * @param {number} maxRadius - The outer radius of the annulus.
+ * @param {number} minRadius - The inner radius of the ring.
+ * @param {number} maxRadius - The outer radius of the ring.
  * @returns {Position2D} The candidate with the largest minimum distance to all placed positions.
  *
  * @see {@link https://gist.github.com/mbostock/1893974} Mitchell's Best-Candidate by Mike Bostock
@@ -125,17 +123,17 @@ export function findPositionMitchellBestCandidate(
 ): Position2D {
   // ? First point has no neighbors to compare against, place it randomly
   if (placedPositions.length === 0) {
-    return generateRandomAnnulusPosition(minRadius, maxRadius);
+    return generateRandomRingPosition(minRadius, maxRadius);
   }
 
-  let bestCandidate: Position2D = generateRandomAnnulusPosition(
+  let bestCandidate: Position2D = generateRandomRingPosition(
     minRadius,
     maxRadius,
   );
   let bestMinDistance: number = -1;
 
   for (let k = 0; k < candidateCount; k++) {
-    const candidate = generateRandomAnnulusPosition(minRadius, maxRadius);
+    const candidate = generateRandomRingPosition(minRadius, maxRadius);
 
     // ? Find the closest already-placed neighbor for this candidate
     let closestDistance: number = Infinity;
