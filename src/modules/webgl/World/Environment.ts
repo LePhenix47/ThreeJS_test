@@ -4,48 +4,19 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { EnvironmentEntity } from "./types/environment-entity";
 
 type EnvironmentState = {
-  lightHelper: boolean;
   environmentColor: string;
 };
 
 class Environment extends EnvironmentEntity implements Destroyable {
   public static readonly CONFIG = {
     guiKey: "environment-gui-state",
-    ambientLight: {
-      color: "#ffffff",
-      intensity: 1,
-    },
-    directionalLight: {
-      color: "#ffffff",
-      intensity: 3,
-      position: {
-        x: 0.25,
-        y: 2,
-        z: -2.25,
-      },
-      shadow: {
-        mapSize: 2 ** 10,
-        normalBias: 0.05,
-        camera: {
-          far: 15,
-          top: 7,
-          right: 7,
-          bottom: -7,
-          left: -7,
-        },
-      },
-    },
   } as const;
 
   private readonly experience: Experience | null;
-  private ambientLight: THREE.AmbientLight;
-  private directionalLight: THREE.DirectionalLight;
-  private lightHelper: THREE.DirectionalLightHelper;
   protected override guiRegistry: GUIStateRegistry<EnvironmentState> | null =
     null;
 
   protected readonly DEBUG_DEFAULTS: EnvironmentState = {
-    lightHelper: true,
     environmentColor: "#160920",
   };
 
@@ -71,9 +42,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.scene.background = this.envMapTexture;
     this.scene.environment = this.envMapTexture;
 
-    this.setAmbientLight();
-    this.setDirectionalLight();
-
     this.applyEnvironmentColor();
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -94,41 +62,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.renderer.instance.setClearColor(threeColor);
   };
 
-  private setAmbientLight(): void {
-    const { color, intensity } = Environment.CONFIG.ambientLight;
-    this.ambientLight = new THREE.AmbientLight(color, intensity);
-    this.scene.add(this.ambientLight);
-  }
-
-  private setDirectionalLight(withHelper = true): void {
-    const { color, intensity } = Environment.CONFIG.directionalLight;
-    const directionalLight = new THREE.DirectionalLight(color, intensity);
-
-    const { mapSize, normalBias } = Environment.CONFIG.directionalLight.shadow;
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.set(mapSize, mapSize);
-    directionalLight.shadow.normalBias = normalBias;
-
-    const { far, top, right, bottom, left } =
-      Environment.CONFIG.directionalLight.shadow.camera;
-    const { camera } = directionalLight.shadow;
-    camera.far = far;
-    camera.top = top;
-    camera.right = right;
-    camera.bottom = bottom;
-    camera.left = left;
-
-    const { x, y, z } = Environment.CONFIG.directionalLight.position;
-    directionalLight.position.set(x, y, z);
-
-    this.directionalLight = directionalLight;
-    this.scene.add(directionalLight);
-
-    if (!withHelper) return;
-    this.lightHelper = new THREE.DirectionalLightHelper(directionalLight);
-    this.scene.add(this.lightHelper);
-  }
-
   protected override addDebugFolders(): void {
     const { guiKey } = Environment.CONFIG;
     const registry = new GUIStateRegistry<EnvironmentState>(
@@ -145,27 +78,9 @@ class Environment extends EnvironmentEntity implements Destroyable {
       .addColor(state, "environmentColor")
       .name("Renderer clear color");
     registry.bind("environmentColor", this.applyEnvironmentColor);
-
-    const helpersFolder = environmentFolder.addFolder("Helpers");
-
-    helpersFolder.add(state, "lightHelper").name("Light Helper");
-    registry.bind("lightHelper", (v) => {
-      this.lightHelper.visible = v;
-    });
   }
 
   public destroy(): void {
-    this.scene.remove(
-      this.ambientLight,
-      this.directionalLight,
-      this.lightHelper,
-    );
-
-    this.ambientLight.dispose();
-
-    this.directionalLight.dispose();
-    this.lightHelper?.dispose();
-
     this.guiRegistry?.dispose();
   }
 }
