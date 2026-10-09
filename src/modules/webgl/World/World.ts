@@ -3,7 +3,7 @@ import Experience, {
   Updatable,
 } from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
-import Particles from "./Particles";
+import FlowFieldParticles from "./FlowFieldParticles";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -31,7 +31,7 @@ class World implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
   public environment?: Environment;
-  public particles?: Particles;
+  public particles?: FlowFieldParticles;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -68,7 +68,7 @@ class World implements Updatable, Destroyable {
     this.setHelpers();
 
     this.resources.on("textures-loaded", () => {
-      this.particles = new Particles();
+      this.particles = new FlowFieldParticles();
     });
 
     if (this.debug?.isActive) {

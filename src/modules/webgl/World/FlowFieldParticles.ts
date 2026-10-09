@@ -7,16 +7,16 @@ import GUIStateRegistry from "@utils/classes/gui-state-registry";
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
 
-type ParticlesState = {
+type FlowFieldParticlesState = {
   uSize: number;
 };
 
-type ParticlesUniforms = MapAsUniforms<{
+type FlowFieldParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
-  uSize: ParticlesState["uSize"];
+  uSize: FlowFieldParticlesState["uSize"];
 }>;
 
-class Particles extends PointsEntity implements Destroyable {
+class FlowFieldParticles extends PointsEntity implements Destroyable {
   public static readonly CONFIG = {
     guiKey: "particles-gui-state",
     geometry: {
@@ -27,13 +27,14 @@ class Particles extends PointsEntity implements Destroyable {
   private readonly experience: Experience | null;
 
   protected geometry: THREE.SphereGeometry;
-  protected material: TypedShaderMaterial<ParticlesUniforms>;
+  protected material: TypedShaderMaterial<FlowFieldParticlesUniforms>;
   protected points: THREE.Points;
 
-  protected override readonly DEBUG_DEFAULTS: ParticlesState = {
+  protected override readonly DEBUG_DEFAULTS: FlowFieldParticlesState = {
     uSize: 0.4,
   };
-  protected guiRegistry: GUIStateRegistry<ParticlesState> | null = null;
+  protected guiRegistry: GUIStateRegistry<FlowFieldParticlesState> | null =
+    null;
 
   private get scene() {
     return this.experience!.scene;
@@ -65,11 +66,11 @@ class Particles extends PointsEntity implements Destroyable {
       this.addDebugFolders();
     }
 
-    console.log("Particles");
+    console.log("FlowFieldParticles");
   }
 
   protected setGeometry(): void {
-    const { radius } = Particles.CONFIG.geometry;
+    const { radius } = FlowFieldParticles.CONFIG.geometry;
 
     this.geometry = new THREE.SphereGeometry(radius);
   }
@@ -78,7 +79,7 @@ class Particles extends PointsEntity implements Destroyable {
     const { x, y } = this.sizes.resolution;
     const { uSize } = this.DEBUG_DEFAULTS;
 
-    const uniforms: ParticlesUniforms = {
+    const uniforms: FlowFieldParticlesUniforms = {
       uResolution: {
         value: new THREE.Vector2(x, y),
       },
@@ -89,7 +90,7 @@ class Particles extends PointsEntity implements Destroyable {
       vertexShader,
       fragmentShader,
       uniforms,
-    }) as TypedShaderMaterial<ParticlesUniforms>;
+    }) as TypedShaderMaterial<FlowFieldParticlesUniforms>;
   }
 
   protected setPoints(): void {
@@ -103,8 +104,8 @@ class Particles extends PointsEntity implements Destroyable {
   };
 
   protected override addDebugFolders(): void {
-    const { guiKey } = Particles.CONFIG;
-    const registry = new GUIStateRegistry<ParticlesState>(
+    const { guiKey } = FlowFieldParticles.CONFIG;
+    const registry = new GUIStateRegistry<FlowFieldParticlesState>(
       guiKey,
       this.DEBUG_DEFAULTS,
     );
@@ -113,9 +114,9 @@ class Particles extends PointsEntity implements Destroyable {
     const { state } = registry;
     const { gui } = this.debug;
 
-    const particlesFolder = gui.addFolder("Particles");
+    const particlesFolder = gui.addFolder("FlowFieldParticles");
 
-    particlesFolder.add(state, "uSize").min(0).max(1).step(0.001);
+    particlesFolder.add(state, "uSize").name("Size").min(0).max(1).step(0.001);
     registry.bind("uSize", (v) => {
       this.material.uniforms.uSize.value = v;
     });
@@ -133,4 +134,4 @@ class Particles extends PointsEntity implements Destroyable {
   }
 }
 
-export default Particles;
+export default FlowFieldParticles;
