@@ -1,99 +1,74 @@
-type RangeMapping = {
-  inputMin: number;
-  inputMax: number;
-  outputMin: number;
-  outputMax: number;
+export type RoundingMode = keyof Pick<typeof Math, "floor" | "round" | "ceil">;
+
+/** Applies `rounding` to `value`, or returns `value` unchanged when `rounding` is omitted. */
+function applyRounding(value: number, rounding?: RoundingMode): number {
+  if (!rounding) return value;
+
+  return Math[rounding](value);
+}
+
+type RemapOptions = {
+  value: number;
+  /** Input range `[min, max]`. Defaults to `[0, 1]`. */
+  input?: [min: number, max: number];
+  /** Output range `[min, max]`. Omitted: `value` is passed through unmapped (rounding still applies). */
+  output?: [min: number, max: number];
+  /** Rounds the mapped value, e.g. when the output range represents an integer count. Skipped when omitted. */
+  rounding?: RoundingMode;
 };
 
 /**
- * Maps a value from an input range to an output range.
- *
- * @param {number} value The value to map.
- * @param {RangeMapping} mapping The input and output range bounds.
- * @returns {number} The mapped value.
+ * Maps `value` from the input range to the output range.
  *
  * @example
- * const newValue = getValueFromNewRange(0.5, { inputMin: 0, inputMax: 1, outputMin: -1, outputMax: 1 });
+ * const newValue = remap({ value: 0.5, input: [0, 1], output: [-1, 1] });
  * console.log(newValue); // 0
  */
-export function getValueFromNewRange(
+export function remap({
+  value,
+  input = [0, 1],
+  output,
+  rounding,
+}: RemapOptions): number {
+  const mapped: number = output ? mapToRange(value, input, output) : value;
+
+  return applyRounding(mapped, rounding);
+}
+
+function mapToRange(
   value: number,
-  { inputMin, inputMax, outputMin, outputMax }: RangeMapping,
+  [inputMin, inputMax]: [number, number],
+  [outputMin, outputMax]: [number, number],
 ): number {
   const slope: number = (outputMax - outputMin) / (inputMax - inputMin);
 
   return outputMin + (value - inputMin) * slope;
 }
 
+type RandomInRangeOptions = {
+  /** Defaults to `0`. */
+  min?: number;
+  /** Defaults to `1`. */
+  max?: number;
+  /** Rounds the result, e.g. when the range represents an integer count. Skipped when omitted. */
+  rounding?: RoundingMode;
+};
+
 /**
- * Returns a random number within the specified range.
- * The inclusion range can be "min", "max", "both", or "none".
- * `"min"`, the minimum value is included.
+ * Returns a random number in `[min, max)`.
  *
- * `"max"`, the maximum value is included.
- *
- * `"both"`, both the minimum and maximum values are included.
- *
- * `"none"`, neither the minimum nor maximum values are included.
- *
- * @param {number} min The minimum value of the range.
- * @param {number} max The maximum value of the range.
- * @param {"min" | "max" | "both" | "none"} inclusionRange The inclusion range to use.
- * @returns {number} A random number within the specified range.
- * @throws {Error} If the inclusion range is invalid.
+ * @throws {RangeError} If `min > max`.
  */
-export function randomInRange(
-  min: number,
-  max: number,
-  inclusionRange: "min" | "max" | "both" | "none" = "min",
-): number {
+export function randomInRange({
+  min = 0,
+  max = 1,
+  rounding,
+}: RandomInRangeOptions = {}): number {
   if (min > max) {
     throw new RangeError(`Invalid range: ${min} > ${max}`);
   }
 
-  const rangeOperatorMap = new Map(
-    Object.entries({
-      min: randomIncludeMinExcludeMax,
-      max: randomExcludeMinIncludeMax,
-      both: randomIncludeBoth,
-      none: randomExcludeBoth,
-    }),
-  );
+  const result: number = min + Math.random() * (max - min);
 
-  const randomOperator = rangeOperatorMap.get(inclusionRange);
-
-  if (!randomOperator) {
-    throw new Error(`Invalid inclusion range: ${inclusionRange}`);
-  }
-
-  return randomOperator(min, max);
-}
-
-// --- Helper Functions ---
-function randomIncludeMinExcludeMax(min: number, max: number): number {
-  // ? [min, max[
-  return min + Math.random() * (max - min);
-}
-
-function randomExcludeMinIncludeMax(min: number, max: number): number {
-  // ? ]min, max]
-  return max - Math.random() * (max - min);
-}
-
-function randomExcludeBoth(min: number, max: number): number {
-  // ? ]min, max[
-  const tinyOffset = getTinyOffset(min);
-  const adjustedMin = min + tinyOffset;
-  const adjustedMax = max - tinyOffset;
-
-  return adjustedMin + Math.random() * (adjustedMax - adjustedMin);
-}
-
-function randomIncludeBoth(min: number, max: number): number {
-  // ? [min, max]
-  return min + Math.random() * (max - min);
-}
-
-function getTinyOffset(reference: number): number {
-  return Number.EPSILON * Math.max(1, Math.abs(reference));
+  return applyRounding(result, rounding);
 }
