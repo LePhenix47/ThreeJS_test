@@ -1,7 +1,8 @@
 varying vec3 vColor;
 
 void main() {
-    float distanceToCenter = distance(gl_PointCoord, 0.5);
+    vec2 localUv = gl_PointCoord;
+    float distanceToCenter = distance(localUv, vec2(0.5));
     if(distanceToCenter > 0.5)
         discard;
 

@@ -19,7 +19,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   protected readonly DEBUG_DEFAULTS: EnvironmentState = {
     lightHelper: true,
-    environmentColor: "#160920",
+    environmentColor: "#29191f",
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
