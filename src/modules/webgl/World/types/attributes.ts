@@ -1,3 +1,4 @@
+import { LooseAutocomplete } from "@/utils/types/helper.type";
 import * as THREE from "three";
 
 type StandardAttributeKeys = "position" | "color" | "uv" | "normal";
@@ -37,10 +38,9 @@ export type StandardAttributes = Record<
  *
  * protected geometry: TypedBufferGeometry<MorphParticlesAttributes>;
  */
-export type MapAsAttributes<TKeys extends string> = Record<
-  TKeys,
-  THREE.BufferAttribute
->;
+export type MapAsAttributes<
+  TKeys extends LooseAutocomplete<keyof StandardAttributes>,
+> = Record<TKeys, THREE.BufferAttribute>;
 
 /**
  * A `THREE.BufferGeometry` with `attributes`/`setAttribute`/`getAttribute` narrowed to a specific,
