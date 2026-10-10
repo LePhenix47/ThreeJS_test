@@ -26,3 +26,15 @@ export enum SpaceEnum {
   Y,
   Z,
 }
+
+/**
+ * Named indices for ST (UV) texture-coordinate components in a `Float32Array` buffer attribute.
+ *
+ * @example
+ * uvs[i2 + UvEnum.S] = (x + 0.5) / size;
+ * uvs[i2 + UvEnum.T] = (y + 0.5) / size;
+ */
+export enum UvEnum {
+  S,
+  T,
+}

@@ -5,7 +5,10 @@ import Experience, {
 } from "@modules/webgl/Experience/Experience";
 import { PointsEntity } from "./types/points-entity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
+import { MapAsAttributes, TypedBufferGeometry } from "./types/attributes";
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
+import { UvEnum } from "@utils/enums/space-color";
+import Enum from "@utils/enums";
 
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
@@ -19,7 +22,10 @@ type FlowFieldParticlesState = {
 type FlowFieldParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
   uSize: FlowFieldParticlesState["uSize"];
+  uParticlesTexture: THREE.Texture;
 }>;
+
+type FlowFieldParticlesAttributes = MapAsAttributes<"aParticlesUv">;
 
 class FlowFieldParticles
   extends PointsEntity
@@ -27,7 +33,7 @@ class FlowFieldParticles
 {
   public static readonly CONFIG = {
     guiKey: "particles-gui-state",
-    geometry: {
+    seedGeometry: {
       radius: 3,
     },
     debugPlane: {
@@ -42,11 +48,15 @@ class FlowFieldParticles
 
   private readonly experience: Experience | null;
 
-  protected geometry: THREE.SphereGeometry;
+  protected geometry: TypedBufferGeometry<FlowFieldParticlesAttributes>;
   protected material: TypedShaderMaterial<FlowFieldParticlesUniforms>;
   protected points: THREE.Points;
 
   private gpGpu: FlowFieldGPGPU;
+  /** Seed geometry's position attribute. Only used to build the GPGPU base texture, then discarded. */
+  private seedPosition: THREE.BufferAttribute;
+  /** Real particle count, captured from the seed geometry before it's replaced by the UV-only one. */
+  private particlesCount: number;
 
   private debugPlane: THREE.Mesh<
     THREE.PlaneGeometry,
@@ -82,11 +92,11 @@ class FlowFieldParticles
     if (!Experience.instance) throw new Error("Experience instance not found");
     this.experience = Experience.instance;
 
+    this.setSeedGeometry();
+    this.setGPGPU();
     this.setGeometry();
     this.setMaterial();
     this.setPoints();
-
-    this.setGPGPU();
 
     this.scene.add(this.points);
 
@@ -100,8 +110,12 @@ class FlowFieldParticles
     console.log("FlowFieldParticles");
   }
 
-  private setGPGPU() {
-    const { position } = this.geometry.attributes;
+  /** Seed-only sphere: its position attribute seeds the GPGPU texture, then it's discarded. */
+  private setSeedGeometry(): void {
+    const { radius } = FlowFieldParticles.CONFIG.seedGeometry;
+
+    const seedGeometry = new THREE.SphereGeometry(radius);
+    const { position } = seedGeometry.attributes;
 
     if (!(position instanceof THREE.BufferAttribute)) {
       throw new Error(
@@ -109,12 +123,35 @@ class FlowFieldParticles
       );
     }
 
-    const gpGpu = new FlowFieldGPGPU({
-      renderer: this.renderer.instance,
-      positions: position,
-    });
+    this.seedPosition = position;
+  }
 
-    this.gpGpu = gpGpu;
+  /** Builds the `GPUComputationRenderer` from the seed positions. */
+  private setGPGPU(): void {
+    this.particlesCount = this.seedPosition.count;
+
+    this.gpGpu = new FlowFieldGPGPU({
+      renderer: this.renderer.instance,
+      positions: this.seedPosition,
+    });
+  }
+
+  /** One UV per particle, pointing at that particle's own texel in the GPGPU texture. */
+  private getParticlesUvArray(): Float32Array {
+    const { size } = this.gpGpu;
+    const stride: number = Enum.length(UvEnum);
+    const uvArray = new Float32Array(size * size * stride);
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i2 = (y * size + x) * stride;
+
+        uvArray[i2 + UvEnum.S] = (x + 0.5) / size;
+        uvArray[i2 + UvEnum.T] = (y + 0.5) / size;
+      }
+    }
+
+    return uvArray;
   }
 
   private addDebugPlane(): void {
@@ -146,9 +183,20 @@ class FlowFieldParticles
   }
 
   protected setGeometry(): void {
-    const { radius } = FlowFieldParticles.CONFIG.geometry;
+    const geometry = new THREE.BufferGeometry<FlowFieldParticlesAttributes>();
 
-    this.geometry = new THREE.SphereGeometry(radius);
+    const particlesUvArray: Float32Array<ArrayBufferLike> =
+      this.getParticlesUvArray();
+
+    const uvStride: number = Enum.length(UvEnum);
+    geometry.setAttribute(
+      "aParticlesUv",
+      new THREE.BufferAttribute(particlesUvArray, uvStride),
+    );
+    // ? size*size always pads up to the next square, drop the leftover texels past the real count
+    geometry.setDrawRange(0, this.particlesCount);
+
+    this.geometry = geometry;
   }
 
   protected setMaterial(): void {
@@ -160,6 +208,7 @@ class FlowFieldParticles
         value: new THREE.Vector2(x, y),
       },
       uSize: new THREE.Uniform(uSize),
+      uParticlesTexture: new THREE.Uniform(this.gpGpu.texture),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -207,6 +256,14 @@ class FlowFieldParticles
 
   public update(): void {
     this.gpGpu.update();
+
+    // ? Ping-ponged: a genuinely different texture object every other frame, must be re-read, not just mutated
+    const { texture } = this.gpGpu;
+    this.material.uniforms.uParticlesTexture.value = texture;
+
+    if (this.debugPlane) {
+      this.debugPlane.material.map = texture;
+    }
   }
 
   private destroyDebugPlane(): void {
