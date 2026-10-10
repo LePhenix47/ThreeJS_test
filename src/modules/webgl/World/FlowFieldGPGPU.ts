@@ -23,6 +23,9 @@ type FlowFieldGPGPUUniforms = MapAsUniforms<{
   uFlowFieldInfluence: number;
   uFlowFieldStrength: number;
   uFlowFieldFrequency: number;
+  uFlowFieldDecayFrequency: number;
+  uFlowFieldInfluenceFrequency: number;
+  uTimePlaybackSpeed: number;
   /** Original seed positions, read back inside the compute shader. */
   uBase: THREE.Texture;
 }>;
@@ -101,6 +104,9 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
       uFlowFieldInfluence: new THREE.Uniform(0),
       uFlowFieldStrength: new THREE.Uniform(0),
       uFlowFieldFrequency: new THREE.Uniform(0),
+      uFlowFieldDecayFrequency: new THREE.Uniform(0),
+      uFlowFieldInfluenceFrequency: new THREE.Uniform(0),
+      uTimePlaybackSpeed: new THREE.Uniform(1),
       uBase: { value: baseParticlesTexture },
     };
 
@@ -154,12 +160,18 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     fieldInfluence,
     fieldStrength,
     fieldFrequency,
+    decayFrequency,
+    influenceFrequency,
+    timePlaybackSpeed,
   }: {
     elapsedSeconds: number;
     deltaTimeSeconds: number;
     fieldInfluence: number;
     fieldStrength: number;
     fieldFrequency: number;
+    decayFrequency: number;
+    influenceFrequency: number;
+    timePlaybackSpeed: number;
   }): void {
     this.computationRenderer.compute();
 
@@ -167,6 +179,9 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     uniforms.uFlowFieldFrequency.value = fieldFrequency;
     uniforms.uFlowFieldInfluence.value = fieldInfluence;
     uniforms.uFlowFieldStrength.value = fieldStrength;
+    uniforms.uFlowFieldDecayFrequency.value = decayFrequency;
+    uniforms.uFlowFieldInfluenceFrequency.value = influenceFrequency;
+    uniforms.uTimePlaybackSpeed.value = timePlaybackSpeed;
     uniforms.uTime.value = elapsedSeconds;
     uniforms.uDeltaTime.value = deltaTimeSeconds;
   }

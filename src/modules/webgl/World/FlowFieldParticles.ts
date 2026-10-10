@@ -20,6 +20,9 @@ type FlowFieldParticlesState = {
   uFlowFieldInfluence: number;
   uFlowFieldStrength: number;
   uFlowFieldFrequency: number;
+  uFlowFieldDecayFrequency: number;
+  uFlowFieldInfluenceFrequency: number;
+  uTimePlaybackSpeed: number;
 };
 
 type FlowFieldParticlesUniforms = MapAsUniforms<{
@@ -75,6 +78,9 @@ class FlowFieldParticles
     uFlowFieldInfluence: 0.5,
     uFlowFieldStrength: 2.0,
     uFlowFieldFrequency: 0.5,
+    uFlowFieldDecayFrequency: 0.3,
+    uFlowFieldInfluenceFrequency: 0.2,
+    uTimePlaybackSpeed: 0.2,
   };
   protected guiRegistry: GUIStateRegistry<FlowFieldParticlesState> | null =
     null;
@@ -303,6 +309,21 @@ class FlowFieldParticles
       .min(0)
       .max(10)
       .step(0.001);
+    particlesFolder
+      .add(state, "uFlowFieldDecayFrequency")
+      .min(0)
+      .max(10)
+      .step(0.001);
+    particlesFolder
+      .add(state, "uFlowFieldInfluenceFrequency")
+      .min(0)
+      .max(10)
+      .step(0.001);
+    particlesFolder
+      .add(state, "uTimePlaybackSpeed")
+      .min(0)
+      .max(5)
+      .step(0.001);
 
     particlesFolder.add(state, "debugPlaneVisible").name("Show GPGPU debug");
     registry.bind("debugPlaneVisible", (v) => {
@@ -315,14 +336,23 @@ class FlowFieldParticles
   private updateGpGpuUniforms(): void {
     const { elapsedSeconds, deltaSeconds } = this.time;
 
-    const { uFlowFieldInfluence, uFlowFieldStrength, uFlowFieldFrequency } =
-      this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+    const {
+      uFlowFieldInfluence,
+      uFlowFieldStrength,
+      uFlowFieldFrequency,
+      uFlowFieldDecayFrequency,
+      uFlowFieldInfluenceFrequency,
+      uTimePlaybackSpeed,
+    } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
     this.gpGpu.update({
       elapsedSeconds,
       deltaTimeSeconds: deltaSeconds,
       fieldInfluence: uFlowFieldInfluence,
       fieldStrength: uFlowFieldStrength,
       fieldFrequency: uFlowFieldFrequency,
+      decayFrequency: uFlowFieldDecayFrequency,
+      influenceFrequency: uFlowFieldInfluenceFrequency,
+      timePlaybackSpeed: uTimePlaybackSpeed,
     });
   }
 

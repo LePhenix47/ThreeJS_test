@@ -3,6 +3,9 @@ uniform float uDeltaTime;
 uniform float uFlowFieldInfluence;
 uniform float uFlowFieldStrength;
 uniform float uFlowFieldFrequency;
+uniform float uFlowFieldDecayFrequency;
+uniform float uFlowFieldInfluenceFrequency;
+uniform float uTimePlaybackSpeed;
 
 uniform sampler2D uBase;
 
@@ -11,7 +14,7 @@ uniform sampler2D uBase;
 vec4 applyFlowField(vec4 particle, float time) {
     float influence = (uFlowFieldInfluence * -2.0) + 1.0; // ? [0,1] → [1, -1], order matters 
 
-    float strength = simplexNoise4d(vec4(particle.xyz * 0.2, time + 1.0));
+    float strength = simplexNoise4d(vec4(particle.xyz * uFlowFieldInfluenceFrequency, time + 1.0));
     strength = smoothstep(influence, 1.0, strength);
 
     vec3 flowField = vec3(//
@@ -28,7 +31,7 @@ vec4 applyFlowField(vec4 particle, float time) {
 }
 
 void main() {
-    float time = uTime * 0.2;
+    float time = uTime * uTimePlaybackSpeed;
 
     // * gl_FragCoord = this pixel's coord in the offscreen compute texture, one pixel per particle
     // * resolution = that compute texture's size, injected by GPUComputationRenderer, not the canvas
@@ -52,7 +55,7 @@ void main() {
         particle = applyFlowField(particle, time);
 
     // * Decay
-        particle.a += uDeltaTime * 0.3;
+        particle.a += uDeltaTime * uFlowFieldDecayFrequency;
 
     }
 
