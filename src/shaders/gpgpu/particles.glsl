@@ -1,4 +1,5 @@
 uniform float uTime;
+uniform float uDeltaTime;
 
 uniform sampler2D uBase;
 
@@ -34,15 +35,14 @@ void main() {
     if(particle.a >= 1.0) {
         particle.xyz = base.xyz;
         particle.a = 0.0;
-
     } else {
     // * Flow field (GO PARTICLE, GO)
         particle = applyFlowField(particle, time);
 
-    }
-
     // * Decay
-    particle.a += 0.01;
+        particle.a += uDeltaTime;
+
+    }
 
     gl_FragColor = particle;
 }

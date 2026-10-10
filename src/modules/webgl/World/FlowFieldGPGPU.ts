@@ -83,6 +83,7 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     ]);
 
     particlesVariable.material.uniforms.uTime = new THREE.Uniform(0);
+    particlesVariable.material.uniforms.uDeltaTime = new THREE.Uniform(0);
     particlesVariable.material.uniforms.uBase = new THREE.Uniform(
       // ? Used to get the original position of the seed geometry
       baseParticlesTexture,
@@ -127,10 +128,18 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     }
   }
 
-  public update(elapsedSeconds: number): void {
+  public update({
+    elapsedSeconds,
+    deltaTimeSeconds,
+  }: {
+    elapsedSeconds: number;
+    deltaTimeSeconds: number;
+  }): void {
     this.computationRenderer.compute();
 
     this.particlesVariable.material.uniforms.uTime.value = elapsedSeconds;
+    this.particlesVariable.material.uniforms.uDeltaTime.value =
+      deltaTimeSeconds;
   }
 
   public destroy(): void {
