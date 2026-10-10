@@ -282,7 +282,7 @@ class FlowFieldParticles
 
     const particlesFolder = gui.addFolder("FlowFieldParticles");
 
-    particlesFolder.add(state, "uSize").name("Size").min(0).max(1).step(0.001);
+    particlesFolder.add(state, "uSize").min(0).max(1).step(0.001);
     registry.bind("uSize", (v) => {
       this.material.uniforms.uSize.value = v;
     });
