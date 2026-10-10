@@ -83,6 +83,10 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     ]);
 
     particlesVariable.material.uniforms.uTime = new THREE.Uniform(0);
+    particlesVariable.material.uniforms.uBase = new THREE.Uniform(
+      // ? Used to get the original position of the seed geometry
+      baseParticlesTexture,
+    );
 
     const error: string | null = this.computationRenderer.init();
     if (error) throw new Error(`[FlowFieldGPGPU] ${error}`);
