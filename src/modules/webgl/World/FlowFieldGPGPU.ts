@@ -42,7 +42,8 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
   constructor({ renderer, positions }: FlowFieldGPGPUConstructor) {
     this.size = this.computeSize(positions.count);
 
-    this.setComputationRenderer(renderer, positions);
+    this.setComputationRenderer(renderer);
+    this.setParticlesVariable(positions);
   }
 
   /** Side length of the smallest square texture that fits `count` particles, one per texel. */
@@ -52,35 +53,34 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     return Math.ceil(sizeFloat);
   }
 
-  /** Builds the `GPUComputationRenderer`, seeds its base texture, and registers the self-dependent `uParticles` variable. */
-  private setComputationRenderer(
-    renderer: THREE.WebGLRenderer,
-    positions: THREE.BufferAttribute,
-  ): void {
-    const computationRenderer = new GPUComputationRenderer(
+  /** Builds the `GPUComputationRenderer` itself. Doesn't know about any variable yet. */
+  private setComputationRenderer(renderer: THREE.WebGLRenderer): void {
+    this.computationRenderer = new GPUComputationRenderer(
       this.size,
       this.size,
       renderer,
     );
+  }
 
+  /** Seeds the base texture, registers the self-dependent `uParticles` variable, and validates it. */
+  private setParticlesVariable(positions: THREE.BufferAttribute): void {
     const baseParticlesTexture: THREE.DataTexture =
-      computationRenderer.createTexture();
+      this.computationRenderer.createTexture();
 
     this.fillBaseTexture(baseParticlesTexture, positions);
 
-    const particlesVariable: Variable = computationRenderer.addVariable(
+    const particlesVariable: Variable = this.computationRenderer.addVariable(
       "uParticles",
       particlesShader,
       baseParticlesTexture,
     );
-    computationRenderer.setVariableDependencies(particlesVariable, [
+    this.computationRenderer.setVariableDependencies(particlesVariable, [
       particlesVariable,
     ]);
 
-    const error: string | null = computationRenderer.init();
+    const error: string | null = this.computationRenderer.init();
     if (error) throw new Error(`[FlowFieldGPGPU] ${error}`);
 
-    this.computationRenderer = computationRenderer;
     this.particlesVariable = particlesVariable;
   }
 
