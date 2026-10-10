@@ -159,10 +159,14 @@ class FlowFieldParticles
 
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        const i2: number = (y * size + x) * stride;
+        const i: number = y * size + x;
+        const i2: number = i * stride;
 
-        uvArray[i2 + UvEnum.S] = (x + 0.5) / size;
-        uvArray[i2 + UvEnum.T] = (y + 0.5) / size;
+        const uvX: number = (x + 0.5) / size;
+        const uvY: number = (y + 0.5) / size;
+
+        uvArray[i2 + UvEnum.S] = uvX;
+        uvArray[i2 + UvEnum.T] = uvY;
       }
     }
 
