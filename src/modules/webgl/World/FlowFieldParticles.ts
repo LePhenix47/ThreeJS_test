@@ -177,7 +177,10 @@ class FlowFieldParticles
   }
 
   /** One UV per particle, pointing at that particle's own texel in the GPGPU texture. */
-  private getAttributesArrays(): { [key: string]: Float32Array } {
+  private getAttributesArrays(): {
+    uvArray: Float32Array;
+    sizesArray: Float32Array;
+  } {
     const { size } = this.gpGpu;
     const stride: number = Enum.length(UvEnum);
 
