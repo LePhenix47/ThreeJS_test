@@ -7,9 +7,10 @@
  * colors[i3 + ColorEnum.Blue]  = mixedColor.b;
  */
 export enum ColorEnum {
-  "Red",
-  "Green",
-  "Blue",
+  Red,
+  Green,
+  Blue,
+  Alpha,
 }
 
 /**
@@ -21,7 +22,7 @@ export enum ColorEnum {
  * positions[i3 + SpaceEnum.Z] = Math.sin(angle) * radius;
  */
 export enum SpaceEnum {
-  "X",
-  "Y",
-  "Z",
+  X,
+  Y,
+  Z,
 }
