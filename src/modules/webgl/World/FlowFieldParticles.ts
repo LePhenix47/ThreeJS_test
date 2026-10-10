@@ -25,7 +25,9 @@ type FlowFieldParticlesUniforms = MapAsUniforms<{
   uParticlesTexture: THREE.Texture;
 }>;
 
-type FlowFieldParticlesAttributes = MapAsAttributes<"aParticlesUv" | "aColor">;
+type FlowFieldParticlesAttributes = MapAsAttributes<
+  "aParticlesUv" | "aColor" | "aSizes"
+>;
 
 /** Named attributes read off the seed model's mesh. Add a name here, then one line in `setSeedGeometry`. */
 type FlowFieldSeedAttributes = MapAsAttributes<"position" | "color">;
@@ -155,14 +157,15 @@ class FlowFieldParticles
   protected setGeometry(): void {
     const geometry = new THREE.BufferGeometry<FlowFieldParticlesAttributes>();
 
-    const particlesUvArray: Float32Array<ArrayBufferLike> =
-      this.getParticlesUvArray();
+    const { uvArray, sizesArray } = this.getAttributesArrays();
 
     const uvStride: number = Enum.length(UvEnum);
     geometry.setAttribute(
       "aParticlesUv",
-      new THREE.BufferAttribute(particlesUvArray, uvStride),
+      new THREE.BufferAttribute(uvArray, uvStride),
     );
+
+    geometry.setAttribute("aSizes", new THREE.BufferAttribute(sizesArray, 1));
 
     geometry.setAttribute("aColor", this.seedAttributes.color);
 
@@ -174,10 +177,13 @@ class FlowFieldParticles
   }
 
   /** One UV per particle, pointing at that particle's own texel in the GPGPU texture. */
-  private getParticlesUvArray(): Float32Array {
+  private getAttributesArrays(): { [key: string]: Float32Array } {
     const { size } = this.gpGpu;
     const stride: number = Enum.length(UvEnum);
-    const uvArray = new Float32Array(size ** 2 * stride);
+
+    const { count } = this.seedAttributes.position;
+    const uvArray = new Float32Array(count * stride);
+    const sizesArray = new Float32Array(count);
 
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
@@ -189,10 +195,12 @@ class FlowFieldParticles
 
         uvArray[i2 + UvEnum.S] = uvS;
         uvArray[i2 + UvEnum.T] = uvT;
+
+        sizesArray[i] = Math.random();
       }
     }
 
-    return uvArray;
+    return { uvArray, sizesArray };
   }
 
   protected setMaterial(): void {
