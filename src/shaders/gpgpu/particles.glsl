@@ -19,7 +19,7 @@ vec4 applyFlowField(vec4 particle, float time) {
 }
 
 void main() {
-    float time = uTime * 0.02;
+    float time = uTime * 0.2;
 
     // * gl_FragCoord = this pixel's coord in the offscreen compute texture, one pixel per particle
     // * resolution = that compute texture's size, injected by GPUComputationRenderer, not the canvas
