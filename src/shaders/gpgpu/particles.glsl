@@ -14,7 +14,7 @@ vec4 applyFlowField(vec4 particle, float time) {
 
     flowField = normalize(flowField);
 
-    particle.xyz += flowField * 0.01;
+    particle.xyz += flowField * uDeltaTime * 0.5;
 
     return particle;
 }
