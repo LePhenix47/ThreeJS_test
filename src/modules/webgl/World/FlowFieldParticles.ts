@@ -27,6 +27,9 @@ type FlowFieldParticlesUniforms = MapAsUniforms<{
 
 type FlowFieldParticlesAttributes = MapAsAttributes<"aParticlesUv">;
 
+/** Named attributes read off the seed model's mesh. Add a name here, then one line in `setSeedGeometry`. */
+type FlowFieldSeedAttributes = MapAsAttributes<"position">;
+
 class FlowFieldParticles
   extends PointsEntity
   implements Updatable, Destroyable
@@ -53,8 +56,8 @@ class FlowFieldParticles
   protected points: THREE.Points;
 
   private gpGpu: FlowFieldGPGPU;
-  /** Seed geometry's position attribute. Only used to build the GPGPU base texture, then discarded. */
-  private seedPosition: THREE.BufferAttribute;
+  /** Named attributes read off the seed model's mesh. Only used to build the GPGPU, then discarded. */
+  private seedAttributes: FlowFieldSeedAttributes;
 
   private debugPlane: THREE.Mesh<
     THREE.PlaneGeometry,
@@ -113,28 +116,38 @@ class FlowFieldParticles
     console.log("FlowFieldParticles");
   }
 
-  /** Seed-only sphere: its position attribute seeds the GPGPU texture, then it's discarded. */
-  private setSeedGeometry(): void {
-    const model = this.resources.getGltf("boat");
-    const boatMesh = model.scene.children[0] as THREE.Mesh;
+  /** Reads one named attribute off the seed mesh, narrowed to a real (non-interleaved) `BufferAttribute`. */
+  private getSeedAttribute(
+    attributes: THREE.NormalBufferAttributes,
+    name: keyof FlowFieldSeedAttributes,
+  ): THREE.BufferAttribute {
+    const attribute = attributes[name];
 
-    const seedGeometry = boatMesh.geometry;
-    const { position } = seedGeometry.attributes;
-
-    if (!(position instanceof THREE.BufferAttribute)) {
+    if (!(attribute instanceof THREE.BufferAttribute)) {
       throw new Error(
-        "[FlowFieldParticles] Unexpected interleaved position attribute",
+        `[FlowFieldParticles] Unexpected interleaved "${name}" attribute`,
       );
     }
 
-    this.seedPosition = position;
+    return attribute;
+  }
+
+  /** Seed-only mesh: its attributes seed the GPGPU texture, then it's discarded. */
+  private setSeedGeometry(): void {
+    const model = this.resources.getGltf("boat");
+    const boatMesh = model.scene.children[0] as THREE.Mesh;
+    const { attributes } = boatMesh.geometry;
+
+    this.seedAttributes = {
+      position: this.getSeedAttribute(attributes, "position"),
+    };
   }
 
   /** Builds the `GPUComputationRenderer` from the seed positions. */
   private setGPGPU(): void {
     this.gpGpu = new FlowFieldGPGPU({
       renderer: this.renderer.instance,
-      positions: this.seedPosition,
+      positions: this.seedAttributes.position,
     });
   }
 
@@ -150,7 +163,7 @@ class FlowFieldParticles
       new THREE.BufferAttribute(particlesUvArray, uvStride),
     );
     // ? size*size always pads up to the next square, drop the leftover texels past the real count
-    const { count } = this.seedPosition;
+    const { count } = this.seedAttributes.position;
     geometry.setDrawRange(0, count);
 
     this.geometry = geometry;
