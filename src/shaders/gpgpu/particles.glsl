@@ -1,13 +1,16 @@
 uniform float uTime;
 uniform float uDeltaTime;
+uniform float uFlowFieldInfluence;
 
 uniform sampler2D uBase;
 
 #include ../utils/noise/simplexNoise4d
 
 vec4 applyFlowField(vec4 particle, float time) {
+    float influence = (uFlowFieldInfluence * -2.0) + 1.0; // ? [0,1] → [1, -1], order matters 
+
     float strength = simplexNoise4d(vec4(particle.xyz * 0.2, time + 1.0));
-    strength = smoothstep(0.0, 1.0, strength);
+    strength = smoothstep(influence, 1.0, strength);
 
     vec3 flowField = vec3(//
     simplexNoise4d(vec4(particle.xyz + 0.0, time)), //

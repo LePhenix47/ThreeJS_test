@@ -17,11 +17,13 @@ import FlowFieldGPGPU from "./FlowFieldGPGPU";
 type FlowFieldParticlesState = {
   uSize: number;
   debugPlaneVisible: boolean;
+  uFlowFieldInfluence: number;
 };
 
 type FlowFieldParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
   uSize: FlowFieldParticlesState["uSize"];
+  uFlowFieldInfluence: FlowFieldParticlesState["uFlowFieldInfluence"];
   uParticlesTexture: THREE.Texture;
 }>;
 
@@ -69,6 +71,7 @@ class FlowFieldParticles
   protected override readonly DEBUG_DEFAULTS: FlowFieldParticlesState = {
     uSize: 0.4,
     debugPlaneVisible: false,
+    uFlowFieldInfluence: 0.5,
   };
   protected guiRegistry: GUIStateRegistry<FlowFieldParticlesState> | null =
     null;
@@ -118,6 +121,8 @@ class FlowFieldParticles
       this.addDebugPlane();
       this.addDebugFolders();
     }
+
+    this.updateGpGpuUniforms();
 
     console.log("FlowFieldParticles");
   }
@@ -212,13 +217,14 @@ class FlowFieldParticles
 
   protected setMaterial(): void {
     const { x, y } = this.sizes.resolution;
-    const { uSize } = this.DEBUG_DEFAULTS;
+    const { uSize, uFlowFieldInfluence } = this.DEBUG_DEFAULTS;
 
     const uniforms: FlowFieldParticlesUniforms = {
       uResolution: {
         value: new THREE.Vector2(x, y),
       },
       uSize: new THREE.Uniform(uSize),
+      uFlowFieldInfluence: new THREE.Uniform(uFlowFieldInfluence),
       uParticlesTexture: new THREE.Uniform(this.gpGpu.texture),
     };
 
@@ -287,6 +293,9 @@ class FlowFieldParticles
       this.material.uniforms.uSize.value = v;
     });
 
+    // TODO: Feels weird not having a bind(), might recheck the structure for the uniforms update w/ persistence
+    particlesFolder.add(state, "uFlowFieldInfluence").min(0).max(1).step(0.001);
+
     particlesFolder.add(state, "debugPlaneVisible").name("Show GPGPU debug");
     registry.bind("debugPlaneVisible", (v) => {
       if (!this.debugPlane) return;
@@ -295,12 +304,20 @@ class FlowFieldParticles
     });
   }
 
-  public update(): void {
+  private updateGpGpuUniforms(): void {
     const { elapsedSeconds, deltaSeconds } = this.time;
+
+    const { uFlowFieldInfluence } =
+      this.guiRegistry?.state || this.DEBUG_DEFAULTS;
     this.gpGpu.update({
       elapsedSeconds,
       deltaTimeSeconds: deltaSeconds,
+      fieldInfluence: uFlowFieldInfluence,
     });
+  }
+
+  public update(): void {
+    this.updateGpGpuUniforms();
 
     // ? Ping-ponged: a genuinely different texture object every other frame, must be re-read, not just mutated
     const { texture } = this.gpGpu;
