@@ -82,6 +82,8 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
       particlesVariable,
     ]);
 
+    particlesVariable.material.uniforms.uTime = new THREE.Uniform(0);
+
     const error: string | null = this.computationRenderer.init();
     if (error) throw new Error(`[FlowFieldGPGPU] ${error}`);
 
@@ -121,8 +123,10 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     }
   }
 
-  public update(): void {
+  public update(elapsedSeconds: number): void {
     this.computationRenderer.compute();
+
+    this.particlesVariable.material.uniforms.uTime.value = elapsedSeconds;
   }
 
   public destroy(): void {

@@ -93,6 +93,10 @@ class FlowFieldParticles
     return this.experience!.resources;
   }
 
+  private get time() {
+    return this.experience!.time;
+  }
+
   constructor() {
     super();
 
@@ -291,7 +295,7 @@ class FlowFieldParticles
   }
 
   public update(): void {
-    this.gpGpu.update();
+    this.gpGpu.update(this.time.elapsedSeconds);
 
     // ? Ping-ponged: a genuinely different texture object every other frame, must be re-read, not just mutated
     const { texture } = this.gpGpu;
