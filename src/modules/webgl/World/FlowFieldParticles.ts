@@ -6,6 +6,7 @@ import GUIStateRegistry from "@utils/classes/gui-state-registry";
 
 import vertexShader from "@shaders/particles/vertex.glsl";
 import fragmentShader from "@shaders/particles/fragment.glsl";
+import FlowFieldGPGPU from "./FlowFieldGPGPU";
 
 type FlowFieldParticlesState = {
   uSize: number;
@@ -30,6 +31,8 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
   protected material: TypedShaderMaterial<FlowFieldParticlesUniforms>;
   protected points: THREE.Points;
 
+  private gpGpu: FlowFieldGPGPU;
+
   protected override readonly DEBUG_DEFAULTS: FlowFieldParticlesState = {
     uSize: 0.4,
   };
@@ -48,6 +51,10 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
     return this.experience!.debug;
   }
 
+  private get renderer() {
+    return this.experience!.renderer;
+  }
+
   constructor() {
     super();
 
@@ -58,6 +65,8 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
     this.setMaterial();
     this.setPoints();
 
+    this.setGPGPU();
+
     this.scene.add(this.points);
 
     this.sizes.on("resize", this.onResize);
@@ -67,6 +76,22 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
     }
 
     console.log("FlowFieldParticles");
+  }
+  private setGPGPU() {
+    const { position } = this.geometry.attributes;
+
+    if (!(position instanceof THREE.BufferAttribute)) {
+      throw new Error(
+        "[FlowFieldParticles] Unexpected interleaved position attribute",
+      );
+    }
+
+    const gpGpu = new FlowFieldGPGPU({
+      renderer: this.renderer.instance,
+      positions: position,
+    });
+
+    this.gpGpu = gpGpu;
   }
 
   protected setGeometry(): void {
