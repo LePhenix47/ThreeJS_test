@@ -2,7 +2,7 @@ import * as THREE from "three";
 import {
   GPUComputationRenderer,
   Variable,
-} from "three/examples/jsm/misc/GPUComputationRenderer.js";
+} from "three/addons/misc/GPUComputationRenderer.js";
 import { SpaceEnum } from "@utils/enums/space-color";
 import Enum from "@utils/enums";
 
