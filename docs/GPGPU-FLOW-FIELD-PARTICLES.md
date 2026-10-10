@@ -60,10 +60,10 @@ Read that render target back as a texture, and decode it. RGB channels encode XY
 ```
 Offscreen scene                           Visible scene
 ┌─────────────────────┐                   ┌─────────────────────┐
-│ OrthographicCamera   │                   │ PerspectiveCamera   │
+│ OrthographicCamera  │                   │ PerspectiveCamera   │
 │ ┌─────────────────┐ │   render to       │                     │
 │ │ full-view plane │ │   texture         │   Points (particles)│
-│ │ (update shader) │ │ ────────────────▶ │   reads position    │
+│ │ (update shader) │ │────────────────▶ │   reads position    │
 │ └─────────────────┘ │   RGB = XYZ       │   from that texture │
 └─────────────────────┘                   └─────────────────────┘
    never shown on screen                      what you actually see
