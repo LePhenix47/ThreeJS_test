@@ -89,9 +89,9 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     texture: THREE.DataTexture,
     position: THREE.BufferAttribute,
   ): void {
-    const data: THREE.TypedArray | null = texture.image.data;
+    const textureImageData: THREE.TypedArray | null = texture.image.data;
 
-    if (!data) {
+    if (!textureImageData) {
       throw new Error(
         "[FlowFieldGPGPU] DataTexture has no pixel data, cannot seed particle positions",
       );
@@ -104,9 +104,14 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
       const i3Particle: number = i * TEXEL_STRIDE;
       const i3Position: number = i * positionStride;
 
-      data[i3Particle + SpaceEnum.X] = position.array[i3Position + SpaceEnum.X];
-      data[i3Particle + SpaceEnum.Y] = position.array[i3Position + SpaceEnum.Y];
-      data[i3Particle + SpaceEnum.Z] = position.array[i3Position + SpaceEnum.Z];
+      textureImageData[i3Particle + SpaceEnum.X] =
+        position.array[i3Position + SpaceEnum.X];
+
+      textureImageData[i3Particle + SpaceEnum.Y] =
+        position.array[i3Position + SpaceEnum.Y];
+
+      textureImageData[i3Particle + SpaceEnum.Z] =
+        position.array[i3Position + SpaceEnum.Z];
     }
   }
 
