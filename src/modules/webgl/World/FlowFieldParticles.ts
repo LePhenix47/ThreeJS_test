@@ -55,8 +55,6 @@ class FlowFieldParticles
   private gpGpu: FlowFieldGPGPU;
   /** Seed geometry's position attribute. Only used to build the GPGPU base texture, then discarded. */
   private seedPosition: THREE.BufferAttribute;
-  /** Real particle count, captured from the seed geometry before it's replaced by the UV-only one. */
-  private particlesCount: number;
 
   private debugPlane: THREE.Mesh<
     THREE.PlaneGeometry,
@@ -128,8 +126,6 @@ class FlowFieldParticles
 
   /** Builds the `GPUComputationRenderer` from the seed positions. */
   private setGPGPU(): void {
-    this.particlesCount = this.seedPosition.count;
-
     this.gpGpu = new FlowFieldGPGPU({
       renderer: this.renderer.instance,
       positions: this.seedPosition,
@@ -140,11 +136,11 @@ class FlowFieldParticles
   private getParticlesUvArray(): Float32Array {
     const { size } = this.gpGpu;
     const stride: number = Enum.length(UvEnum);
-    const uvArray = new Float32Array(size * size * stride);
+    const uvArray = new Float32Array(size ** 2 * stride);
 
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        const i2 = (y * size + x) * stride;
+        const i2: number = (y * size + x) * stride;
 
         uvArray[i2 + UvEnum.S] = (x + 0.5) / size;
         uvArray[i2 + UvEnum.T] = (y + 0.5) / size;
@@ -194,7 +190,8 @@ class FlowFieldParticles
       new THREE.BufferAttribute(particlesUvArray, uvStride),
     );
     // ? size*size always pads up to the next square, drop the leftover texels past the real count
-    geometry.setDrawRange(0, this.particlesCount);
+    const { count } = this.seedPosition;
+    geometry.setDrawRange(0, count);
 
     this.geometry = geometry;
   }
