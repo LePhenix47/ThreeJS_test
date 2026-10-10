@@ -64,16 +64,20 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
 
   /** Seeds the base texture, registers the self-dependent `uParticles` variable, and validates it. */
   private setParticlesVariable(positions: THREE.BufferAttribute): void {
+    // * Step 1: We create the base texture
     const baseParticlesTexture: THREE.DataTexture =
       this.computationRenderer.createTexture();
 
     this.fillBaseTexture(baseParticlesTexture, positions);
 
+    // * Step 2: Register uParticles, updated each frame by this shader
     const particlesVariable: Variable = this.computationRenderer.addVariable(
       "uParticles",
       particlesShader,
       baseParticlesTexture,
     );
+
+    // * Step 3: Use current texture output as an input for the next frame (ping-pong buffer)
     this.computationRenderer.setVariableDependencies(particlesVariable, [
       particlesVariable,
     ]);
