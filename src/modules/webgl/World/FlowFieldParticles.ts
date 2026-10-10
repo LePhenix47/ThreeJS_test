@@ -1,5 +1,8 @@
 import * as THREE from "three";
-import Experience, { Destroyable } from "@modules/webgl/Experience/Experience";
+import Experience, {
+  Destroyable,
+  Updatable,
+} from "@modules/webgl/Experience/Experience";
 import { PointsEntity } from "./types/points-entity";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 import GUIStateRegistry from "@utils/classes/gui-state-registry";
@@ -18,7 +21,10 @@ type FlowFieldParticlesUniforms = MapAsUniforms<{
   uSize: FlowFieldParticlesState["uSize"];
 }>;
 
-class FlowFieldParticles extends PointsEntity implements Destroyable {
+class FlowFieldParticles
+  extends PointsEntity
+  implements Updatable, Destroyable
+{
   public static readonly CONFIG = {
     guiKey: "particles-gui-state",
     geometry: {
@@ -197,6 +203,10 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
 
       this.debugPlane.visible = v;
     });
+  }
+
+  public update(): void {
+    this.gpGpu.update();
   }
 
   private destroyDebugPlane(): void {
