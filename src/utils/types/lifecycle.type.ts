@@ -2,8 +2,8 @@ export interface Resizable {
   resize(): void;
 }
 export interface Updatable {
-  update(): void;
+  update(...args: any[]): void;
 }
 export interface Destroyable {
-  destroy(): void;
+  destroy(...args: any[]): void;
 }
