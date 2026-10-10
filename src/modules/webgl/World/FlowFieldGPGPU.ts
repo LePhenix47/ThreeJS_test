@@ -3,7 +3,7 @@ import {
   GPUComputationRenderer,
   Variable,
 } from "three/addons/misc/GPUComputationRenderer.js";
-import { SpaceEnum } from "@utils/enums/space-color";
+import { SpaceEnum, ColorEnum } from "@utils/enums/space-color";
 import Enum from "@utils/enums";
 
 import particlesShader from "@shaders/gpgpu/particles.glsl";
@@ -108,14 +108,16 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
       const i4Particle: number = i * TEXEL_STRIDE;
       const i3Position: number = i * positionStride;
 
-      textureImageData[i4Particle + SpaceEnum.X] =
+      textureImageData[i4Particle + ColorEnum.Red] =
         position.array[i3Position + SpaceEnum.X];
 
-      textureImageData[i4Particle + SpaceEnum.Y] =
+      textureImageData[i4Particle + ColorEnum.Green] =
         position.array[i3Position + SpaceEnum.Y];
 
-      textureImageData[i4Particle + SpaceEnum.Z] =
+      textureImageData[i4Particle + ColorEnum.Blue] =
         position.array[i3Position + SpaceEnum.Z];
+
+      textureImageData[i4Particle + ColorEnum.Alpha] = 0;
     }
   }
 
