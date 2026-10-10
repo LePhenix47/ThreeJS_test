@@ -6,6 +6,9 @@ uniform sampler2D uBase;
 #include ../utils/noise/simplexNoise4d
 
 vec4 applyFlowField(vec4 particle, float time) {
+    float strength = simplexNoise4d(vec4(particle.xyz * 0.2, time + 1.0));
+    strength = smoothstep(0.0, 1.0, strength);
+
     vec3 flowField = vec3(//
     simplexNoise4d(vec4(particle.xyz + 0.0, time)), //
     simplexNoise4d(vec4(particle.xyz + 1.0, time)), //
@@ -14,7 +17,7 @@ vec4 applyFlowField(vec4 particle, float time) {
 
     flowField = normalize(flowField);
 
-    particle.xyz += flowField * uDeltaTime * 0.5;
+    particle.xyz += flowField * uDeltaTime * 0.5 * strength;
 
     return particle;
 }
