@@ -257,6 +257,7 @@ class FlowFieldParticles
       depthTest: false,
       depthWrite: false,
       side: THREE.DoubleSide,
+      transparent: true,
     });
 
     const debugPlane = new THREE.Mesh(geometry, material);
