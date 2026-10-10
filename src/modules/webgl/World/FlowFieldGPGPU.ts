@@ -10,9 +10,10 @@ import particlesShader from "@shaders/gpgpu/particles.glsl";
 import { Destroyable, Updatable } from "@modules/webgl/Experience/Experience";
 
 export type FlowFieldGPGPUConstructor = {
+  /** The real THREE.JS renderer, used to actually run the compute shader each frame. */
   renderer: THREE.WebGLRenderer;
-  /** Starting position of every particle, read once to seed the compute texture. */
-  baseParticlesPosition: THREE.BufferAttribute;
+  /** Base particles' positions from the geometry attributes: each particle's starting position, read once to seed the compute texture. */
+  positions: THREE.BufferAttribute;
 };
 
 /**
@@ -38,10 +39,10 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     return renderTarget.texture;
   }
 
-  constructor({ renderer, baseParticlesPosition }: FlowFieldGPGPUConstructor) {
-    this.size = this.computeSize(baseParticlesPosition.count);
+  constructor({ renderer, positions }: FlowFieldGPGPUConstructor) {
+    this.size = this.computeSize(positions.count);
 
-    this.setComputationRenderer(renderer, baseParticlesPosition);
+    this.setComputationRenderer(renderer, positions);
   }
 
   /** Side length of the smallest square texture that fits `count` particles, one per texel. */
@@ -54,7 +55,7 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
   /** Builds the `GPUComputationRenderer`, seeds its base texture, and registers the self-dependent `uParticles` variable. */
   private setComputationRenderer(
     renderer: THREE.WebGLRenderer,
-    baseParticlesPosition: THREE.BufferAttribute,
+    positions: THREE.BufferAttribute,
   ): void {
     const computationRenderer = new GPUComputationRenderer(
       this.size,
@@ -65,7 +66,7 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     const baseParticlesTexture: THREE.DataTexture =
       computationRenderer.createTexture();
 
-    this.fillBaseTexture(baseParticlesTexture, baseParticlesPosition);
+    this.fillBaseTexture(baseParticlesTexture, positions);
 
     const particlesVariable: Variable = computationRenderer.addVariable(
       "uParticles",
