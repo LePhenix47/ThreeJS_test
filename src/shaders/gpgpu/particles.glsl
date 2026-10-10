@@ -34,13 +34,17 @@ void main() {
     // * Particle dies 😭😭😭😭😭😭
     if(particle.a >= 1.0) {
         particle.xyz = base.xyz;
-        particle.a = 0.0;
+        // ? Avoids long frames, when a tab is inactive, the deltaTime keeps increasing to a huge value → alpha = max(1.0, huge ass deltaTime) → have same value (synced) → bad
+        // ? Can use either % 1 or fract() to only get float from value
+
+        // particle.a = mod(particle.a, 1.0); 
+        particle.a = fract(particle.a);
     } else {
     // * Flow field (GO PARTICLE, GO)
         particle = applyFlowField(particle, time);
 
     // * Decay
-        particle.a += uDeltaTime;
+        particle.a += uDeltaTime * 0.3;
 
     }
 
