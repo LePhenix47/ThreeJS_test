@@ -21,7 +21,7 @@ export type FlowFieldGPGPUConstructor = {
  * whichever entity renders the particles, nothing else needs to reach into this.
  */
 class FlowFieldGPGPU implements Updatable, Destroyable {
-  /** Number of components per texel in an RGBA compute texture. */
+  /** Number of components per texel, TEXture pixEL, in an RGBA compute texture. */
   private static readonly TEXEL_STRIDE = 4;
 
   /** Side length of the square compute texture. `size * size` is always >= the particle count. */
@@ -37,9 +37,16 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
   }
 
   constructor({ renderer, baseParticlesPosition }: FlowFieldGPGPUConstructor) {
-    this.size = Math.ceil(Math.sqrt(baseParticlesPosition.count));
+    this.size = this.computeSize(baseParticlesPosition.count);
 
     this.setComputationRenderer(renderer, baseParticlesPosition);
+  }
+
+  /** Side length of the smallest square texture that fits `count` particles, one per texel. */
+  private computeSize(count: number): number {
+    const sizeFloat: number = Math.sqrt(count);
+
+    return Math.ceil(sizeFloat);
   }
 
   /** Builds the `GPUComputationRenderer`, seeds its base texture, and registers the self-dependent `uParticles` variable. */
