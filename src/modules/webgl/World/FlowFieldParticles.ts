@@ -18,12 +18,14 @@ type FlowFieldParticlesState = {
   uSize: number;
   debugPlaneVisible: boolean;
   uFlowFieldInfluence: number;
+  uFlowFieldStrength: number;
 };
 
 type FlowFieldParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
   uSize: FlowFieldParticlesState["uSize"];
   uFlowFieldInfluence: FlowFieldParticlesState["uFlowFieldInfluence"];
+  uFlowFieldStrength: FlowFieldParticlesState["uFlowFieldStrength"];
   uParticlesTexture: THREE.Texture;
 }>;
 
@@ -72,6 +74,7 @@ class FlowFieldParticles
     uSize: 0.4,
     debugPlaneVisible: false,
     uFlowFieldInfluence: 0.5,
+    uFlowFieldStrength: 2.0,
   };
   protected guiRegistry: GUIStateRegistry<FlowFieldParticlesState> | null =
     null;
@@ -217,7 +220,8 @@ class FlowFieldParticles
 
   protected setMaterial(): void {
     const { x, y } = this.sizes.resolution;
-    const { uSize, uFlowFieldInfluence } = this.DEBUG_DEFAULTS;
+    const { uSize, uFlowFieldInfluence, uFlowFieldStrength } =
+      this.DEBUG_DEFAULTS;
 
     const uniforms: FlowFieldParticlesUniforms = {
       uResolution: {
@@ -225,6 +229,7 @@ class FlowFieldParticles
       },
       uSize: new THREE.Uniform(uSize),
       uFlowFieldInfluence: new THREE.Uniform(uFlowFieldInfluence),
+      uFlowFieldStrength: new THREE.Uniform(uFlowFieldStrength),
       uParticlesTexture: new THREE.Uniform(this.gpGpu.texture),
     };
 
@@ -295,6 +300,7 @@ class FlowFieldParticles
 
     // TODO: Feels weird not having a bind(), might recheck the structure for the uniforms update w/ persistence
     particlesFolder.add(state, "uFlowFieldInfluence").min(0).max(1).step(0.001);
+    particlesFolder.add(state, "uFlowFieldStrength").min(0).max(10).step(0.001);
 
     particlesFolder.add(state, "debugPlaneVisible").name("Show GPGPU debug");
     registry.bind("debugPlaneVisible", (v) => {
@@ -307,12 +313,13 @@ class FlowFieldParticles
   private updateGpGpuUniforms(): void {
     const { elapsedSeconds, deltaSeconds } = this.time;
 
-    const { uFlowFieldInfluence } =
+    const { uFlowFieldInfluence, uFlowFieldStrength } =
       this.guiRegistry?.state || this.DEBUG_DEFAULTS;
     this.gpGpu.update({
       elapsedSeconds,
       deltaTimeSeconds: deltaSeconds,
       fieldInfluence: uFlowFieldInfluence,
+      fieldStrength: uFlowFieldStrength,
     });
   }
 

@@ -83,9 +83,12 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     ]);
 
     // * Step 3.5: Add however many uniforms we want (non FBO ones)
-    // TODO: lacks type safety
+    // TODO: lacks type safety + repetitive to init
     particlesVariable.material.uniforms.uTime = new THREE.Uniform(0);
     particlesVariable.material.uniforms.uFlowFieldInfluence = new THREE.Uniform(
+      0,
+    );
+    particlesVariable.material.uniforms.uFlowFieldStrength = new THREE.Uniform(
       0,
     );
     particlesVariable.material.uniforms.uDeltaTime = new THREE.Uniform(0);
@@ -137,15 +140,19 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     elapsedSeconds,
     deltaTimeSeconds,
     fieldInfluence,
+    fieldStrength,
   }: {
     elapsedSeconds: number;
     deltaTimeSeconds: number;
     fieldInfluence: number;
+    fieldStrength: number;
   }): void {
     this.computationRenderer.compute();
 
     this.particlesVariable.material.uniforms.uFlowFieldInfluence.value =
       fieldInfluence;
+    this.particlesVariable.material.uniforms.uFlowFieldStrength.value =
+      fieldStrength;
 
     this.particlesVariable.material.uniforms.uTime.value = elapsedSeconds;
     this.particlesVariable.material.uniforms.uDeltaTime.value =

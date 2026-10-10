@@ -1,6 +1,7 @@
 uniform float uTime;
 uniform float uDeltaTime;
 uniform float uFlowFieldInfluence;
+uniform float uFlowFieldStrength;
 
 uniform sampler2D uBase;
 
@@ -20,7 +21,7 @@ vec4 applyFlowField(vec4 particle, float time) {
 
     flowField = normalize(flowField);
 
-    particle.xyz += flowField * uDeltaTime * 0.5 * strength;
+    particle.xyz += flowField * uDeltaTime * 0.5 * strength * uFlowFieldStrength;
 
     return particle;
 }
