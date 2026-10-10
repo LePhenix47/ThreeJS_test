@@ -133,52 +133,6 @@ class FlowFieldParticles
     });
   }
 
-  /** One UV per particle, pointing at that particle's own texel in the GPGPU texture. */
-  private getParticlesUvArray(): Float32Array {
-    const { size } = this.gpGpu;
-    const stride: number = Enum.length(UvEnum);
-    const uvArray = new Float32Array(size ** 2 * stride);
-
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        const i2: number = (y * size + x) * stride;
-
-        uvArray[i2 + UvEnum.S] = (x + 0.5) / size;
-        uvArray[i2 + UvEnum.T] = (y + 0.5) / size;
-      }
-    }
-
-    return uvArray;
-  }
-
-  private addDebugPlane(): void {
-    this.setDebugPlane();
-
-    if (!this.debugPlane) return;
-    this.scene.add(this.debugPlane);
-  }
-
-  private setDebugPlane(): void {
-    const { size, position } = FlowFieldParticles.CONFIG.debugPlane;
-    const { debugPlaneVisible } = this.DEBUG_DEFAULTS;
-
-    const geometry = new THREE.PlaneGeometry(size, size);
-    // ? depthTest/depthWrite off: a debug overlay should never be occluded by whatever's physically in front of it
-    const material = new THREE.MeshBasicMaterial({
-      map: this.gpGpu.texture,
-      depthTest: false,
-      depthWrite: false,
-    });
-
-    const debugPlane = new THREE.Mesh(geometry, material);
-    debugPlane.position.set(position.x, position.y, position.z);
-    // ? With depth testing off, draw order is all that decides stacking, renderOrder makes sure this paints over the particles
-    debugPlane.renderOrder = 1;
-    debugPlane.visible = debugPlaneVisible;
-
-    this.debugPlane = debugPlane;
-  }
-
   protected setGeometry(): void {
     const geometry = new THREE.BufferGeometry<FlowFieldParticlesAttributes>();
 
@@ -195,6 +149,24 @@ class FlowFieldParticles
     geometry.setDrawRange(0, count);
 
     this.geometry = geometry;
+  }
+
+  /** One UV per particle, pointing at that particle's own texel in the GPGPU texture. */
+  private getParticlesUvArray(): Float32Array {
+    const { size } = this.gpGpu;
+    const stride: number = Enum.length(UvEnum);
+    const uvArray = new Float32Array(size ** 2 * stride);
+
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i2: number = (y * size + x) * stride;
+
+        uvArray[i2 + UvEnum.S] = (x + 0.5) / size;
+        uvArray[i2 + UvEnum.T] = (y + 0.5) / size;
+      }
+    }
+
+    return uvArray;
   }
 
   protected setMaterial(): void {
@@ -225,6 +197,34 @@ class FlowFieldParticles
 
     this.material.uniforms.uResolution.value.set(x, y);
   };
+
+  private addDebugPlane(): void {
+    this.setDebugPlane();
+
+    if (!this.debugPlane) return;
+    this.scene.add(this.debugPlane);
+  }
+
+  private setDebugPlane(): void {
+    const { size, position } = FlowFieldParticles.CONFIG.debugPlane;
+    const { debugPlaneVisible } = this.DEBUG_DEFAULTS;
+
+    const geometry = new THREE.PlaneGeometry(size, size);
+    // ? depthTest/depthWrite off: a debug overlay should never be occluded by whatever's physically in front of it
+    const material = new THREE.MeshBasicMaterial({
+      map: this.gpGpu.texture,
+      depthTest: false,
+      depthWrite: false,
+    });
+
+    const debugPlane = new THREE.Mesh(geometry, material);
+    debugPlane.position.set(position.x, position.y, position.z);
+    // ? With depth testing off, draw order is all that decides stacking, renderOrder makes sure this paints over the particles
+    debugPlane.renderOrder = 1;
+    debugPlane.visible = debugPlaneVisible;
+
+    this.debugPlane = debugPlane;
+  }
 
   protected override addDebugFolders(): void {
     const { guiKey } = FlowFieldParticles.CONFIG;
