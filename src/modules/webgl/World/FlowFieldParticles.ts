@@ -92,6 +92,7 @@ class FlowFieldParticles
 
     this.setSeedGeometry();
     this.setGPGPU();
+
     this.setGeometry();
     this.setMaterial();
     this.setPoints();
