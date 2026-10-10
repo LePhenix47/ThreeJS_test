@@ -5,6 +5,7 @@ import {
 } from "three/addons/misc/GPUComputationRenderer.js";
 import { SpaceEnum, ColorEnum } from "@utils/enums/space-color";
 import Enum from "@utils/enums";
+import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
 import particlesShader from "@shaders/gpgpu/particles.glsl";
 import { Destroyable, Updatable } from "@modules/webgl/Experience/Experience";
@@ -15,6 +16,16 @@ export type FlowFieldGPGPUConstructor = {
   /** Base particles' positions from the geometry attributes: each particle's starting position, read once to seed the compute texture. */
   positions: THREE.BufferAttribute;
 };
+
+type FlowFieldGPGPUUniforms = MapAsUniforms<{
+  uTime: number;
+  uDeltaTime: number;
+  uFlowFieldInfluence: number;
+  uFlowFieldStrength: number;
+  uFlowFieldFrequency: number;
+  /** Original seed positions, read back inside the compute shader. */
+  uBase: THREE.Texture;
+}>;
 
 /**
  * Wraps a `GPUComputationRenderer` simulating particle positions on the GPU: each frame, the
@@ -30,6 +41,7 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
 
   private computationRenderer: GPUComputationRenderer;
   private particlesVariable: Variable;
+  private material: TypedShaderMaterial<FlowFieldGPGPUUniforms>;
 
   public get texture(): THREE.Texture {
     const renderTarget = this.computationRenderer.getCurrentRenderTarget(
@@ -83,27 +95,24 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     ]);
 
     // * Step 3.5: Add however many uniforms we want (non FBO ones)
-    // TODO: lacks type safety + repetitive to init
-    particlesVariable.material.uniforms.uTime = new THREE.Uniform(0);
-    particlesVariable.material.uniforms.uFlowFieldInfluence = new THREE.Uniform(
-      0,
-    );
-    particlesVariable.material.uniforms.uFlowFieldStrength = new THREE.Uniform(
-      0,
-    );
-    particlesVariable.material.uniforms.uFlowFieldFrequency = new THREE.Uniform(
-      0,
-    );
-    particlesVariable.material.uniforms.uDeltaTime = new THREE.Uniform(0);
-    particlesVariable.material.uniforms.uBase = new THREE.Uniform(
-      // ? Used to get the original position of the seed geometry
-      baseParticlesTexture,
-    );
+    const uniforms: FlowFieldGPGPUUniforms = {
+      uTime: new THREE.Uniform(0),
+      uDeltaTime: new THREE.Uniform(0),
+      uFlowFieldInfluence: new THREE.Uniform(0),
+      uFlowFieldStrength: new THREE.Uniform(0),
+      uFlowFieldFrequency: new THREE.Uniform(0),
+      uBase: { value: baseParticlesTexture },
+    };
+
+    const material = particlesVariable.material as TypedShaderMaterial<FlowFieldGPGPUUniforms>;
+    material.uniforms = uniforms;
+    // TODO: Add particle decay playback
 
     const error: string | null = this.computationRenderer.init();
     if (error) throw new Error(`[FlowFieldGPGPU] ${error}`);
 
     this.particlesVariable = particlesVariable;
+    this.material = material;
   }
 
   /** Copies each particle's starting xyz into the texture's RGB, one texel per particle. */
@@ -154,16 +163,12 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
   }): void {
     this.computationRenderer.compute();
 
-    this.particlesVariable.material.uniforms.uFlowFieldFrequency.value =
-      fieldFrequency;
-    this.particlesVariable.material.uniforms.uFlowFieldInfluence.value =
-      fieldInfluence;
-    this.particlesVariable.material.uniforms.uFlowFieldStrength.value =
-      fieldStrength;
-
-    this.particlesVariable.material.uniforms.uTime.value = elapsedSeconds;
-    this.particlesVariable.material.uniforms.uDeltaTime.value =
-      deltaTimeSeconds;
+    const { uniforms } = this.material;
+    uniforms.uFlowFieldFrequency.value = fieldFrequency;
+    uniforms.uFlowFieldInfluence.value = fieldInfluence;
+    uniforms.uFlowFieldStrength.value = fieldStrength;
+    uniforms.uTime.value = elapsedSeconds;
+    uniforms.uDeltaTime.value = deltaTimeSeconds;
   }
 
   public destroy(): void {

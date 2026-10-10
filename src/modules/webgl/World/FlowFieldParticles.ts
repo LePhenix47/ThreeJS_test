@@ -25,9 +25,6 @@ type FlowFieldParticlesState = {
 type FlowFieldParticlesUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
   uSize: FlowFieldParticlesState["uSize"];
-  uFlowFieldInfluence: FlowFieldParticlesState["uFlowFieldInfluence"];
-  uFlowFieldStrength: FlowFieldParticlesState["uFlowFieldStrength"];
-  uFlowFieldFrequency: FlowFieldParticlesState["uFlowFieldFrequency"];
   uParticlesTexture: THREE.Texture;
 }>;
 
@@ -223,21 +220,13 @@ class FlowFieldParticles
 
   protected setMaterial(): void {
     const { x, y } = this.sizes.resolution;
-    const {
-      uSize,
-      uFlowFieldInfluence,
-      uFlowFieldStrength,
-      uFlowFieldFrequency,
-    } = this.DEBUG_DEFAULTS;
+    const { uSize } = this.DEBUG_DEFAULTS;
 
     const uniforms: FlowFieldParticlesUniforms = {
       uResolution: {
         value: new THREE.Vector2(x, y),
       },
       uSize: new THREE.Uniform(uSize),
-      uFlowFieldInfluence: new THREE.Uniform(uFlowFieldInfluence),
-      uFlowFieldStrength: new THREE.Uniform(uFlowFieldStrength),
-      uFlowFieldFrequency: new THREE.Uniform(uFlowFieldFrequency),
       uParticlesTexture: new THREE.Uniform(this.gpGpu.texture),
     };
 
