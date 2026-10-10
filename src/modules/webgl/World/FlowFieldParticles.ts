@@ -25,10 +25,10 @@ type FlowFieldParticlesUniforms = MapAsUniforms<{
   uParticlesTexture: THREE.Texture;
 }>;
 
-type FlowFieldParticlesAttributes = MapAsAttributes<"aParticlesUv">;
+type FlowFieldParticlesAttributes = MapAsAttributes<"aParticlesUv" | "aColor">;
 
 /** Named attributes read off the seed model's mesh. Add a name here, then one line in `setSeedGeometry`. */
-type FlowFieldSeedAttributes = MapAsAttributes<"position">;
+type FlowFieldSeedAttributes = MapAsAttributes<"position" | "color">;
 
 class FlowFieldParticles
   extends PointsEntity
@@ -140,6 +140,7 @@ class FlowFieldParticles
 
     this.seedAttributes = {
       position: this.getSeedAttribute(attributes, "position"),
+      color: this.getSeedAttribute(attributes, "color"),
     };
   }
 
@@ -162,6 +163,9 @@ class FlowFieldParticles
       "aParticlesUv",
       new THREE.BufferAttribute(particlesUvArray, uvStride),
     );
+
+    geometry.setAttribute("aColor", this.seedAttributes.color);
+
     // ? size*size always pads up to the next square, drop the leftover texels past the real count
     const { count } = this.seedAttributes.position;
     geometry.setDrawRange(0, count);
