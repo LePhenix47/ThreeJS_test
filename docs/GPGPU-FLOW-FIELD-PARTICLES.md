@@ -12,6 +12,14 @@ General-Purpose computing on GPU: using the GPU — normally dedicated to render
 
 For particles specifically: store each particle's state (position, velocity, whatever) as pixels in a texture, one pixel per particle. Write a fragment shader that computes the *next* state from the *current* state. The GPU runs that shader for every pixel in parallel, updating every particle in one pass.
 
+```
+CPU (serial)                       GPU (parallel)
+for i in 0..10000:                 texture, one pixel per particle
+  particle[i].pos += ...             ↓
+  (10000 sequential steps)         fragment shader runs on every
+                                    pixel at once, same frame
+```
+
 ---
 
 ## Flow field
@@ -19,6 +27,13 @@ For particles specifically: store each particle's state (position, velocity, wha
 A vector field: every point in space has a direction (and usually a magnitude) assigned to it, typically generated from noise (simplex/Perlin) so it varies smoothly instead of randomly jittering.
 
 A particle "follows" the field by sampling the field's direction at its *own current position*, each frame, and nudging itself that way — not following a fixed, precomputed path.
+
+```
+→ → ↗ ↑ ↑        A particle sitting at any point just reads
+→ ↗ ↑ ↑ ↖        the arrow under it and moves that way next frame.
+↗ ↑ ↑ ↖ ←        Smooth noise means neighboring points have
+↑ ↑ ↖ ← ←        similar directions, so paths curve, not jitter.
+```
 
 ---
 
@@ -42,6 +57,18 @@ For particles: instead of relying on a geometry's `position` attribute directly,
 
 Read that render target back as a texture, and decode it: **RGB channels encode XYZ position**. That texture becomes the "position texture" fed into the real, visible particle `Points` object.
 
+```
+Offscreen scene                           Visible scene
+┌─────────────────────┐                   ┌─────────────────────┐
+│ OrthographicCamera   │                   │ PerspectiveCamera   │
+│ ┌─────────────────┐ │   render to       │                     │
+│ │ full-view plane │ │   texture         │   Points (particles)│
+│ │ (update shader) │ │ ────────────────▶ │   reads position    │
+│ └─────────────────┘ │   RGB = XYZ       │   from that texture │
+└─────────────────────┘                   └─────────────────────┘
+   never shown on screen                      what you actually see
+```
+
 ---
 
 ## Three problems FBOs introduce
@@ -49,6 +76,13 @@ Read that render target back as a texture, and decode it: **RGB channels encode 
 ### 1. Can't read and write the same FBO in one pass
 
 A shader can't simultaneously sample a texture it's currently rendering into. Fix: **two render targets, ping-ponged**. Each frame, read from buffer A and write to buffer B, then swap which one is "current" for the next frame.
+
+```
+Frame N:    read Buffer A  →  update shader  →  write Buffer B
+Frame N+1:  read Buffer B  →  update shader  →  write Buffer A
+Frame N+2:  read Buffer A  →  update shader  →  write Buffer B
+            (swap which buffer is "current" every frame)
+```
 
 ### 2. Pixel format and precision
 
