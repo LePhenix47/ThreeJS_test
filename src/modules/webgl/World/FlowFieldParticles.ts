@@ -10,6 +10,7 @@ import FlowFieldGPGPU from "./FlowFieldGPGPU";
 
 type FlowFieldParticlesState = {
   uSize: number;
+  debugPlaneVisible: boolean;
 };
 
 type FlowFieldParticlesUniforms = MapAsUniforms<{
@@ -23,6 +24,14 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
     geometry: {
       radius: 3,
     },
+    debugPlane: {
+      size: 3,
+      position: {
+        x: 0,
+        y: 0,
+        z: 0,
+      },
+    },
   } as const;
 
   private readonly experience: Experience | null;
@@ -33,8 +42,14 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
 
   private gpGpu: FlowFieldGPGPU;
 
+  private debugPlane: THREE.Mesh<
+    THREE.PlaneGeometry,
+    THREE.MeshBasicMaterial
+  > | null = null;
+
   protected override readonly DEBUG_DEFAULTS: FlowFieldParticlesState = {
     uSize: 0.4,
+    debugPlaneVisible: false,
   };
   protected guiRegistry: GUIStateRegistry<FlowFieldParticlesState> | null =
     null;
@@ -72,11 +87,13 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
     this.sizes.on("resize", this.onResize);
 
     if (this.debug?.isActive) {
+      this.addDebugPlane();
       this.addDebugFolders();
     }
 
     console.log("FlowFieldParticles");
   }
+
   private setGPGPU() {
     const { position } = this.geometry.attributes;
 
@@ -92,6 +109,34 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
     });
 
     this.gpGpu = gpGpu;
+  }
+
+  private addDebugPlane(): void {
+    this.setDebugPlane();
+
+    if (!this.debugPlane) return;
+    this.scene.add(this.debugPlane);
+  }
+
+  private setDebugPlane(): void {
+    const { size, position } = FlowFieldParticles.CONFIG.debugPlane;
+    const { debugPlaneVisible } = this.DEBUG_DEFAULTS;
+
+    const geometry = new THREE.PlaneGeometry(size, size);
+    // ? depthTest/depthWrite off: a debug overlay should never be occluded by whatever's physically in front of it
+    const material = new THREE.MeshBasicMaterial({
+      map: this.gpGpu.texture,
+      depthTest: false,
+      depthWrite: false,
+    });
+
+    const debugPlane = new THREE.Mesh(geometry, material);
+    debugPlane.position.set(position.x, position.y, position.z);
+    // ? With depth testing off, draw order is all that decides stacking, renderOrder makes sure this paints over the particles
+    debugPlane.renderOrder = 1;
+    debugPlane.visible = debugPlaneVisible;
+
+    this.debugPlane = debugPlane;
   }
 
   protected setGeometry(): void {
@@ -145,12 +190,30 @@ class FlowFieldParticles extends PointsEntity implements Destroyable {
     registry.bind("uSize", (v) => {
       this.material.uniforms.uSize.value = v;
     });
+
+    particlesFolder.add(state, "debugPlaneVisible").name("Show GPGPU debug");
+    registry.bind("debugPlaneVisible", (v) => {
+      if (!this.debugPlane) return;
+
+      this.debugPlane.visible = v;
+    });
+  }
+
+  private destroyDebugPlane(): void {
+    if (!this.debugPlane) return;
+
+    this.scene.remove(this.debugPlane);
+    this.debugPlane.geometry.dispose();
+    this.debugPlane.material.dispose();
+
+    this.debugPlane = null;
   }
 
   public destroy(): void {
     this.sizes.off("resize", this.onResize);
 
     this.guiRegistry?.dispose();
+    this.destroyDebugPlane();
 
     this.geometry.dispose();
     this.material.dispose();
