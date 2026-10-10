@@ -31,9 +31,11 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
   private particlesVariable: Variable;
 
   public get texture(): THREE.Texture {
-    return this.computationRenderer.getCurrentRenderTarget(
+    const renderTarget = this.computationRenderer.getCurrentRenderTarget(
       this.particlesVariable,
-    ).texture;
+    );
+
+    return renderTarget.texture;
   }
 
   constructor({ renderer, baseParticlesPosition }: FlowFieldGPGPUConstructor) {
