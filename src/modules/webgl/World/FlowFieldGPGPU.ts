@@ -123,7 +123,7 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
       textureImageData[i4Particle + ColorEnum.Blue] =
         position.array[i3Position + SpaceEnum.Z];
 
-      textureImageData[i4Particle + ColorEnum.Alpha] = 0;
+      textureImageData[i4Particle + ColorEnum.Alpha] = Math.random();
     }
   }
 

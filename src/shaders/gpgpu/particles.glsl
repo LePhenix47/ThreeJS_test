@@ -19,7 +19,7 @@ vec4 applyFlowField(vec4 particle, float time) {
 }
 
 void main() {
-    float time = uTime * 0.2;
+    float time = uTime * 0.02;
 
     // * gl_FragCoord = this pixel's coord in the offscreen compute texture, one pixel per particle
     // * resolution = that compute texture's size, injected by GPUComputationRenderer, not the canvas
@@ -32,6 +32,8 @@ void main() {
 
     // * Particle dies 😭😭😭😭😭😭
     if(particle.a >= 1.0) {
+        particle.xyz = base.xyz;
+        particle.a = 0.0;
 
     } else {
     // * Flow field (GO PARTICLE, GO)
@@ -40,7 +42,7 @@ void main() {
     }
 
     // * Decay
-    particle.a += 0.001;
+    particle.a += 0.01;
 
     gl_FragColor = particle;
 }
