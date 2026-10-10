@@ -215,6 +215,7 @@ class FlowFieldParticles
       map: this.gpGpu.texture,
       depthTest: false,
       depthWrite: false,
+      side: THREE.DoubleSide,
     });
 
     const debugPlane = new THREE.Mesh(geometry, material);
