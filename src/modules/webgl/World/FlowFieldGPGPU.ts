@@ -105,16 +105,16 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     const { TEXEL_STRIDE } = FlowFieldGPGPU;
 
     for (let i = 0; i < position.count; i++) {
-      const i3Particle: number = i * TEXEL_STRIDE;
+      const i4Particle: number = i * TEXEL_STRIDE;
       const i3Position: number = i * positionStride;
 
-      textureImageData[i3Particle + SpaceEnum.X] =
+      textureImageData[i4Particle + SpaceEnum.X] =
         position.array[i3Position + SpaceEnum.X];
 
-      textureImageData[i3Particle + SpaceEnum.Y] =
+      textureImageData[i4Particle + SpaceEnum.Y] =
         position.array[i3Position + SpaceEnum.Y];
 
-      textureImageData[i3Particle + SpaceEnum.Z] =
+      textureImageData[i4Particle + SpaceEnum.Z] =
         position.array[i3Position + SpaceEnum.Z];
     }
   }
