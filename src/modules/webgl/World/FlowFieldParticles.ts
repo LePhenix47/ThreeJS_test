@@ -84,6 +84,10 @@ class FlowFieldParticles
     return this.experience!.renderer;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     super();
 
@@ -111,9 +115,10 @@ class FlowFieldParticles
 
   /** Seed-only sphere: its position attribute seeds the GPGPU texture, then it's discarded. */
   private setSeedGeometry(): void {
-    const { radius } = FlowFieldParticles.CONFIG.seedGeometry;
+    const model = this.resources.getGltf("boat");
+    const boat = model.scene.children[0] as THREE.Mesh;
 
-    const seedGeometry = new THREE.SphereGeometry(radius);
+    const seedGeometry = boat.geometry;
     const { position } = seedGeometry.attributes;
 
     if (!(position instanceof THREE.BufferAttribute)) {
