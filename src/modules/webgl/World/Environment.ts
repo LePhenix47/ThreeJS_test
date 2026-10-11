@@ -44,6 +44,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.scene.background = this.envMapTexture;
     this.scene.environment = this.envMapTexture;
 
+    this.applyEnvironmentColor();
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
@@ -54,6 +55,14 @@ class Environment extends EnvironmentEntity implements Destroyable {
   protected updateMaterial(): void {}
 
   protected setEnvMap(): void {}
+
+  /** Sets the renderer clear color from the current state. */
+  private applyEnvironmentColor = (): void => {
+    const { environmentColor } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+    const threeColor = new THREE.Color(environmentColor);
+
+    this.renderer.instance.setClearColor(threeColor);
+  };
 
   protected override addDebugFolders(): void {
     const { guiKey } = Environment.CONFIG;
@@ -70,10 +79,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
     environmentFolder
       .addColor(state, "environmentColor")
       .name("Renderer clear color");
-    registry.bind("environmentColor", (v) => {
-      const threeColor = new THREE.Color(v);
-      this.renderer.instance.setClearColor(threeColor);
-    });
+    registry.bind("environmentColor", this.applyEnvironmentColor);
   }
 
   public destroy(): void {
