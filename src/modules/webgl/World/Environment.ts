@@ -11,7 +11,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private readonly experience: Experience | null;
   private guiRegistry: GUIStateRegistry<EnvironmentState> | null = null;
 
-  private readonly debugDefaults: EnvironmentState = {
+  private readonly DEBUG_DEFAULTS: EnvironmentState = {
     environmentColor: "#181818",
   };
 
@@ -53,7 +53,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   /** Sets the renderer clear color from the current state. */
   private applyEnvironmentColor = (): void => {
-    const { environmentColor } = this.guiRegistry?.state || this.debugDefaults;
+    const { environmentColor } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
     const threeColor = new THREE.Color(environmentColor);
 
     this.renderer.instance.setClearColor(threeColor);
@@ -62,7 +62,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<EnvironmentState>(
       "environment-gui-state",
-      this.debugDefaults,
+      this.DEBUG_DEFAULTS,
     );
     this.guiRegistry = registry;
 

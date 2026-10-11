@@ -35,7 +35,7 @@ class World implements Updatable, Destroyable {
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
 
-  private readonly debugDefaults: WorldState = {
+  private readonly DEBUG_DEFAULTS: WorldState = {
     axisHelperVisible: true,
     gridHelperVisible: true,
     helpersPosX: 0,
@@ -82,7 +82,7 @@ class World implements Updatable, Destroyable {
     const { size } = World.CONFIG.axisHelper;
     const axisHelper = new THREE.AxesHelper(size);
 
-    const { axisHelperVisible } = this.debugDefaults;
+    const { axisHelperVisible } = this.DEBUG_DEFAULTS;
     axisHelper.visible = axisHelperVisible;
 
     this.axisHelper = axisHelper;
@@ -92,7 +92,7 @@ class World implements Updatable, Destroyable {
     const { size, subdivisions } = World.CONFIG.gridHelper;
     const gridHelper = new THREE.GridHelper(size, subdivisions);
 
-    const { gridHelperVisible } = this.debugDefaults;
+    const { gridHelperVisible } = this.DEBUG_DEFAULTS;
     gridHelper.visible = gridHelperVisible;
 
     this.gridHelper = gridHelper;
@@ -103,7 +103,7 @@ class World implements Updatable, Destroyable {
       helpersPosX: x,
       helpersPosY: y,
       helpersPosZ: z,
-    } = this.guiRegistry?.state || this.debugDefaults;
+    } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
 
     const { axisHelper, gridHelper } = World.CONFIG;
 
@@ -148,7 +148,7 @@ class World implements Updatable, Destroyable {
   private addDebugFolders(): void {
     const registry = new GUIStateRegistry<WorldState>(
       "world-gui-state",
-      this.debugDefaults,
+      this.DEBUG_DEFAULTS,
     );
     this.guiRegistry = registry;
 
