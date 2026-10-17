@@ -131,8 +131,6 @@ class FlowFieldParticles
       this.addDebugFolders();
     }
 
-    this.updateGpGpuUniforms();
-
     console.log("FlowFieldParticles");
   }
 
@@ -164,11 +162,28 @@ class FlowFieldParticles
     };
   }
 
-  /** Builds the `GPUComputationRenderer` from the seed positions. */
+  /** Builds the `GPUComputationRenderer` from the seed positions, seeded with the current tunable defaults. */
   private setGPGPU(): void {
+    const {
+      uFlowFieldInfluence,
+      uFlowFieldStrength,
+      uFlowFieldFrequency,
+      uFlowFieldDecayFrequency,
+      uFlowFieldInfluenceFrequency,
+      uTimePlaybackSpeed,
+    } = this.DEBUG_DEFAULTS;
+
     this.gpGpu = new FlowFieldGPGPU({
       renderer: this.renderer.instance,
       positions: this.seedAttributes.position,
+      uniforms: {
+        uFlowFieldInfluence,
+        uFlowFieldStrength,
+        uFlowFieldFrequency,
+        uFlowFieldDecayFrequency,
+        uFlowFieldInfluenceFrequency,
+        uTimePlaybackSpeed,
+      },
     });
   }
 
@@ -293,6 +308,7 @@ class FlowFieldParticles
 
     const { state } = registry;
     const { gui } = this.debug;
+    const { uniforms } = this.gpGpu;
 
     const particlesFolder = gui.addFolder("FlowFieldParticles");
 
@@ -301,29 +317,47 @@ class FlowFieldParticles
       this.material.uniforms.uSize.value = v;
     });
 
-    // TODO: Feels weird not having a bind(), might recheck the structure for the uniforms update w/ persistence
     particlesFolder.add(state, "uFlowFieldInfluence").min(0).max(1).step(0.001);
+    registry.bind("uFlowFieldInfluence", (v) => {
+      uniforms.uFlowFieldInfluence.value = v;
+    });
+
     particlesFolder.add(state, "uFlowFieldStrength").min(0).max(10).step(0.001);
+    registry.bind("uFlowFieldStrength", (v) => {
+      uniforms.uFlowFieldStrength.value = v;
+    });
+
     particlesFolder
       .add(state, "uFlowFieldFrequency")
       .min(0)
       .max(10)
       .step(0.001);
+    registry.bind("uFlowFieldFrequency", (v) => {
+      uniforms.uFlowFieldFrequency.value = v;
+    });
+
     particlesFolder
       .add(state, "uFlowFieldDecayFrequency")
       .min(0)
       .max(10)
       .step(0.001);
+    registry.bind("uFlowFieldDecayFrequency", (v) => {
+      uniforms.uFlowFieldDecayFrequency.value = v;
+    });
+
     particlesFolder
       .add(state, "uFlowFieldInfluenceFrequency")
       .min(0)
       .max(10)
       .step(0.001);
-    particlesFolder
-      .add(state, "uTimePlaybackSpeed")
-      .min(0)
-      .max(5)
-      .step(0.001);
+    registry.bind("uFlowFieldInfluenceFrequency", (v) => {
+      uniforms.uFlowFieldInfluenceFrequency.value = v;
+    });
+
+    particlesFolder.add(state, "uTimePlaybackSpeed").min(0).max(5).step(0.001);
+    registry.bind("uTimePlaybackSpeed", (v) => {
+      uniforms.uTimePlaybackSpeed.value = v;
+    });
 
     particlesFolder.add(state, "debugPlaneVisible").name("Show GPGPU debug");
     registry.bind("debugPlaneVisible", (v) => {
@@ -333,31 +367,9 @@ class FlowFieldParticles
     });
   }
 
-  private updateGpGpuUniforms(): void {
-    const { elapsedSeconds, deltaSeconds } = this.time;
-
-    const {
-      uFlowFieldInfluence,
-      uFlowFieldStrength,
-      uFlowFieldFrequency,
-      uFlowFieldDecayFrequency,
-      uFlowFieldInfluenceFrequency,
-      uTimePlaybackSpeed,
-    } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
-    this.gpGpu.update({
-      elapsedSeconds,
-      deltaTimeSeconds: deltaSeconds,
-      fieldInfluence: uFlowFieldInfluence,
-      fieldStrength: uFlowFieldStrength,
-      fieldFrequency: uFlowFieldFrequency,
-      decayFrequency: uFlowFieldDecayFrequency,
-      influenceFrequency: uFlowFieldInfluenceFrequency,
-      timePlaybackSpeed: uTimePlaybackSpeed,
-    });
-  }
-
   public update(): void {
-    this.updateGpGpuUniforms();
+    const { elapsedSeconds, deltaSeconds } = this.time;
+    this.gpGpu.update({ elapsedSeconds, deltaTimeSeconds: deltaSeconds });
 
     // ? Ping-ponged: a genuinely different texture object every other frame, must be re-read, not just mutated
     const { texture } = this.gpGpu;

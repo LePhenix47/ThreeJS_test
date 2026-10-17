@@ -10,25 +10,32 @@ import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 import particlesShader from "@shaders/gpgpu/particles.glsl";
 import { Destroyable, Updatable } from "@modules/webgl/Experience/Experience";
 
-export type FlowFieldGPGPUConstructor = {
-  /** The real THREE.JS renderer, used to actually run the compute shader each frame. */
-  renderer: THREE.WebGLRenderer;
-  /** Base particles' positions from the geometry attributes: each particle's starting position, read once to seed the compute texture. */
-  positions: THREE.BufferAttribute;
-};
-
-type FlowFieldGPGPUUniforms = MapAsUniforms<{
-  uTime: number;
-  uDeltaTime: number;
+/** GUI-tunable values the caller seeds the compute shader's uniforms with, named 1:1 with the GLSL uniforms. */
+type FlowFieldGPGPUTunableUniforms = {
   uFlowFieldInfluence: number;
   uFlowFieldStrength: number;
   uFlowFieldFrequency: number;
   uFlowFieldDecayFrequency: number;
   uFlowFieldInfluenceFrequency: number;
   uTimePlaybackSpeed: number;
-  /** Original seed positions, read back inside the compute shader. */
-  uBase: THREE.Texture;
-}>;
+};
+
+export type FlowFieldGPGPUConstructor = {
+  /** The real THREE.JS renderer, used to actually run the compute shader each frame. */
+  renderer: THREE.WebGLRenderer;
+  /** Base particles' positions from the geometry attributes: each particle's starting position, read once to seed the compute texture. */
+  positions: THREE.BufferAttribute;
+  uniforms: FlowFieldGPGPUTunableUniforms;
+};
+
+type FlowFieldGPGPUUniforms = MapAsUniforms<
+  FlowFieldGPGPUTunableUniforms & {
+    uTime: number;
+    uDeltaTime: number;
+    /** Original seed positions, read back inside the compute shader. */
+    uBase: THREE.Texture;
+  }
+>;
 
 /**
  * Wraps a `GPUComputationRenderer` simulating particle positions on the GPU: each frame, the
@@ -54,11 +61,16 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
     return renderTarget.texture;
   }
 
-  constructor({ renderer, positions }: FlowFieldGPGPUConstructor) {
+  /** The compute material's own typed uniforms, shared by reference so callers can bind GUI controls directly to them. */
+  public get uniforms(): FlowFieldGPGPUUniforms {
+    return this.material.uniforms;
+  }
+
+  constructor({ renderer, positions, uniforms }: FlowFieldGPGPUConstructor) {
     this.size = this.computeSize(positions.count);
 
     this.setComputationRenderer(renderer);
-    this.setParticlesVariable(positions);
+    this.setParticlesVariable(positions, uniforms);
   }
 
   /** Side length of the smallest square texture that fits `count` particles, one per texel. */
@@ -78,7 +90,10 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
   }
 
   /** Seeds the base texture, registers the self-dependent `uParticles` variable, and validates it. */
-  private setParticlesVariable(positions: THREE.BufferAttribute): void {
+  private setParticlesVariable(
+    positions: THREE.BufferAttribute,
+    initialUniforms: FlowFieldGPGPUTunableUniforms,
+  ): void {
     // * Step 1: We create the base texture
     const baseParticlesTexture: THREE.DataTexture =
       this.computationRenderer.createTexture();
@@ -97,17 +112,28 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
       particlesVariable,
     ]);
 
-    // * Step 3.5: Add however many uniforms we want (non FBO ones)
+    // * Step 3.5: Add however many uniforms we want (non FBO ones), seeded with their real starting values
+    const {
+      uFlowFieldInfluence,
+      uFlowFieldStrength,
+      uFlowFieldFrequency,
+      uFlowFieldDecayFrequency,
+      uFlowFieldInfluenceFrequency,
+      uTimePlaybackSpeed,
+    } = initialUniforms;
+
     const uniforms: FlowFieldGPGPUUniforms = {
       uTime: new THREE.Uniform(0),
       uDeltaTime: new THREE.Uniform(0),
-      uFlowFieldInfluence: new THREE.Uniform(0),
-      uFlowFieldStrength: new THREE.Uniform(0),
-      uFlowFieldFrequency: new THREE.Uniform(0),
-      uFlowFieldDecayFrequency: new THREE.Uniform(0),
-      uFlowFieldInfluenceFrequency: new THREE.Uniform(0),
-      uTimePlaybackSpeed: new THREE.Uniform(1),
-      uBase: new THREE.Uniform(baseParticlesTexture),
+      uFlowFieldInfluence: new THREE.Uniform(uFlowFieldInfluence),
+      uFlowFieldStrength: new THREE.Uniform(uFlowFieldStrength),
+      uFlowFieldFrequency: new THREE.Uniform(uFlowFieldFrequency),
+      uFlowFieldDecayFrequency: new THREE.Uniform(uFlowFieldDecayFrequency),
+      uFlowFieldInfluenceFrequency: new THREE.Uniform(
+        uFlowFieldInfluenceFrequency,
+      ),
+      uTimePlaybackSpeed: new THREE.Uniform(uTimePlaybackSpeed),
+      uBase: { value: baseParticlesTexture },
     };
 
     const material =
@@ -158,31 +184,13 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
   public update({
     elapsedSeconds,
     deltaTimeSeconds,
-    fieldInfluence,
-    fieldStrength,
-    fieldFrequency,
-    decayFrequency,
-    influenceFrequency,
-    timePlaybackSpeed,
   }: {
     elapsedSeconds: number;
     deltaTimeSeconds: number;
-    fieldInfluence: number;
-    fieldStrength: number;
-    fieldFrequency: number;
-    decayFrequency: number;
-    influenceFrequency: number;
-    timePlaybackSpeed: number;
   }): void {
     this.computationRenderer.compute();
 
     const { uniforms } = this.material;
-    uniforms.uFlowFieldFrequency.value = fieldFrequency;
-    uniforms.uFlowFieldInfluence.value = fieldInfluence;
-    uniforms.uFlowFieldStrength.value = fieldStrength;
-    uniforms.uFlowFieldDecayFrequency.value = decayFrequency;
-    uniforms.uFlowFieldInfluenceFrequency.value = influenceFrequency;
-    uniforms.uTimePlaybackSpeed.value = timePlaybackSpeed;
     uniforms.uTime.value = elapsedSeconds;
     uniforms.uDeltaTime.value = deltaTimeSeconds;
   }
