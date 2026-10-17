@@ -73,7 +73,7 @@ class FlowFieldParticles
   > | null = null;
 
   protected override readonly DEBUG_DEFAULTS: FlowFieldParticlesState = {
-    uSize: 0.4,
+    uSize: 0.1,
     debugPlaneVisible: false,
     uFlowFieldInfluence: 0.5,
     uFlowFieldStrength: 2.0,
