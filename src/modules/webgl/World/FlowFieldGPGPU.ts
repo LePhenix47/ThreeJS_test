@@ -107,10 +107,11 @@ class FlowFieldGPGPU implements Updatable, Destroyable {
       uFlowFieldDecayFrequency: new THREE.Uniform(0),
       uFlowFieldInfluenceFrequency: new THREE.Uniform(0),
       uTimePlaybackSpeed: new THREE.Uniform(1),
-      uBase: { value: baseParticlesTexture },
+      uBase: new THREE.Uniform(baseParticlesTexture),
     };
 
-    const material = particlesVariable.material as TypedShaderMaterial<FlowFieldGPGPUUniforms>;
+    const material =
+      particlesVariable.material as TypedShaderMaterial<FlowFieldGPGPUUniforms>;
     material.uniforms = uniforms;
     // TODO: Add particle decay playback
 
