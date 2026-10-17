@@ -149,22 +149,26 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
   }
 
   /**
-   * Sets the 2D canvas fade rate and derives the shader's clamp threshold from it, so the two can't drift apart.
-   * A slower fade (lower alpha) leaves a bigger stuck floor (1/(510×alpha)), so the threshold has to rise to match.
+   * Derives the shader's clamp threshold from a fade-alpha percent. A slower fade (lower alpha)
+   * leaves a bigger stuck floor (1/(510×alpha)), so the threshold has to rise to match.
    */
-  private applyFadeAlpha = (): void => {
-    const { fadeAlphaPercent } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+  private getDisplacementThreshold(fadeAlphaPercent: number): number {
     const alpha: number = fadeAlphaPercent / 100;
-    this.displacementCanvas.setFadeAlpha(alpha);
+    const { thresholdMargin } = Particles.CONFIG.displacement;
 
     // ? See DisplacementCanvas.getFadeResidueFloor for the derivation. smoothstep's lower edge must clear that floor, hence the margin.
-    const { thresholdMargin } = Particles.CONFIG.displacement;
-    const threshold: number =
+    const displacementThreshold: number =
       DisplacementCanvas.getFadeResidueFloor(alpha) * thresholdMargin;
+    return displacementThreshold;
+  }
 
-    console.log({ threshold });
+  /** Sets the 2D canvas fade rate and re-derives the shader's clamp threshold from it, so the two can't drift apart. */
+  private applyFadeAlpha = (): void => {
+    const { fadeAlphaPercent } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+    this.displacementCanvas.setFadeAlpha(fadeAlphaPercent / 100);
 
-    this.material.uniforms.uDisplacementThreshold.value = threshold;
+    this.material.uniforms.uDisplacementThreshold.value =
+      this.getDisplacementThreshold(fadeAlphaPercent);
   };
 
   private setInteractivePlane(): void {
@@ -251,13 +255,16 @@ class Particles extends PointsEntity implements Updatable, Destroyable {
     const chosenTexture: THREE.Texture =
       this.texturesArray[clampedChosenPicture];
 
+    const displacementThreshold: number =
+      this.getDisplacementThreshold(fadeAlphaPercent);
+
     const uniforms: ParticlesUniforms = {
       uResolution: {
         value: new THREE.Vector2(x, y),
       },
       uPictureTexture: new THREE.Uniform(chosenTexture),
       uDisplacementTexture: new THREE.Uniform(this.displacementCanvasTexture),
-      uDisplacementThreshold: new THREE.Uniform(fadeAlphaPercent), // ? Real value set right after by applyFadeAlpha
+      uDisplacementThreshold: new THREE.Uniform(displacementThreshold),
       uPictureAspect: new THREE.Uniform(1), // ? Real value set right after by applyPictureTexture
       uFlipPictureX: new THREE.Uniform(false),
     };
