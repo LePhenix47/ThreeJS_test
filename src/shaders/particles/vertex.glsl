@@ -7,6 +7,7 @@ attribute vec3 aColor;
 attribute float aSizes;
 
 varying vec3 vColor;
+varying float vSize;
 
 void main() {
     vec4 particle = texture(uParticlesTexture, aParticlesUv);
@@ -28,4 +29,5 @@ void main() {
 
     // Varyings
     vColor = aColor;
+    vSize = gl_PointSize;
 }
