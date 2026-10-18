@@ -71,8 +71,7 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     seedBoxVisible: false,
     debugPlaneVisible: false,
   };
-  protected guiRegistry: GUIStateRegistry<NetworkParticlesState> | null =
-    null;
+  protected guiRegistry: GUIStateRegistry<NetworkParticlesState> | null = null;
 
   private get scene() {
     return this.experience!.scene;
@@ -139,7 +138,9 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     const { position } = this.seedGeometry.attributes;
 
     if (!(position instanceof THREE.BufferAttribute)) {
-      throw new Error("[NetworkParticles] Unexpected interleaved position attribute");
+      throw new Error(
+        "[NetworkParticles] Unexpected interleaved position attribute",
+      );
     }
 
     return position;
