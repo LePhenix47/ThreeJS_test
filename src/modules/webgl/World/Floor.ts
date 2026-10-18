@@ -12,6 +12,7 @@ type FloorState = {
   subdivisions: number;
 };
 
+// * Remove floor: git cherry-pick efa6084a40c6e486ff217fc8d5ce5136be2005a7
 class Floor extends MeshEntity implements Destroyable {
   public static readonly CONFIG = {
     guiKey: "floor-gui-state",

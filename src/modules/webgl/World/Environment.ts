@@ -8,6 +8,7 @@ type EnvironmentState = {
   environmentColor: string;
 };
 
+// * Remove lights: git cherry-pick c647e5364f7b5371c91cba8d7474c25e4623e3b5
 class Environment extends EnvironmentEntity implements Destroyable {
   public static readonly CONFIG = {
     guiKey: "environment-gui-state",
