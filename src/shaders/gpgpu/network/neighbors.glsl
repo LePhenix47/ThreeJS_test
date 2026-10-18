@@ -1,5 +1,9 @@
 // TODO: Update to able to choose more than 4 candidates
 
+float computeIndex(int x, int y, int size) {
+    return float(y * size + x);
+}
+
 vec4 sampleCandidate(int x, int y) {
     vec2 centerSample = vec2(x, y) + 0.5;
     vec2 candidateUv = centerSample / resolution.xy;
@@ -33,6 +37,7 @@ void insertCandidate(
 
 void findBestCandidates(
     vec3 position,
+    float selfIndex,
     out float bestDistances[4],
     out float bestIndices[4]
 ) {
@@ -43,9 +48,13 @@ void findBestCandidates(
 
     for(int y = 0; y < sideLength; y++) {
         for(int x = 0; x < sideLength; x++) {
-            vec4 candidate = sampleCandidate(x, y);
-            float candidateIndex = float(y * sideLength + x);
+            float candidateIndex = computeIndex(x, y, sideLength);
 
+            // ? Skip itself, distance to self is always 0 and would otherwise always win a slot
+            if(candidateIndex == selfIndex)
+                continue;
+
+            vec4 candidate = sampleCandidate(x, y);
             float candidateDist = distance(position, candidate.xyz);
             // TODO: Set min size as non-FBO uniform
             if(candidateDist > 5.0)
@@ -64,9 +73,14 @@ void main() {
     // ? GPUComputationRenderer already injected the uParticles uniform
     vec4 particle = texture(uParticles, uv);
 
+    int sideLength = int(resolution.x);
+
+    ivec2 intFragCoord = ivec2(gl_FragCoord.xy);
+    float selfIndex = computeIndex(intFragCoord.x, intFragCoord.y, sideLength);
+
     float bestDistances[4];
     float bestIndices[4];
-    findBestCandidates(particle.xyz, bestDistances, bestIndices);
+    findBestCandidates(particle.xyz, selfIndex, bestDistances, bestIndices);
 
     gl_FragColor = vec4(bestIndices[0], bestIndices[1], bestIndices[2], bestIndices[3]);
 }
