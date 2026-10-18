@@ -41,7 +41,7 @@ class NetworkGPGPU implements Updatable, Destroyable {
   /** Number of components per texel, TEXture pixEL, in an RGBA compute texture. */
   private static readonly TEXEL_STRIDE = 4;
   /** Speed range particles are randomly seeded with. */
-  private static readonly SPEED = { min: 0.5, max: 2 } as const;
+  private static readonly SPEED = { min: 0.25, max: 4 } as const;
 
   /** Side length of the square compute texture. `size * size` is always >= the particle count. */
   public readonly size: number;
