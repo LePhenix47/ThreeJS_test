@@ -13,6 +13,8 @@ import NetworkGPGPU from "./NetworkGPGPU";
 
 import vertexShader from "@shaders/network-particles/vertex.glsl";
 import fragmentShader from "@shaders/network-particles/fragment.glsl";
+import linesVertexShader from "@shaders/network-lines/vertex.glsl";
+import linesFragmentShader from "@shaders/network-lines/fragment.glsl";
 
 type NetworkParticlesState = {
   uSize: number;
@@ -28,6 +30,17 @@ type NetworkParticlesUniforms = MapAsUniforms<{
 }>;
 
 type NetworkParticlesAttributes = MapAsAttributes<"aParticlesUv">;
+
+type NetworkLinesUniforms = MapAsUniforms<{
+  uParticlesTexture: THREE.Texture;
+  uNeighborsTexture: THREE.Texture;
+  uGpgpuSize: number;
+  uMaxDistance: number;
+}>;
+
+type NetworkLinesAttributes = MapAsAttributes<
+  "aOwnerUv" | "aNeighborSlot" | "aEndpoint"
+>;
 
 class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
@@ -45,6 +58,12 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
         y: 0,
         z: 0,
       },
+    },
+    lines: {
+      /** How many of each particle's closest neighbors get a line. Matches neighbors.glsl's fixed K=4. */
+      neighborCount: 4,
+      /** Distance past which a line's alpha fades to 0. Should stay <= the neighbor search's own cutoff in neighbors.glsl. */
+      maxDistance: 5,
     },
   } as const;
 
@@ -66,6 +85,10 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     THREE.PlaneGeometry,
     THREE.MeshBasicMaterial
   > | null = null;
+
+  private linesGeometry: TypedBufferGeometry<NetworkLinesAttributes>;
+  private linesMaterial: TypedShaderMaterial<NetworkLinesUniforms>;
+  private lines: THREE.LineSegments;
 
   protected readonly DEBUG_DEFAULTS: NetworkParticlesState = {
     uSize: 0.1,
@@ -109,6 +132,12 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     this.setPoints();
 
     this.scene.add(this.points);
+
+    this.setLinesGeometry();
+    this.setLinesMaterial();
+    this.setLines();
+
+    this.scene.add(this.lines);
 
     this.sizes.on("resize", this.onResize);
 
@@ -216,6 +245,99 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     this.points = new THREE.Points(this.geometry, this.material);
   }
 
+  private setLinesGeometry(): void {
+    const geometry = new THREE.BufferGeometry<NetworkLinesAttributes>();
+
+    const { ownerUvArray, neighborSlotArray, endpointArray } =
+      this.getLinesArrays();
+
+    const uvStride: number = Enum.length(UvEnum);
+    geometry.setAttribute(
+      "aOwnerUv",
+      new THREE.BufferAttribute(ownerUvArray, uvStride),
+    );
+    geometry.setAttribute(
+      "aNeighborSlot",
+      new THREE.BufferAttribute(neighborSlotArray, 1),
+    );
+    geometry.setAttribute(
+      "aEndpoint",
+      new THREE.BufferAttribute(endpointArray, 1),
+    );
+
+    // ? No "position" attribute exists on this geometry (gl_Position is computed from the others), but
+    // ? WebGLRenderer determines vertex count from geometry.attributes.position.count specifically. Without
+    // ? it, drawRange falls back to its Infinity default and the renderer silently skips the draw call entirely.
+    geometry.setDrawRange(0, endpointArray.length);
+
+    this.linesGeometry = geometry;
+  }
+
+  /** Two vertices per neighbor slot, per particle: one line segment from each particle to each of its (up to) `neighborCount` neighbors. */
+  private getLinesArrays(): {
+    ownerUvArray: Float32Array;
+    neighborSlotArray: Float32Array;
+    endpointArray: Float32Array;
+  } {
+    const { neighborCount } = NetworkParticles.CONFIG.lines;
+    const { size } = this.gpGpu;
+    const { count } = this.seedGeometry.attributes.position;
+
+    const verticesPerParticle = neighborCount * 2;
+    const vertexCount = count * verticesPerParticle;
+
+    const uvStride: number = Enum.length(UvEnum);
+    const ownerUvArray = new Float32Array(vertexCount * uvStride);
+    const neighborSlotArray = new Float32Array(vertexCount);
+    const endpointArray = new Float32Array(vertexCount);
+
+    let vertex = 0;
+    for (let i = 0; i < count; i++) {
+      const ownerU: number = ((i % size) + 0.5) / size;
+      const ownerV: number = (Math.floor(i / size) + 0.5) / size;
+
+      for (let slot = 0; slot < neighborCount; slot++) {
+        for (let endpoint = 0; endpoint < 2; endpoint++) {
+          const i2: number = vertex * uvStride;
+
+          ownerUvArray[i2 + UvEnum.S] = ownerU;
+          ownerUvArray[i2 + UvEnum.T] = ownerV;
+          neighborSlotArray[vertex] = slot;
+          endpointArray[vertex] = endpoint;
+
+          vertex++;
+        }
+      }
+    }
+
+    return { ownerUvArray, neighborSlotArray, endpointArray };
+  }
+
+  private setLinesMaterial(): void {
+    const { maxDistance } = NetworkParticles.CONFIG.lines;
+    const { positionTexture, neighborsTexture, size } = this.gpGpu;
+
+    const uniforms: NetworkLinesUniforms = {
+      uParticlesTexture: { value: positionTexture },
+      uNeighborsTexture: { value: neighborsTexture },
+      uGpgpuSize: new THREE.Uniform(size),
+      uMaxDistance: new THREE.Uniform(maxDistance),
+    };
+
+    this.linesMaterial = new THREE.ShaderMaterial({
+      vertexShader: linesVertexShader,
+      fragmentShader: linesFragmentShader,
+      uniforms,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }) as TypedShaderMaterial<NetworkLinesUniforms>;
+  }
+
+  private setLines(): void {
+    this.lines = new THREE.LineSegments(this.linesGeometry, this.linesMaterial);
+  }
+
   private onResize = (): void => {
     const { x, y } = this.sizes.resolution;
 
@@ -314,6 +436,10 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     const { positionTexture } = this.gpGpu;
     this.material.uniforms.uParticlesTexture.value = positionTexture;
 
+    const { uniforms: linesUniforms } = this.linesMaterial;
+    linesUniforms.uParticlesTexture.value = positionTexture;
+    linesUniforms.uNeighborsTexture.value = this.gpGpu.neighborsTexture;
+
     this.updateGpGpuDebugPlane();
   }
 
@@ -360,6 +486,11 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     this.material.dispose();
 
     this.scene.remove(this.points);
+
+    this.linesGeometry.dispose();
+    this.linesMaterial.dispose();
+
+    this.scene.remove(this.lines);
   }
 }
 
