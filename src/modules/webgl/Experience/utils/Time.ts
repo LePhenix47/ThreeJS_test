@@ -13,6 +13,9 @@ type TimeEvents = {
 };
 
 class Time extends EventEmitter<TimeEvents> {
+  /** Hard ceiling on `deltaMs`, so a tab coming back from being hidden/throttled can't feed a huge spike into per-frame accumulations (decay, velocity integration, …). */
+  private static readonly MAX_DELTA_MS = 1_000;
+
   /** `performance.now()` reading when `Time` was created. Milliseconds since page load, not a calendar time. */
   public startMs: number;
   /** `performance.now()` reading at the latest tick. */
@@ -111,7 +114,8 @@ class Time extends EventEmitter<TimeEvents> {
     const currentMsTick: number = performance.now();
     const previousTick: number = this.currentMs;
 
-    this.deltaMs = currentMsTick - previousTick;
+    const rawDeltaMs: number = currentMsTick - previousTick;
+    this.deltaMs = Math.min(rawDeltaMs, Time.MAX_DELTA_MS);
 
     this.elapsedMs = currentMsTick - this.startMs;
 
