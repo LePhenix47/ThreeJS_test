@@ -10,6 +10,7 @@ import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
 import positionShader from "@shaders/gpgpu/network/position.glsl";
 import velocityShader from "@shaders/gpgpu/network/velocity.glsl";
+import neighborsShader from "@shaders/gpgpu/network/neighbors.glsl";
 import { Destroyable, Updatable } from "@modules/webgl/Experience/Experience";
 
 export type NetworkGPGPUConstructor = {
@@ -48,6 +49,7 @@ class NetworkGPGPU implements Updatable, Destroyable {
   private computationRenderer: GPUComputationRenderer;
   private particlesVariable: Variable;
   private velocityVariable: Variable;
+  private neighborsVariable: Variable;
 
   /** `uTime`/`uDeltaTime`, shared by reference across both compute materials — written once in `update()`. */
   private readonly sharedUniforms: NetworkGPGPUSharedUniforms = {
@@ -66,6 +68,14 @@ class NetworkGPGPU implements Updatable, Destroyable {
   public get velocityTexture(): THREE.Texture {
     const renderTarget = this.computationRenderer.getCurrentRenderTarget(
       this.velocityVariable,
+    );
+
+    return renderTarget.texture;
+  }
+
+  public get neighborsTexture(): THREE.Texture {
+    const renderTarget = this.computationRenderer.getCurrentRenderTarget(
+      this.neighborsVariable,
     );
 
     return renderTarget.texture;
@@ -120,6 +130,15 @@ class NetworkGPGPU implements Updatable, Destroyable {
       baseVelocityTexture,
     );
 
+    // ? Stateless: never reads its own previous output, just the current positions, so no self-dependency
+    const baseNeighborsTexture: THREE.DataTexture =
+      this.computationRenderer.createTexture();
+    const neighborsVariable: Variable = this.computationRenderer.addVariable(
+      "uNeighbors",
+      neighborsShader,
+      baseNeighborsTexture,
+    );
+
     // * Step 3: Each depends on both — position needs the current velocity to move, velocity needs the current position to detect the wall
     this.computationRenderer.setVariableDependencies(particlesVariable, [
       particlesVariable,
@@ -128,6 +147,10 @@ class NetworkGPGPU implements Updatable, Destroyable {
     this.computationRenderer.setVariableDependencies(velocityVariable, [
       particlesVariable,
       velocityVariable,
+    ]);
+    // ? No self-dependency: unlike position/velocity, neighbors never reads its own previous output, just a fresh function of current positions each frame
+    this.computationRenderer.setVariableDependencies(neighborsVariable, [
+      particlesVariable,
     ]);
 
     // * Step 3.5: Add however many uniforms we want (non FBO ones). uTime/uDeltaTime reused by reference, see sharedUniforms
@@ -150,6 +173,7 @@ class NetworkGPGPU implements Updatable, Destroyable {
 
     this.particlesVariable = particlesVariable;
     this.velocityVariable = velocityVariable;
+    this.neighborsVariable = neighborsVariable;
   }
 
   /** Copies each particle's starting xyz into the texture's RGB, one texel per particle. */
