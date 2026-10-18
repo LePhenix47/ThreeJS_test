@@ -314,13 +314,19 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     const { positionTexture } = this.gpGpu;
     this.material.uniforms.uParticlesTexture.value = positionTexture;
 
-    if (this.debugPlane) {
-      const { debugPlaneSource } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
-      this.debugPlane.material.map =
-        debugPlaneSource === "velocity"
-          ? this.gpGpu.velocityTexture
-          : positionTexture;
-    }
+    this.updateGpGpuDebugPlane();
+  }
+
+  private updateGpGpuDebugPlane(): void {
+    if (!this.debugPlane) return;
+
+    const { debugPlaneSource } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+
+    const { positionTexture, velocityTexture } = this.gpGpu;
+    const debugPlaneMap: THREE.Texture =
+      debugPlaneSource === "velocity" ? velocityTexture : positionTexture;
+
+    this.debugPlane.material.map = debugPlaneMap;
   }
 
   private destroySeedBoxMesh(): void {
