@@ -3,6 +3,7 @@ import Experience, {
   Updatable,
 } from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
+import NetworkParticles from "./NetworkParticles";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -30,6 +31,7 @@ class World implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
   public environment?: Environment;
+  public networkParticles: NetworkParticles;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -59,6 +61,7 @@ class World implements Updatable, Destroyable {
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.environment = new Environment();
+    this.networkParticles = new NetworkParticles();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -205,10 +208,13 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   }
 
-  public update(): void {}
+  public update(): void {
+    this.networkParticles.update();
+  }
 
   public destroy(): void {
     this.environment?.destroy();
+    this.networkParticles.destroy();
     this.removeHelpers();
   }
 }
