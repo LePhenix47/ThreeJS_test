@@ -1,0 +1,176 @@
+import * as THREE from "three";
+import Experience, {
+  Destroyable,
+  Updatable,
+} from "@modules/webgl/Experience/Experience";
+import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
+import { MapAsAttributes, TypedBufferGeometry } from "./types/attributes";
+import { UvEnum } from "@utils/enums/space-color";
+import Enum from "@utils/enums";
+import NetworkGPGPU from "./NetworkGPGPU";
+
+import vertexShader from "@shaders/network-lines/vertex.glsl";
+import fragmentShader from "@shaders/network-lines/fragment.glsl";
+
+export type NetworkLinesConstructor = {
+  /** Shared with `NetworkParticles`, owned by `Network`. Read from here, never disposed. */
+  gpGpu: NetworkGPGPU;
+  particleCount: number;
+};
+
+type NetworkLinesUniforms = MapAsUniforms<{
+  uParticlesTexture: THREE.Texture;
+  uNeighborsTexture: THREE.Texture;
+  uGpgpuSize: number;
+  uMaxDistance: number;
+}>;
+
+type NetworkLinesAttributes = MapAsAttributes<
+  "aOwnerUv" | "aNeighborSlot" | "aEndpoint"
+>;
+
+class NetworkLines implements Updatable, Destroyable {
+  public static readonly CONFIG = {
+    /** How many of each particle's closest neighbors get a line. Matches neighbors.glsl's fixed K=4. */
+    neighborCount: 4,
+    /** Distance past which a line's alpha fades to 0. Should stay <= the neighbor search's own cutoff in neighbors.glsl. */
+    maxDistance: 5,
+  } as const;
+
+  private readonly experience: Experience | null;
+  private readonly gpGpu: NetworkGPGPU;
+  private readonly particleCount: number;
+
+  private geometry: TypedBufferGeometry<NetworkLinesAttributes>;
+  private material: TypedShaderMaterial<NetworkLinesUniforms>;
+  private lines: THREE.LineSegments;
+
+  private get scene() {
+    return this.experience!.scene;
+  }
+
+  constructor({ gpGpu, particleCount }: NetworkLinesConstructor) {
+    if (!Experience.instance) throw new Error("Experience instance not found");
+    this.experience = Experience.instance;
+
+    this.gpGpu = gpGpu;
+    this.particleCount = particleCount;
+
+    this.setGeometry();
+    this.setMaterial();
+    this.setLines();
+
+    this.scene.add(this.lines);
+
+    console.log("NetworkLines");
+  }
+
+  private setGeometry(): void {
+    const geometry = new THREE.BufferGeometry<NetworkLinesAttributes>();
+
+    const { ownerUvArray, neighborSlotArray, endpointArray } =
+      this.getLinesArrays();
+
+    const uvStride: number = Enum.length(UvEnum);
+    geometry.setAttribute(
+      "aOwnerUv",
+      new THREE.BufferAttribute(ownerUvArray, uvStride),
+    );
+    geometry.setAttribute(
+      "aNeighborSlot",
+      new THREE.BufferAttribute(neighborSlotArray, 1),
+    );
+    geometry.setAttribute(
+      "aEndpoint",
+      new THREE.BufferAttribute(endpointArray, 1),
+    );
+
+    // ? No "position" attribute exists on this geometry (gl_Position is computed from the others), but
+    // ? WebGLRenderer determines vertex count from geometry.attributes.position.count specifically. Without
+    // ? it, drawRange falls back to its Infinity default and the renderer silently skips the draw call entirely.
+    geometry.setDrawRange(0, endpointArray.length);
+
+    this.geometry = geometry;
+  }
+
+  /** Two vertices per neighbor slot, per particle: one line segment from each particle to each of its (up to) `neighborCount` neighbors. */
+  private getLinesArrays(): {
+    ownerUvArray: Float32Array;
+    neighborSlotArray: Float32Array;
+    endpointArray: Float32Array;
+  } {
+    const { neighborCount } = NetworkLines.CONFIG;
+    const { size } = this.gpGpu;
+    const { particleCount } = this;
+
+    const verticesPerParticle = neighborCount * 2;
+    const vertexCount = particleCount * verticesPerParticle;
+
+    const uvStride: number = Enum.length(UvEnum);
+    const ownerUvArray = new Float32Array(vertexCount * uvStride);
+    const neighborSlotArray = new Float32Array(vertexCount);
+    const endpointArray = new Float32Array(vertexCount);
+
+    let vertex = 0;
+    for (let i = 0; i < particleCount; i++) {
+      const ownerU: number = ((i % size) + 0.5) / size;
+      const ownerV: number = (Math.floor(i / size) + 0.5) / size;
+
+      for (let slot = 0; slot < neighborCount; slot++) {
+        for (let endpoint = 0; endpoint < 2; endpoint++) {
+          const i2: number = vertex * uvStride;
+
+          ownerUvArray[i2 + UvEnum.S] = ownerU;
+          ownerUvArray[i2 + UvEnum.T] = ownerV;
+          neighborSlotArray[vertex] = slot;
+          endpointArray[vertex] = endpoint;
+
+          vertex++;
+        }
+      }
+    }
+
+    return { ownerUvArray, neighborSlotArray, endpointArray };
+  }
+
+  private setMaterial(): void {
+    const { maxDistance } = NetworkLines.CONFIG;
+    const { positionTexture, neighborsTexture, size } = this.gpGpu;
+
+    const uniforms: NetworkLinesUniforms = {
+      uParticlesTexture: { value: positionTexture },
+      uNeighborsTexture: { value: neighborsTexture },
+      uGpgpuSize: new THREE.Uniform(size),
+      uMaxDistance: new THREE.Uniform(maxDistance),
+    };
+
+    this.material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }) as TypedShaderMaterial<NetworkLinesUniforms>;
+  }
+
+  private setLines(): void {
+    this.lines = new THREE.LineSegments(this.geometry, this.material);
+  }
+
+  public update(): void {
+    // ? Ping-ponged: genuinely different texture objects every other frame, must be re-read, not just mutated
+    const { uniforms } = this.material;
+    uniforms.uParticlesTexture.value = this.gpGpu.positionTexture;
+    uniforms.uNeighborsTexture.value = this.gpGpu.neighborsTexture;
+  }
+
+  public destroy(): void {
+    this.geometry.dispose();
+    this.material.dispose();
+
+    this.scene.remove(this.lines);
+  }
+}
+
+export default NetworkLines;
