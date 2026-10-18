@@ -7,7 +7,10 @@ void main() {
     vec2 uv = gl_FragCoord.xy / resolution.xy;
 
     // ? GPUComputationRenderer already injected the uParticles uniform
-    vec4 particle = texture(uParticles, uv);
+    vec4 position = texture(uParticles, uv);
+    vec4 velocity = texture(uVelocity, uv);
 
-    gl_FragColor = particle;
+    position.xyz += velocity.xyz * uDeltaTime;
+
+    gl_FragColor = position;
 }
