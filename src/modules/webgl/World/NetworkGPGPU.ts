@@ -8,8 +8,8 @@ import Enum from "@utils/enums";
 import { randomInRange } from "@utils/numbers/range";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
-import positionShader from "@shaders/gpgpu/network.glsl";
-import velocityShader from "@shaders/gpgpu/network-velocity.glsl";
+import positionShader from "@shaders/gpgpu/network/position.glsl";
+import velocityShader from "@shaders/gpgpu/network/velocity.glsl";
 import { Destroyable, Updatable } from "@modules/webgl/Experience/Experience";
 
 export type NetworkGPGPUConstructor = {
