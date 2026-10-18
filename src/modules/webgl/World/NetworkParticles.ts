@@ -18,6 +18,7 @@ type NetworkParticlesState = {
   uSize: number;
   seedBoxVisible: boolean;
   debugPlaneVisible: boolean;
+  debugPlaneSource: "position" | "velocity";
 };
 
 type NetworkParticlesUniforms = MapAsUniforms<{
@@ -70,6 +71,7 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     uSize: 0.1,
     seedBoxVisible: false,
     debugPlaneVisible: false,
+    debugPlaneSource: "position",
   };
   protected guiRegistry: GUIStateRegistry<NetworkParticlesState> | null = null;
 
@@ -148,9 +150,12 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
 
   /** Builds the `GPUComputationRenderer` from the seed box's vertex positions. */
   private setGPGPU(): void {
+    const { size } = NetworkParticles.CONFIG.seedBox;
+
     this.gpGpu = new NetworkGPGPU({
       renderer: this.renderer.instance,
       positions: this.getSeedPositionAttribute(),
+      boundary: size / 2,
     });
   }
 
@@ -197,7 +202,7 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     const uniforms: NetworkParticlesUniforms = {
       uResolution: { value: new THREE.Vector2(x, y) },
       uSize: new THREE.Uniform(uSize),
-      uParticlesTexture: { value: this.gpGpu.texture },
+      uParticlesTexture: { value: this.gpGpu.positionTexture },
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -249,7 +254,7 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     // ? depthTest/depthWrite off: a debug overlay should never be occluded by whatever's physically in front of it
     // ? Not transparent: alpha is unused by this effect's GPGPU texture (stays 0), which would make the whole plane invisible under alpha blending
     const material = new THREE.MeshBasicMaterial({
-      map: this.gpGpu.texture,
+      map: this.gpGpu.positionTexture,
       depthTest: false,
       depthWrite: false,
       side: THREE.DoubleSide,
@@ -295,6 +300,10 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
 
       this.debugPlane.visible = v;
     });
+
+    networkFolder
+      .add(state, "debugPlaneSource", ["position", "velocity"])
+      .name("GPGPU debug source");
   }
 
   public update(): void {
@@ -302,11 +311,15 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     this.gpGpu.update({ elapsedSeconds, deltaTimeSeconds: deltaSeconds });
 
     // ? Ping-ponged: a genuinely different texture object every other frame, must be re-read, not just mutated
-    const { texture } = this.gpGpu;
-    this.material.uniforms.uParticlesTexture.value = texture;
+    const { positionTexture } = this.gpGpu;
+    this.material.uniforms.uParticlesTexture.value = positionTexture;
 
     if (this.debugPlane) {
-      this.debugPlane.material.map = texture;
+      const { debugPlaneSource } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+      this.debugPlane.material.map =
+        debugPlaneSource === "velocity"
+          ? this.gpGpu.velocityTexture
+          : positionTexture;
     }
   }
 

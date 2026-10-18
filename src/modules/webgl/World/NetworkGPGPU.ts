@@ -5,40 +5,55 @@ import {
 } from "three/addons/misc/GPUComputationRenderer.js";
 import { SpaceEnum, ColorEnum } from "@utils/enums/space-color";
 import Enum from "@utils/enums";
+import { randomInRange } from "@utils/numbers/range";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 
-import particlesShader from "@shaders/gpgpu/network.glsl";
+import positionShader from "@shaders/gpgpu/network.glsl";
+import velocityShader from "@shaders/gpgpu/network-velocity.glsl";
 import { Destroyable, Updatable } from "@modules/webgl/Experience/Experience";
 
 export type NetworkGPGPUConstructor = {
-  /** The real THREE.JS renderer, used to actually run the compute shader each frame. */
+  /** The real THREE.JS renderer, used to actually run the compute shaders each frame. */
   renderer: THREE.WebGLRenderer;
   /** Base particles' positions from the geometry attributes: each particle's starting position, read once to seed the compute texture. */
   positions: THREE.BufferAttribute;
+  /** Half-extent of the cube particles bounce inside, same on every axis. */
+  boundary: number;
 };
 
-type NetworkGPGPUUniforms = MapAsUniforms<{
+type NetworkGPGPUParticlesUniforms = MapAsUniforms<{
   uTime: number;
   uDeltaTime: number;
 }>;
 
+type NetworkGPGPUVelocityUniforms = MapAsUniforms<{
+  uTime: number;
+  uDeltaTime: number;
+  uBoundary: number;
+}>;
+
 /**
- * Wraps a `GPUComputationRenderer` simulating particle positions on the GPU: each frame, the
- * compute shader reads last frame's position texture and writes the next one. Owned privately by
- * whichever entity renders the particles, nothing else needs to reach into this.
+ * Wraps a `GPUComputationRenderer` simulating particle positions AND velocities on the GPU: each
+ * frame, the position shader moves particles by their current velocity, and the velocity shader
+ * reverses them on hitting the boundary. Two variables, one `GPUComputationRenderer`. Owned
+ * privately by whichever entity renders the particles, nothing else needs to reach into this.
  */
 class NetworkGPGPU implements Updatable, Destroyable {
   /** Number of components per texel, TEXture pixEL, in an RGBA compute texture. */
   private static readonly TEXEL_STRIDE = 4;
+  /** Speed range particles are randomly seeded with. */
+  private static readonly SPEED = { min: 0.5, max: 2 } as const;
 
   /** Side length of the square compute texture. `size * size` is always >= the particle count. */
   public readonly size: number;
 
   private computationRenderer: GPUComputationRenderer;
   private particlesVariable: Variable;
-  private material: TypedShaderMaterial<NetworkGPGPUUniforms>;
+  private velocityVariable: Variable;
+  private particlesMaterial: TypedShaderMaterial<NetworkGPGPUParticlesUniforms>;
+  private velocityMaterial: TypedShaderMaterial<NetworkGPGPUVelocityUniforms>;
 
-  public get texture(): THREE.Texture {
+  public get positionTexture(): THREE.Texture {
     const renderTarget = this.computationRenderer.getCurrentRenderTarget(
       this.particlesVariable,
     );
@@ -46,16 +61,19 @@ class NetworkGPGPU implements Updatable, Destroyable {
     return renderTarget.texture;
   }
 
-  /** The compute material's own typed uniforms, shared by reference so callers can bind GUI controls directly to them. */
-  public get uniforms(): NetworkGPGPUUniforms {
-    return this.material.uniforms;
+  public get velocityTexture(): THREE.Texture {
+    const renderTarget = this.computationRenderer.getCurrentRenderTarget(
+      this.velocityVariable,
+    );
+
+    return renderTarget.texture;
   }
 
-  constructor({ renderer, positions }: NetworkGPGPUConstructor) {
+  constructor({ renderer, positions, boundary }: NetworkGPGPUConstructor) {
     this.size = this.computeSize(positions.count);
 
     this.setComputationRenderer(renderer);
-    this.setParticlesVariable(positions);
+    this.setVariables(positions, boundary);
   }
 
   /** Side length of the smallest square texture that fits `count` particles, one per texel. */
@@ -74,45 +92,72 @@ class NetworkGPGPU implements Updatable, Destroyable {
     );
   }
 
-  /** Seeds the base texture, registers the self-dependent `uParticles` variable, and validates it. */
-  private setParticlesVariable(positions: THREE.BufferAttribute): void {
-    // * Step 1: We create the base texture
-    const baseParticlesTexture: THREE.DataTexture =
+  /** Registers the position and velocity variables, cross-dependent so each frame's move reads both. */
+  private setVariables(
+    positions: THREE.BufferAttribute,
+    boundary: number,
+  ): void {
+    // * Step 1: We create the base textures
+    const basePositionTexture: THREE.DataTexture =
       this.computationRenderer.createTexture();
+    this.fillPositionTexture(basePositionTexture, positions);
 
-    this.fillBaseTexture(baseParticlesTexture, positions);
+    const baseVelocityTexture: THREE.DataTexture =
+      this.computationRenderer.createTexture();
+    this.fillVelocityTexture(baseVelocityTexture, positions.count);
 
-    // * Step 2: Register uParticles, updated each frame by this shader
+    // * Step 2: Register uParticles and uVelocity, each updated each frame by its own shader
     const particlesVariable: Variable = this.computationRenderer.addVariable(
       "uParticles",
-      particlesShader,
-      baseParticlesTexture,
+      positionShader,
+      basePositionTexture,
+    );
+    const velocityVariable: Variable = this.computationRenderer.addVariable(
+      "uVelocity",
+      velocityShader,
+      baseVelocityTexture,
     );
 
-    // * Step 3: Use current texture output as an input for the next frame (ping-pong buffer)
+    // * Step 3: Each depends on both — position needs the current velocity to move, velocity needs the current position to detect the wall
     this.computationRenderer.setVariableDependencies(particlesVariable, [
       particlesVariable,
+      velocityVariable,
+    ]);
+    this.computationRenderer.setVariableDependencies(velocityVariable, [
+      particlesVariable,
+      velocityVariable,
     ]);
 
     // * Step 3.5: Add however many uniforms we want (non FBO ones)
-    const uniforms: NetworkGPGPUUniforms = {
+    const particlesUniforms: NetworkGPGPUParticlesUniforms = {
       uTime: new THREE.Uniform(0),
       uDeltaTime: new THREE.Uniform(0),
     };
+    const velocityUniforms: NetworkGPGPUVelocityUniforms = {
+      uTime: new THREE.Uniform(0),
+      uDeltaTime: new THREE.Uniform(0),
+      uBoundary: new THREE.Uniform(boundary),
+    };
 
-    const material =
-      particlesVariable.material as TypedShaderMaterial<NetworkGPGPUUniforms>;
-    material.uniforms = uniforms;
+    const particlesMaterial =
+      particlesVariable.material as TypedShaderMaterial<NetworkGPGPUParticlesUniforms>;
+    particlesMaterial.uniforms = particlesUniforms;
+
+    const velocityMaterial =
+      velocityVariable.material as TypedShaderMaterial<NetworkGPGPUVelocityUniforms>;
+    velocityMaterial.uniforms = velocityUniforms;
 
     const error: string | null = this.computationRenderer.init();
     if (error) throw new Error(`[NetworkGPGPU] ${error}`);
 
     this.particlesVariable = particlesVariable;
-    this.material = material;
+    this.velocityVariable = velocityVariable;
+    this.particlesMaterial = particlesMaterial;
+    this.velocityMaterial = velocityMaterial;
   }
 
   /** Copies each particle's starting xyz into the texture's RGB, one texel per particle. */
-  private fillBaseTexture(
+  private fillPositionTexture(
     texture: THREE.DataTexture,
     position: THREE.BufferAttribute,
   ): void {
@@ -142,6 +187,35 @@ class NetworkGPGPU implements Updatable, Destroyable {
     }
   }
 
+  /** Seeds each particle with a random unit direction scaled by a random speed. */
+  private fillVelocityTexture(texture: THREE.DataTexture, count: number): void {
+    const textureImageData: THREE.TypedArray | null = texture.image.data;
+
+    if (!textureImageData) {
+      throw new Error(
+        "[NetworkGPGPU] DataTexture has no pixel data, cannot seed particle velocities",
+      );
+    }
+
+    const { min, max } = NetworkGPGPU.SPEED;
+    const { TEXEL_STRIDE } = NetworkGPGPU;
+
+    for (let i = 0; i < count; i++) {
+      const i4: number = i * TEXEL_STRIDE;
+
+      const direction = new THREE.Vector3(
+        randomInRange({ min: -1, max: 1 }),
+        randomInRange({ min: -1, max: 1 }),
+        randomInRange({ min: -1, max: 1 }),
+      ).normalize();
+      const speed: number = randomInRange({ min, max });
+
+      textureImageData[i4 + ColorEnum.Red] = direction.x * speed;
+      textureImageData[i4 + ColorEnum.Green] = direction.y * speed;
+      textureImageData[i4 + ColorEnum.Blue] = direction.z * speed;
+    }
+  }
+
   public update({
     elapsedSeconds = 0,
     deltaTimeSeconds = 0,
@@ -151,9 +225,13 @@ class NetworkGPGPU implements Updatable, Destroyable {
   } = {}): void {
     this.computationRenderer.compute();
 
-    const { uniforms } = this.material;
-    uniforms.uTime.value = elapsedSeconds;
-    uniforms.uDeltaTime.value = deltaTimeSeconds;
+    const { uniforms: particleUniforms } = this.particlesMaterial;
+    particleUniforms.uTime.value = elapsedSeconds;
+    particleUniforms.uDeltaTime.value = deltaTimeSeconds;
+
+    const { uniforms: velocityUniforms } = this.velocityMaterial;
+    velocityUniforms.uTime.value = elapsedSeconds;
+    velocityUniforms.uDeltaTime.value = deltaTimeSeconds;
   }
 
   public destroy(): void {
