@@ -1,5 +1,7 @@
 // TODO: Update to able to choose more than 4 candidates
 
+uniform float uParticleCount;
+
 float computeIndex(int x, int y, int size) {
     return float(y * size + x);
 }
@@ -49,6 +51,12 @@ void findBestCandidates(
     for(int y = 0; y < sideLength; y++) {
         for(int x = 0; x < sideLength; x++) {
             float candidateIndex = computeIndex(x, y, sideLength);
+
+            // ? Skip padding texels: size*size always rounds up past the real particle count, and
+            // ? the leftover texels were never seeded, they default to (0,0,0), a fake "particle"
+            // ? sitting at the origin that every real particle would otherwise think is a close neighbor
+            if(candidateIndex >= uParticleCount)
+                continue;
 
             // ? Skip itself, distance to self is always 0 and would otherwise always win a slot
             if(candidateIndex == selfIndex)

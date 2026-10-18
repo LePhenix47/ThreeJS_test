@@ -31,6 +31,11 @@ type NetworkGPGPUSharedUniforms = MapAsUniforms<{
 type NetworkGPGPUVelocityUniforms = NetworkGPGPUSharedUniforms &
   MapAsUniforms<{ uBoundary: number }>;
 
+type NetworkGPGPUNeighborsUniforms = MapAsUniforms<{
+  /** Real particle count, size*size always rounds up past it. Candidates past this index are unseeded padding texels, not real particles. */
+  uParticleCount: number;
+}>;
+
 /**
  * Wraps a `GPUComputationRenderer` simulating particle positions AND velocities on the GPU: each
  * frame, the position shader moves particles by their current velocity, and the velocity shader
@@ -167,6 +172,14 @@ class NetworkGPGPU implements Updatable, Destroyable {
     const velocityMaterial =
       velocityVariable.material as TypedShaderMaterial<NetworkGPGPUVelocityUniforms>;
     velocityMaterial.uniforms = velocityUniforms;
+
+    const neighborsUniforms: NetworkGPGPUNeighborsUniforms = {
+      uParticleCount: new THREE.Uniform(positions.count),
+    };
+
+    const neighborsMaterial =
+      neighborsVariable.material as TypedShaderMaterial<NetworkGPGPUNeighborsUniforms>;
+    neighborsMaterial.uniforms = neighborsUniforms;
 
     const error: string | null = this.computationRenderer.init();
     if (error) throw new Error(`[NetworkGPGPU] ${error}`);
