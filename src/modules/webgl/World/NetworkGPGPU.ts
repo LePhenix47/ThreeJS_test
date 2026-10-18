@@ -21,16 +21,14 @@ export type NetworkGPGPUConstructor = {
   boundary: number;
 };
 
-type NetworkGPGPUParticlesUniforms = MapAsUniforms<{
+/** Written once per frame in `update()`, shared by reference across both compute materials. */
+type NetworkGPGPUSharedUniforms = MapAsUniforms<{
   uTime: number;
   uDeltaTime: number;
 }>;
 
-type NetworkGPGPUVelocityUniforms = MapAsUniforms<{
-  uTime: number;
-  uDeltaTime: number;
-  uBoundary: number;
-}>;
+type NetworkGPGPUVelocityUniforms = NetworkGPGPUSharedUniforms &
+  MapAsUniforms<{ uBoundary: number }>;
 
 /**
  * Wraps a `GPUComputationRenderer` simulating particle positions AND velocities on the GPU: each
@@ -50,8 +48,12 @@ class NetworkGPGPU implements Updatable, Destroyable {
   private computationRenderer: GPUComputationRenderer;
   private particlesVariable: Variable;
   private velocityVariable: Variable;
-  private particlesMaterial: TypedShaderMaterial<NetworkGPGPUParticlesUniforms>;
-  private velocityMaterial: TypedShaderMaterial<NetworkGPGPUVelocityUniforms>;
+
+  /** `uTime`/`uDeltaTime`, shared by reference across both compute materials — written once in `update()`. */
+  private readonly sharedUniforms: NetworkGPGPUSharedUniforms = {
+    uTime: new THREE.Uniform(0),
+    uDeltaTime: new THREE.Uniform(0),
+  };
 
   public get positionTexture(): THREE.Texture {
     const renderTarget = this.computationRenderer.getCurrentRenderTarget(
@@ -128,20 +130,16 @@ class NetworkGPGPU implements Updatable, Destroyable {
       velocityVariable,
     ]);
 
-    // * Step 3.5: Add however many uniforms we want (non FBO ones)
-    const particlesUniforms: NetworkGPGPUParticlesUniforms = {
-      uTime: new THREE.Uniform(0),
-      uDeltaTime: new THREE.Uniform(0),
-    };
+    // * Step 3.5: Add however many uniforms we want (non FBO ones). uTime/uDeltaTime reused by reference, see sharedUniforms
+    const { sharedUniforms } = this;
     const velocityUniforms: NetworkGPGPUVelocityUniforms = {
-      uTime: new THREE.Uniform(0),
-      uDeltaTime: new THREE.Uniform(0),
+      ...sharedUniforms,
       uBoundary: new THREE.Uniform(boundary),
     };
 
     const particlesMaterial =
-      particlesVariable.material as TypedShaderMaterial<NetworkGPGPUParticlesUniforms>;
-    particlesMaterial.uniforms = particlesUniforms;
+      particlesVariable.material as TypedShaderMaterial<NetworkGPGPUSharedUniforms>;
+    particlesMaterial.uniforms = sharedUniforms;
 
     const velocityMaterial =
       velocityVariable.material as TypedShaderMaterial<NetworkGPGPUVelocityUniforms>;
@@ -152,8 +150,6 @@ class NetworkGPGPU implements Updatable, Destroyable {
 
     this.particlesVariable = particlesVariable;
     this.velocityVariable = velocityVariable;
-    this.particlesMaterial = particlesMaterial;
-    this.velocityMaterial = velocityMaterial;
   }
 
   /** Copies each particle's starting xyz into the texture's RGB, one texel per particle. */
@@ -225,13 +221,8 @@ class NetworkGPGPU implements Updatable, Destroyable {
   } = {}): void {
     this.computationRenderer.compute();
 
-    const { uniforms: particleUniforms } = this.particlesMaterial;
-    particleUniforms.uTime.value = elapsedSeconds;
-    particleUniforms.uDeltaTime.value = deltaTimeSeconds;
-
-    const { uniforms: velocityUniforms } = this.velocityMaterial;
-    velocityUniforms.uTime.value = elapsedSeconds;
-    velocityUniforms.uDeltaTime.value = deltaTimeSeconds;
+    this.sharedUniforms.uTime.value = elapsedSeconds;
+    this.sharedUniforms.uDeltaTime.value = deltaTimeSeconds;
   }
 
   public destroy(): void {
