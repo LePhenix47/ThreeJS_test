@@ -189,8 +189,8 @@ class NetworkLines implements Updatable, Destroyable {
     const { positionTexture, neighborsTexture, size } = this.gpGpu;
 
     const uniforms: NetworkLinesUniforms = {
-      uParticlesTexture: { value: positionTexture },
-      uNeighborsTexture: { value: neighborsTexture },
+      uParticlesTexture: new THREE.Uniform(positionTexture),
+      uNeighborsTexture: new THREE.Uniform(neighborsTexture),
       uGpgpuSize: new THREE.Uniform(size),
       uMaxDistance: new THREE.Uniform(maxDistance),
       uLineWidth: new THREE.Uniform(lineWidth),
