@@ -61,8 +61,8 @@ class Network implements Updatable, Destroyable {
     seedBoxVisible: false,
     debugPlaneVisible: false,
     debugPlaneSource: "position",
-    uMaxDistance: 5,
-    uBoundary: 4,
+    uMaxDistance: 1,
+    uBoundary: 5,
   };
   private guiRegistry: GUIStateRegistry<NetworkState> | null = null;
 
