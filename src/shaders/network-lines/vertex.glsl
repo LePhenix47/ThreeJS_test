@@ -17,19 +17,38 @@ vec2 indexToUv(float index, float size) {
     return (vec2(x, y) + 0.5) / size;
 }
 
+/** Looks up the particle at `neighborSlot` for the owner sitting at `ownerUv`, falling back to `ownerPosition` when that slot has no neighbor (-1.0 sentinel). */
+vec3 getNeighborPosition(
+    vec2 ownerUv,
+    vec3 ownerPosition,
+    float neighborSlot,
+    float gpgpuSize,
+    out bool hasNeighbor
+) {
+    vec4 neighbors = texture(uNeighborsTexture, ownerUv);
+    float neighborIndex = neighbors[int(neighborSlot)];
+    hasNeighbor = neighborIndex >= 0.0;
+
+    if(!hasNeighbor) {
+        return ownerPosition;
+    }
+
+    vec2 neighborUv = indexToUv(neighborIndex, gpgpuSize);
+    return texture(uParticlesTexture, neighborUv).xyz;
+}
+
 void main() {
     vec4 ownerParticle = texture(uParticlesTexture, aOwnerUv);
     vec3 ownerPosition = ownerParticle.xyz;
 
-    vec4 neighbors = texture(uNeighborsTexture, aOwnerUv);
-    float neighborIndex = neighbors[int(aNeighborSlot)];
-    bool hasNeighbor = neighborIndex >= 0.0;
-
-    vec3 neighborPosition = ownerPosition;
-    if(hasNeighbor) {
-        vec2 neighborUv = indexToUv(neighborIndex, uGpgpuSize);
-        neighborPosition = texture(uParticlesTexture, neighborUv).xyz;
-    }
+    bool hasNeighbor;
+    vec3 neighborPosition = getNeighborPosition(
+        aOwnerUv,
+        ownerPosition,
+        aNeighborSlot,
+        uGpgpuSize,
+        hasNeighbor
+    );
 
     // ? aEndpoint picks which end of the line this vertex is: 0.0 = the owner itself, 1.0 = its neighbor
     vec3 position = mix(ownerPosition, neighborPosition, aEndpoint);

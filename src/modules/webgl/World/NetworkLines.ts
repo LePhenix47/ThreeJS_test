@@ -33,6 +33,8 @@ class NetworkLines implements Updatable, Destroyable {
   public static readonly CONFIG = {
     /** How many of each particle's closest neighbors get a line. Matches neighbors.glsl's fixed K=4. */
     neighborCount: 4,
+    /** Every line has exactly 2 vertices: the owner particle, and the neighbor it connects to. */
+    verticesPerLine: 2,
     /** Distance past which a line's alpha fades to 0. Should stay <= the neighbor search's own cutoff in neighbors.glsl. */
     maxDistance: 5,
   } as const;
@@ -99,12 +101,11 @@ class NetworkLines implements Updatable, Destroyable {
     neighborSlotArray: Float32Array;
     endpointArray: Float32Array;
   } {
-    const { neighborCount } = NetworkLines.CONFIG;
+    const { neighborCount, verticesPerLine } = NetworkLines.CONFIG;
     const { size } = this.gpGpu;
     const { particleCount } = this;
 
-    const verticesPerParticle = neighborCount * 2;
-    const vertexCount = particleCount * verticesPerParticle;
+    const vertexCount = particleCount * neighborCount * verticesPerLine;
 
     const uvStride: number = Enum.length(UvEnum);
     const ownerUvArray = new Float32Array(vertexCount * uvStride);
@@ -112,18 +113,23 @@ class NetworkLines implements Updatable, Destroyable {
     const endpointArray = new Float32Array(vertexCount);
 
     let vertex = 0;
-    for (let i = 0; i < particleCount; i++) {
-      const ownerU: number = ((i % size) + 0.5) / size;
-      const ownerV: number = (Math.floor(i / size) + 0.5) / size;
 
-      for (let slot = 0; slot < neighborCount; slot++) {
-        for (let endpoint = 0; endpoint < 2; endpoint++) {
+    for (let particleIndex = 0; particleIndex < particleCount; particleIndex++) {
+      const { u, v } = this.particleIndexToUv(particleIndex, size);
+
+      for (let neighborSlot = 0; neighborSlot < neighborCount; neighborSlot++) {
+        // ? Each line needs 2 vertices: endpoint 0 = the owner particle itself, endpoint 1 = its neighbor at this slot
+        for (
+          let endpointIndex = 0;
+          endpointIndex < verticesPerLine;
+          endpointIndex++
+        ) {
           const i2: number = vertex * uvStride;
 
-          ownerUvArray[i2 + UvEnum.S] = ownerU;
-          ownerUvArray[i2 + UvEnum.T] = ownerV;
-          neighborSlotArray[vertex] = slot;
-          endpointArray[vertex] = endpoint;
+          ownerUvArray[i2 + UvEnum.S] = u;
+          ownerUvArray[i2 + UvEnum.T] = v;
+          neighborSlotArray[vertex] = neighborSlot;
+          endpointArray[vertex] = endpointIndex;
 
           vertex++;
         }
@@ -131,6 +137,17 @@ class NetworkLines implements Updatable, Destroyable {
     }
 
     return { ownerUvArray, neighborSlotArray, endpointArray };
+  }
+
+  /** Converts a flat particle index into the GPGPU texture's UV. Mirrors indexToUv in the lines vertex shader. */
+  private particleIndexToUv(
+    index: number,
+    size: number,
+  ): { u: number; v: number } {
+    const u: number = ((index % size) + 0.5) / size;
+    const v: number = (Math.floor(index / size) + 0.5) / size;
+
+    return { u, v };
   }
 
   private setMaterial(): void {
