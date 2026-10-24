@@ -13,6 +13,7 @@ type NetworkState = {
   debugPlaneVisible: boolean;
   debugPlaneSource: "position" | "velocity";
   uMaxDistance: number;
+  uBoundary: number;
 };
 
 /**
@@ -62,6 +63,7 @@ class Network implements Updatable, Destroyable {
     debugPlaneVisible: false,
     debugPlaneSource: "position",
     uMaxDistance: 5,
+    uBoundary: Network.CONFIG.seedBox.size / 2,
   };
   private guiRegistry: GUIStateRegistry<NetworkState> | null = null;
 
@@ -135,13 +137,12 @@ class Network implements Updatable, Destroyable {
 
   /** Builds the `GPUComputationRenderer` from the seed box's vertex positions. */
   private setGPGPU(): void {
-    const { uMaxDistance } = this.DEBUG_DEFAULTS;
-    const { size: boxSize } = Network.CONFIG.seedBox;
+    const { uMaxDistance, uBoundary } = this.DEBUG_DEFAULTS;
 
     this.gpGpu = new NetworkGPGPU({
       renderer: this.renderer.instance,
       positions: this.getSeedPositionAttribute(),
-      boundary: boxSize / 2,
+      boundary: uBoundary,
       maxDistance: uMaxDistance,
     });
   }
@@ -233,6 +234,22 @@ class Network implements Updatable, Destroyable {
     registry.bind("uMaxDistance", (v) => {
       this.gpGpu.setMaxDistance(v);
       this.lines.setMaxDistance(v);
+    });
+
+    networkFolder
+      .add(state, "uBoundary")
+      .min(0)
+      .max(10)
+      .step(0.001)
+      .name("Boundary");
+    registry.bind("uBoundary", (v) => {
+      this.gpGpu.setBoundary(v);
+
+      // ? The wireframe's geometry stays fixed (seed data isn't rebuilt), rescale it visually so it keeps matching the live boundary
+      if (!this.seedBoxMesh) return;
+      const { size } = Network.CONFIG.seedBox;
+      const boundarySize: number = size / 2;
+      this.seedBoxMesh.scale.setScalar(v / boundarySize);
     });
   }
 

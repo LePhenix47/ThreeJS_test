@@ -58,6 +58,7 @@ class NetworkGPGPU implements Updatable, Destroyable {
   private computationRenderer: GPUComputationRenderer;
   private particlesVariable: Variable;
   private velocityVariable: Variable;
+  private velocityMaterial: TypedShaderMaterial<NetworkGPGPUVelocityUniforms>;
   private neighborsVariable: Variable;
   private neighborsMaterial: TypedShaderMaterial<NetworkGPGPUNeighborsUniforms>;
 
@@ -198,6 +199,7 @@ class NetworkGPGPU implements Updatable, Destroyable {
 
     this.particlesVariable = particlesVariable;
     this.velocityVariable = velocityVariable;
+    this.velocityMaterial = velocityMaterial;
     this.neighborsVariable = neighborsVariable;
     this.neighborsMaterial = neighborsMaterial;
   }
@@ -205,6 +207,11 @@ class NetworkGPGPU implements Updatable, Destroyable {
   /** Live-updates the neighbor search's distance cutoff, e.g. from a GUI change. */
   public setMaxDistance(value: number): void {
     this.neighborsMaterial.uniforms.uMaxDistance.value = value;
+  }
+
+  /** Live-updates the bounce boundary, e.g. from a GUI change. */
+  public setBoundary(value: number): void {
+    this.velocityMaterial.uniforms.uBoundary.value = value;
   }
 
   /** Copies each particle's starting xyz into the texture's RGB, one texel per particle. */
