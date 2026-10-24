@@ -12,6 +12,7 @@ type NetworkState = {
   seedBoxVisible: boolean;
   debugPlaneVisible: boolean;
   debugPlaneSource: "position" | "velocity";
+  uMaxDistance: number;
 };
 
 /**
@@ -60,6 +61,7 @@ class Network implements Updatable, Destroyable {
     seedBoxVisible: false,
     debugPlaneVisible: false,
     debugPlaneSource: "position",
+    uMaxDistance: 5,
   };
   private guiRegistry: GUIStateRegistry<NetworkState> | null = null;
 
@@ -88,9 +90,14 @@ class Network implements Updatable, Destroyable {
 
     const { gpGpu } = this;
     const { count: particleCount } = this.getSeedPositionAttribute();
+    const { uMaxDistance } = this.DEBUG_DEFAULTS;
 
     this.particles = new NetworkParticles({ gpGpu, particleCount });
-    this.lines = new NetworkLines({ gpGpu, particleCount });
+    this.lines = new NetworkLines({
+      gpGpu,
+      particleCount,
+      maxDistance: uMaxDistance,
+    });
 
     if (this.debug?.isActive) {
       this.addSeedBoxMesh();
@@ -128,12 +135,14 @@ class Network implements Updatable, Destroyable {
 
   /** Builds the `GPUComputationRenderer` from the seed box's vertex positions. */
   private setGPGPU(): void {
-    const { size } = Network.CONFIG.seedBox;
+    const { uMaxDistance } = this.DEBUG_DEFAULTS;
+    const { size: boxSize } = Network.CONFIG.seedBox;
 
     this.gpGpu = new NetworkGPGPU({
       renderer: this.renderer.instance,
       positions: this.getSeedPositionAttribute(),
-      boundary: size / 2,
+      boundary: boxSize / 2,
+      maxDistance: uMaxDistance,
     });
   }
 
@@ -214,6 +223,17 @@ class Network implements Updatable, Destroyable {
     networkFolder
       .add(state, "debugPlaneSource", ["position", "velocity"])
       .name("GPGPU debug source");
+
+    networkFolder
+      .add(state, "uMaxDistance")
+      .min(0)
+      .max(10)
+      .step(0.001)
+      .name("Max neighbor distance");
+    registry.bind("uMaxDistance", (v) => {
+      this.gpGpu.setMaxDistance(v);
+      this.lines.setMaxDistance(v);
+    });
   }
 
   public update(): void {

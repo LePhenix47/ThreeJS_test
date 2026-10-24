@@ -20,6 +20,8 @@ export type NetworkGPGPUConstructor = {
   positions: THREE.BufferAttribute;
   /** Half-extent of the cube particles bounce inside, same on every axis. */
   boundary: number;
+  /** Distance past which a candidate is no longer considered a neighbor. Shared with NetworkLines's own line-fade cutoff. */
+  maxDistance: number;
 };
 
 /** Written once per frame in `update()`, shared by reference across both compute materials. */
@@ -34,6 +36,8 @@ type NetworkGPGPUVelocityUniforms = NetworkGPGPUSharedUniforms &
 type NetworkGPGPUNeighborsUniforms = MapAsUniforms<{
   /** Real particle count, size*size always rounds up past it. Candidates past this index are unseeded padding texels, not real particles. */
   uParticleCount: number;
+  /** Distance past which a candidate is no longer considered a neighbor. */
+  uMaxDistance: number;
 }>;
 
 /**
@@ -55,6 +59,7 @@ class NetworkGPGPU implements Updatable, Destroyable {
   private particlesVariable: Variable;
   private velocityVariable: Variable;
   private neighborsVariable: Variable;
+  private neighborsMaterial: TypedShaderMaterial<NetworkGPGPUNeighborsUniforms>;
 
   /** `uTime`/`uDeltaTime`, shared by reference across both compute materials — written once in `update()`. */
   private readonly sharedUniforms: NetworkGPGPUSharedUniforms = {
@@ -86,11 +91,16 @@ class NetworkGPGPU implements Updatable, Destroyable {
     return renderTarget.texture;
   }
 
-  constructor({ renderer, positions, boundary }: NetworkGPGPUConstructor) {
+  constructor({
+    renderer,
+    positions,
+    boundary,
+    maxDistance,
+  }: NetworkGPGPUConstructor) {
     this.size = this.computeSize(positions.count);
 
     this.setComputationRenderer(renderer);
-    this.setVariables(positions, boundary);
+    this.setVariables(positions, boundary, maxDistance);
   }
 
   /** Side length of the smallest square texture that fits `count` particles, one per texel. */
@@ -113,6 +123,7 @@ class NetworkGPGPU implements Updatable, Destroyable {
   private setVariables(
     positions: THREE.BufferAttribute,
     boundary: number,
+    maxDistance: number,
   ): void {
     // * Step 1: We create the base textures
     const basePositionTexture: THREE.DataTexture =
@@ -175,6 +186,7 @@ class NetworkGPGPU implements Updatable, Destroyable {
 
     const neighborsUniforms: NetworkGPGPUNeighborsUniforms = {
       uParticleCount: new THREE.Uniform(positions.count),
+      uMaxDistance: new THREE.Uniform(maxDistance),
     };
 
     const neighborsMaterial =
@@ -187,6 +199,12 @@ class NetworkGPGPU implements Updatable, Destroyable {
     this.particlesVariable = particlesVariable;
     this.velocityVariable = velocityVariable;
     this.neighborsVariable = neighborsVariable;
+    this.neighborsMaterial = neighborsMaterial;
+  }
+
+  /** Live-updates the neighbor search's distance cutoff, e.g. from a GUI change. */
+  public setMaxDistance(value: number): void {
+    this.neighborsMaterial.uniforms.uMaxDistance.value = value;
   }
 
   /** Copies each particle's starting xyz into the texture's RGB, one texel per particle. */

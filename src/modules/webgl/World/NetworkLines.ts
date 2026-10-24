@@ -17,6 +17,8 @@ export type NetworkLinesConstructor = {
   /** Shared with `NetworkParticles`, owned by `Network`. Read from here, never disposed. */
   gpGpu: NetworkGPGPU;
   particleCount: number;
+  /** Distance past which a line's alpha fades to 0. Shared with NetworkGPGPU's own neighbor-search cutoff. */
+  maxDistance: number;
 };
 
 type NetworkLinesUniforms = MapAsUniforms<{
@@ -36,13 +38,12 @@ class NetworkLines implements Updatable, Destroyable {
     neighborCount: 4,
     /** Every line has exactly 2 vertices: the owner particle, and the neighbor it connects to. */
     verticesPerLine: 2,
-    /** Distance past which a line's alpha fades to 0. Should stay <= the neighbor search's own cutoff in neighbors.glsl. */
-    maxDistance: 5,
   } as const;
 
   private readonly experience: Experience | null;
   private readonly gpGpu: NetworkGPGPU;
   private readonly particleCount: number;
+  private readonly maxDistance: number;
 
   private geometry: TypedBufferGeometry<NetworkLinesAttributes>;
   private material: TypedShaderMaterial<NetworkLinesUniforms>;
@@ -52,12 +53,17 @@ class NetworkLines implements Updatable, Destroyable {
     return this.experience!.scene;
   }
 
-  constructor({ gpGpu, particleCount }: NetworkLinesConstructor) {
+  constructor({
+    gpGpu,
+    particleCount,
+    maxDistance,
+  }: NetworkLinesConstructor) {
     if (!Experience.instance) throw new Error("Experience instance not found");
     this.experience = Experience.instance;
 
     this.gpGpu = gpGpu;
     this.particleCount = particleCount;
+    this.maxDistance = maxDistance;
 
     this.setGeometry();
     this.setMaterial();
@@ -162,7 +168,7 @@ class NetworkLines implements Updatable, Destroyable {
   }
 
   private setMaterial(): void {
-    const { maxDistance } = NetworkLines.CONFIG;
+    const { maxDistance } = this;
     const { positionTexture, neighborsTexture, size } = this.gpGpu;
 
     const uniforms: NetworkLinesUniforms = {
@@ -184,6 +190,11 @@ class NetworkLines implements Updatable, Destroyable {
 
   private setLines(): void {
     this.lines = new THREE.LineSegments(this.geometry, this.material);
+  }
+
+  /** Live-updates the line fade distance, e.g. from a GUI change. */
+  public setMaxDistance(value: number): void {
+    this.material.uniforms.uMaxDistance.value = value;
   }
 
   public update(): void {

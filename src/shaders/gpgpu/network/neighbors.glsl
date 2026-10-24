@@ -1,6 +1,7 @@
 // TODO: Update to able to choose more than 4 candidates
 
 uniform float uParticleCount;
+uniform float uMaxDistance;
 
 float computeIndex(int x, int y, int size) {
     return float(y * size + x);
@@ -68,8 +69,7 @@ void findBestCandidates(
 
             vec4 candidate = sampleCandidate(x, y);
             float candidateDist = distance(position, candidate.xyz);
-            // TODO: Set min size as non-FBO uniform
-            if(candidateDist > 5.0)
+            if(candidateDist > uMaxDistance)
                 continue;
 
             insertCandidate(bestDistances, bestIndices, candidateDist, candidateIndex);
