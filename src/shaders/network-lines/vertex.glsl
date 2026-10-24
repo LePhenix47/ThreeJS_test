@@ -1,3 +1,5 @@
+#include ../utils/vectors/direction
+
 uniform sampler2D uParticlesTexture;
 uniform sampler2D uNeighborsTexture;
 uniform float uGpgpuSize;
@@ -61,7 +63,7 @@ vec4 getQuadPosition(
     // ? No neighbor: both views are identical, direction would be normalize(0,0) = NaN, skip it entirely
     vec2 lineDirection = vec2(0.0);
     if(hasNeighbor) {
-        lineDirection = normalize(neighborView.xy - ownerView.xy);
+        lineDirection = direction(ownerView.xy, neighborView.xy);
     }
 
     // * Perpendicular to the line's view-space direction: (dx,dy) -> (-dy,dx) is a fixed 90° rotation
