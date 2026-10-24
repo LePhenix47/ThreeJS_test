@@ -189,7 +189,11 @@ class NetworkLines implements Updatable, Destroyable {
   }
 
   private setLines(): void {
-    this.lines = new THREE.LineSegments(this.geometry, this.material);
+    const lines = new THREE.LineSegments(this.geometry, this.material);
+    // ? Same reasoning as NetworkParticles: no "position" attribute, no real bounding sphere, disable culling
+    lines.frustumCulled = false;
+
+    this.lines = lines;
   }
 
   /** Live-updates the line fade distance, e.g. from a GUI change. */

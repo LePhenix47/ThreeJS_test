@@ -140,7 +140,13 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
   }
 
   protected setPoints(): void {
-    this.points = new THREE.Points(this.geometry, this.material);
+    const points = new THREE.Points(this.geometry, this.material);
+    // ? No "position" attribute on this geometry (positions come from the GPGPU texture in-shader), so
+    // ? Three.js can't compute a real bounding sphere, it'd default to zero-radius at local origin and
+    // ? cull the whole object the moment that one point leaves the frustum, even with particles still visible
+    points.frustumCulled = false;
+
+    this.points = points;
   }
 
   private onResize = (): void => {
