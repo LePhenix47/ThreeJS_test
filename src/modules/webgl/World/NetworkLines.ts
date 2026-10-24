@@ -1,14 +1,16 @@
 import * as THREE from "three";
+import type GUI from "lil-gui";
+import type { Controller } from "lil-gui";
 import Experience, {
   Destroyable,
   Updatable,
 } from "@modules/webgl/Experience/Experience";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
 import { MapAsAttributes, TypedBufferGeometry } from "./types/attributes";
+import GUIStateRegistry from "@utils/classes/gui-state-registry";
 import { UvEnum } from "@utils/enums/space-color";
 import Enum from "@utils/enums";
 import NetworkGPGPU from "./NetworkGPGPU";
-import type NetworkParticles from "./NetworkParticles";
 
 import vertexShader from "@shaders/network-lines/vertex.glsl";
 import fragmentShader from "@shaders/network-lines/fragment.glsl";
@@ -19,8 +21,12 @@ export type NetworkLinesConstructor = {
   particleCount: number;
   /** Distance past which a line's alpha fades to 0. Shared with NetworkGPGPU's own neighbor-search cutoff. */
   maxDistance: number;
-  /** World-space thickness of each line. */
-  lineWidth: number;
+  /** Shared GUI folder from `Network`, this builds its own child folder under it. Null when debug tools are off. */
+  parentFolder: GUI | null;
+};
+
+type NetworkLinesState = {
+  uLineWidth: number;
 };
 
 type NetworkLinesUniforms = MapAsUniforms<{
@@ -28,7 +34,7 @@ type NetworkLinesUniforms = MapAsUniforms<{
   uNeighborsTexture: THREE.Texture;
   uGpgpuSize: number;
   uMaxDistance: number;
-  uLineWidth: number;
+  uLineWidth: NetworkLinesState["uLineWidth"];
 }>;
 
 type NetworkLinesAttributes = MapAsAttributes<
@@ -40,6 +46,7 @@ type QuadCorner = { endpoint: number; side: number };
 
 class NetworkLines implements Updatable, Destroyable {
   public static readonly CONFIG = {
+    guiKey: "network-lines-gui-state",
     /** How many of each particle's closest neighbors get a line. Matches neighbors.glsl's fixed K=4. */
     neighborCount: 4,
   } as const;
@@ -58,11 +65,18 @@ class NetworkLines implements Updatable, Destroyable {
   private readonly gpGpu: NetworkGPGPU;
   private readonly particleCount: number;
   private readonly maxDistance: number;
-  private readonly lineWidth: number;
+  private readonly parentFolder: GUI | null;
 
   private geometry: TypedBufferGeometry<NetworkLinesAttributes>;
   private material: TypedShaderMaterial<NetworkLinesUniforms>;
   private lines: THREE.Mesh;
+
+  private readonly DEBUG_DEFAULTS: NetworkLinesState = {
+    uLineWidth: 0.03,
+  };
+  private guiRegistry: GUIStateRegistry<NetworkLinesState> | null = null;
+  /** Line width GUI slider, its max is kept capped to the sibling `Particles` folder's `uSize`. */
+  private lineWidthController: Controller | null = null;
 
   private get scene() {
     return this.experience!.scene;
@@ -72,7 +86,7 @@ class NetworkLines implements Updatable, Destroyable {
     gpGpu,
     particleCount,
     maxDistance,
-    lineWidth,
+    parentFolder,
   }: NetworkLinesConstructor) {
     if (!Experience.instance) throw new Error("Experience instance not found");
     this.experience = Experience.instance;
@@ -80,13 +94,17 @@ class NetworkLines implements Updatable, Destroyable {
     this.gpGpu = gpGpu;
     this.particleCount = particleCount;
     this.maxDistance = maxDistance;
-    this.lineWidth = lineWidth;
+    this.parentFolder = parentFolder;
 
     this.setGeometry();
     this.setMaterial();
     this.setLines();
 
     this.scene.add(this.lines);
+
+    if (this.parentFolder) {
+      this.addDebugFolders();
+    }
 
     console.log("NetworkLines");
   }
@@ -185,7 +203,8 @@ class NetworkLines implements Updatable, Destroyable {
   }
 
   private setMaterial(): void {
-    const { maxDistance, lineWidth } = this;
+    const { maxDistance } = this;
+    const { uLineWidth } = this.DEBUG_DEFAULTS;
     const { positionTexture, neighborsTexture, size } = this.gpGpu;
 
     const uniforms: NetworkLinesUniforms = {
@@ -193,7 +212,7 @@ class NetworkLines implements Updatable, Destroyable {
       uNeighborsTexture: new THREE.Uniform(neighborsTexture),
       uGpgpuSize: new THREE.Uniform(size),
       uMaxDistance: new THREE.Uniform(maxDistance),
-      uLineWidth: new THREE.Uniform(lineWidth),
+      uLineWidth: new THREE.Uniform(uLineWidth),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -226,6 +245,73 @@ class NetworkLines implements Updatable, Destroyable {
   /** Live-updates the line thickness, e.g. from a GUI change. */
   public setLineWidth(value: number): void {
     this.material.uniforms.uLineWidth.value = value;
+  }
+
+  private addDebugFolders(): void {
+    if (!this.parentFolder) return;
+
+    const { guiKey } = NetworkLines.CONFIG;
+    const registry = new GUIStateRegistry<NetworkLinesState>(
+      guiKey,
+      this.DEBUG_DEFAULTS,
+    );
+    this.guiRegistry = registry;
+
+    const { state } = registry;
+    const linesFolder = this.parentFolder.addFolder("Lines");
+
+    this.lineWidthController = linesFolder
+      .add(state, "uLineWidth")
+      .min(0.001)
+      .max(0.5)
+      .step(0.001);
+    registry.bind("uLineWidth", (v) => {
+      this.setLineWidth(v);
+    });
+
+    this.syncLineWidthMax();
+  }
+
+  /**
+   * ! Finds the sibling `Particles` folder's `uSize` controller by scanning `parentFolder.folders`
+   * ! for a controller whose `property` is `"uSize"`. Not a typed cross-class reference, relies on
+   * ! lil-gui's internal folder/controller arrays and a string property match. Breaks silently if
+   * ! `NetworkParticles` renames its folder or its `uSize` state key. Fine for this debug-only cap.
+   */
+  private findParticleSizeController(): Controller | null {
+    if (!this.parentFolder) return null;
+
+    for (const folder of this.parentFolder.folders) {
+      const found = folder.controllers.find(
+        (c: Controller) => c.property === "uSize",
+      );
+      if (found) return found;
+    }
+
+    return null;
+  }
+
+  /** Caps the line width slider's max to the particles' current `uSize`, so a line can never visually outgrow a particle. */
+  private syncLineWidthMax(): void {
+    const sizeController = this.findParticleSizeController();
+    if (!sizeController) return;
+
+    const applyMax = (size: number): void => {
+      const { lineWidthController, guiRegistry } = this;
+      if (!lineWidthController) return;
+
+      lineWidthController.max(size);
+
+      if (!guiRegistry) return;
+      const { state } = guiRegistry;
+      if (state.uLineWidth <= size) return;
+
+      lineWidthController.setValue(size);
+    };
+
+    const initialSize: number = sizeController.getValue();
+    applyMax(initialSize);
+    sizeController.onChange(applyMax);
   }
 
   public update(): void {

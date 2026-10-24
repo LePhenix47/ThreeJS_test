@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import type GUI from "lil-gui";
 import Experience, {
   Destroyable,
   Updatable,
@@ -14,7 +15,6 @@ type NetworkState = {
   debugPlaneSource: "position" | "velocity" | "neighbors";
   uMaxDistance: number;
   uBoundary: number;
-  uLineWidth: number;
 };
 
 /**
@@ -65,7 +65,6 @@ class Network implements Updatable, Destroyable {
     debugPlaneSource: "position",
     uMaxDistance: 5,
     uBoundary: Network.CONFIG.seedBox.size / 2,
-    uLineWidth: 0.03,
   };
   private guiRegistry: GUIStateRegistry<NetworkState> | null = null;
 
@@ -94,20 +93,25 @@ class Network implements Updatable, Destroyable {
 
     const { gpGpu } = this;
     const { count: particleCount } = this.getSeedPositionAttribute();
-    const { uMaxDistance, uLineWidth } = this.DEBUG_DEFAULTS;
+    const { uMaxDistance } = this.DEBUG_DEFAULTS;
 
-    this.particles = new NetworkParticles({ gpGpu, particleCount });
+    const isDebugActive: boolean = this.debug?.isActive ?? false;
+    const parentFolder = isDebugActive
+      ? this.debug.gui.addFolder("Network")
+      : null;
+
+    this.particles = new NetworkParticles({ gpGpu, particleCount, parentFolder });
     this.lines = new NetworkLines({
       gpGpu,
       particleCount,
       maxDistance: uMaxDistance,
-      lineWidth: uLineWidth,
+      parentFolder,
     });
 
-    if (this.debug?.isActive) {
+    if (isDebugActive) {
       this.addSeedBoxMesh();
       this.addDebugPlane();
-      this.addDebugFolders();
+      this.addDebugFolders(parentFolder!);
     }
 
     console.log("Network");
@@ -197,7 +201,7 @@ class Network implements Updatable, Destroyable {
     this.debugPlane = debugPlane;
   }
 
-  private addDebugFolders(): void {
+  private addDebugFolders(networkFolder: GUI): void {
     const { guiKey } = Network.CONFIG;
     const registry = new GUIStateRegistry<NetworkState>(
       guiKey,
@@ -206,9 +210,6 @@ class Network implements Updatable, Destroyable {
     this.guiRegistry = registry;
 
     const { state } = registry;
-    const { gui } = this.debug;
-
-    const networkFolder = gui.addFolder("Network");
 
     networkFolder.add(state, "seedBoxVisible").name("Show seed box");
     registry.bind("seedBoxVisible", (v) => {
@@ -255,15 +256,6 @@ class Network implements Updatable, Destroyable {
       this.seedBoxMesh.scale.setScalar(v / boundarySize);
     });
 
-    networkFolder
-      .add(state, "uLineWidth")
-      .min(0.001)
-      .max(0.5)
-      .step(0.001)
-      .name("Line width");
-    registry.bind("uLineWidth", (v) => {
-      this.lines.setLineWidth(v);
-    });
   }
 
   public update(): void {

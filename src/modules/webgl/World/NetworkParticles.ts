@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import type GUI from "lil-gui";
 import Experience, {
   Destroyable,
   Updatable,
@@ -18,6 +19,8 @@ export type NetworkParticlesConstructor = {
   /** Shared with `NetworkLines`, owned by `Network`. Read from here, never disposed. */
   gpGpu: NetworkGPGPU;
   particleCount: number;
+  /** Shared GUI folder from `Network`, this builds its own child folder under it. Null when debug tools are off. */
+  parentFolder: GUI | null;
 };
 
 type NetworkParticlesState = {
@@ -40,6 +43,7 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   private readonly gpGpu: NetworkGPGPU;
   private readonly particleCount: number;
+  private readonly parentFolder: GUI | null;
 
   protected geometry: TypedBufferGeometry<NetworkParticlesAttributes>;
   protected material: TypedShaderMaterial<NetworkParticlesUniforms>;
@@ -59,11 +63,11 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     return this.experience!.sizes;
   }
 
-  private get debug() {
-    return this.experience!.debug;
-  }
-
-  constructor({ gpGpu, particleCount }: NetworkParticlesConstructor) {
+  constructor({
+    gpGpu,
+    particleCount,
+    parentFolder,
+  }: NetworkParticlesConstructor) {
     super();
 
     if (!Experience.instance) throw new Error("Experience instance not found");
@@ -71,6 +75,7 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
 
     this.gpGpu = gpGpu;
     this.particleCount = particleCount;
+    this.parentFolder = parentFolder;
 
     this.setGeometry();
     this.setMaterial();
@@ -80,7 +85,7 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
 
     this.sizes.on("resize", this.onResize);
 
-    if (this.debug?.isActive) {
+    if (this.parentFolder) {
       this.addDebugFolders();
     }
 
@@ -164,9 +169,9 @@ class NetworkParticles extends PointsEntity implements Updatable, Destroyable {
     this.guiRegistry = registry;
 
     const { state } = registry;
-    const { gui } = this.debug;
 
-    const particlesFolder = gui.addFolder("NetworkParticles");
+    if (!this.parentFolder) return;
+    const particlesFolder = this.parentFolder.addFolder("Particles");
 
     particlesFolder.add(state, "uSize").min(0).max(1).step(0.001);
     registry.bind("uSize", (v) => {
