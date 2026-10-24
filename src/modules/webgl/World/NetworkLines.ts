@@ -114,40 +114,43 @@ class NetworkLines implements Updatable, Destroyable {
 
     let vertex = 0;
 
-    for (let particleIndex = 0; particleIndex < particleCount; particleIndex++) {
-      const { u, v } = this.particleIndexToUv(particleIndex, size);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const particleIndex: number = y * size + x;
 
-      for (let neighborSlot = 0; neighborSlot < neighborCount; neighborSlot++) {
-        // ? Each line needs 2 vertices: endpoint 0 = the owner particle itself, endpoint 1 = its neighbor at this slot
+        // ? particleIndex only increases from here (row-major order), so once padding starts every
+        // ? remaining x this row and every later row is padding too, break not continue. size*size
+        // ? always rounds up past the real particle count, the leftover texels are never real particles
+        if (particleIndex >= particleCount) break;
+
+        const ownerU: number = (x + 0.5) / size;
+        const ownerV: number = (y + 0.5) / size;
+
         for (
-          let endpointIndex = 0;
-          endpointIndex < verticesPerLine;
-          endpointIndex++
+          let neighborSlot = 0;
+          neighborSlot < neighborCount;
+          neighborSlot++
         ) {
-          const i2: number = vertex * uvStride;
+          // ? Each line needs 2 vertices: endpoint 0 = the owner particle itself, endpoint 1 = its neighbor at this slot
+          for (
+            let endpointIndex = 0;
+            endpointIndex < verticesPerLine;
+            endpointIndex++
+          ) {
+            const i2: number = vertex * uvStride;
 
-          ownerUvArray[i2 + UvEnum.S] = u;
-          ownerUvArray[i2 + UvEnum.T] = v;
-          neighborSlotArray[vertex] = neighborSlot;
-          endpointArray[vertex] = endpointIndex;
+            ownerUvArray[i2 + UvEnum.S] = ownerU;
+            ownerUvArray[i2 + UvEnum.T] = ownerV;
+            neighborSlotArray[vertex] = neighborSlot;
+            endpointArray[vertex] = endpointIndex;
 
-          vertex++;
+            vertex++;
+          }
         }
       }
     }
 
     return { ownerUvArray, neighborSlotArray, endpointArray };
-  }
-
-  /** Converts a flat particle index into the GPGPU texture's UV. Mirrors indexToUv in the lines vertex shader. */
-  private particleIndexToUv(
-    index: number,
-    size: number,
-  ): { u: number; v: number } {
-    const u: number = ((index % size) + 0.5) / size;
-    const v: number = (Math.floor(index / size) + 0.5) / size;
-
-    return { u, v };
   }
 
   private setMaterial(): void {
