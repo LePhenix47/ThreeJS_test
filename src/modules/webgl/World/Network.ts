@@ -11,7 +11,7 @@ import NetworkLines from "./NetworkLines";
 type NetworkState = {
   seedBoxVisible: boolean;
   debugPlaneVisible: boolean;
-  debugPlaneSource: "position" | "velocity";
+  debugPlaneSource: "position" | "velocity" | "neighbors";
   uMaxDistance: number;
   uBoundary: number;
 };
@@ -222,7 +222,7 @@ class Network implements Updatable, Destroyable {
     });
 
     networkFolder
-      .add(state, "debugPlaneSource", ["position", "velocity"])
+      .add(state, "debugPlaneSource", ["position", "velocity", "neighbors"])
       .name("GPGPU debug source");
 
     networkFolder
@@ -268,9 +268,14 @@ class Network implements Updatable, Destroyable {
 
     const { debugPlaneSource } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
 
-    const { positionTexture, velocityTexture } = this.gpGpu;
-    this.debugPlane.material.map =
-      debugPlaneSource === "velocity" ? velocityTexture : positionTexture;
+    const { positionTexture, velocityTexture, neighborsTexture } = this.gpGpu;
+    const debugPlaneMap: Record<typeof debugPlaneSource, THREE.Texture> = {
+      position: positionTexture,
+      velocity: velocityTexture,
+      neighbors: neighborsTexture,
+    };
+
+    this.debugPlane.material.map = debugPlaneMap[debugPlaneSource];
   }
 
   private destroySeedBoxMesh(): void {
