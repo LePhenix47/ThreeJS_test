@@ -14,6 +14,7 @@ type NetworkState = {
   debugPlaneSource: "position" | "velocity" | "neighbors";
   uMaxDistance: number;
   uBoundary: number;
+  uLineWidth: number;
 };
 
 /**
@@ -64,6 +65,7 @@ class Network implements Updatable, Destroyable {
     debugPlaneSource: "position",
     uMaxDistance: 5,
     uBoundary: Network.CONFIG.seedBox.size / 2,
+    uLineWidth: 0.03,
   };
   private guiRegistry: GUIStateRegistry<NetworkState> | null = null;
 
@@ -92,13 +94,14 @@ class Network implements Updatable, Destroyable {
 
     const { gpGpu } = this;
     const { count: particleCount } = this.getSeedPositionAttribute();
-    const { uMaxDistance } = this.DEBUG_DEFAULTS;
+    const { uMaxDistance, uLineWidth } = this.DEBUG_DEFAULTS;
 
     this.particles = new NetworkParticles({ gpGpu, particleCount });
     this.lines = new NetworkLines({
       gpGpu,
       particleCount,
       maxDistance: uMaxDistance,
+      lineWidth: uLineWidth,
     });
 
     if (this.debug?.isActive) {
@@ -250,6 +253,16 @@ class Network implements Updatable, Destroyable {
       const { size } = Network.CONFIG.seedBox;
       const boundarySize: number = size / 2;
       this.seedBoxMesh.scale.setScalar(v / boundarySize);
+    });
+
+    networkFolder
+      .add(state, "uLineWidth")
+      .min(0.001)
+      .max(0.5)
+      .step(0.001)
+      .name("Line width");
+    registry.bind("uLineWidth", (v) => {
+      this.lines.setLineWidth(v);
     });
   }
 

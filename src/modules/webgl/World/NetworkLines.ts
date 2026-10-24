@@ -19,6 +19,8 @@ export type NetworkLinesConstructor = {
   particleCount: number;
   /** Distance past which a line's alpha fades to 0. Shared with NetworkGPGPU's own neighbor-search cutoff. */
   maxDistance: number;
+  /** World-space thickness of each line. */
+  lineWidth: number;
 };
 
 type NetworkLinesUniforms = MapAsUniforms<{
@@ -26,28 +28,41 @@ type NetworkLinesUniforms = MapAsUniforms<{
   uNeighborsTexture: THREE.Texture;
   uGpgpuSize: number;
   uMaxDistance: number;
+  uLineWidth: number;
 }>;
 
 type NetworkLinesAttributes = MapAsAttributes<
-  "aOwnerUv" | "aNeighborSlot" | "aEndpoint"
+  "aOwnerUv" | "aNeighborSlot" | "aEndpoint" | "aSide"
 >;
+
+/** One corner of a line's quad: which endpoint it's near, and which edge (side) of the quad it is. */
+type QuadCorner = { endpoint: number; side: number };
 
 class NetworkLines implements Updatable, Destroyable {
   public static readonly CONFIG = {
     /** How many of each particle's closest neighbors get a line. Matches neighbors.glsl's fixed K=4. */
     neighborCount: 4,
-    /** Every line has exactly 2 vertices: the owner particle, and the neighbor it connects to. */
-    verticesPerLine: 2,
   } as const;
+
+  /** Each line's quad as 2 non-indexed triangles: (0,1,2) and (3,4,5), 6 vertices, endpoint 0 = owner, 1 = neighbor. */
+  private static readonly QUAD_CORNERS: readonly QuadCorner[] = [
+    { endpoint: 0, side: -1 },
+    { endpoint: 0, side: 1 },
+    { endpoint: 1, side: -1 },
+    { endpoint: 0, side: 1 },
+    { endpoint: 1, side: 1 },
+    { endpoint: 1, side: -1 },
+  ];
 
   private readonly experience: Experience | null;
   private readonly gpGpu: NetworkGPGPU;
   private readonly particleCount: number;
   private readonly maxDistance: number;
+  private readonly lineWidth: number;
 
   private geometry: TypedBufferGeometry<NetworkLinesAttributes>;
   private material: TypedShaderMaterial<NetworkLinesUniforms>;
-  private lines: THREE.LineSegments;
+  private lines: THREE.Mesh;
 
   private get scene() {
     return this.experience!.scene;
@@ -57,6 +72,7 @@ class NetworkLines implements Updatable, Destroyable {
     gpGpu,
     particleCount,
     maxDistance,
+    lineWidth,
   }: NetworkLinesConstructor) {
     if (!Experience.instance) throw new Error("Experience instance not found");
     this.experience = Experience.instance;
@@ -64,6 +80,7 @@ class NetworkLines implements Updatable, Destroyable {
     this.gpGpu = gpGpu;
     this.particleCount = particleCount;
     this.maxDistance = maxDistance;
+    this.lineWidth = lineWidth;
 
     this.setGeometry();
     this.setMaterial();
@@ -77,7 +94,7 @@ class NetworkLines implements Updatable, Destroyable {
   private setGeometry(): void {
     const geometry = new THREE.BufferGeometry<NetworkLinesAttributes>();
 
-    const { ownerUvArray, neighborSlotArray, endpointArray } =
+    const { ownerUvArray, neighborSlotArray, endpointArray, sideArray } =
       this.getLinesArrays();
 
     const uvStride: number = Enum.length(UvEnum);
@@ -93,6 +110,7 @@ class NetworkLines implements Updatable, Destroyable {
       "aEndpoint",
       new THREE.BufferAttribute(endpointArray, 1),
     );
+    geometry.setAttribute("aSide", new THREE.BufferAttribute(sideArray, 1));
 
     // ? No "position" attribute exists on this geometry (gl_Position is computed from the others), but
     // ? WebGLRenderer determines vertex count from geometry.attributes.position.count specifically. Without
@@ -102,22 +120,25 @@ class NetworkLines implements Updatable, Destroyable {
     this.geometry = geometry;
   }
 
-  /** Two vertices per neighbor slot, per particle: one line segment from each particle to each of its (up to) `neighborCount` neighbors. */
+  /** 6 vertices (2 triangles, a quad) per neighbor slot, per particle: one line from each particle to each of its (up to) `neighborCount` neighbors. */
   private getLinesArrays(): {
     ownerUvArray: Float32Array;
     neighborSlotArray: Float32Array;
     endpointArray: Float32Array;
+    sideArray: Float32Array;
   } {
-    const { neighborCount, verticesPerLine } = NetworkLines.CONFIG;
+    const { neighborCount } = NetworkLines.CONFIG;
+    const { QUAD_CORNERS } = NetworkLines;
     const { size } = this.gpGpu;
     const { particleCount } = this;
 
-    const vertexCount = particleCount * neighborCount * verticesPerLine;
+    const vertexCount = particleCount * neighborCount * QUAD_CORNERS.length;
 
     const uvStride: number = Enum.length(UvEnum);
     const ownerUvArray = new Float32Array(vertexCount * uvStride);
     const neighborSlotArray = new Float32Array(vertexCount);
     const endpointArray = new Float32Array(vertexCount);
+    const sideArray = new Float32Array(vertexCount);
 
     let vertex = 0;
 
@@ -129,25 +150,21 @@ class NetworkLines implements Updatable, Destroyable {
       const { u, v } = this.particleIndexToUv(particleIndex, size);
 
       for (let neighborSlot = 0; neighborSlot < neighborCount; neighborSlot++) {
-        // ? Each line needs 2 vertices: endpoint 0 = the owner particle itself, endpoint 1 = its neighbor at this slot
-        for (
-          let endpointIndex = 0;
-          endpointIndex < verticesPerLine;
-          endpointIndex++
-        ) {
+        for (const corner of QUAD_CORNERS) {
           const i2: number = vertex * uvStride;
 
           ownerUvArray[i2 + UvEnum.S] = u;
           ownerUvArray[i2 + UvEnum.T] = v;
           neighborSlotArray[vertex] = neighborSlot;
-          endpointArray[vertex] = endpointIndex;
+          endpointArray[vertex] = corner.endpoint;
+          sideArray[vertex] = corner.side;
 
           vertex++;
         }
       }
     }
 
-    return { ownerUvArray, neighborSlotArray, endpointArray };
+    return { ownerUvArray, neighborSlotArray, endpointArray, sideArray };
   }
 
   /**
@@ -168,7 +185,7 @@ class NetworkLines implements Updatable, Destroyable {
   }
 
   private setMaterial(): void {
-    const { maxDistance } = this;
+    const { maxDistance, lineWidth } = this;
     const { positionTexture, neighborsTexture, size } = this.gpGpu;
 
     const uniforms: NetworkLinesUniforms = {
@@ -176,6 +193,7 @@ class NetworkLines implements Updatable, Destroyable {
       uNeighborsTexture: { value: neighborsTexture },
       uGpgpuSize: new THREE.Uniform(size),
       uMaxDistance: new THREE.Uniform(maxDistance),
+      uLineWidth: new THREE.Uniform(lineWidth),
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -185,11 +203,15 @@ class NetworkLines implements Updatable, Destroyable {
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
+      // ? Each quad's winding order is fixed in the vertex data, but lines point in arbitrary 3D
+      // ? directions, so whichever ones wind clockwise from the camera get backface-culled under
+      // ? the FrontSide default. DoubleSide renders both windings, correct for a flat colored ribbon.
+      side: THREE.DoubleSide,
     }) as TypedShaderMaterial<NetworkLinesUniforms>;
   }
 
   private setLines(): void {
-    const lines = new THREE.LineSegments(this.geometry, this.material);
+    const lines = new THREE.Mesh(this.geometry, this.material);
     // ? Same reasoning as NetworkParticles: no "position" attribute, no real bounding sphere, disable culling
     lines.frustumCulled = false;
 
@@ -199,6 +221,11 @@ class NetworkLines implements Updatable, Destroyable {
   /** Live-updates the line fade distance, e.g. from a GUI change. */
   public setMaxDistance(value: number): void {
     this.material.uniforms.uMaxDistance.value = value;
+  }
+
+  /** Live-updates the line thickness, e.g. from a GUI change. */
+  public setLineWidth(value: number): void {
+    this.material.uniforms.uLineWidth.value = value;
   }
 
   public update(): void {

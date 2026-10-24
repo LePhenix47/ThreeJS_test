@@ -2,10 +2,12 @@ uniform sampler2D uParticlesTexture;
 uniform sampler2D uNeighborsTexture;
 uniform float uGpgpuSize;
 uniform float uMaxDistance;
+uniform float uLineWidth;
 
 attribute vec2 aOwnerUv;
 attribute float aNeighborSlot;
 attribute float aEndpoint;
+attribute float aSide;
 
 varying float vAlpha;
 
@@ -37,6 +39,40 @@ vec3 getNeighborPosition(
     return texture(uParticlesTexture, neighborUv).xyz;
 }
 
+/**
+ * Builds this vertex's clip-space position as one corner of the line's quad. Offsets the chosen
+ * endpoint (owner or neighbor, via `endpoint`) perpendicular to the line's view-space direction by
+ * half the width, to the side picked by `side`. Offsetting in view space, before projection, makes
+ * the quad's width naturally shrink with distance, same perspective behavior gl_PointSize already has.
+ */
+vec4 getQuadPosition(
+    vec3 ownerPosition,
+    vec3 neighborPosition,
+    bool hasNeighbor,
+    float endpoint,
+    float side
+) {
+    vec4 ownerView = viewMatrix * modelMatrix * vec4(ownerPosition, 1.0);
+    vec4 neighborView = viewMatrix * modelMatrix * vec4(neighborPosition, 1.0);
+
+    // ? endpoint picks which end of the line this vertex is: 0.0 = the owner itself, 1.0 = its neighbor
+    vec4 baseView = mix(ownerView, neighborView, endpoint);
+
+    // ? No neighbor: both views are identical, direction would be normalize(0,0) = NaN, skip it entirely
+    vec2 lineDirection = vec2(0.0);
+    if(hasNeighbor) {
+        lineDirection = normalize(neighborView.xy - ownerView.xy);
+    }
+
+    // * Perpendicular to the line's view-space direction: (dx,dy) -> (-dy,dx) is a fixed 90° rotation
+    vec2 perpendicular = vec2(-lineDirection.y, lineDirection.x);
+
+    // ? side picks which edge of the quad this vertex is: -1.0 or 1.0
+    baseView.xy += perpendicular * uLineWidth * 0.5 * side;
+
+    return projectionMatrix * baseView;
+}
+
 void main() {
     vec4 ownerParticle = texture(uParticlesTexture, aOwnerUv);
     vec3 ownerPosition = ownerParticle.xyz;
@@ -50,14 +86,13 @@ void main() {
         hasNeighbor
     );
 
-    // ? aEndpoint picks which end of the line this vertex is: 0.0 = the owner itself, 1.0 = its neighbor
-    vec3 position = mix(ownerPosition, neighborPosition, aEndpoint);
-
-    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
-    vec4 viewPosition = viewMatrix * modelPosition;
-    vec4 projectedPosition = projectionMatrix * viewPosition;
-
-    gl_Position = projectedPosition;
+    gl_Position = getQuadPosition(
+        ownerPosition,
+        neighborPosition,
+        hasNeighbor,
+        aEndpoint,
+        aSide
+    );
 
     float lineDistance = distance(ownerPosition, neighborPosition);
     float distanceAlpha = 1.0 - smoothstep(0.0, uMaxDistance, lineDistance);
