@@ -1,5 +1,3 @@
-// TODO: Update to able to choose more than 4 candidates
-
 uniform float uParticleCount;
 uniform float uMaxDistance;
 
