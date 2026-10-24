@@ -26,8 +26,6 @@ class Network implements Updatable, Destroyable {
   public static readonly CONFIG = {
     guiKey: "network-gui-state",
     seedBox: {
-      /** Side length of the cube particles are seeded from, centered on the origin. */
-      size: 8,
       /** Segments per axis. Higher = more particles (6 faces × (segments + 1)²). */
       segments: 8,
     },
@@ -64,7 +62,7 @@ class Network implements Updatable, Destroyable {
     debugPlaneVisible: false,
     debugPlaneSource: "position",
     uMaxDistance: 5,
-    uBoundary: Network.CONFIG.seedBox.size / 2,
+    uBoundary: 4,
   };
   private guiRegistry: GUIStateRegistry<NetworkState> | null = null;
 
@@ -100,7 +98,11 @@ class Network implements Updatable, Destroyable {
       ? this.debug.gui.addFolder("Network")
       : null;
 
-    this.particles = new NetworkParticles({ gpGpu, particleCount, parentFolder });
+    this.particles = new NetworkParticles({
+      gpGpu,
+      particleCount,
+      parentFolder,
+    });
     this.lines = new NetworkLines({
       gpGpu,
       particleCount,
@@ -117,9 +119,11 @@ class Network implements Updatable, Destroyable {
     console.log("Network");
   }
 
-  /** Box whose own vertices seed the particles, one per vertex. */
+  /** Box whose own vertices seed the particles, one per vertex, half-extent matching `uBoundary` so particles start spread across the real bounce volume. */
   private setSeedGeometry(): void {
-    const { size, segments } = Network.CONFIG.seedBox;
+    const { segments } = Network.CONFIG.seedBox;
+    const { uBoundary } = this.DEBUG_DEFAULTS;
+    const size: number = uBoundary * 2;
 
     this.seedGeometry = new THREE.BoxGeometry(
       size,
@@ -251,11 +255,9 @@ class Network implements Updatable, Destroyable {
 
       // ? The wireframe's geometry stays fixed (seed data isn't rebuilt), rescale it visually so it keeps matching the live boundary
       if (!this.seedBoxMesh) return;
-      const { size } = Network.CONFIG.seedBox;
-      const boundarySize: number = size / 2;
+      const { uBoundary: boundarySize } = this.DEBUG_DEFAULTS;
       this.seedBoxMesh.scale.setScalar(v / boundarySize);
     });
-
   }
 
   public update(): void {
