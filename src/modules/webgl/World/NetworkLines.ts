@@ -8,6 +8,7 @@ import { MapAsAttributes, TypedBufferGeometry } from "./types/attributes";
 import { UvEnum } from "@utils/enums/space-color";
 import Enum from "@utils/enums";
 import NetworkGPGPU from "./NetworkGPGPU";
+import type NetworkParticles from "./NetworkParticles";
 
 import vertexShader from "@shaders/network-lines/vertex.glsl";
 import fragmentShader from "@shaders/network-lines/fragment.glsl";
@@ -114,7 +115,11 @@ class NetworkLines implements Updatable, Destroyable {
 
     let vertex = 0;
 
-    for (let particleIndex = 0; particleIndex < particleCount; particleIndex++) {
+    for (
+      let particleIndex = 0;
+      particleIndex < particleCount;
+      particleIndex++
+    ) {
       const { u, v } = this.particleIndexToUv(particleIndex, size);
 
       for (let neighborSlot = 0; neighborSlot < neighborCount; neighborSlot++) {
@@ -139,7 +144,13 @@ class NetworkLines implements Updatable, Destroyable {
     return { ownerUvArray, neighborSlotArray, endpointArray };
   }
 
-  /** Converts a flat particle index into the GPGPU texture's UV. Mirrors indexToUv in the lines vertex shader. */
+  /**
+   * Converts a flat particle index into the GPGPU texture's UV. Mirrors indexToUv in the lines vertex shader.
+   *
+   * Same underlying formula as {@link NetworkParticles#getParticlesUvArray}'s `(x + 0.5) / size`, just entered from
+   * a flat index instead of x/y loop variables. This file loops per-particle (not the full x/y grid), so
+   * deriving x/y from the index here is simpler than restructuring the loop to match that one's shape.
+   */
   private particleIndexToUv(
     index: number,
     size: number,
