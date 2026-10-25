@@ -59,7 +59,7 @@ class NetworkLines implements Updatable, Destroyable {
     { endpoint: 0, side: 1 },
     { endpoint: 1, side: 1 },
     { endpoint: 1, side: -1 },
-  ];
+  ] as const;
 
   private readonly experience: Experience | null;
   private readonly gpGpu: NetworkGPGPU;
