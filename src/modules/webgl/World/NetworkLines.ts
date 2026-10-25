@@ -158,7 +158,7 @@ class NetworkLines implements Updatable, Destroyable {
     const endpointArray = new Float32Array(vertexCount);
     const sideArray = new Float32Array(vertexCount);
 
-    let vertex = 0;
+    let vertex: number = 0;
 
     for (
       let particleIndex = 0;
@@ -173,6 +173,7 @@ class NetworkLines implements Updatable, Destroyable {
 
           ownerUvArray[i2 + UvEnum.S] = u;
           ownerUvArray[i2 + UvEnum.T] = v;
+
           neighborSlotArray[vertex] = neighborSlot;
           endpointArray[vertex] = corner.endpoint;
           sideArray[vertex] = corner.side;
