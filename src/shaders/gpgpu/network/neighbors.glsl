@@ -24,7 +24,7 @@ void insertCandidate(
         }
 
         // * Insertion sort to shift lower-ranked neighbors to the right
-        for(int j = 3; j > i; j--) {
+        for(int j = bestDistances.length() - 1; j > i; j--) {
             bestDistances[j] = bestDistances[j - 1];
             bestIndices[j] = bestIndices[j - 1];
         }
