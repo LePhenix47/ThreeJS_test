@@ -54,8 +54,9 @@ vec4 getQuadPosition(
     float endpoint,
     float side
 ) {
-    vec4 ownerView = viewMatrix * modelMatrix * vec4(ownerPosition, 1.0);
-    vec4 neighborView = viewMatrix * modelMatrix * vec4(neighborPosition, 1.0);
+    mat4 viewModelMatrix = viewMatrix * modelMatrix;
+    vec4 ownerView = viewModelMatrix * vec4(ownerPosition, 1.0);
+    vec4 neighborView = viewModelMatrix * vec4(neighborPosition, 1.0);
 
     // ? endpoint picks which end of the line this vertex is: 0.0 = the owner itself, 1.0 = its neighbor
     vec4 baseView = mix(ownerView, neighborView, endpoint);
@@ -80,21 +81,9 @@ void main() {
     vec3 ownerPosition = ownerParticle.xyz;
 
     bool hasNeighbor;
-    vec3 neighborPosition = getNeighborPosition(
-        aOwnerUv,
-        ownerPosition,
-        aNeighborSlot,
-        uGpgpuSize,
-        hasNeighbor
-    );
+    vec3 neighborPosition = getNeighborPosition(aOwnerUv, ownerPosition, aNeighborSlot, uGpgpuSize, hasNeighbor);
 
-    gl_Position = getQuadPosition(
-        ownerPosition,
-        neighborPosition,
-        hasNeighbor,
-        aEndpoint,
-        aSide
-    );
+    gl_Position = getQuadPosition(ownerPosition, neighborPosition, hasNeighbor, aEndpoint, aSide);
 
     float lineDistance = distance(ownerPosition, neighborPosition);
     float distanceAlpha = 1.0 - smoothstep(0.0, uMaxDistance, lineDistance);
