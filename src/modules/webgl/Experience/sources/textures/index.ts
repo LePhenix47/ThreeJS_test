@@ -21,16 +21,14 @@ export type HdrTextureNames = TextureNamesByType<"hdrEnvTexture">;
 export type TextureArrayNames = TextureNamesByType<"textureArray">; // never (until registered)
 export type ShaderTextureNames = TextureNamesByType<"shaderTexture">;
 
-// ? Only multi-map sources (texture/ldrEnvTexture/cubeEnvTexture/textureArray/shaderTexture)
-// ? have a "paths" field at all, "hdrEnvTexture" (and "gltf") are single-file sources with "path"
-type TextureWithPaths = Extract<TextureUnion, { paths: unknown }>;
-
 // ? Creates an object with the "name" property value as the key and its whole obj as the value
 type TextureByName = {
-  [T in TextureWithPaths as T["name"]]: T;
+  [T in TextureUnion as T["name"]]: T;
 };
 
+// ? Only multi-map sources have a "paths" field at all, "hdrEnvTexture" (and "gltf") are
+// ? single-file sources with "path" instead, and have no map key to choose between: never
 export type GetPathsFromName<T extends keyof TextureByName> =
-  keyof TextureByName[T]["paths"];
+  TextureByName[T] extends { paths: infer P } ? keyof P : never;
 
 export default textures;
