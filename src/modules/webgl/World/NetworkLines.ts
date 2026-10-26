@@ -157,9 +157,9 @@ class NetworkLines implements Updatable, Destroyable {
     const { QUAD_CORNERS, QUAD_TRIANGLE_INDICES } = NetworkLines;
     const { size } = this.gpGpu;
 
-    const quadCount: number = this.particleCount * neighborCount;
-    const vertexCount: number = quadCount * QUAD_CORNERS.length;
-    const indexCount: number = quadCount * QUAD_TRIANGLE_INDICES.length;
+    const lineCount: number = this.particleCount * neighborCount;
+    const vertexCount: number = lineCount * QUAD_CORNERS.length;
+    const indexCount: number = lineCount * QUAD_TRIANGLE_INDICES.length;
 
     const uvStride: number = Enum.length(UvEnum);
     const ownerUvArray = new Float32Array(vertexCount * uvStride);
