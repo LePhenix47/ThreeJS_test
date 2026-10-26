@@ -3,6 +3,7 @@ import Experience, {
   Updatable,
 } from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
+import WobblySphere from "./WobblySphere";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -30,6 +31,7 @@ class World implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
   public environment?: Environment;
+  public wobblySphere: WobblySphere;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -54,11 +56,20 @@ class World implements Updatable, Destroyable {
     return this.experience!.camera;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.environment = new Environment();
+    this.wobblySphere = new WobblySphere();
+
+    this.resources.on("textures-loaded", () => {
+      this.environment = new Environment();
+    });
+
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -208,6 +219,7 @@ class World implements Updatable, Destroyable {
   public update(): void {}
 
   public destroy(): void {
+    this.wobblySphere.destroy();
     this.environment?.destroy();
     this.removeHelpers();
   }
