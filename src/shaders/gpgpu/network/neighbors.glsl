@@ -88,6 +88,12 @@ void main() {
     ivec2 intFragCoord = ivec2(gl_FragCoord.xy);
     float selfIndex = computeIndex(intFragCoord.x, intFragCoord.y, sideLength);
 
+// * The current particle could be a padding value itself, if so skip
+    if(selfIndex >= uParticleCount) {
+        gl_FragColor = vec4(-1.0);
+        return;
+    }
+
     float bestDistances[4];
     float bestIndices[4];
     findBestCandidates(particle.xyz, selfIndex, bestDistances, bestIndices);

@@ -99,7 +99,7 @@ void insertCandidate(
 }
 ```
 
-Two gotchas:
+Three gotchas:
 
 - **Padding texels.** The compute texture is always a square, `ceil(sqrt(particleCount))` per side, so it rounds up past the real particle count. Nothing ever seeds those leftover texels, they default to `(0,0,0)`, a fake particle sitting at the origin that every real particle nearby thought was a close neighbor. Excluding any candidate index past the real count fixes it:
 
@@ -116,6 +116,17 @@ Two gotchas:
   ```
 
   Skip this one and the particle shows 3 real connections instead of 4, miss it and it always shows 3 real ones plus an invisible zero-length line to itself.
+
+- **Padding running the search too.** `candidateIndex >= uParticleCount` only filters which *candidates* get considered, it says nothing about whether the pixel currently running the shader (the implicit "self") is itself real or padding. A padding pixel's own position is stuck at `(0,0,0)` forever (same reason position/velocity padding never changes), but nothing stopped it from still running the full search, so it kept finding whichever real particles were currently closest to the origin, and writing that into its own pixel. Harmless since nothing downstream ever reads a padding texel's neighbors, but it showed up as the neighbors debug view's padding area visibly changing color over time while position/velocity's padding stayed frozen. An early exit on `selfIndex` fixes it:
+
+  ```glsl
+  if(selfIndex >= uParticleCount) {
+      gl_FragColor = vec4(-1.0);
+      return;
+  }
+  ```
+
+  Same `uParticleCount` value, two different jobs: filtering candidates (done above) and filtering self (this one). Easy to miss since they look like the same check.
 
 ---
 
