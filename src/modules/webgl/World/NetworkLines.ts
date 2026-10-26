@@ -51,14 +51,17 @@ class NetworkLines implements Updatable, Destroyable {
     neighborCount: 4,
   } as const;
 
-  /** Each line's quad as 2 non-indexed triangles: (0,1,2) and (3,4,5), 6 vertices, endpoint 0 = owner, 1 = neighbor. */
+  /** The quad's 4 real corners, endpoint 0 = owner, 1 = neighbor. Referenced (not duplicated) by QUAD_TRIANGLE_INDICES below. */
   private static readonly QUAD_CORNERS: readonly QuadCorner[] = [
-    { endpoint: 0, side: -1 },
-    { endpoint: 0, side: 1 },
-    { endpoint: 1, side: -1 },
-    { endpoint: 0, side: 1 },
-    { endpoint: 1, side: 1 },
-    { endpoint: 1, side: -1 },
+    { endpoint: 0, side: -1 }, // A: owner, left
+    { endpoint: 0, side: 1 }, // B: owner, right
+    { endpoint: 1, side: -1 }, // C: neighbor, left
+    { endpoint: 1, side: 1 }, // D: neighbor, right
+  ] as const;
+
+  /** 2 triangles covering quad A-B-D-C as local corner indices into QUAD_CORNERS: (A,B,C) and (B,D,C). B and C are each reused via the index buffer, not duplicated as vertex data. */
+  private static readonly QUAD_TRIANGLE_INDICES: readonly number[] = [
+    0, 1, 2, 1, 3, 2,
   ] as const;
 
   private readonly experience: Experience | null;
@@ -112,8 +115,13 @@ class NetworkLines implements Updatable, Destroyable {
   private setGeometry(): void {
     const geometry = new THREE.BufferGeometry<NetworkLinesAttributes>();
 
-    const { ownerUvArray, neighborSlotArray, endpointArray, sideArray } =
-      this.getLinesArrays();
+    const {
+      ownerUvArray,
+      neighborSlotArray,
+      endpointArray,
+      sideArray,
+      indexArray,
+    } = this.getLinesArrays();
 
     const uvStride: number = Enum.length(UvEnum);
     geometry.setAttribute(
@@ -130,35 +138,38 @@ class NetworkLines implements Updatable, Destroyable {
     );
     geometry.setAttribute("aSide", new THREE.BufferAttribute(sideArray, 1));
 
-    // ? No "position" attribute exists on this geometry (gl_Position is computed from the others), but
-    // ? WebGLRenderer determines vertex count from geometry.attributes.position.count specifically. Without
-    // ? it, drawRange falls back to its Infinity default and the renderer silently skips the draw call entirely.
-    geometry.setDrawRange(0, endpointArray.length);
+    // ? Indexed: the renderer derives the real draw count from index.count directly, no manual
+    // ? drawRange override needed (unlike NetworkParticles, which has no index and must set one itself).
+    geometry.setIndex(new THREE.BufferAttribute(indexArray, 1));
 
     this.geometry = geometry;
   }
 
-  /** 6 vertices (2 triangles, a quad) per neighbor slot, per particle: one line from each particle to each of its (up to) `neighborCount` neighbors. */
+  /** 4 unique vertices (the quad's real corners) per neighbor slot, per particle: one line from each particle to each of its (up to) `neighborCount` neighbors. Each quad's 2 triangles are drawn by reusing those 4 corners via the index buffer, not duplicating them as vertex data. */
   private getLinesArrays(): {
     ownerUvArray: Float32Array;
     neighborSlotArray: Float32Array;
     endpointArray: Float32Array;
     sideArray: Float32Array;
+    indexArray: Uint32Array;
   } {
     const { neighborCount } = NetworkLines.CONFIG;
-    const { QUAD_CORNERS } = NetworkLines;
+    const { QUAD_CORNERS, QUAD_TRIANGLE_INDICES } = NetworkLines;
     const { size } = this.gpGpu;
 
-    const vertexCount: number =
-      this.particleCount * neighborCount * QUAD_CORNERS.length;
+    const quadCount: number = this.particleCount * neighborCount;
+    const vertexCount: number = quadCount * QUAD_CORNERS.length;
+    const indexCount: number = quadCount * QUAD_TRIANGLE_INDICES.length;
 
     const uvStride: number = Enum.length(UvEnum);
     const ownerUvArray = new Float32Array(vertexCount * uvStride);
     const neighborSlotArray = new Float32Array(vertexCount);
     const endpointArray = new Float32Array(vertexCount);
     const sideArray = new Float32Array(vertexCount);
+    const indexArray = new Uint32Array(indexCount);
 
     let vertex: number = 0;
+    let index: number = 0;
 
     for (
       let particleIndex = 0;
@@ -168,6 +179,8 @@ class NetworkLines implements Updatable, Destroyable {
       const { u, v } = this.particleIndexToUv(particleIndex, size);
 
       for (let neighborSlot = 0; neighborSlot < neighborCount; neighborSlot++) {
+        const quadBase: number = vertex;
+
         for (const corner of QUAD_CORNERS) {
           const i2: number = vertex * uvStride;
 
@@ -180,10 +193,15 @@ class NetworkLines implements Updatable, Destroyable {
 
           vertex++;
         }
+
+        for (const localIndex of QUAD_TRIANGLE_INDICES) {
+          indexArray[index] = quadBase + localIndex;
+          index++;
+        }
       }
     }
 
-    return { ownerUvArray, neighborSlotArray, endpointArray, sideArray };
+    return { ownerUvArray, neighborSlotArray, endpointArray, sideArray, indexArray };
   }
 
   /**

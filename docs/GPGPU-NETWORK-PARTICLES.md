@@ -87,7 +87,7 @@ void insertCandidate(
             continue;
         }
 
-        for(int j = 3; j > i; j--) {
+        for(int j = bestDistances.length() - 1; j > i; j--) {
             bestDistances[j] = bestDistances[j - 1];
             bestIndices[j] = bestIndices[j - 1];
         }
@@ -142,40 +142,69 @@ return projectionMatrix * baseView;
 
 `viewMatrix * modelMatrix` is combined once into a local `viewModelMatrix` since the same transform gets applied to two different positions (owner and neighbor) right below it, cheaper than redoing the `mat4 * mat4` twice.
 
-### Why the vertex count is `particleCount * neighborCount * 6`
+### Why the vertex count is `particleCount * neighborCount * 4`
 
 This geometry has no `position` attribute. Every vertex's actual location is computed in the shader, from sampling `uParticlesTexture`. The CPU side only needs to hand each vertex a "recipe": which particle, which of its neighbors, and which corner of that one line's rectangle.
 
-A rectangle has 4 corners, but with no index buffer, 2 triangles means 6 vertex slots, some corners repeated:
+A rectangle has exactly 4 real corners:
 
 ```ts
 private static readonly QUAD_CORNERS: readonly QuadCorner[] = [
-  { endpoint: 0, side: -1 }, // owner,    left
-  { endpoint: 0, side: 1 },  // owner,    right
-  { endpoint: 1, side: -1 }, // neighbor, left
-  { endpoint: 0, side: 1 },  // owner,    right   (shared edge)
-  { endpoint: 1, side: 1 },  // neighbor, right
-  { endpoint: 1, side: -1 }, // neighbor, left    (shared edge)
+  { endpoint: 0, side: -1 }, // A: owner,    left
+  { endpoint: 0, side: 1 },  // B: owner,    right
+  { endpoint: 1, side: -1 }, // C: neighbor, left
+  { endpoint: 1, side: 1 },  // D: neighbor, right
 ];
 ```
 
-`endpoint` picks which end of the line (0 = this particle, 1 = its neighbor). `side` picks which edge of the ribbon's width (left/right of the line's direction). The two repeated corners are the shared diagonal between the two triangles.
+`endpoint` picks which end of the line (0 = this particle, 1 = its neighbor). `side` picks which edge of the ribbon's width (left/right of the line's direction).
 
-Every particle can have up to `neighborCount` (4) lines, every line is a 6-vertex quad, so every particle contributes `4 * 6 = 24` vertices total, all sharing the same `aOwnerUv`, differing only in `aNeighborSlot`/`aEndpoint`/`aSide`:
+```text
+side -1                  side +1
+  A ───────────────────── B     endpoint 0 (owner)
+  │                     / │
+  │      triangle 1   /   │
+  │       (A, B, C) /     │
+  │               /       │
+  │             /         │
+  │           /  triangle 2
+  │         /    (B, D, C)│
+  C ───────────────────── D     endpoint 1 (neighbor)
+```
+
+The diagonal `B─C` is the shared edge between the two triangles, that's the pair getting reused instead of duplicated.
+
+2 triangles are needed to fill that rectangle, and a quad only has 4 unique corners, not 6, so an index buffer reuses B and C instead of writing them twice as vertex data:
+
+```ts
+private static readonly QUAD_TRIANGLE_INDICES: readonly number[] = [0, 1, 2, 1, 3, 2];
+```
+
+That's triangle A-B-C and triangle B-D-C, covering the full rectangle A-B-D-C. Indexing matters here beyond just a smaller buffer: GPUs cache recent vertex shader output by index, and B/C sit right next to each other in that 6-entry list, so the cache reuses their output instead of rerunning the vertex shader. 4 real vertex shader invocations per quad instead of 6.
+
+Every particle can have up to `neighborCount` (4) lines, every line is a 4-vertex quad (plus 6 indices), so every particle contributes `4 * 4 = 16` vertices and `4 * 6 = 24` indices total, all 16 vertices sharing the same `aOwnerUv`, differing only in `aNeighborSlot`/`aEndpoint`/`aSide`:
 
 ```ts
 for (let particleIndex = 0; particleIndex < particleCount; particleIndex++) {
-  const { u, v } = particleIndexToUv(particleIndex, size); // same for all 24
+  const { u, v } = particleIndexToUv(particleIndex, size); // same for all 16
 
   for (let neighborSlot = 0; neighborSlot < neighborCount; neighborSlot++) {
+    const quadBase = vertex;
+
     for (const corner of QUAD_CORNERS) {
       // write aOwnerUv = (u, v), aNeighborSlot, aEndpoint = corner.endpoint, aSide = corner.side
+    }
+
+    for (const localIndex of QUAD_TRIANGLE_INDICES) {
+      // write quadBase + localIndex into the index buffer
     }
   }
 }
 ```
 
 In the vertex shader, `aOwnerUv` samples the owner's live position, `aNeighborSlot` picks which of the 4 neighbor-texture entries to follow for the neighbor's live position, and `aEndpoint`/`aSide` pick which of the quad's 4 real corners this vertex is.
+
+Indexing also means the renderer gets the real draw count straight from `index.count`, no manual `geometry.setDrawRange(...)` needed (unlike `NetworkParticles`, which still has no index and sets its own drawRange to work around the missing `position` attribute).
 
 ---
 
