@@ -19,6 +19,14 @@ class WobblySphere extends MeshEntity implements Destroyable {
       radius: 2.5,
       detail: 50,
     },
+    /** Plain backdrop plane behind/below the sphere, purely to catch its shadow. */
+    backdrop: {
+      width: 15,
+      height: 15,
+      widthSegments: 15,
+      position: { y: -5, z: 5 },
+      rotationYDeg: 180,
+    },
   } as const;
 
   private readonly experience: Experience | null;
@@ -26,6 +34,10 @@ class WobblySphere extends MeshEntity implements Destroyable {
   protected geometry: THREE.IcosahedronGeometry;
   protected material: THREE.MeshPhysicalMaterial;
   protected mesh: THREE.Mesh;
+
+  private backdropGeometry: THREE.PlaneGeometry;
+  private backdropMaterial: THREE.MeshStandardMaterial;
+  private backdrop: THREE.Mesh;
 
   protected override guiRegistry: GUIStateRegistry<WobblySphereState> | null =
     null;
@@ -56,8 +68,9 @@ class WobblySphere extends MeshEntity implements Destroyable {
     this.setGeometry();
     this.setMaterial();
     this.setMesh();
+    this.setBackdrop();
 
-    this.scene.add(this.mesh);
+    this.scene.add(this.mesh, this.backdrop);
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -94,6 +107,29 @@ class WobblySphere extends MeshEntity implements Destroyable {
     mesh.receiveShadow = true;
 
     this.mesh = mesh;
+  }
+
+  private setBackdrop(): void {
+    const { width, height, widthSegments, position, rotationYDeg } =
+      WobblySphere.CONFIG.backdrop;
+
+    this.backdropGeometry = new THREE.PlaneGeometry(
+      width,
+      height,
+      widthSegments,
+    );
+    this.backdropMaterial = new THREE.MeshStandardMaterial();
+
+    const backdrop = new THREE.Mesh(
+      this.backdropGeometry,
+      this.backdropMaterial,
+    );
+
+    backdrop.receiveShadow = true;
+    backdrop.rotation.y = THREE.MathUtils.degToRad(rotationYDeg);
+    backdrop.position.set(0, position.y, position.z);
+
+    this.backdrop = backdrop;
   }
 
   protected override addDebugFolders(): void {
@@ -144,12 +180,7 @@ class WobblySphere extends MeshEntity implements Destroyable {
       this.material.transmission = v;
     });
 
-    wobblySphereFolder
-      .add(state, "ior")
-      .min(0)
-      .max(10)
-      .step(0.001)
-      .name("IOR");
+    wobblySphereFolder.add(state, "ior").min(0).max(10).step(0.001).name("IOR");
     registry.bind("ior", (v) => {
       this.material.ior = v;
     });
@@ -169,6 +200,11 @@ class WobblySphere extends MeshEntity implements Destroyable {
     this.geometry.dispose();
     this.material.dispose();
     this.scene.remove(this.mesh);
+
+    this.backdropGeometry.dispose();
+    this.backdropMaterial.dispose();
+    this.scene.remove(this.backdrop);
+
     this.guiRegistry?.dispose();
   }
 }
