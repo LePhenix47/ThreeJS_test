@@ -1,7 +1,7 @@
 uniform float uParticleCount;
 uniform float uMaxDistance;
 
-float computeIndex(int x, int y, int size) {
+float uvToIndex(int x, int y, int size) {
     return float(y * size + x);
 }
 
@@ -49,7 +49,7 @@ void findBestCandidates(
 
     for(int y = 0; y < sideLength; y++) {
         for(int x = 0; x < sideLength; x++) {
-            float candidateIndex = computeIndex(x, y, sideLength);
+            float candidateIndex = uvToIndex(x, y, sideLength);
 
         /*          
             ? candidateIndex only increases from here on (row-major order), so once padding starts
@@ -86,7 +86,7 @@ void main() {
     int sideLength = int(resolution.x);
 
     ivec2 intFragCoord = ivec2(gl_FragCoord.xy);
-    float selfIndex = computeIndex(intFragCoord.x, intFragCoord.y, sideLength);
+    float selfIndex = uvToIndex(intFragCoord.x, intFragCoord.y, sideLength);
 
 // * The current particle could be a padding value itself, if so skip
     if(selfIndex >= uParticleCount) {
