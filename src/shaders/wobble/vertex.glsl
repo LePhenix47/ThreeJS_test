@@ -22,17 +22,16 @@ float getWobble(vec3 position) {
     return wobble;
 }
 
-vec3 computeSphereNormal(vec3 position, float shift) {
+vec3 computeSphereNormal(vec3 originalPosition, vec3 changedPosition, float shift) {
     vec3 bitTangent = cross(normal, tangent.xyz);
 
-    vec3 positionA = position + tangent.xyz * shift;
-    vec3 positionB = position + bitTangent.xyz * shift;
+    vec3 positionA = originalPosition + tangent.xyz * shift;
+    vec3 positionB = originalPosition + bitTangent.xyz * shift;
     positionA += getWobble(positionA) * normal;
     positionB += getWobble(positionB) * normal;
 
-    vec3 wobbledPosition = position + getWobble(position) * normal;
-    vec3 toA = direction(wobbledPosition, positionA);
-    vec3 toB = direction(wobbledPosition, positionB);
+    vec3 toA = direction(changedPosition, positionA);
+    vec3 toB = direction(changedPosition, positionB);
 
     return cross(toA, toB);
 }
@@ -46,7 +45,7 @@ void main() {
     csm_Position = originalPosition + wobble * normal;
 
     // * Computed normal
-    vec3 computedNormal = computeSphereNormal(originalPosition, 0.01);
+    vec3 computedNormal = computeSphereNormal(originalPosition, csm_Position, 0.01);
     csm_Normal = computedNormal;
 
     // * Varyings
