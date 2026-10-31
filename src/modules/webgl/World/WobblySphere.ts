@@ -1,4 +1,7 @@
-import Experience, { Destroyable } from "@modules/webgl/Experience/Experience";
+import Experience, {
+  Destroyable,
+  Updatable,
+} from "@modules/webgl/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { MeshEntity } from "./types/mesh-entity";
@@ -25,7 +28,7 @@ type WobblySphereUniforms = MapAsUniforms<{
   uTime: number;
 }>;
 
-class WobblySphere extends MeshEntity implements Destroyable {
+class WobblySphere extends MeshEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
     guiKey: "wobbly-sphere-gui-state",
     geometry: {
@@ -72,6 +75,10 @@ class WobblySphere extends MeshEntity implements Destroyable {
 
   private get scene() {
     return this.experience!.scene;
+  }
+
+  private get time() {
+    return this.experience!.time;
   }
 
   private get debug() {
@@ -257,6 +264,10 @@ class WobblySphere extends MeshEntity implements Destroyable {
     registry.bind("thickness", (v) => {
       this.material.thickness = v;
     });
+  }
+
+  public update(): void {
+    this.uniforms.uTime.value = this.time.elapsedSeconds;
   }
 
   public destroy(): void {

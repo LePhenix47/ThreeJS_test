@@ -216,7 +216,9 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   }
 
-  public update(): void {}
+  public update(): void {
+    this.wobblySphere.update();
+  }
 
   public destroy(): void {
     this.wobblySphere.destroy();
