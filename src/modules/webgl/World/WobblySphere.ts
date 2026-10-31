@@ -25,6 +25,9 @@ type WobblySphereState = {
   uPositionFrequency: number;
   uTimeFrequency: number;
   uStrengthAmplitude: number;
+  uWarpPositionFrequency: number;
+  uWarpTimeFrequency: number;
+  uWarpStrengthAmplitude: number;
 };
 
 type WobblySphereUniforms = MapAsUniforms<{
@@ -32,6 +35,9 @@ type WobblySphereUniforms = MapAsUniforms<{
   uPositionFrequency: WobblySphereState["uPositionFrequency"];
   uTimeFrequency: WobblySphereState["uTimeFrequency"];
   uStrengthAmplitude: WobblySphereState["uStrengthAmplitude"];
+  uWarpPositionFrequency: WobblySphereState["uWarpPositionFrequency"];
+  uWarpTimeFrequency: WobblySphereState["uWarpTimeFrequency"];
+  uWarpStrengthAmplitude: WobblySphereState["uWarpStrengthAmplitude"];
 }>;
 
 class WobblySphere extends MeshEntity implements Updatable, Destroyable {
@@ -81,6 +87,9 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
     uPositionFrequency: 0.5,
     uStrengthAmplitude: 0.4,
     uTimeFrequency: 0.3,
+    uWarpPositionFrequency: 0.38,
+    uWarpStrengthAmplitude: 0.12,
+    uWarpTimeFrequency: 1.7,
   };
 
   private get scene() {
@@ -131,14 +140,29 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setMaterial(): void {
-    const { color, metalness, roughness, transmission, ior, thickness } =
-      this.DEBUG_DEFAULTS;
+    const {
+      color,
+      metalness,
+      roughness,
+      transmission,
+      ior,
+      thickness,
+      uPositionFrequency,
+      uStrengthAmplitude,
+      uTimeFrequency,
+      uWarpPositionFrequency,
+      uWarpStrengthAmplitude,
+      uWarpTimeFrequency,
+    } = this.DEBUG_DEFAULTS;
 
     this.uniforms = {
       uTime: new THREE.Uniform(0),
-      uPositionFrequency: new THREE.Uniform(0),
-      uStrengthAmplitude: new THREE.Uniform(0),
-      uTimeFrequency: new THREE.Uniform(0),
+      uPositionFrequency: new THREE.Uniform(uPositionFrequency),
+      uStrengthAmplitude: new THREE.Uniform(uStrengthAmplitude),
+      uTimeFrequency: new THREE.Uniform(uTimeFrequency),
+      uWarpPositionFrequency: new THREE.Uniform(uWarpPositionFrequency),
+      uWarpStrengthAmplitude: new THREE.Uniform(uWarpStrengthAmplitude),
+      uWarpTimeFrequency: new THREE.Uniform(uWarpTimeFrequency),
     };
 
     this.material = new CustomShaderMaterial({
@@ -280,7 +304,7 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       this.material.thickness = v;
     });
 
-    uniformsFolder.add(state, "uPositionFrequency").min(0).max(1).step(0.001);
+    uniformsFolder.add(state, "uPositionFrequency").min(0).max(2).step(0.001);
     registry.bind("uPositionFrequency", (v) => {
       this.material.uniforms.uPositionFrequency.value = v;
     });
@@ -290,9 +314,32 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       this.material.uniforms.uTimeFrequency.value = v;
     });
 
-    uniformsFolder.add(state, "uStrengthAmplitude").min(0).max(1).step(0.001);
+    uniformsFolder.add(state, "uStrengthAmplitude").min(0).max(2).step(0.001);
     registry.bind("uStrengthAmplitude", (v) => {
       this.material.uniforms.uStrengthAmplitude.value = v;
+    });
+
+    uniformsFolder
+      .add(state, "uWarpPositionFrequency")
+      .min(0)
+      .max(2)
+      .step(0.001);
+    registry.bind("uWarpPositionFrequency", (v) => {
+      this.material.uniforms.uWarpPositionFrequency.value = v;
+    });
+
+    uniformsFolder.add(state, "uWarpTimeFrequency").min(0).max(3).step(0.001);
+    registry.bind("uWarpTimeFrequency", (v) => {
+      this.material.uniforms.uWarpTimeFrequency.value = v;
+    });
+
+    uniformsFolder
+      .add(state, "uWarpStrengthAmplitude")
+      .min(0)
+      .max(2)
+      .step(0.001);
+    registry.bind("uWarpStrengthAmplitude", (v) => {
+      this.material.uniforms.uWarpStrengthAmplitude.value = v;
     });
   }
 
