@@ -29,11 +29,14 @@ export abstract class GltfEntity {
    * NOTE, we use regular method syntax: lives on the prototype
    * 1000 GltfEntity instances share 1 copy vs. 1000 copies with an arrow field
    */
-  protected destroyModel(): void {
+  /** @param disposeMaterial - Pass `false` when the material was assigned by reference from an external owner (e.g. a composite-entities shared-resource group), so the owner disposes it exactly once. */
+  protected destroyModel(disposeMaterial = true): void {
     this.model.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
 
       child.geometry.dispose();
+
+      if (!disposeMaterial) return;
 
       /*
         ? Dispose material(s). A mesh can have either a single material or

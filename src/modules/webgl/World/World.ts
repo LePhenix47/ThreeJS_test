@@ -3,7 +3,7 @@ import Experience, {
   Updatable,
 } from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
-import WobblySphere from "./WobblySphere";
+import WobblyGroup from "./WobblyGroup";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -31,7 +31,7 @@ class World implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
   public environment?: Environment;
-  public wobblySphere?: WobblySphere;
+  public wobblyGroup?: WobblyGroup;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -66,7 +66,7 @@ class World implements Updatable, Destroyable {
 
     this.resources.on("textures-loaded", () => {
       this.environment = new Environment();
-      this.wobblySphere = new WobblySphere();
+      this.wobblyGroup = new WobblyGroup();
     });
 
     this.setHelpers();
@@ -216,11 +216,11 @@ class World implements Updatable, Destroyable {
   }
 
   public update(): void {
-    this.wobblySphere?.update();
+    this.wobblyGroup?.update();
   }
 
   public destroy(): void {
-    this.wobblySphere?.destroy();
+    this.wobblyGroup?.destroy();
     this.environment?.destroy();
     this.removeHelpers();
   }
