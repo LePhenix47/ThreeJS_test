@@ -78,9 +78,9 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
     ior: 1.5,
     thickness: 1.5,
     // * uniforms
-    uPositionFrequency: 1.0,
-    uStrengthAmplitude: 1.0,
-    uTimeFrequency: 1.0,
+    uPositionFrequency: 0.5,
+    uStrengthAmplitude: 0.4,
+    uTimeFrequency: 0.3,
   };
 
   private get scene() {
@@ -285,7 +285,7 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       this.material.uniforms.uPositionFrequency.value = v;
     });
 
-    uniformsFolder.add(state, "uTimeFrequency").min(0).max(1).step(0.001);
+    uniformsFolder.add(state, "uTimeFrequency").min(0).max(3).step(0.001);
     registry.bind("uTimeFrequency", (v) => {
       this.material.uniforms.uTimeFrequency.value = v;
     });
