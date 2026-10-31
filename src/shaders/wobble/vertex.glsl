@@ -12,13 +12,17 @@ varying vec2 vUv;
 #include ../utils/noise/simplexNoise4d
 
 float getWobble(vec3 position) {
-    vec4 shiftedPosition = vec4(
-        // 
-    position * uPositionFrequency, // ? XYZ
-    uTime * uTimeFrequency // ? W
-    ) * uStrengthAmplitude;
+    vec3 warpedPosition = position;
 
-    float wobble = simplexNoise4d(shiftedPosition);
+    warpedPosition += simplexNoise4d(vec4(warpedPosition, uTime));
+
+    vec4 noisedPosition = vec4(
+        // 
+    warpedPosition * uPositionFrequency, // ? XYZ
+    uTime * uTimeFrequency // ? W
+    );
+
+    float wobble = simplexNoise4d(noisedPosition) * uStrengthAmplitude;
     return wobble;
 }
 
