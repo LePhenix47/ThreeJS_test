@@ -1,5 +1,3 @@
 void main() {
-    // gl_FragColor = vec4(1.0);
-    // #include <tonemapping_fragment>
-    // #include <colorspace_fragment>
+    csm_DiffuseColor.rgb = vec3(1.0, 0.5, 0.5);
 }
