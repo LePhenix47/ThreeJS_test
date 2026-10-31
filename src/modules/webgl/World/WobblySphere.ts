@@ -118,20 +118,21 @@ class WobblySphere extends MeshEntity implements Destroyable {
 
     this.material = new CustomShaderMaterial({
       // * Custom
-      baseMaterial: THREE.MeshPhysicalMaterial,
+      baseMaterial: THREE.MeshDepthMaterial,
       vertexShader,
-      fragmentShader,
+      // fragmentShader,
 
       // * MeshPhysicalMaterial
+      depthPacking: THREE.RGBADepthPacking,
       uniforms,
-      color,
-      metalness,
-      roughness,
-      transmission,
-      ior,
-      thickness,
-      transparent: true,
-      wireframe: false,
+      // color,
+      // metalness,
+      // roughness,
+      // transmission,
+      // ior,
+      // thickness,
+      // transparent: true,
+      // wireframe: false,
       // ? CSM's constructor is typed to return the base `CustomShaderMaterial` class shape, which
       // ? only declares uniforms/vertexShader/fragmentShader, not the base material's own properties
       // ? (color, metalness, ...) even though they really do exist on the instance at runtime.
@@ -185,55 +186,55 @@ class WobblySphere extends MeshEntity implements Destroyable {
 
     const wobblySphereFolder = gui.addFolder("Wobbly sphere");
 
-    wobblySphereFolder.addColor(state, "color").name("Color");
-    registry.bind("color", (v) => {
-      this.material.color.set(v);
-    });
+    // wobblySphereFolder.addColor(state, "color").name("Color");
+    // registry.bind("color", (v) => {
+    //   this.material.color.set(v);
+    // });
 
-    wobblySphereFolder
-      .add(state, "metalness")
-      .min(0)
-      .max(1)
-      .step(0.001)
-      .name("Metalness");
-    registry.bind("metalness", (v) => {
-      this.material.metalness = v;
-    });
+    // wobblySphereFolder
+    //   .add(state, "metalness")
+    //   .min(0)
+    //   .max(1)
+    //   .step(0.001)
+    //   .name("Metalness");
+    // registry.bind("metalness", (v) => {
+    //   this.material.metalness = v;
+    // });
 
-    wobblySphereFolder
-      .add(state, "roughness")
-      .min(0)
-      .max(1)
-      .step(0.001)
-      .name("Roughness");
-    registry.bind("roughness", (v) => {
-      this.material.roughness = v;
-    });
+    // wobblySphereFolder
+    //   .add(state, "roughness")
+    //   .min(0)
+    //   .max(1)
+    //   .step(0.001)
+    //   .name("Roughness");
+    // registry.bind("roughness", (v) => {
+    //   this.material.roughness = v;
+    // });
 
-    wobblySphereFolder
-      .add(state, "transmission")
-      .min(0)
-      .max(1)
-      .step(0.001)
-      .name("Transmission");
-    registry.bind("transmission", (v) => {
-      this.material.transmission = v;
-    });
+    // wobblySphereFolder
+    //   .add(state, "transmission")
+    //   .min(0)
+    //   .max(1)
+    //   .step(0.001)
+    //   .name("Transmission");
+    // registry.bind("transmission", (v) => {
+    //   this.material.transmission = v;
+    // });
 
-    wobblySphereFolder.add(state, "ior").min(0).max(10).step(0.001).name("IOR");
-    registry.bind("ior", (v) => {
-      this.material.ior = v;
-    });
+    // wobblySphereFolder.add(state, "ior").min(0).max(10).step(0.001).name("IOR");
+    // registry.bind("ior", (v) => {
+    //   this.material.ior = v;
+    // });
 
-    wobblySphereFolder
-      .add(state, "thickness")
-      .min(0)
-      .max(10)
-      .step(0.001)
-      .name("Thickness");
-    registry.bind("thickness", (v) => {
-      this.material.thickness = v;
-    });
+    // wobblySphereFolder
+    //   .add(state, "thickness")
+    //   .min(0)
+    //   .max(10)
+    //   .step(0.001)
+    //   .name("Thickness");
+    // registry.bind("thickness", (v) => {
+    //   this.material.thickness = v;
+    // });
   }
 
   public destroy(): void {
