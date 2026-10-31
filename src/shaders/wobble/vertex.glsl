@@ -2,6 +2,9 @@ uniform float uTime;
 uniform float uTimeFrequency;
 uniform float uStrengthAmplitude;
 uniform float uPositionFrequency;
+uniform float uWarpTimeFrequency;
+uniform float uWarpStrengthAmplitude;
+uniform float uWarpPositionFrequency;
 
 attribute vec4 tangent;
 
@@ -14,7 +17,11 @@ varying vec2 vUv;
 float getWobble(vec3 position) {
     vec3 warpedPosition = position;
 
-    warpedPosition += simplexNoise4d(vec4(warpedPosition, uTime));
+    warpedPosition += simplexNoise4d(vec4(
+        // 
+    warpedPosition * uWarpPositionFrequency, // ? XYZ
+    uTime * uWarpTimeFrequency // ? W
+    )) * uWarpStrengthAmplitude;
 
     vec4 noisedPosition = vec4(
         // 
