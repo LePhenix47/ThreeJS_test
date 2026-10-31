@@ -7,8 +7,8 @@ import Experience, {
 
 class Renderer implements Resizable, Updatable, Destroyable {
   public static readonly CONFIG = {
-    toneMappingExposure: 1.75,
-    toneMapping: THREE.CineonToneMapping,
+    toneMappingExposure: 1,
+    toneMapping: THREE.ACESFilmicToneMapping,
     outputColorSpace: THREE.SRGBColorSpace,
     shadowMap: {
       type: THREE.PCFShadowMap,
