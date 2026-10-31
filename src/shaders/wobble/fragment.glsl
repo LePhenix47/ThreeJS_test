@@ -1,8 +1,14 @@
 uniform float uTime;
 
+uniform vec3 uLowColor;
+uniform vec3 uHighColor;
+
 varying float vWobble;
 
 void main() {
-    vec3 color = vec3(vWobble);
+    float colorMix = smoothstep(-1.0, 1.0, vWobble);
+
+    vec3 color = mix(uLowColor, uHighColor, colorMix);
+
     csm_DiffuseColor.rgb = color;
 }

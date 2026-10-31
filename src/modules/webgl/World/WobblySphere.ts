@@ -28,6 +28,8 @@ type WobblySphereState = {
   uWarpPositionFrequency: number;
   uWarpTimeFrequency: number;
   uWarpStrengthAmplitude: number;
+  uLowColor: string;
+  uHighColor: string;
 };
 
 type WobblySphereUniforms = MapAsUniforms<{
@@ -38,6 +40,8 @@ type WobblySphereUniforms = MapAsUniforms<{
   uWarpPositionFrequency: WobblySphereState["uWarpPositionFrequency"];
   uWarpTimeFrequency: WobblySphereState["uWarpTimeFrequency"];
   uWarpStrengthAmplitude: WobblySphereState["uWarpStrengthAmplitude"];
+  uLowColor: THREE.Color;
+  uHighColor: THREE.Color;
 }>;
 
 class WobblySphere extends MeshEntity implements Updatable, Destroyable {
@@ -90,6 +94,8 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
     uWarpPositionFrequency: 0.38,
     uWarpStrengthAmplitude: 0.12,
     uWarpTimeFrequency: 1.7,
+    uLowColor: "#0000ff",
+    uHighColor: "#ff0000",
   };
 
   private get scene() {
@@ -112,8 +118,11 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
 
     this.setGeometry();
     this.setMaterial();
+
     this.setDepthMaterial();
+
     this.setMesh();
+
     this.setBackdrop();
 
     this.scene.add(this.mesh, this.backdrop);
@@ -153,6 +162,8 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       uWarpPositionFrequency,
       uWarpStrengthAmplitude,
       uWarpTimeFrequency,
+      uHighColor,
+      uLowColor,
     } = this.DEBUG_DEFAULTS;
 
     this.uniforms = {
@@ -163,6 +174,12 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       uWarpPositionFrequency: new THREE.Uniform(uWarpPositionFrequency),
       uWarpStrengthAmplitude: new THREE.Uniform(uWarpStrengthAmplitude),
       uWarpTimeFrequency: new THREE.Uniform(uWarpTimeFrequency),
+      uHighColor: {
+        value: new THREE.Color(uHighColor),
+      },
+      uLowColor: {
+        value: new THREE.Color(uLowColor),
+      },
     };
 
     this.material = new CustomShaderMaterial({
@@ -340,6 +357,16 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       .step(0.001);
     registry.bind("uWarpStrengthAmplitude", (v) => {
       this.material.uniforms.uWarpStrengthAmplitude.value = v;
+    });
+
+    uniformsFolder.addColor(state, "uLowColor");
+    registry.bind("uLowColor", (v) => {
+      this.material.uniforms.uLowColor.value.set(v);
+    });
+
+    uniformsFolder.addColor(state, "uHighColor");
+    registry.bind("uHighColor", (v) => {
+      this.material.uniforms.uHighColor.value.set(v);
     });
   }
 
