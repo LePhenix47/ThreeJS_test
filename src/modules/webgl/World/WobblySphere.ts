@@ -91,13 +91,13 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
     ior: 1.5,
     thickness: 1.5,
     // * uniforms
-    uPositionFrequency: 0.5,
-    uStrengthAmplitude: 0.4,
-    uTimeFrequency: 0.3,
-    uWarpPositionFrequency: 0.38,
-    uWarpStrengthAmplitude: 0.12,
-    uWarpTimeFrequency: 1.7,
-    uLowColor: "#0000ff",
+    uPositionFrequency: 1.456,
+    uStrengthAmplitude: 0.172,
+    uTimeFrequency: 1,
+    uWarpPositionFrequency: 0.463,
+    uWarpStrengthAmplitude: 1.278,
+    uWarpTimeFrequency: 0.319,
+    uLowColor: "#abaf12",
     uHighColor: "#ff0000",
   };
 
