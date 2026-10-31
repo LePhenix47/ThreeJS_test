@@ -1,7 +1,8 @@
 uniform float uTime;
 
-varying vec2 vUv;
+varying float vWobble;
 
 void main() {
-    // csm_DiffuseColor.rgb = vec3(sin(vUv + uTime), 1.0);
+    vec3 color = vec3(vWobble);
+    csm_DiffuseColor.rgb = color;
 }

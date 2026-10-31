@@ -8,7 +8,7 @@ uniform float uWarpPositionFrequency;
 
 attribute vec4 tangent;
 
-varying vec2 vUv;
+varying float vWobble;
 
 #include ../utils/vectors/direction
 #include ../utils/vectors/displacement
@@ -60,5 +60,5 @@ void main() {
     csm_Normal = computedNormal;
 
     // * Varyings
-    vUv = uv;
+    vWobble = wobble / uStrengthAmplitude;
 }
