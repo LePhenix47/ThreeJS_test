@@ -25,13 +25,13 @@ float getWobble(vec3 position) {
 vec3 computeSphereNormal(vec3 originalPosition, vec3 changedPosition, float shift) {
     vec3 bitTangent = cross(normal, tangent.xyz);
 
-    vec3 positionA = originalPosition + tangent.xyz * shift;
-    vec3 positionB = originalPosition + bitTangent.xyz * shift;
-    positionA += getWobble(positionA) * normal;
-    positionB += getWobble(positionB) * normal;
+    vec3 originA = originalPosition + tangent.xyz * shift;
+    vec3 originB = originalPosition + bitTangent.xyz * shift;
+    originA += getWobble(originA) * normal;
+    originB += getWobble(originB) * normal;
 
-    vec3 toA = direction(changedPosition, positionA);
-    vec3 toB = direction(changedPosition, positionB);
+    vec3 toA = direction(changedPosition, originA);
+    vec3 toB = direction(changedPosition, originB);
 
     return cross(toA, toB);
 }
