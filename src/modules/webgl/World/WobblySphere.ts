@@ -3,6 +3,10 @@ import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { MeshEntity } from "./types/mesh-entity";
 
+import CustomShaderMaterial, {
+  CSMProxy,
+} from "three-custom-shader-material/vanilla";
+
 type WobblySphereState = {
   color: string;
   metalness: number;
@@ -32,7 +36,7 @@ class WobblySphere extends MeshEntity implements Destroyable {
   private readonly experience: Experience | null;
 
   protected geometry: THREE.IcosahedronGeometry;
-  protected material: THREE.MeshPhysicalMaterial;
+  protected material: CSMProxy<typeof THREE.MeshPhysicalMaterial>;
   protected mesh: THREE.Mesh;
 
   private backdropGeometry: THREE.PlaneGeometry;
@@ -89,7 +93,11 @@ class WobblySphere extends MeshEntity implements Destroyable {
     const { color, metalness, roughness, transmission, ior, thickness } =
       this.DEBUG_DEFAULTS;
 
-    this.material = new THREE.MeshPhysicalMaterial({
+    this.material = new CustomShaderMaterial({
+      // * Custom
+      baseMaterial: THREE.MeshPhysicalMaterial,
+
+      // * MeshPhysicalMaterial
       color,
       metalness,
       roughness,
@@ -98,7 +106,11 @@ class WobblySphere extends MeshEntity implements Destroyable {
       thickness,
       transparent: true,
       wireframe: false,
-    });
+      // ? CSM's constructor is typed to return the base `CustomShaderMaterial` class shape, which
+      // ? only declares uniforms/vertexShader/fragmentShader, not the base material's own properties
+      // ? (color, metalness, ...) even though they really do exist on the instance at runtime.
+      // ? CSMProxy<T> is the package's own type for that real shape, hence the cast.
+    }) as unknown as CSMProxy<typeof THREE.MeshPhysicalMaterial>;
   }
 
   protected setMesh(): void {
