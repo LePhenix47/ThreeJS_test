@@ -30,7 +30,7 @@ type WobblySphereState = {
   uWarpStrengthAmplitude: number;
   uLowColor: string;
   uHighColor: string;
-  suzanne: boolean;
+  showSuzanne: boolean;
 };
 
 type WobblySphereUniforms = MapAsUniforms<{
@@ -78,11 +78,13 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
   private backdropMaterial: THREE.MeshStandardMaterial;
   private backdrop: THREE.Mesh;
 
+  private suzanneMesh: THREE.Mesh;
+
   protected override guiRegistry: GUIStateRegistry<WobblySphereState> | null =
     null;
 
   protected readonly DEBUG_DEFAULTS: WobblySphereState = {
-    suzanne: false,
+    showSuzanne: false,
     // * Material
     color: "#ffffff",
     metalness: 0,
@@ -113,6 +115,10 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
     return this.experience!.debug;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     super();
 
@@ -128,13 +134,33 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
 
     this.setBackdrop();
 
-    this.scene.add(this.mesh, this.backdrop);
+    this.setSuzanne();
+
+    this.scene.add(this.mesh, this.backdrop, this.suzanneMesh);
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
 
     console.log("WobblySphere");
+  }
+
+  protected setSuzanne(): void {
+    const { showSuzanne } = this.DEBUG_DEFAULTS;
+    const model = this.resources.getGltf("suzanne");
+
+    const [suzanneModel] = model.scene.children;
+    if (!(suzanneModel instanceof THREE.Mesh)) return;
+
+    suzanneModel.castShadow = true;
+    suzanneModel.receiveShadow = true;
+
+    suzanneModel.visible = showSuzanne;
+
+    suzanneModel.material = this.material;
+    suzanneModel.customDepthMaterial = this.depthMaterial;
+
+    this.suzanneMesh = suzanneModel;
   }
 
   protected setGeometry(): void {
@@ -227,11 +253,14 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setMesh(): void {
+    const { showSuzanne } = this.DEBUG_DEFAULTS;
+
     const mesh = new THREE.Mesh(this.geometry, this.material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
     mesh.customDepthMaterial = this.depthMaterial;
+    mesh.visible = !showSuzanne;
 
     this.mesh = mesh;
   }
@@ -271,6 +300,13 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
     const { gui } = this.debug;
 
     const wobblySphereFolder = gui.addFolder("Wobbly sphere");
+
+    wobblySphereFolder.add(state, "showSuzanne").name("Show Suzanne");
+    registry.bind("showSuzanne", (v) => {
+      this.mesh.visible = !v;
+      this.suzanneMesh.visible = v;
+    });
+
     const materialFolder = wobblySphereFolder.addFolder("Material");
     const uniformsFolder = wobblySphereFolder.addFolder("Uniforms");
 
