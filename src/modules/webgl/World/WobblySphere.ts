@@ -7,6 +7,9 @@ import CustomShaderMaterial, {
   CSMProxy,
 } from "three-custom-shader-material/vanilla";
 
+import vertexShader from "@shaders/wobble/vertex.glsl";
+import fragmentShader from "@shaders/wobble/fragment.glsl";
+
 type WobblySphereState = {
   color: string;
   metalness: number;
@@ -96,6 +99,8 @@ class WobblySphere extends MeshEntity implements Destroyable {
     this.material = new CustomShaderMaterial({
       // * Custom
       baseMaterial: THREE.MeshPhysicalMaterial,
+      vertexShader,
+      fragmentShader,
 
       // * MeshPhysicalMaterial
       color,
