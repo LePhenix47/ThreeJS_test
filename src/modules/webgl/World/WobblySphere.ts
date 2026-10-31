@@ -50,6 +50,10 @@ class WobblySphere extends MeshEntity implements Destroyable {
   };
   protected mesh: THREE.Mesh;
 
+  /** Matches the main material's vertex displacement so the shadow map's silhouette matches the wobbled surface, not the flat original geometry. */
+  private depthMaterial: THREE.Material;
+  private uniforms: WobblySphereUniforms;
+
   private backdropGeometry: THREE.PlaneGeometry;
   private backdropMaterial: THREE.MeshStandardMaterial;
   private backdrop: THREE.Mesh;
@@ -82,6 +86,7 @@ class WobblySphere extends MeshEntity implements Destroyable {
 
     this.setGeometry();
     this.setMaterial();
+    this.setDepthMaterial();
     this.setMesh();
     this.setBackdrop();
 
@@ -112,27 +117,26 @@ class WobblySphere extends MeshEntity implements Destroyable {
     const { color, metalness, roughness, transmission, ior, thickness } =
       this.DEBUG_DEFAULTS;
 
-    const uniforms: WobblySphereUniforms = {
+    this.uniforms = {
       uTime: new THREE.Uniform(0),
     };
 
     this.material = new CustomShaderMaterial({
       // * Custom
-      baseMaterial: THREE.MeshDepthMaterial,
+      baseMaterial: THREE.MeshPhysicalMaterial,
       vertexShader,
-      // fragmentShader,
+      fragmentShader,
 
       // * MeshPhysicalMaterial
-      depthPacking: THREE.RGBADepthPacking,
-      uniforms,
-      // color,
-      // metalness,
-      // roughness,
-      // transmission,
-      // ior,
-      // thickness,
-      // transparent: true,
-      // wireframe: false,
+      uniforms: this.uniforms,
+      color,
+      metalness,
+      roughness,
+      transmission,
+      ior,
+      thickness,
+      transparent: true,
+      wireframe: false,
       // ? CSM's constructor is typed to return the base `CustomShaderMaterial` class shape, which
       // ? only declares uniforms/vertexShader/fragmentShader, not the base material's own properties
       // ? (color, metalness, ...) even though they really do exist on the instance at runtime.
@@ -142,10 +146,28 @@ class WobblySphere extends MeshEntity implements Destroyable {
     };
   }
 
+  /**
+   * Shadow maps render from a mesh's (undisplaced) geometry by default, so without this, the
+   * cast shadow would be shaped like the flat original icosahedron, not the wobbled surface.
+   * Same vertex shader as the main material so the depth pass wobbles identically, RGBA depth
+   * packing since a plain depth material can't pack enough precision into a regular texture.
+   */
+  private setDepthMaterial(): void {
+    this.depthMaterial = new CustomShaderMaterial({
+      baseMaterial: THREE.MeshDepthMaterial,
+      vertexShader,
+
+      uniforms: this.uniforms,
+      depthPacking: THREE.RGBADepthPacking,
+    }) as unknown as THREE.Material;
+  }
+
   protected setMesh(): void {
     const mesh = new THREE.Mesh(this.geometry, this.material);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+
+    mesh.customDepthMaterial = this.depthMaterial;
 
     this.mesh = mesh;
   }
@@ -186,60 +208,61 @@ class WobblySphere extends MeshEntity implements Destroyable {
 
     const wobblySphereFolder = gui.addFolder("Wobbly sphere");
 
-    // wobblySphereFolder.addColor(state, "color").name("Color");
-    // registry.bind("color", (v) => {
-    //   this.material.color.set(v);
-    // });
+    wobblySphereFolder.addColor(state, "color").name("Color");
+    registry.bind("color", (v) => {
+      this.material.color.set(v);
+    });
 
-    // wobblySphereFolder
-    //   .add(state, "metalness")
-    //   .min(0)
-    //   .max(1)
-    //   .step(0.001)
-    //   .name("Metalness");
-    // registry.bind("metalness", (v) => {
-    //   this.material.metalness = v;
-    // });
+    wobblySphereFolder
+      .add(state, "metalness")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("Metalness");
+    registry.bind("metalness", (v) => {
+      this.material.metalness = v;
+    });
 
-    // wobblySphereFolder
-    //   .add(state, "roughness")
-    //   .min(0)
-    //   .max(1)
-    //   .step(0.001)
-    //   .name("Roughness");
-    // registry.bind("roughness", (v) => {
-    //   this.material.roughness = v;
-    // });
+    wobblySphereFolder
+      .add(state, "roughness")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("Roughness");
+    registry.bind("roughness", (v) => {
+      this.material.roughness = v;
+    });
 
-    // wobblySphereFolder
-    //   .add(state, "transmission")
-    //   .min(0)
-    //   .max(1)
-    //   .step(0.001)
-    //   .name("Transmission");
-    // registry.bind("transmission", (v) => {
-    //   this.material.transmission = v;
-    // });
+    wobblySphereFolder
+      .add(state, "transmission")
+      .min(0)
+      .max(1)
+      .step(0.001)
+      .name("Transmission");
+    registry.bind("transmission", (v) => {
+      this.material.transmission = v;
+    });
 
-    // wobblySphereFolder.add(state, "ior").min(0).max(10).step(0.001).name("IOR");
-    // registry.bind("ior", (v) => {
-    //   this.material.ior = v;
-    // });
+    wobblySphereFolder.add(state, "ior").min(0).max(10).step(0.001).name("IOR");
+    registry.bind("ior", (v) => {
+      this.material.ior = v;
+    });
 
-    // wobblySphereFolder
-    //   .add(state, "thickness")
-    //   .min(0)
-    //   .max(10)
-    //   .step(0.001)
-    //   .name("Thickness");
-    // registry.bind("thickness", (v) => {
-    //   this.material.thickness = v;
-    // });
+    wobblySphereFolder
+      .add(state, "thickness")
+      .min(0)
+      .max(10)
+      .step(0.001)
+      .name("Thickness");
+    registry.bind("thickness", (v) => {
+      this.material.thickness = v;
+    });
   }
 
   public destroy(): void {
     this.geometry.dispose();
     this.material.dispose();
+    this.depthMaterial.dispose();
     this.scene.remove(this.mesh);
 
     this.backdropGeometry.dispose();
