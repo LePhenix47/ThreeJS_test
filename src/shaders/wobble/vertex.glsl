@@ -1,3 +1,5 @@
+attribute vec4 tangent;
+
 varying vec2 vUv;
 
 #include ../utils/vectors/direction
@@ -11,19 +13,33 @@ float getWobble(vec3 position) {
     return wobble;
 }
 
-vec3 computeNormal(vec3 position, float shift) {
-    vec3 samplePositionA = position.xyz + vec3(shift, 0.0, 0.0);
-    vec3 samplePositionB = position.xyz + vec3(0.0, 0.0, -1.0 * shift);
+vec3 computeSphereNormal(vec3 position, float shift) {
+    vec3 bitTangent = cross(normal, tangent.xyz);
 
-    vec3 toA = direction(position.xyz, samplePositionA);
-    vec3 toB = direction(position.xyz, samplePositionB);
+    vec3 wobbledPosition = position + getWobble(position) * normal;
+
+    vec3 positionA = position + tangent.xyz * shift;
+    vec3 positionB = position + bitTangent.xyz * shift;
+    positionA += getWobble(positionA) * normal;
+    positionB += getWobble(positionB) * normal;
+
+    vec3 toA = direction(wobbledPosition, positionA);
+    vec3 toB = direction(wobbledPosition, positionB);
 
     return cross(toA, toB);
 }
 
 void main() {
-    vec3 computedNormal = computeNormal(csm_Position, 0.1);
-    csm_Position += getWobble(csm_Position) * computedNormal;
+
+    // * Wobble
+    vec3 originalPosition = csm_Position;
+
+    float wobble = getWobble(originalPosition);
+    csm_Position = originalPosition + wobble * normal;
+
+    // * Computed normal
+    vec3 computedNormal = computeSphereNormal(originalPosition, 0.01);
+    csm_Normal = computedNormal;
 
     // * Varyings
     vUv = uv;
