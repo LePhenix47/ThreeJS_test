@@ -9,6 +9,7 @@ import CustomShaderMaterial, {
 
 import vertexShader from "@shaders/wobble/vertex.glsl";
 import fragmentShader from "@shaders/wobble/fragment.glsl";
+import { MapAsUniforms } from "./types/uniforms";
 
 type WobblySphereState = {
   color: string;
@@ -18,6 +19,10 @@ type WobblySphereState = {
   ior: number;
   thickness: number;
 };
+
+type WobblySphereUniforms = MapAsUniforms<{
+  uTime: number;
+}>;
 
 class WobblySphere extends MeshEntity implements Destroyable {
   public static readonly CONFIG = {
@@ -39,7 +44,9 @@ class WobblySphere extends MeshEntity implements Destroyable {
   private readonly experience: Experience | null;
 
   protected geometry: THREE.IcosahedronGeometry;
-  protected material: CSMProxy<typeof THREE.MeshPhysicalMaterial>;
+  protected material: CSMProxy<typeof THREE.MeshPhysicalMaterial> & {
+    uniforms: WobblySphereUniforms;
+  };
   protected mesh: THREE.Mesh;
 
   private backdropGeometry: THREE.PlaneGeometry;
@@ -96,6 +103,10 @@ class WobblySphere extends MeshEntity implements Destroyable {
     const { color, metalness, roughness, transmission, ior, thickness } =
       this.DEBUG_DEFAULTS;
 
+    const uniforms: WobblySphereUniforms = {
+      uTime: new THREE.Uniform(0),
+    };
+
     this.material = new CustomShaderMaterial({
       // * Custom
       baseMaterial: THREE.MeshPhysicalMaterial,
@@ -103,6 +114,7 @@ class WobblySphere extends MeshEntity implements Destroyable {
       fragmentShader,
 
       // * MeshPhysicalMaterial
+      uniforms,
       color,
       metalness,
       roughness,
@@ -115,7 +127,9 @@ class WobblySphere extends MeshEntity implements Destroyable {
       // ? only declares uniforms/vertexShader/fragmentShader, not the base material's own properties
       // ? (color, metalness, ...) even though they really do exist on the instance at runtime.
       // ? CSMProxy<T> is the package's own type for that real shape, hence the cast.
-    }) as unknown as CSMProxy<typeof THREE.MeshPhysicalMaterial>;
+    }) as unknown as CSMProxy<typeof THREE.MeshPhysicalMaterial> & {
+      uniforms: WobblySphereUniforms;
+    };
   }
 
   protected setMesh(): void {
