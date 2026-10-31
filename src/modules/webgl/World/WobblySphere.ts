@@ -6,6 +6,7 @@ import { MeshEntity } from "./types/mesh-entity";
 import CustomShaderMaterial, {
   CSMProxy,
 } from "three-custom-shader-material/vanilla";
+import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import vertexShader from "@shaders/wobble/vertex.glsl";
 import fragmentShader from "@shaders/wobble/fragment.glsl";
@@ -43,7 +44,7 @@ class WobblySphere extends MeshEntity implements Destroyable {
 
   private readonly experience: Experience | null;
 
-  protected geometry: THREE.IcosahedronGeometry;
+  protected geometry: THREE.BufferGeometry;
   protected material: CSMProxy<typeof THREE.MeshPhysicalMaterial> & {
     uniforms: WobblySphereUniforms;
   };
@@ -96,7 +97,15 @@ class WobblySphere extends MeshEntity implements Destroyable {
   protected setGeometry(): void {
     const { radius, detail } = WobblySphere.CONFIG.geometry;
 
-    this.geometry = new THREE.IcosahedronGeometry(radius, detail);
+    const geometry = new THREE.IcosahedronGeometry(radius, detail);
+
+    // * The IcosahedronGeometry is NOT indexed so we can't get the tangent & bit-tangent without indexing, we have duplicate vertices, to make it indexed → mergeVertices
+    const indexedGeometry = mergeVertices(geometry);
+    indexedGeometry.computeTangents();
+
+    // ? Warning: merging vertices is power-consuming
+
+    this.geometry = indexedGeometry;
   }
 
   protected setMaterial(): void {
