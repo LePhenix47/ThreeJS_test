@@ -30,6 +30,7 @@ type WobblySphereState = {
   uWarpStrengthAmplitude: number;
   uLowColor: string;
   uHighColor: string;
+  suzanne: boolean;
 };
 
 type WobblySphereUniforms = MapAsUniforms<{
@@ -81,6 +82,8 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
     null;
 
   protected readonly DEBUG_DEFAULTS: WobblySphereState = {
+    suzanne: false,
+    // * Material
     color: "#ffffff",
     metalness: 0,
     roughness: 0.5,
