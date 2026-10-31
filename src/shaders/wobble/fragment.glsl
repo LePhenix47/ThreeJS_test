@@ -11,4 +11,11 @@ void main() {
     vec3 color = mix(uLowColor, uHighColor, colorMix);
 
     csm_DiffuseColor.rgb = color;
+
+    // // * Shiny tip
+    // csm_Roughness = 1.0 - colorMix;
+
+    // // * Mirror
+    // csm_Metalness = step(0.25, vWobble);
+    // csm_Roughness = 1.0 - csm_Metalness;
 }
