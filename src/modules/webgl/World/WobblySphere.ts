@@ -22,10 +22,16 @@ type WobblySphereState = {
   transmission: number;
   ior: number;
   thickness: number;
+  uPositionFrequency: number;
+  uTimeFrequency: number;
+  uStrengthAmplitude: number;
 };
 
 type WobblySphereUniforms = MapAsUniforms<{
   uTime: number;
+  uPositionFrequency: WobblySphereState["uPositionFrequency"];
+  uTimeFrequency: WobblySphereState["uTimeFrequency"];
+  uStrengthAmplitude: WobblySphereState["uStrengthAmplitude"];
 }>;
 
 class WobblySphere extends MeshEntity implements Updatable, Destroyable {
@@ -71,6 +77,10 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
     transmission: 0,
     ior: 1.5,
     thickness: 1.5,
+    // * uniforms
+    uPositionFrequency: 1.0,
+    uStrengthAmplitude: 1.0,
+    uTimeFrequency: 1.0,
   };
 
   private get scene() {
@@ -126,6 +136,9 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
 
     this.uniforms = {
       uTime: new THREE.Uniform(0),
+      uPositionFrequency: new THREE.Uniform(0),
+      uStrengthAmplitude: new THREE.Uniform(0),
+      uTimeFrequency: new THREE.Uniform(0),
     };
 
     this.material = new CustomShaderMaterial({
@@ -214,13 +227,15 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
     const { gui } = this.debug;
 
     const wobblySphereFolder = gui.addFolder("Wobbly sphere");
+    const materialFolder = wobblySphereFolder.addFolder("Material");
+    const uniformsFolder = wobblySphereFolder.addFolder("Uniforms");
 
-    wobblySphereFolder.addColor(state, "color").name("Color");
+    materialFolder.addColor(state, "color").name("Color");
     registry.bind("color", (v) => {
       this.material.color.set(v);
     });
 
-    wobblySphereFolder
+    materialFolder
       .add(state, "metalness")
       .min(0)
       .max(1)
@@ -230,7 +245,7 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       this.material.metalness = v;
     });
 
-    wobblySphereFolder
+    materialFolder
       .add(state, "roughness")
       .min(0)
       .max(1)
@@ -240,7 +255,7 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       this.material.roughness = v;
     });
 
-    wobblySphereFolder
+    materialFolder
       .add(state, "transmission")
       .min(0)
       .max(1)
@@ -250,12 +265,12 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       this.material.transmission = v;
     });
 
-    wobblySphereFolder.add(state, "ior").min(0).max(10).step(0.001).name("IOR");
+    materialFolder.add(state, "ior").min(0).max(10).step(0.001).name("IOR");
     registry.bind("ior", (v) => {
       this.material.ior = v;
     });
 
-    wobblySphereFolder
+    materialFolder
       .add(state, "thickness")
       .min(0)
       .max(10)
@@ -263,6 +278,21 @@ class WobblySphere extends MeshEntity implements Updatable, Destroyable {
       .name("Thickness");
     registry.bind("thickness", (v) => {
       this.material.thickness = v;
+    });
+
+    uniformsFolder.add(state, "uPositionFrequency").min(0).max(1).step(0.001);
+    registry.bind("uPositionFrequency", (v) => {
+      this.material.uniforms.uPositionFrequency.value = v;
+    });
+
+    uniformsFolder.add(state, "uTimeFrequency").min(0).max(1).step(0.001);
+    registry.bind("uTimeFrequency", (v) => {
+      this.material.uniforms.uTimeFrequency.value = v;
+    });
+
+    uniformsFolder.add(state, "uStrengthAmplitude").min(0).max(1).step(0.001);
+    registry.bind("uStrengthAmplitude", (v) => {
+      this.material.uniforms.uStrengthAmplitude.value = v;
     });
   }
 
