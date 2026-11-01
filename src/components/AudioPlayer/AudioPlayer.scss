@@ -4,9 +4,6 @@
   @include card-styling;
   @include center-flex-column(12px);
 
-  container-type: inline-size;
-  container-name: audio-player;
-
   width: 100%;
   max-width: 480px;
   margin: 0;
@@ -37,16 +34,7 @@
 
     &--dragging {
       border-color: var(--color-blue-500);
-
-      @supports (background: color-mix(in srgb, red 50%, transparent)) {
-        background-color: color-mix(in srgb,
-            var(--color-blue-500) 10%,
-            transparent);
-      }
-
-      @supports not (background: color-mix(in srgb, red 50%, transparent)) {
-        background-color: var(--color-blue-50);
-      }
+      background-color: rgb(from var(--color-blue-500) r g b / 10%);
     }
   }
 
@@ -75,16 +63,8 @@
 
     width: 100%;
 
-    @supports (container-type: inline-size) {
-      @container audio-player (max-width: 360px) {
-        flex-wrap: wrap;
-      }
-    }
-
-    @supports not (container-type: inline-size) {
-      @include mobile-only {
-        flex-wrap: wrap;
-      }
+    @include mobile-only {
+      flex-wrap: wrap;
     }
   }
 
@@ -92,8 +72,6 @@
     --_size: 44px;
 
     flex-shrink: 0;
-    justify-items: center;
-    align-items: center;
     border: none;
     border-radius: 100vmax;
     background: var(--color-primary);
@@ -130,9 +108,15 @@
     color: var(--color-secondary);
   }
 
+  // ? Overrides _normalization.scss's own range-input reset variables, not accent-color — the
+  // ? reset already strips native appearance, accent-color has nothing left to theme once it has
   &__scrubber {
     flex: 1;
-    accent-color: var(--color-primary);
+
+    --_track-width: 100%;
+    --_track-bg: var(--border-color);
+    --_thumb-bg: var(--color-primary);
+    --_inner-track-bg: var(--color-blue-500);
   }
 
   &__volume {
@@ -142,7 +126,11 @@
 
     input[type="range"] {
       width: 80px;
-      accent-color: var(--color-primary);
+
+      --_track-width: 100%;
+      --_track-bg: var(--border-color);
+      --_thumb-bg: var(--color-primary);
+      --_inner-track-bg: var(--color-blue-500);
     }
   }
 }
