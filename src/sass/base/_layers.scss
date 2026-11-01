@@ -1,0 +1,3 @@
+// ? Explicit cascade layer order: later layers win, regardless of @forward order below.
+// ? js-classes goes last so utility classes (.square, .stack, ...) beat base resets.
+@layer normalization, typograhy, scrollbar, js-classes;

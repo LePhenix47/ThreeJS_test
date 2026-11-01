@@ -1,3 +1,6 @@
+//Layer order (must be forwarded first, declares priority for every layer below)
+@forward "./base/layers";
+
 //Utils other than variabls, maps and mixins
 @forward "./utils/js-classes";
 
