@@ -113,10 +113,16 @@
   &__scrubber {
     flex: 1;
 
-    --_track-width: 100%;
+    color: inherit;
+    height: 18px;
+
     --_track-bg: var(--border-color);
-    --_thumb-bg: var(--color-primary);
     --_inner-track-bg: var(--color-blue-500);
+    --_track-height: 100% !important;
+
+    --_thumb-border-width: 1px;
+    --_thumb-border-color: currentColor;
+    --_thumb-bg: currentColor;
   }
 
   &__volume {
@@ -129,8 +135,11 @@
 
       --_track-width: 100%;
       --_track-bg: var(--border-color);
-      --_thumb-bg: var(--color-primary);
       --_inner-track-bg: var(--color-blue-500);
+
+      --_thumb-border-width: 1px;
+      --_thumb-bg: var(--color-primary);
+
     }
   }
 }
