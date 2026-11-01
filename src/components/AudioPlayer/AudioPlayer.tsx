@@ -62,35 +62,38 @@ function AudioPlayer({ className = "" }: AudioPlayerProps) {
   }
 
   // 7. Render
-  const dropzoneClassName = isDraggingOver
-    ? "audio-player__dropzone audio-player__dropzone--dragging"
-    : "audio-player__dropzone";
+  const rootClassName = [
+    "audio-player",
+    isDraggingOver && "audio-player--dragging",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const uploadClassName = file
+    ? "audio-player__upload audio-player__upload--compact"
+    : "audio-player__upload";
 
   return (
-    <figure className={`audio-player ${className}`}>
-      <label className={dropzoneClassName} {...dropHandlers}>
+    <figure className={rootClassName} {...dropHandlers}>
+      <label className={uploadClassName}>
         <input
           type="file"
           accept={acceptAttr}
           className="screen-readers-only"
           onChange={handleFileChange}
         />
-        <span className="audio-player__dropzone-hint">
-          {file
-            ? "Drop a new file to replace it"
-            : "Drag & drop an audio file, or click to browse"}
-        </span>
+        <svg
+          className="audio-player__icon audio-player__upload-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M12 16V4m0 0 5 5m-5-5-5 5" />
+          <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+        </svg>
+        <figcaption className="audio-player__filename" aria-live="polite">
+          {file ? file.name : "Drop audio, or click to browse"}
+        </figcaption>
       </label>
-
-      {fileError && (
-        <p className="audio-player__error" role="alert">
-          {fileError}
-        </p>
-      )}
-
-      <figcaption className="audio-player__filename" aria-live="polite">
-        {file ? file.name : "No audio loaded"}
-      </figcaption>
 
       {file && (
         <div className="audio-player__controls">
@@ -156,6 +159,12 @@ function AudioPlayer({ className = "" }: AudioPlayerProps) {
             />
           </label>
         </div>
+      )}
+
+      {fileError && (
+        <p className="audio-player__error" role="alert">
+          {fileError}
+        </p>
       )}
 
       {objectUrl && (

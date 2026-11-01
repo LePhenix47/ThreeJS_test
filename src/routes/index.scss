@@ -1,7 +1,7 @@
 @use "../sass/utils/" as *;
 
 .index-page {
-  @include center-flex-column(16px);
+  @include center-flex-column;
   width: 100%;
   height: 100%;
 
