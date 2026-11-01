@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, CSSProperties } from "react";
 
 import { formatMediaTimeStamp } from "@/utils/formatting/format";
 import { useFileDrop } from "@/hooks/useFileDrop";
@@ -72,6 +72,9 @@ function AudioPlayer({ className = "" }: AudioPlayerProps) {
   const uploadClassName = file
     ? "audio-player__upload audio-player__upload--compact"
     : "audio-player__upload";
+  const progress = duration ? (currentTime / duration) * 100 : 0;
+  // ? Drives &__scrubber::before's width — see AudioPlayer.scss
+  const scrubberStyle = { "--_progress": `${progress}%` } as CSSProperties;
 
   return (
     <figure className={rootClassName} {...dropHandlers}>
@@ -124,16 +127,18 @@ function AudioPlayer({ className = "" }: AudioPlayerProps) {
             {formatMediaTimeStamp(currentTime)}
           </span>
 
-          <input
-            type="range"
-            className="audio-player__scrubber"
-            min={0}
-            max={duration || 0}
-            step={0.01}
-            value={currentTime}
-            onChange={handleScrub}
-            aria-label="Seek"
-          />
+          <div className="audio-player__track" style={scrubberStyle}>
+            <input
+              type="range"
+              className="audio-player__scrubber"
+              min={0}
+              max={duration || 0}
+              step={0.01}
+              value={currentTime}
+              onChange={handleScrub}
+              aria-label="Seek"
+            />
+          </div>
 
           <span className="audio-player__time">
             {formatMediaTimeStamp(duration)}
