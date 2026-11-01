@@ -50,6 +50,8 @@ type WobblyUniforms = MapAsUniforms<{
   uWarpStrengthAmplitude: WobblyGroupState["uWarpStrengthAmplitude"];
   uLowColor: THREE.Color;
   uHighColor: THREE.Color;
+  /** Added on top of uStrengthAmplitude each frame, derived from the playing track's bass energy. */
+  uAudioIntensity: number;
 }>;
 
 class WobblyGroup implements Updatable, Destroyable {
@@ -62,6 +64,12 @@ class WobblyGroup implements Updatable, Destroyable {
       widthSegments: 15,
       position: { y: -5, z: 5 },
       rotationYDeg: 180,
+    },
+    audio: {
+      /** Of the 16 bins getFrequencyData() returns at fftSize 32, how many (from the low end) count as "bass" for the wobble boost. */
+      bassBinCount: 4,
+      /** Scales the 0-1 bass average into a uStrengthAmplitude-comparable range. */
+      intensityScale: 0.6,
     },
   } as const;
 
@@ -114,6 +122,10 @@ class WobblyGroup implements Updatable, Destroyable {
 
   private get debug() {
     return this.experience!.debug;
+  }
+
+  private get audioAnalyser() {
+    return this.experience!.audioAnalyser;
   }
 
   constructor() {
@@ -181,6 +193,7 @@ class WobblyGroup implements Updatable, Destroyable {
       uLowColor: {
         value: new THREE.Color(uLowColor),
       },
+      uAudioIntensity: new THREE.Uniform(0),
     };
 
     this.material = new CustomShaderMaterial({
@@ -364,6 +377,26 @@ class WobblyGroup implements Updatable, Destroyable {
 
   public update(): void {
     this.uniforms.uTime.value = this.time.elapsedSeconds;
+    this.uniforms.uAudioIntensity.value = this.getAudioIntensity();
+  }
+
+  /** Average of the lowest frequency bins (bass), 0-1, scaled for uStrengthAmplitude. 0 when nothing's playing. */
+  private getAudioIntensity(): number {
+    const { bassBinCount, intensityScale } = WobblyGroup.CONFIG.audio;
+
+    const frequencyData = this.audioAnalyser.getFrequencyData();
+    if (frequencyData.length === 0) return 0;
+
+    const bassBins: Uint8Array<ArrayBufferLike> = frequencyData.subarray(
+      0,
+      bassBinCount,
+    );
+
+    const bassSum: number = bassBins.reduce((total, value) => total + value, 0);
+    const bassAverage: number = bassSum / bassBins.length;
+    const bassAverageNormalized: number = bassAverage / 255;
+
+    return bassAverageNormalized * intensityScale;
   }
 
   public destroy(): void {

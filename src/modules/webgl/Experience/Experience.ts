@@ -3,6 +3,7 @@ import Camera from "./three/Camera";
 import Renderer from "./three/Renderer";
 import Sizes from "./utils/Sizes";
 import Time from "./utils/Time";
+import AudioAnalyser from "./utils/AudioAnalyser";
 
 import GUI from "lil-gui";
 import * as THREE from "three";
@@ -40,6 +41,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public camera: Camera;
   public renderer: Renderer;
   public world: World;
+  public audioAnalyser: AudioAnalyser;
 
   constructor({
     canvas,
@@ -84,6 +86,9 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     // ? Camera
     this.camera = new Camera({ persistence: true });
+
+    // ? Audio (needs the camera instance to attach its listener)
+    this.audioAnalyser = new AudioAnalyser({ camera: this.camera.instance });
 
     // ? Render
     this.renderer = new Renderer();
@@ -133,6 +138,7 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.sizes.destroy();
     this.time.destroy();
     this.camera.destroy();
+    this.audioAnalyser.destroy();
     this.renderer.destroy();
     this.world.destroy();
 

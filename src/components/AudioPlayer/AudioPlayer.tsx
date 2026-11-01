@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import type { ChangeEvent, CSSProperties } from "react";
 
+import Experience from "@modules/webgl/Experience/Experience";
 import { formatMediaTimeStamp } from "@/utils/formatting/format";
 import { useFileDrop } from "@/hooks/useFileDrop";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
@@ -39,6 +41,13 @@ function AudioPlayer({ className = "" }: AudioPlayerProps) {
   const { isDraggingOver, dropHandlers } = useFileDrop({
     onDropFile: loadFile,
   });
+
+  // 5. Effects
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    Experience.instance?.audioAnalyser.setMediaElement(audioRef.current);
+  }, [audioRef, objectUrl]);
 
   // 6. Event handlers
   function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {

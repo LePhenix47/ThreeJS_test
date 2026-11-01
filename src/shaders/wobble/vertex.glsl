@@ -5,6 +5,8 @@ uniform float uPositionFrequency;
 uniform float uWarpTimeFrequency;
 uniform float uWarpStrengthAmplitude;
 uniform float uWarpPositionFrequency;
+// ? 0 when idle/no track loaded, so this never changes the look when nothing's playing
+uniform float uAudioIntensity;
 
 attribute vec4 tangent;
 
@@ -29,7 +31,7 @@ float getWobble(vec3 position) {
     uTime * uTimeFrequency // ? W
     );
 
-    float wobble = simplexNoise4d(noisedPosition) * uStrengthAmplitude;
+    float wobble = simplexNoise4d(noisedPosition) * (uStrengthAmplitude + uAudioIntensity);
     return wobble;
 }
 
