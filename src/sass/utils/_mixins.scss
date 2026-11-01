@@ -188,6 +188,16 @@
     --_thumb-border-color: #{$thumb-border-color};
 }
 
+// ? Sizes a reset range input's track/thumb as a matched pair (see range-input-theme for color)
+@mixin range-input-size($size: 10px, $thumb-border-width: 0px) {
+    height: $size;
+
+    --_track-height: #{$size};
+    --_thumb-height: var(--_track-height);
+    --_thumb-width: var(--_track-height);
+    --_thumb-border-width: #{$thumb-border-width};
+}
+
 @mixin card-styling {
     border: 2px solid var(--border-color);
     border-radius: 10px;
