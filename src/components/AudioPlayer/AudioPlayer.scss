@@ -174,12 +174,17 @@
       mask-position: left center;
       -webkit-mask-position: left center;
 
-      mask-size: auto 60%;
-      -webkit-mask-size: auto 60%;
+      // ? Single source of truth for the tile width: read by mask-size below AND by the
+      // ? audio-wave-scroll keyframe (_keyframes.scss), so the scroll shift and the rendered
+      // ? tile size can never drift apart again. Must still match --_wave-svg's viewBox width by
+      // ? convention — a data URI can't read a CSS var, so that side can't be unified too
+      --_wave-tile-width: 14px;
+      mask-size: var(--_wave-tile-width) auto;
+      -webkit-mask-size: var(--_wave-tile-width) auto;
 
       // ? Paused by default so the wave only scrolls while audio is actually playing — see
       // ? &--playing below. prefers-reduced-motion is already handled globally in _normalization
-      animation: audio-wave-scroll 6s linear infinite;
+      animation: audio-wave-scroll 250ms linear infinite;
       animation-play-state: paused;
     }
   }

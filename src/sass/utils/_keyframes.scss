@@ -78,9 +78,10 @@
     }
 
     to {
-        // ? -14px matches the wave SVG's own tile width, so the loop point is seamless
-        mask-position: -100% center;
-        -webkit-mask-position: -100% center;
+        // ? Reads --_wave-tile-width (declared in AudioPlayer.scss, same source mask-size uses)
+        // ? instead of a hardcoded px value, so the shift and the rendered tile can't drift apart
+        mask-position: calc(var(--_wave-tile-width) * -1) center;
+        -webkit-mask-position: calc(var(--_wave-tile-width) * -1) center;
     }
 }
 
