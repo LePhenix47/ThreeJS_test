@@ -1,0 +1,155 @@
+@use "../../sass/utils/" as *;
+
+.audio-player {
+  @include card-styling;
+  @include center-flex-column(12px);
+
+  container-type: inline-size;
+  container-name: audio-player;
+
+  width: 100%;
+  max-width: 480px;
+  margin: 0;
+  padding: 16px;
+
+  &__dropzone {
+    @include center-flex(8px);
+
+    width: 100%;
+    padding: 16px;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius, 8px);
+    cursor: pointer;
+    text-align: center;
+    transition:
+      border-color 150ms ease,
+      background-color 150ms ease;
+
+    &:hover {
+      border-color: var(--color-primary);
+    }
+
+    &:has(input:focus-visible) {
+      outline: 2px solid var(--color-blue-500);
+      outline-offset: 2px;
+    }
+
+    &--dragging {
+      border-color: var(--color-blue-500);
+
+      @supports (background: color-mix(in srgb, red 50%, transparent)) {
+        background-color: color-mix(
+          in srgb,
+          var(--color-blue-500) 10%,
+          transparent
+        );
+      }
+
+      @supports not (background: color-mix(in srgb, red 50%, transparent)) {
+        background-color: var(--color-blue-50);
+      }
+    }
+  }
+
+  &__dropzone-hint {
+    font-size: 14px;
+    color: var(--color-secondary);
+  }
+
+  &__filename {
+    @include single-ellipsis-effect;
+
+    max-width: 100%;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-primary);
+  }
+
+  &__controls {
+    @include center-flex(10px);
+
+    width: 100%;
+
+    @supports (container-type: inline-size) {
+      @container audio-player (max-width: 360px) {
+        flex-wrap: wrap;
+      }
+    }
+
+    @supports not (container-type: inline-size) {
+      @include mobile-only {
+        flex-wrap: wrap;
+      }
+    }
+  }
+
+  &__toggle {
+    --_size: 44px;
+
+    flex-shrink: 0;
+    justify-items: center;
+    align-items: center;
+    border: none;
+    border-radius: 100vmax;
+    background: var(--color-primary);
+    color: var(--bg-secondary);
+    cursor: pointer;
+    transition: background-color 150ms ease;
+
+    &:hover {
+      background: var(--color-primary--hover);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-blue-500);
+      outline-offset: 2px;
+    }
+  }
+
+  &__icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+    transition: opacity 150ms ease;
+  }
+
+  &__time {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-secondary);
+  }
+
+  &__scrubber {
+    flex: 1;
+    accent-color: var(--color-primary);
+  }
+
+  &__volume {
+    @include center-flex(6px);
+
+    flex-shrink: 0;
+
+    input[type="range"] {
+      width: 80px;
+      accent-color: var(--color-primary);
+    }
+  }
+}
+
+/*
+  ? Both icons share one grid cell (.stack, from js-classes), crossfaded via aria-pressed instead
+  ? of conditional rendering, so the swap can transition instead of popping
+*/
+.audio-player__toggle[aria-pressed="true"] .audio-player__icon--play {
+  opacity: 0;
+}
+
+.audio-player__toggle[aria-pressed="false"] .audio-player__icon--pause {
+  opacity: 0;
+}

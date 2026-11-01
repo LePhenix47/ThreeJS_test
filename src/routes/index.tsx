@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import ThreeScene from "@/components/ThreeScene/ThreeScene";
 import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
+import AudioPlayer from "@/components/AudioPlayer/AudioPlayer";
 import "./index.scss";
 
 export const Route = createFileRoute("/")({
@@ -38,6 +39,7 @@ function IndexComponent() {
         <ThreeScene />
         <LoadingSpinner />
       </div>
+      <AudioPlayer />
     </div>
   );
 }
