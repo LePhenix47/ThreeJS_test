@@ -73,8 +73,11 @@ function AudioPlayer({ className = "" }: AudioPlayerProps) {
     ? "audio-player__upload audio-player__upload--compact"
     : "audio-player__upload";
   const progress = duration ? (currentTime / duration) * 100 : 0;
-  // ? Drives &__scrubber::before's width — see AudioPlayer.scss
+  // ? Drives &__track::before's width — see AudioPlayer.scss
   const scrubberStyle = { "--_progress": `${progress}%` } as CSSProperties;
+  const trackClassName = isPlaying
+    ? "audio-player__track audio-player__track--playing"
+    : "audio-player__track";
 
   return (
     <figure className={rootClassName} {...dropHandlers}>
@@ -127,7 +130,7 @@ function AudioPlayer({ className = "" }: AudioPlayerProps) {
             {formatMediaTimeStamp(currentTime)}
           </span>
 
-          <div className="audio-player__track" style={scrubberStyle}>
+          <div className={trackClassName} style={scrubberStyle}>
             <input
               type="range"
               className="audio-player__scrubber"

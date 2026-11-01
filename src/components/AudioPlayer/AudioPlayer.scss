@@ -127,7 +127,7 @@
   // ? Used as a mask, not painted directly — the stroke just needs to be opaque so the shape
   // ? reads cleanly under both luminance-based (Firefox) and alpha-based (WebKit) masking.
   // ? Actual color comes from --_track-bg below, so it tracks the theme automatically
-  --_wave-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 8'%3E%3Cpath d='M0 4 Q3.5 0 7 4 T14 4' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  --_wave-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 8'%3E%3Cpath d='M0 4 Q3.5 0 7 4 T14 4' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
 
   // ? <input> is a replaced element — ::before/::after have no content model to attach to on one,
   // ? so Chromium rendering it there was non-conformant, not something Firefox got wrong. This
@@ -140,6 +140,18 @@
     align-items: center;
 
     flex: 1;
+
+    &::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      // width: calc(100% - var(--_progress, 0%));
+      width: 100%;
+      height: 100%;
+      background-color: var(--border-color);
+      border-radius: 100vmax;
+      z-index: -2;
+    }
 
     &::before {
       content: "";
@@ -164,7 +176,16 @@
 
       mask-size: auto 60%;
       -webkit-mask-size: auto 60%;
+
+      // ? Paused by default so the wave only scrolls while audio is actually playing — see
+      // ? &--playing below. prefers-reduced-motion is already handled globally in _normalization
+      animation: audio-wave-scroll 6s linear infinite;
+      animation-play-state: paused;
     }
+  }
+
+  &__track--playing::before {
+    animation-play-state: running;
   }
 
   &__scrubber {
