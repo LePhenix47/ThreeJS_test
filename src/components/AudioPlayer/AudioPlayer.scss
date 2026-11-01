@@ -108,21 +108,16 @@
     color: var(--color-secondary);
   }
 
-  // ? Overrides _normalization.scss's own range-input reset variables, not accent-color — the
-  // ? reset already strips native appearance, accent-color has nothing left to theme once it has
   &__scrubber {
+    @include range-input-theme($thumb-bg: currentColor,
+      $thumb-border-color: currentColor);
+
     flex: 1;
 
     color: inherit;
     height: 18px;
 
-    --_track-bg: var(--border-color);
-    --_inner-track-bg: var(--color-blue-500);
     --_track-height: 100% !important;
-
-    --_thumb-border-width: 1px;
-    --_thumb-border-color: currentColor;
-    --_thumb-bg: currentColor;
   }
 
   &__volume {
@@ -131,15 +126,10 @@
     flex-shrink: 0;
 
     input[type="range"] {
+      @include range-input-theme;
+
       width: 80px;
-
-      --_track-width: 100%;
-      --_track-bg: var(--border-color);
-      --_inner-track-bg: var(--color-blue-500);
-
-      --_thumb-border-width: 1px;
-      --_thumb-bg: var(--color-primary);
-
+      --_track-height: 100% !important;
     }
   }
 }
