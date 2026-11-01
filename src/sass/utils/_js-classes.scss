@@ -55,7 +55,7 @@
     }
 
     .square {
-        display: block;
+        display: flex;
         --_size: 24px;
         width: var(--_size);
         height: var(--_size);
@@ -72,4 +72,26 @@
             timestamp-reset-flash 0.6s ease-in-out;
         animation-iteration-count: 1;
     }
+
+
+    .stack {
+        display: grid;
+        grid-template-areas: "stack";
+        justify-items: center;
+        align-items: center;
+    }
+
+    .stack>* {
+        grid-area: stack;
+    }
+
+
+    .prose {
+        --_prose-flow: 1em;
+    }
+
+    .prose>*+* {
+        margin-block-start: var(--_prose-flow, 1em);
+    }
+
 }
