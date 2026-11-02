@@ -42,12 +42,16 @@ class AudioAnalyser implements Destroyable {
 
   /** Frequency bins (0-255 each), low to high. Empty until a media element is connected. */
   public getFrequencyData(): Uint8Array {
-    return this.analyser?.getFrequencyData() ?? new Uint8Array(0);
+    if (!this.analyser) return new Uint8Array(0);
+
+    return this.analyser.getFrequencyData();
   }
 
   /** Overall loudness (0-255), averaged across the whole spectrum. 0 until a media element is connected. */
   public getVolume(): number {
-    return this.analyser?.getAverageFrequency() ?? 0;
+    if (!this.analyser) return 0;
+
+    return this.analyser.getAverageFrequency();
   }
 
   public destroy(): void {

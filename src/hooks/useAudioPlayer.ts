@@ -106,13 +106,14 @@ export function useAudioPlayer(
   }, [objectUrl]);
 
   useEffect(() => {
-    if (!audioRef.current) return;
+    const audioElement: HTMLAudioElement | null = audioRef.current;
+    if (!audioElement) return;
 
     /*
       ? iOS Safari ignores this entirely — HTMLMediaElement.volume is locked to 1 and only the
       ? hardware buttons control output there. Still correct everywhere else, so it stays.
     */
-    audioRef.current.volume = volume;
+    audioElement.volume = volume;
   }, [volume]);
 
   function loadFile(candidate: File): void {
@@ -131,25 +132,28 @@ export function useAudioPlayer(
   }
 
   function togglePlayback(): void {
-    if (!audioRef.current) return;
+    const audioElement: HTMLAudioElement | null = audioRef.current;
+    if (!audioElement) return;
 
-    if (audioRef.current.paused) {
-      // ? play() returns a Promise that rejects on a near-simultaneous pause() — unhandled
-      // ? rejections log a console error in Chrome if this isn't caught
-      audioRef.current.play().catch((error: unknown) => {
-        console.error("Audio playback failed:", error);
-      });
+    if (!audioElement.paused) {
+      audioElement.pause();
       return;
     }
 
-    audioRef.current.pause();
+    // ? play() returns a Promise that rejects on a near-simultaneous pause() — unhandled
+    // ? rejections log a console error in Chrome if this isn't caught
+    audioElement.play().catch((error: unknown) => {
+      console.error("Audio playback failed:", error);
+    });
   }
 
   function seek(time: number): void {
     setCurrentTime(time);
 
-    if (!audioRef.current) return;
-    audioRef.current.currentTime = time;
+    const audioElement: HTMLAudioElement | null = audioRef.current;
+    if (!audioElement) return;
+
+    audioElement.currentTime = time;
   }
 
   const acceptAttr = [...acceptedMimeTypes].join(",");
