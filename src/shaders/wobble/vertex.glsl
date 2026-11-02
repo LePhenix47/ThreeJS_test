@@ -42,7 +42,7 @@ float getWobble(vec3 position) {
     return wobble;
 }
 
-vec3 computeSphereNormal(vec3 originalPosition, vec3 changedPosition, float shift) {
+vec3 computeWobbleNormal(vec3 originalPosition, vec3 changedPosition, float shift) {
     vec3 bitTangent = cross(normal, tangent.xyz);
 
     vec3 originA = originalPosition + tangent.xyz * shift;
@@ -65,7 +65,7 @@ void main() {
     csm_Position = originalPosition + wobble * normal;
 
     // * Computed normal
-    vec3 computedNormal = computeSphereNormal(originalPosition, csm_Position, 0.01);
+    vec3 computedNormal = computeWobbleNormal(originalPosition, csm_Position, 0.01);
     csm_Normal = computedNormal;
 
     // * Varyings
