@@ -14,7 +14,7 @@ class AudioAnalyser implements Destroyable {
   private readonly sound: THREE.Audio;
   private readonly fftSize: number;
 
-  private analyser: THREE.AudioAnalyser | null = null;
+  private instance: THREE.AudioAnalyser | null = null;
   /** Set once by setMediaElement(). A media element can only ever back one MediaElementAudioSourceNode. */
   private mediaElement: HTMLMediaElement | null = null;
 
@@ -37,21 +37,21 @@ class AudioAnalyser implements Destroyable {
 
     this.mediaElement = audio;
     this.sound.setMediaElementSource(audio);
-    this.analyser = new THREE.AudioAnalyser(this.sound, this.fftSize);
+    this.instance = new THREE.AudioAnalyser(this.sound, this.fftSize);
   }
 
   /** Frequency bins (0-255 each), low to high. Empty until a media element is connected. */
   public getFrequencyData(): Uint8Array {
-    if (!this.analyser) return new Uint8Array(0);
+    if (!this.instance) return new Uint8Array(0);
 
-    return this.analyser.getFrequencyData();
+    return this.instance.getFrequencyData();
   }
 
   /** Overall loudness (0-255), averaged across the whole spectrum. 0 until a media element is connected. */
   public getVolume(): number {
-    if (!this.analyser) return 0;
+    if (!this.instance) return 0;
 
-    return this.analyser.getAverageFrequency();
+    return this.instance.getAverageFrequency();
   }
 
   public destroy(): void {
