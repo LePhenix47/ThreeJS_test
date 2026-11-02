@@ -1,16 +1,16 @@
-import { useEffect } from "react";
 import type { ChangeEvent, CSSProperties } from "react";
 
-import Experience from "@modules/webgl/Experience/Experience";
 import { formatMediaTimeStamp } from "@/utils/formatting/format";
 import { useFileDrop } from "@/hooks/useFileDrop";
 import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 
 import "./AudioPlayer.scss";
 
-type AudioPlayerProps = {
-  className?: string;
-};
+type AudioPlayerProps = Partial<{
+  className: string;
+  /** Called whenever the underlying <audio> element becomes available, e.g. to wire it into some other system. */
+  onAudioElementReady: (audio: HTMLAudioElement) => void;
+}>;
 
 // ? <audio> plays an mp4/webm/mov's audio track fine, it just ignores any video track
 const ACCEPTED_MIME_TYPES = new Set([
@@ -21,7 +21,10 @@ const ACCEPTED_MIME_TYPES = new Set([
   "video/x-m4v",
 ]);
 
-function AudioPlayer({ className = "" }: AudioPlayerProps) {
+function AudioPlayer({
+  className = "",
+  onAudioElementReady,
+}: AudioPlayerProps) {
   // 4. Custom hooks
   const {
     audioRef,
@@ -37,17 +40,10 @@ function AudioPlayer({ className = "" }: AudioPlayerProps) {
     togglePlayback,
     seek,
     setVolume,
-  } = useAudioPlayer(ACCEPTED_MIME_TYPES);
+  } = useAudioPlayer(ACCEPTED_MIME_TYPES, { onAudioElementReady });
   const { isDraggingOver, dropHandlers } = useFileDrop({
     onDropFile: loadFile,
   });
-
-  // 5. Effects
-  useEffect(() => {
-    if (!audioRef.current) return;
-
-    Experience.instance?.audioAnalyser.setMediaElement(audioRef.current);
-  }, [audioRef, objectUrl]);
 
   // 6. Event handlers
   function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
@@ -63,11 +59,13 @@ function AudioPlayer({ className = "" }: AudioPlayerProps) {
   }
 
   function handleScrub(event: ChangeEvent<HTMLInputElement>): void {
-    seek(Number(event.target.value));
+    const timestampProgress = Number(event.target.value);
+    seek(timestampProgress);
   }
 
   function handleVolumeChange(event: ChangeEvent<HTMLInputElement>): void {
-    setVolume(Number(event.target.value));
+    const volume = Number(event.target.value);
+    setVolume(volume);
   }
 
   // 7. Render

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import Experience from "@modules/webgl/Experience/Experience";
 import ThreeScene from "@/components/ThreeScene/ThreeScene";
 import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
 import AudioPlayer from "@/components/AudioPlayer/AudioPlayer";
@@ -33,13 +34,17 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexComponent() {
+  function handleAudioElementReady(audio: HTMLAudioElement): void {
+    Experience.instance?.audioAnalyser.setMediaElement(audio);
+  }
+
   return (
     <div className="index-page">
       <div className="index-page__scene-container">
         <ThreeScene />
         <LoadingSpinner />
       </div>
-      <AudioPlayer />
+      <AudioPlayer onAudioElementReady={handleAudioElementReady} />
     </div>
   );
 }

@@ -5,6 +5,11 @@ import { useObjectUrl } from "./useObjectUrl";
 
 const DEFAULT_ACCEPTED_MIME_TYPES: ReadonlySet<string> = new Set(["audio/*"]);
 
+type UseAudioPlayerOptions = {
+  /** Called whenever the <audio> element becomes available (mount, or a new file after unmount). */
+  onAudioElementReady?: (audio: HTMLAudioElement) => void;
+};
+
 type UseAudioPlayerResult = {
   /** Attach to the <audio> element: `<audio ref={audioRef} src={objectUrl ?? undefined} />`. */
   audioRef: RefObject<HTMLAudioElement | null>;
@@ -50,6 +55,7 @@ function isAcceptedMimeType(
  */
 export function useAudioPlayer(
   acceptedMimeTypes: ReadonlySet<string> = DEFAULT_ACCEPTED_MIME_TYPES,
+  { onAudioElementReady }: UseAudioPlayerOptions = {},
 ): UseAudioPlayerResult {
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -60,6 +66,13 @@ export function useAudioPlayer(
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
+
+  useEffect(() => {
+    const audioElement: HTMLAudioElement | null = audioRef.current;
+    if (!audioElement) return;
+
+    onAudioElementReady?.(audioElement);
+  }, [objectUrl, onAudioElementReady]);
 
   useEffect(() => {
     // ? New source: previous element's playback position/duration no longer apply
