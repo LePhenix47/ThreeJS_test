@@ -103,7 +103,7 @@ class WobblyGroup implements Updatable, Destroyable {
     color: "#ffffff",
     metalness: 0,
     roughness: 0.5,
-    transmission: 0.9,
+    transmission: 0,
     ior: 1.5,
     thickness: 1.5,
     // * uniforms
