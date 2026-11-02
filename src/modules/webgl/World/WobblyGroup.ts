@@ -402,10 +402,13 @@ class WobblyGroup implements Updatable, Destroyable {
     const { trebleBinCount, frequencyScale } = WobblyGroup.CONFIG.audio;
     const start = Math.max(0, frequencyData.length - trebleBinCount);
 
-    return (
-      averageFrequencyRange(frequencyData, start, trebleBinCount) *
-      frequencyScale
+    const averageFrequency: number = averageFrequencyRange(
+      frequencyData,
+      start,
+      trebleBinCount,
     );
+
+    return averageFrequency * frequencyScale;
   }
 
   public destroy(): void {
