@@ -72,7 +72,7 @@ class WobblyGroup implements Updatable, Destroyable {
       /** How much louder audio can make the wobble. */
       volumeScale: 0.6,
       /** How many bins, counting from the high-pitch end, count as treble for the warp boost. */
-      trebleBinCount: 4,
+      trebleBinCount: 6,
       /** How much treble can make the warp. */
       frequencyScale: 0.6,
     },
