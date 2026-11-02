@@ -65,7 +65,11 @@ class WobblyGroup implements Updatable, Destroyable {
       width: 15,
       height: 15,
       widthSegments: 15,
-      position: { y: -5, z: 5 },
+      position: {
+        x: 0,
+        y: -5,
+        z: 5,
+      },
       rotationYDeg: 180,
     },
     audio: {
@@ -255,7 +259,7 @@ class WobblyGroup implements Updatable, Destroyable {
 
     backdrop.receiveShadow = true;
     backdrop.rotation.y = THREE.MathUtils.degToRad(rotationYDeg);
-    backdrop.position.set(0, position.y, position.z);
+    backdrop.position.set(position.x, position.y, position.z);
 
     this.backdrop = backdrop;
   }
