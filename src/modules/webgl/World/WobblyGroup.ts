@@ -53,7 +53,7 @@ type WobblyUniforms = MapAsUniforms<{
   uHighColor: THREE.Color;
   /** Added on top of uStrengthAmplitude each frame, derived from the playing track's overall volume. */
   uAudioVolume: number;
-  /** Added on top of uWarpStrengthAmplitude each frame, derived from the playing track's treble (the high end of the frequency spectrum). */
+  /** Added on top of uWarpStrengthAmplitude each frame, from how loud the track's treble is right now — treble meaning the high-pitched bins of the frequency spectrum (which pitch), not a loudness value itself. */
   uAudioFrequency: number;
 }>;
 
@@ -71,7 +71,7 @@ class WobblyGroup implements Updatable, Destroyable {
     audio: {
       /** How much louder audio can make the wobble. */
       volumeScale: 0.6,
-      /** How many high bins count as treble for the warp boost. */
+      /** How many bins, counting from the high-pitch end, count as treble for the warp boost. */
       trebleBinCount: 4,
       /** How much treble can make the warp. */
       frequencyScale: 0.6,
