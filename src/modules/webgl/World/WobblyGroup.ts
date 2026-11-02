@@ -12,6 +12,7 @@ import CustomShaderMaterial, {
 import vertexShader from "@shaders/wobble/vertex.glsl";
 import fragmentShader from "@shaders/wobble/fragment.glsl";
 import { MapAsUniforms } from "./types/uniforms";
+import { averageFrequencyRange } from "@/utils/audio/frequency";
 
 import WobblySphere from "./WobblySphere";
 import WobblySuzanne from "./WobblySuzanne";
@@ -50,8 +51,10 @@ type WobblyUniforms = MapAsUniforms<{
   uWarpStrengthAmplitude: WobblyGroupState["uWarpStrengthAmplitude"];
   uLowColor: THREE.Color;
   uHighColor: THREE.Color;
-  /** Added on top of uStrengthAmplitude each frame, derived from the playing track's bass energy. */
-  uAudioIntensity: number;
+  /** Added on top of uStrengthAmplitude each frame, derived from the playing track's overall volume. */
+  uAudioVolume: number;
+  /** Added on top of uWarpStrengthAmplitude each frame, derived from the playing track's treble (the high end of the frequency spectrum). */
+  uAudioFrequency: number;
 }>;
 
 class WobblyGroup implements Updatable, Destroyable {
@@ -66,10 +69,12 @@ class WobblyGroup implements Updatable, Destroyable {
       rotationYDeg: 180,
     },
     audio: {
-      /** Of the 16 bins getFrequencyData() returns at fftSize 32, how many (from the low end) count as "bass" for the wobble boost. */
-      bassBinCount: 4,
-      /** Scales the 0-1 bass average into a uStrengthAmplitude-comparable range. */
-      intensityScale: 0.6,
+      /** How much louder audio can make the wobble. */
+      volumeScale: 0.6,
+      /** How many high bins count as treble for the warp boost. */
+      trebleBinCount: 4,
+      /** How much treble can make the warp. */
+      frequencyScale: 0.6,
     },
   } as const;
 
@@ -193,7 +198,8 @@ class WobblyGroup implements Updatable, Destroyable {
       uLowColor: {
         value: new THREE.Color(uLowColor),
       },
-      uAudioIntensity: new THREE.Uniform(0),
+      uAudioVolume: new THREE.Uniform(0),
+      uAudioFrequency: new THREE.Uniform(0),
     };
 
     this.material = new CustomShaderMaterial({
@@ -377,26 +383,29 @@ class WobblyGroup implements Updatable, Destroyable {
 
   public update(): void {
     this.uniforms.uTime.value = this.time.elapsedSeconds;
-    this.uniforms.uAudioIntensity.value = this.getAudioIntensity();
+
+    this.uniforms.uAudioVolume.value = this.getVolumeBoost();
+    this.uniforms.uAudioFrequency.value = this.getFrequencyBoost(
+      this.audioAnalyser.getFrequencyData(),
+    );
   }
 
-  /** Average of the lowest frequency bins (bass), 0-1, scaled for uStrengthAmplitude. 0 when nothing's playing. */
-  private getAudioIntensity(): number {
-    const { bassBinCount, intensityScale } = WobblyGroup.CONFIG.audio;
+  /** Overall track volume, scaled for uStrengthAmplitude. 0 when nothing's playing. */
+  private getVolumeBoost(): number {
+    const { volumeScale } = WobblyGroup.CONFIG.audio;
 
-    const frequencyData = this.audioAnalyser.getFrequencyData();
-    if (frequencyData.length === 0) return 0;
+    return (this.audioAnalyser.getVolume() / 255) * volumeScale;
+  }
 
-    const bassBins: Uint8Array<ArrayBufferLike> = frequencyData.subarray(
-      0,
-      bassBinCount,
+  /** Average of the highest frequency bins (treble), scaled for uWarpStrengthAmplitude. 0 when nothing's playing. */
+  private getFrequencyBoost(frequencyData: Uint8Array): number {
+    const { trebleBinCount, frequencyScale } = WobblyGroup.CONFIG.audio;
+    const start = Math.max(0, frequencyData.length - trebleBinCount);
+
+    return (
+      averageFrequencyRange(frequencyData, start, trebleBinCount) *
+      frequencyScale
     );
-
-    const bassSum: number = bassBins.reduce((total, value) => total + value, 0);
-    const bassAverage: number = bassSum / bassBins.length;
-    const bassAverageNormalized: number = bassAverage / 255;
-
-    return bassAverageNormalized * intensityScale;
   }
 
   public destroy(): void {

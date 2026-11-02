@@ -7,7 +7,7 @@ export type AudioAnalyserConstructor = {
   fftSize?: number;
 };
 
-const DEFAULT_FFT_SIZE: number = 2 ** 5;
+const DEFAULT_FFT_SIZE: number = 2 ** 7;
 
 class AudioAnalyser implements Destroyable {
   private readonly listener: THREE.AudioListener;
@@ -43,6 +43,11 @@ class AudioAnalyser implements Destroyable {
   /** Frequency bins (0-255 each), low to high. Empty until a media element is connected. */
   public getFrequencyData(): Uint8Array {
     return this.analyser?.getFrequencyData() ?? new Uint8Array(0);
+  }
+
+  /** Overall loudness (0-255), averaged across the whole spectrum. 0 until a media element is connected. */
+  public getVolume(): number {
+    return this.analyser?.getAverageFrequency() ?? 0;
   }
 
   public destroy(): void {
