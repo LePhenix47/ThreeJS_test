@@ -259,7 +259,7 @@ class WobblyGroup implements Updatable, Destroyable {
 
     backdrop.receiveShadow = true;
     backdrop.rotation.y = THREE.MathUtils.degToRad(rotationYDeg);
-    backdrop.position.set(position.x, position.y, position.z);
+    backdrop.position.copy(position);
 
     this.backdrop = backdrop;
   }
