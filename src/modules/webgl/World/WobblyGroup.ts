@@ -113,8 +113,8 @@ class WobblyGroup implements Updatable, Destroyable {
     uWarpPositionFrequency: 0.463,
     uWarpStrengthAmplitude: 1.278,
     uWarpTimeFrequency: 0.319,
-    uLowColor: "#abaf12",
-    uHighColor: "#ff0000",
+    uLowColor: "#14889c",
+    uHighColor: "#b4feaf",
   };
 
   private get scene() {
