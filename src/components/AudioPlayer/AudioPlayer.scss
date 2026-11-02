@@ -147,11 +147,14 @@
       content: "";
       position: absolute;
       right: 0;
-      // width: calc(100% - var(--_progress, 0%));
-      width: 100%;
+      width: calc(100% - var(--_progress, 0%));
+      // width: 100%;
       height: 100%;
       background-color: var(--border-color);
       z-index: -2;
+
+      border-top-left-radius: inherit;
+      border-bottom-left-radius: inherit;
     }
 
     &::before {
