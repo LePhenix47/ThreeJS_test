@@ -3,19 +3,23 @@ import { Destroyable } from "@utils/types/lifecycle.type";
 
 export type AudioAnalyserConstructor = {
   camera: THREE.Camera;
-  /** FFT window size, must be a power of 2. Half this many frequency bins come out of getFrequencyData(). */
+  /** How many raw waveform samples get pulled per analysis window, must be a power of 2. Half this many frequency bins come out of getFrequencyData(). */
   fftSize?: number;
 };
 
 const DEFAULT_FFT_SIZE: number = 2 ** 7;
 
 class AudioAnalyser implements Destroyable {
+  /** Owns the `AudioContext` and the one volume-control node all sound funnels through to reach the speakers. Required by THREE.Audio even without positional/3D sound. */
   private readonly listener: THREE.AudioListener;
+  /** The audio source, wired into the listener's output. */
   private readonly sound: THREE.Audio;
+  /** How many raw waveform samples get pulled per analysis window, driving `getFrequencyData()`'s resolution (half this many bins come out). Must stay fixed after construction, three.js has no API to resize an existing analyser. */
   private readonly fftSize: number;
 
+  /** The actual analyser, tapping `sound`'s output. Null until a media element is connected. */
   private instance: THREE.AudioAnalyser | null = null;
-  /** Set once by setMediaElement(). A media element can only ever back one MediaElementAudioSourceNode. */
+  /** Set once by `setMediaElement()`. A media element can only ever back one MediaElementAudioSourceNode. */
   private mediaElement: HTMLMediaElement | null = null;
 
   constructor({
