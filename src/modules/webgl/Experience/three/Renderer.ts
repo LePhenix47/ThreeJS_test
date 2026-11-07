@@ -52,8 +52,8 @@ class Renderer implements Resizable, Updatable, Destroyable {
 
     const { toneMapping, toneMappingExposure, outputColorSpace } =
       Renderer.CONFIG;
-    // renderer.toneMapping = toneMapping;
-    // renderer.toneMappingExposure = toneMappingExposure;
+    renderer.toneMapping = toneMapping;
+    renderer.toneMappingExposure = toneMappingExposure;
 
     const { type } = Renderer.CONFIG.shadowMap;
     renderer.shadowMap.enabled = true;
@@ -63,7 +63,7 @@ class Renderer implements Resizable, Updatable, Destroyable {
     renderer.setSize(width, height);
     renderer.setPixelRatio(this.sizes.pixelRatio);
 
-    renderer.outputColorSpace = outputColorSpace;
+    // renderer.outputColorSpace = outputColorSpace;
 
     this.instance = renderer;
   }
