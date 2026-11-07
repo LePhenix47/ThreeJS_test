@@ -36,6 +36,9 @@ class Environment extends EnvironmentEntity implements Destroyable {
         },
       },
     },
+    envMap: {
+      backgroundBlurriness: 0.5,
+    },
   } as const;
 
   private readonly experience: Experience | null;
@@ -64,13 +67,16 @@ class Environment extends EnvironmentEntity implements Destroyable {
     return this.experience!.renderer;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.scene.background = this.envMapTexture;
-    this.scene.environment = this.envMapTexture;
+    this.setEnvMap();
 
     this.setAmbientLight();
     this.setDirectionalLight();
@@ -85,7 +91,18 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   protected updateMaterial(): void {}
 
-  protected setEnvMap(): void {}
+  protected setEnvMap(): void {
+    const { backgroundBlurriness } = Environment.CONFIG.envMap;
+
+    const envMapTexture = this.resources.getDataTexture("aerodynamics-workshop");
+    envMapTexture.mapping = THREE.EquirectangularReflectionMapping;
+
+    this.scene.background = envMapTexture;
+    this.scene.backgroundBlurriness = backgroundBlurriness;
+    this.scene.environment = envMapTexture;
+
+    this.envMapTexture = envMapTexture;
+  }
 
   /** Sets the renderer clear color from the current state. */
   private applyEnvironmentColor = (): void => {
@@ -166,6 +183,10 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
     this.directionalLight.dispose();
     this.lightHelper?.dispose();
+
+    this.scene.background = null;
+    this.scene.environment = null;
+    this.envMapTexture?.dispose();
 
     this.guiRegistry?.dispose();
   }
