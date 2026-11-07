@@ -31,7 +31,7 @@ class World implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
   public environment?: Environment;
-  public slicedModel: SlicedModel;
+  public slicedModel?: SlicedModel;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -215,10 +215,12 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   }
 
-  public update(): void {}
+  public update(): void {
+    this.slicedModel?.update();
+  }
 
   public destroy(): void {
-    this.slicedModel.destroy();
+    this.slicedModel?.destroy();
     this.environment?.destroy();
     this.removeHelpers();
   }

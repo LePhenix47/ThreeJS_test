@@ -1,4 +1,7 @@
-import Experience, { Destroyable } from "@modules/webgl/Experience/Experience";
+import Experience, {
+  Destroyable,
+  Updatable,
+} from "@modules/webgl/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { MeshEntity } from "./types/mesh-entity";
@@ -11,7 +14,7 @@ type SlicedModelState = {
   envMapIntensity: number;
 };
 
-class SlicedModel extends GltfEntity implements Destroyable {
+class SlicedModel extends GltfEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
     guiKey: "sliced-model-gui-state",
     geometry: {
@@ -61,6 +64,10 @@ class SlicedModel extends GltfEntity implements Destroyable {
 
   private get resources() {
     return this.experience!.resources;
+  }
+
+  private get time() {
+    return this.experience!.time;
   }
 
   constructor() {
@@ -171,6 +178,10 @@ class SlicedModel extends GltfEntity implements Destroyable {
     registry.bind("envMapIntensity", (v) => {
       this.material.envMapIntensity = v;
     });
+  }
+
+  public update(): void {
+    this.model.rotation.y = this.time.elapsedSeconds * 0.1;
   }
 
   public destroy(): void {
