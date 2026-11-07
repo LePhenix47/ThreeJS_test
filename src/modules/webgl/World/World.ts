@@ -15,6 +15,7 @@ type WorldState = {
   helpersPosZ: number;
 };
 
+// * To install three-custom-shader-material (v6.4): git cherry-pick 02dfdbfafffb567a6504616b70f36483e05d5a14
 class World implements Updatable, Destroyable {
   public static readonly CONFIG = {
     guiKey: "world-gui-state",
