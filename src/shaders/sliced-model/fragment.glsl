@@ -5,7 +5,7 @@ varying vec3 vPosition;
 
 #define TAU (2.0 * PI) // ? Note: ThreeJS injects PI as a #define, but also PI2, TAU = PI2
 
-bool isWithinSliceArea(float angle, float offset, float stop) {
+bool isWithinSliceArea(float angle, float offset, float stop) { // ? Own solution
     float end = offset + stop;
 
     if(end <= TAU) {
@@ -17,6 +17,13 @@ bool isWithinSliceArea(float angle, float offset, float stop) {
     float wrappedEnd = mod(end, TAU);
     return angle >= offset || angle <= wrappedEnd;
 }
+
+/*
+bool isWithinSliceArea2(float angle, float offset, float stop) {  // ? Bruno SIMON's solution
+    float newStart = mod(angle - offset, TAU);
+    return newStart >= 0.0 && newStart < stop; 
+}
+*/
 
 void main() {
 // * atan() range: [-π, π] → [0, 2π]
