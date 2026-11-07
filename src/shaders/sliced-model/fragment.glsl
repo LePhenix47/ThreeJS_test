@@ -34,4 +34,5 @@ void main() {
     }
 
     float csm_Slice;
+    float csm_SliceUniform;
 }

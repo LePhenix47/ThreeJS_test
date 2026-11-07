@@ -20,11 +20,13 @@ type SlicedModelState = {
   envMapIntensity: number;
   uSliceStart: number;
   uSliceArc: number;
+  uGapFillColor: string;
 };
 
 type SlicedModelUniforms = MapAsUniforms<{
   uSliceStart: SlicedModelState["uSliceStart"];
   uSliceArc: SlicedModelState["uSliceArc"];
+  uGapFillColor: THREE.Color;
 }>;
 
 type SliceModelMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
@@ -68,12 +70,19 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
 
   private patchMap = {
     // * We override this: https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderLib/meshphysical.glsl.js#L218
+    csm_SliceUniform: {
+      // ? "uniform" only legal at global scope, "#include <common>" sits before main(), unlike <colorspace_fragment>
+      "#include <common>": /* glsl */ `
+            #include <common>
+            uniform vec3 uGapFillColor;
+        `,
+    },
     csm_Slice: {
       "#include <colorspace_fragment>": /* glsl */ `
             #include <colorspace_fragment>
 
             if(!gl_FrontFacing)
-                gl_FragColor = vec4(0.75, 0.15, 0.3, 1.0);
+                gl_FragColor = vec4(uGapFillColor, 1.0);
         `,
     },
   };
@@ -96,6 +105,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     // * uniforms
     uSliceStart: 1.0,
     uSliceArc: 1.5,
+    uGapFillColor: "#be264d",
   };
 
   private get scene() {
@@ -145,11 +155,15 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       envMapIntensity,
       uSliceStart,
       uSliceArc,
+      uGapFillColor,
     } = this.DEBUG_DEFAULTS;
 
     this.uniforms = {
       uSliceStart: new THREE.Uniform(uSliceStart),
       uSliceArc: new THREE.Uniform(uSliceArc),
+      uGapFillColor: {
+        value: new THREE.Color(uGapFillColor),
+      },
     };
 
     this.material = new THREE.MeshStandardMaterial({
@@ -298,6 +312,11 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     uniformsFolder.add(state, "uSliceArc").min(0).max(360).step(0.1);
     registry.bind("uSliceArc", (v) => {
       this.uniforms.uSliceArc.value = THREE.MathUtils.degToRad(v);
+    });
+
+    uniformsFolder.addColor(state, "uGapFillColor");
+    registry.bind("uGapFillColor", (v) => {
+      this.uniforms.uGapFillColor.value.set(v);
     });
   }
 
