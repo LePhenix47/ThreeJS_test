@@ -17,6 +17,18 @@ class SlicedSphere extends MeshEntity implements Destroyable {
       radius: 2.5,
       detail: 5,
     },
+    /** Plain grey plane behind/below the sphere, purely to catch its shadow. */
+    backdrop: {
+      color: "#aaaaaa",
+      width: 10,
+      height: 10,
+      widthSegments: 10,
+      position: {
+        x: -4,
+        y: -3,
+        z: -4,
+      },
+    },
   } as const;
 
   private readonly experience: Experience | null;
@@ -24,6 +36,10 @@ class SlicedSphere extends MeshEntity implements Destroyable {
   protected geometry: THREE.IcosahedronGeometry;
   protected material: THREE.MeshStandardMaterial;
   protected mesh: THREE.Mesh;
+
+  private backdropGeometry: THREE.PlaneGeometry;
+  private backdropMaterial: THREE.MeshStandardMaterial;
+  private backdrop: THREE.Mesh;
 
   protected override guiRegistry: GUIStateRegistry<SlicedSphereState> | null =
     null;
@@ -54,6 +70,9 @@ class SlicedSphere extends MeshEntity implements Destroyable {
     this.setMesh();
 
     this.scene.add(this.mesh);
+
+    this.setBackdrop();
+    this.scene.add(this.backdrop);
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
@@ -86,6 +105,29 @@ class SlicedSphere extends MeshEntity implements Destroyable {
     mesh.receiveShadow = true;
 
     this.mesh = mesh;
+  }
+
+  private setBackdrop(): void {
+    const { color, width, height, widthSegments, position } =
+      SlicedSphere.CONFIG.backdrop;
+
+    this.backdropGeometry = new THREE.PlaneGeometry(
+      width,
+      height,
+      widthSegments,
+    );
+    this.backdropMaterial = new THREE.MeshStandardMaterial({ color });
+
+    const backdrop = new THREE.Mesh(
+      this.backdropGeometry,
+      this.backdropMaterial,
+    );
+
+    backdrop.receiveShadow = true;
+    backdrop.position.copy(position);
+    backdrop.lookAt(0, 0, 0);
+
+    this.backdrop = backdrop;
   }
 
   protected override addDebugFolders(): void {
@@ -141,6 +183,11 @@ class SlicedSphere extends MeshEntity implements Destroyable {
     this.geometry.dispose();
     this.material.dispose();
     this.scene.remove(this.mesh);
+
+    this.backdropGeometry.dispose();
+    this.backdropMaterial.dispose();
+    this.scene.remove(this.backdrop);
+
     this.guiRegistry?.dispose();
   }
 }

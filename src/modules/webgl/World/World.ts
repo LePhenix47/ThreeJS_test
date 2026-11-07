@@ -3,7 +3,6 @@ import Experience, {
   Updatable,
 } from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
-import Floor from "./Floor";
 import SlicedSphere from "./SlicedSphere";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
@@ -32,7 +31,6 @@ class World implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
   public environment?: Environment;
-  public floor?: Floor;
   public slicedSphere: SlicedSphere;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
@@ -66,7 +64,6 @@ class World implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.floor = new Floor();
     this.slicedSphere = new SlicedSphere();
 
     this.resources.on("textures-loaded", () => {
@@ -222,7 +219,6 @@ class World implements Updatable, Destroyable {
   public update(): void {}
 
   public destroy(): void {
-    this.floor?.destroy();
     this.slicedSphere.destroy();
     this.environment?.destroy();
     this.removeHelpers();
