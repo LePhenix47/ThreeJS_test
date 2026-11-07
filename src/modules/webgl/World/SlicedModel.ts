@@ -31,6 +31,10 @@ type SliceModelMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
   uniforms: SlicedModelUniforms;
 };
 
+type SliceModelDepthMaterialType = CSMProxy<typeof THREE.MeshDepthMaterial> & {
+  uniforms: SlicedModelUniforms;
+};
+
 class SlicedModel extends GltfEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
     guiKey: "sliced-model-gui-state",
@@ -55,11 +59,24 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
   private readonly experience: Experience | null;
 
   /**  The default material */
-  protected material: SliceModelMaterialType;
+  protected material: THREE.MeshStandardMaterial;
   /**  The sliced material */
   protected slicedMaterial: SliceModelMaterialType;
+  protected slicedDepthMaterial: SliceModelDepthMaterialType;
 
   private uniforms: SlicedModelUniforms;
+
+  private patchMap = {
+    // * We override this: https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderLib/meshphysical.glsl.js#L218
+    csm_Slice: {
+      "#include <colorspace_fragment>": /* glsl */ `
+            #include <colorspace_fragment>
+
+            if(!gl_FrontFacing)
+                gl_FragColor = vec4(0.75, 0.15, 0.3, 1.0);
+        `,
+    },
+  };
 
   protected model: THREE.Group;
 
@@ -105,6 +122,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
 
     this.setMaterial();
     this.setSlicedMaterial();
+    this.setSlicedDepthMaterial();
 
     this.setModel();
     this.scene.add(this.model);
@@ -134,14 +152,12 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       uSliceArc: new THREE.Uniform(uSliceArc),
     };
 
-    this.material = new CustomShaderMaterial({
-      // * Material
-      baseMaterial: THREE.MeshStandardMaterial,
+    this.material = new THREE.MeshStandardMaterial({
       color,
       metalness,
       roughness,
       envMapIntensity,
-    }) as SliceModelMaterialType;
+    });
   }
 
   private setSlicedMaterial() {
@@ -156,11 +172,26 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
 
       // * Material
       baseMaterial: THREE.MeshStandardMaterial,
+      patchMap: this.patchMap,
+      side: THREE.DoubleSide,
       color,
       metalness,
       roughness,
       envMapIntensity,
     }) as SliceModelMaterialType;
+  }
+
+  private setSlicedDepthMaterial() {
+    this.slicedDepthMaterial = new CustomShaderMaterial({
+      // * Shader
+      uniforms: this.uniforms,
+      vertexShader: slicedVertexShader,
+      fragmentShader: slicedFragmentShader,
+
+      // * Material
+      baseMaterial: THREE.MeshDepthMaterial,
+      patchMap: this.patchMap,
+    }) as SliceModelDepthMaterialType;
   }
 
   protected setModel(): void {
@@ -173,6 +204,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
 
       if (child.name === "outerHull") {
         child.material = this.slicedMaterial;
+        child.customDepthMaterial = this.slicedDepthMaterial;
       } else {
         child.material = this.material;
       }

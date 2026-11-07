@@ -33,9 +33,5 @@ void main() {
         discard;
     }
 
-// * color: [0, 2π] → %
-    float normalizedAngle = angle / TAU;
-    vec3 color = vec3(normalizedAngle);
-    // vec3 color = vPosition;
-    csm_FragColor = vec4(color, 1.0);
+    float csm_Slice;
 }
