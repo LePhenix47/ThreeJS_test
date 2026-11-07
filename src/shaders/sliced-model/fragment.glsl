@@ -4,12 +4,15 @@ uniform float uSliceEnd;
 varying vec3 vPosition;
 
 #define PI 3.141592653589793
-
-float TAU = 2.0 * PI;
+#define TAU (2.0 * PI)
 
 void main() {
+// * atan() range: [-π, π] → [0, 2π]
+    float angle = atan(vPosition.y, vPosition.x) + PI;
 
-    vec3 color = vec3(uSliceStart / TAU, uSliceEnd / TAU, 0.0);
+// * 
+    float normalizedAngle = angle / TAU;
+    vec3 color = vec3(normalizedAngle);
     // vec3 color = vPosition;
     csm_FragColor = vec4(color, 1.0);
 }
