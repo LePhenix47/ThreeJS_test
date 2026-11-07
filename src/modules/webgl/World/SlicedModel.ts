@@ -258,12 +258,12 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
 
     const uniformsFolder = slicedModelFolder.addFolder("Uniforms");
 
-    uniformsFolder.add(state, "uSliceStart").min(0).max(360).step(0.01);
+    uniformsFolder.add(state, "uSliceStart").min(0).max(360).step(0.1);
     registry.bind("uSliceStart", (v) => {
       this.uniforms.uSliceStart.value = THREE.MathUtils.degToRad(v);
     });
 
-    uniformsFolder.add(state, "uSliceArc").min(0).max(360).step(0.01);
+    uniformsFolder.add(state, "uSliceArc").min(0).max(360).step(0.1);
     registry.bind("uSliceArc", (v) => {
       this.uniforms.uSliceArc.value = THREE.MathUtils.degToRad(v);
     });
