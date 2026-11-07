@@ -1,5 +1,5 @@
 uniform float uSliceStart;
-uniform float uSliceEnd;
+uniform float uSliceArc;
 
 varying vec3 vPosition;
 

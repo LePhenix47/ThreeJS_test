@@ -19,12 +19,12 @@ type SlicedModelState = {
   roughness: number;
   envMapIntensity: number;
   uSliceStart: number;
-  uSliceEnd: number;
+  uSliceArc: number;
 };
 
 type SlicedModelUniforms = MapAsUniforms<{
   uSliceStart: SlicedModelState["uSliceStart"];
-  uSliceEnd: SlicedModelState["uSliceEnd"];
+  uSliceArc: SlicedModelState["uSliceArc"];
 }>;
 
 type SliceModelMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
@@ -78,7 +78,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     envMapIntensity: 0.5,
     // * uniforms
     uSliceStart: 1.0,
-    uSliceEnd: 1.5,
+    uSliceArc: 1.5,
   };
 
   private get scene() {
@@ -126,12 +126,12 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       roughness,
       envMapIntensity,
       uSliceStart,
-      uSliceEnd,
+      uSliceArc,
     } = this.DEBUG_DEFAULTS;
 
     this.uniforms = {
       uSliceStart: new THREE.Uniform(uSliceStart),
-      uSliceEnd: new THREE.Uniform(uSliceEnd),
+      uSliceArc: new THREE.Uniform(uSliceArc),
     };
 
     this.material = new CustomShaderMaterial({
@@ -263,9 +263,9 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       this.uniforms.uSliceStart.value = THREE.MathUtils.degToRad(v);
     });
 
-    uniformsFolder.add(state, "uSliceEnd").min(0).max(360).step(0.01);
-    registry.bind("uSliceEnd", (v) => {
-      this.uniforms.uSliceEnd.value = THREE.MathUtils.degToRad(v);
+    uniformsFolder.add(state, "uSliceArc").min(0).max(360).step(0.01);
+    registry.bind("uSliceArc", (v) => {
+      this.uniforms.uSliceArc.value = THREE.MathUtils.degToRad(v);
     });
   }
 
