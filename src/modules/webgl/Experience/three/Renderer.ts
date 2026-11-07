@@ -9,7 +9,7 @@ class Renderer implements Resizable, Updatable, Destroyable {
   public static readonly CONFIG = {
     toneMappingExposure: 1,
     toneMapping: THREE.ACESFilmicToneMapping,
-    outputColorSpace: THREE.SRGBColorSpace,
+    outputColorSpace: THREE.LinearSRGBColorSpace,
     shadowMap: {
       type: THREE.PCFShadowMap,
     },
@@ -52,8 +52,8 @@ class Renderer implements Resizable, Updatable, Destroyable {
 
     const { toneMapping, toneMappingExposure, outputColorSpace } =
       Renderer.CONFIG;
-    renderer.toneMapping = toneMapping;
-    renderer.toneMappingExposure = toneMappingExposure;
+    // renderer.toneMapping = toneMapping;
+    // renderer.toneMappingExposure = toneMappingExposure;
 
     const { type } = Renderer.CONFIG.shadowMap;
     renderer.shadowMap.enabled = true;
