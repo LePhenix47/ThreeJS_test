@@ -103,9 +103,19 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
   }
 
   protected setModel(): void {
-    const model = this.resources.getGltf("gears");
+    const gltfGears = this.resources.getGltf("gears");
 
-    this.model = model.scene;
+    const model = gltfGears.scene;
+
+    model.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+
+      child.material = this.material;
+      child.castShadow = true;
+      child.receiveShadow = true;
+    });
+
+    this.model = model;
   }
 
   private setBackdrop(): void {
