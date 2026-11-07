@@ -18,9 +18,14 @@ type SlicedModelState = {
   metalness: number;
   roughness: number;
   envMapIntensity: number;
+  uSliceStart: number;
+  uSliceEnd: number;
 };
 
-type SlicedModelUniforms = MapAsUniforms<{}>;
+type SlicedModelUniforms = MapAsUniforms<{
+  uSliceStart: SlicedModelState["uSliceStart"];
+  uSliceEnd: SlicedModelState["uSliceEnd"];
+}>;
 
 type SliceModelMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
   uniforms: SlicedModelUniforms;
@@ -66,10 +71,14 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     null;
 
   protected readonly DEBUG_DEFAULTS: SlicedModelState = {
+    // * material
     color: "#858080",
     metalness: 0.5,
     roughness: 0.25,
     envMapIntensity: 0.5,
+    // * uniforms
+    uSliceStart: 1.0,
+    uSliceEnd: 1.5,
   };
 
   private get scene() {
@@ -111,10 +120,19 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
   }
 
   protected setMaterial(): void {
-    const { color, metalness, roughness, envMapIntensity } =
-      this.DEBUG_DEFAULTS;
+    const {
+      color,
+      metalness,
+      roughness,
+      envMapIntensity,
+      uSliceStart,
+      uSliceEnd,
+    } = this.DEBUG_DEFAULTS;
 
-    this.uniforms = {};
+    this.uniforms = {
+      uSliceStart: new THREE.Uniform(uSliceStart),
+      uSliceEnd: new THREE.Uniform(uSliceEnd),
+    };
 
     this.material = new CustomShaderMaterial({
       // * Material
@@ -201,13 +219,14 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     const { gui } = this.debug;
 
     const slicedModelFolder = gui.addFolder("Sliced model");
+    const materialFolder = slicedModelFolder.addFolder("Material");
 
-    slicedModelFolder.addColor(state, "color").name("Color");
+    materialFolder.addColor(state, "color").name("Color");
     registry.bind("color", (v) => {
       this.material.color.set(v);
     });
 
-    slicedModelFolder
+    materialFolder
       .add(state, "metalness")
       .min(0)
       .max(1)
@@ -217,7 +236,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       this.material.metalness = v;
     });
 
-    slicedModelFolder
+    materialFolder
       .add(state, "roughness")
       .min(0)
       .max(1)
@@ -227,7 +246,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       this.material.roughness = v;
     });
 
-    slicedModelFolder
+    materialFolder
       .add(state, "envMapIntensity")
       .min(0)
       .max(3)
@@ -235,6 +254,18 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       .name("Env map intensity");
     registry.bind("envMapIntensity", (v) => {
       this.material.envMapIntensity = v;
+    });
+
+    const uniformsFolder = slicedModelFolder.addFolder("Uniforms");
+
+    uniformsFolder.add(state, "uSliceStart").min(0).max(360).step(0.01);
+    registry.bind("uSliceStart", (v) => {
+      this.uniforms.uSliceStart.value = THREE.MathUtils.degToRad(v);
+    });
+
+    uniformsFolder.add(state, "uSliceEnd").min(0).max(360).step(0.01);
+    registry.bind("uSliceEnd", (v) => {
+      this.uniforms.uSliceEnd.value = THREE.MathUtils.degToRad(v);
     });
   }
 
