@@ -19,6 +19,8 @@ bool isWithinSliceArea(float angle, float offset, float stop) {
 }
 ```
 
+![Checking a wrapping value against a threshold](../assets/threshold-illustration.jpg)
+
 **Why:** `atan(y, x)` returns an angle in `[-π, π]`. Shifting by `PI` remaps it to `[0, 2π]`, matching the range `uSliceStart`/`uSliceArc` are expressed in. A slice spanning `[offset, offset + stop]` is a plain range check as long as it stays under `2π`.
 
 Once `offset + stop` goes past `2π`, the slice wraps across the same seam `atan` jumps across at `0`/`2π`, so the check flips from "between offset and end" to "past offset, OR before the wrapped end".
