@@ -4,14 +4,23 @@ import Experience, {
 } from "@modules/webgl/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-import { MeshEntity } from "./types/mesh-entity";
+import CustomShaderMaterial, {
+  CSMProxy,
+} from "three-custom-shader-material/vanilla";
 import { GltfEntity } from "./types/gltf-entity";
+import { MapAsUniforms } from "./types/uniforms";
 
 type SlicedModelState = {
   color: string;
   metalness: number;
   roughness: number;
   envMapIntensity: number;
+};
+
+type SlicedModelUniforms = MapAsUniforms<{}>;
+
+type SliceModelMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
+  uniforms: SlicedModelUniforms;
 };
 
 class SlicedModel extends GltfEntity implements Updatable, Destroyable {
@@ -37,7 +46,10 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
 
-  protected material: THREE.MeshStandardMaterial;
+  protected material: SliceModelMaterialType;
+
+  private uniforms: SlicedModelUniforms;
+
   protected model: THREE.Group;
 
   private backdropGeometry: THREE.PlaneGeometry;
@@ -94,12 +106,19 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     const { color, metalness, roughness, envMapIntensity } =
       this.DEBUG_DEFAULTS;
 
-    this.material = new THREE.MeshStandardMaterial({
+    this.uniforms = {};
+
+    this.material = new CustomShaderMaterial({
+      // * Shader
+      uniforms: this.uniforms,
+
+      // * Material
+      baseMaterial: THREE.MeshStandardMaterial,
       color,
       metalness,
       roughness,
       envMapIntensity,
-    });
+    }) as SliceModelMaterialType;
   }
 
   protected setModel(): void {
