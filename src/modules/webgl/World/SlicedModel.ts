@@ -10,6 +10,9 @@ import CustomShaderMaterial, {
 import { GltfEntity } from "./types/gltf-entity";
 import { MapAsUniforms } from "./types/uniforms";
 
+import slicedVertexShader from "@shaders/sliced-model/vertex.glsl";
+import slicedFragmentShader from "@shaders/sliced-model/fragment.glsl";
+
 type SlicedModelState = {
   color: string;
   metalness: number;
@@ -46,7 +49,10 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
 
+  /**  The default material */
   protected material: SliceModelMaterialType;
+  /**  The sliced material */
+  protected slicedMaterial: SliceModelMaterialType;
 
   private uniforms: SlicedModelUniforms;
 
@@ -89,6 +95,8 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.setMaterial();
+    this.setSlicedMaterial();
+
     this.setModel();
     this.scene.add(this.model);
 
@@ -109,8 +117,24 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     this.uniforms = {};
 
     this.material = new CustomShaderMaterial({
+      // * Material
+      baseMaterial: THREE.MeshStandardMaterial,
+      color,
+      metalness,
+      roughness,
+      envMapIntensity,
+    }) as SliceModelMaterialType;
+  }
+
+  private setSlicedMaterial() {
+    const { color, metalness, roughness, envMapIntensity } =
+      this.DEBUG_DEFAULTS;
+
+    this.slicedMaterial = new CustomShaderMaterial({
       // * Shader
       uniforms: this.uniforms,
+      vertexShader: slicedVertexShader,
+      fragmentShader: slicedFragmentShader,
 
       // * Material
       baseMaterial: THREE.MeshStandardMaterial,
@@ -129,7 +153,12 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     model.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
 
-      child.material = this.material;
+      if (child.name === "outerHull") {
+        child.material = this.slicedMaterial;
+      } else {
+        child.material = this.material;
+      }
+
       child.castShadow = true;
       child.receiveShadow = true;
     });
