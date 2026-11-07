@@ -4,7 +4,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { EnvironmentEntity } from "./types/environment-entity";
 
 type EnvironmentState = {
-  lightHelper: boolean;
+  lightHelperVisible: boolean;
   environmentColor: string;
 };
 
@@ -46,7 +46,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
     null;
 
   protected readonly DEBUG_DEFAULTS: EnvironmentState = {
-    lightHelper: true,
+    lightHelperVisible: false,
     environmentColor: "#160920",
   };
 
@@ -101,7 +101,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.scene.add(this.ambientLight);
   }
 
-  private setDirectionalLight(withHelper = true): void {
+  private setDirectionalLight(): void {
     const { color, intensity } = Environment.CONFIG.directionalLight;
     const directionalLight = new THREE.DirectionalLight(color, intensity);
 
@@ -125,8 +125,13 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.directionalLight = directionalLight;
     this.scene.add(directionalLight);
 
-    if (!withHelper) return;
-    this.lightHelper = new THREE.DirectionalLightHelper(directionalLight);
+    const lightHelper = new THREE.DirectionalLightHelper(directionalLight);
+    const { lightHelperVisible } =
+      this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+    lightHelper.visible = lightHelperVisible;
+
+    this.lightHelper = lightHelper;
+
     this.scene.add(this.lightHelper);
   }
 
@@ -149,8 +154,8 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
     const helpersFolder = environmentFolder.addFolder("Helpers");
 
-    helpersFolder.add(state, "lightHelper").name("Light Helper");
-    registry.bind("lightHelper", (v) => {
+    helpersFolder.add(state, "lightHelperVisible").name("Light Helper");
+    registry.bind("lightHelperVisible", (v) => {
       this.lightHelper.visible = v;
     });
   }

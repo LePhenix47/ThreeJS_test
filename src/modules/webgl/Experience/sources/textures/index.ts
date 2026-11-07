@@ -1,9 +1,7 @@
 import { TextureSourceType } from "@modules/webgl/Experience/utils/Resources/types";
-import aerodynamicsWorkshop from "./aerodynamics-workshop/aerodynamics-workshop";
 
 // prettier-ignore
 const textures = [
-  aerodynamicsWorkshop,
 ] as const;
 
 type RawTextures = typeof textures;
