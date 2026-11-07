@@ -509,14 +509,14 @@
                 background-color: var(--_track-bg);
 
                 width: var(--_track-width);
-                height: var(--_track-bg);
+                height: var(--_track-height);
             }
 
             &::-moz-range-track {
                 background-color: var(--_track-bg);
 
                 width: var(--_track-width);
-                height: var(--_track-bg);
+                height: var(--_track-height);
             }
 
             //Thumb

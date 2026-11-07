@@ -174,6 +174,30 @@
     transition: border 250ms ease-in-out;
 }
 
+// ? Themes a reset range input (see _normalization.scss) by overriding its own custom
+// ? properties, never accent-color — the reset already strips native appearance
+@mixin range-input-theme($track-bg: var(--border-color),
+    $inner-track-bg: var(--color-blue-500),
+    $thumb-bg: var(--color-primary),
+    $thumb-border-width: 1px,
+    $thumb-border-color: $thumb-bg) {
+    --_track-bg: #{$track-bg};
+    --_inner-track-bg: #{$inner-track-bg};
+    --_thumb-bg: #{$thumb-bg};
+    --_thumb-border-width: #{$thumb-border-width};
+    --_thumb-border-color: #{$thumb-border-color};
+}
+
+// ? Sizes a reset range input's track/thumb as a matched pair (see range-input-theme for color)
+@mixin range-input-size($size: 10px, $thumb-border-width: 0px) {
+    height: $size;
+
+    --_track-height: #{$size};
+    --_thumb-height: var(--_track-height);
+    --_thumb-width: var(--_track-height);
+    --_thumb-border-width: #{$thumb-border-width};
+}
+
 @mixin card-styling {
     border: 2px solid var(--border-color);
     border-radius: 10px;
