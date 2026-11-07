@@ -9,14 +9,14 @@ varying vec3 vPosition;
 bool isWithinSliceArea(float angle, float offset, float stop) {
     float end = offset + stop;
 
-    if(end > TAU) {
-        // * The slice wraps around the 0/2π boundary
-        float wrappedEnd = mod(end, TAU);
-        return angle >= offset || angle <= wrappedEnd;
-    } else {
+    if(end <= TAU) {
         // * Normal slice (doesn't cross the boundary)
         return angle >= offset && angle <= end;
-    }
+    } 
+
+        // * The slice wraps around the 0/2π boundary
+    float wrappedEnd = mod(end, TAU);
+    return angle >= offset || angle <= wrappedEnd;
 }
 
 void main() {
