@@ -3,21 +3,21 @@ import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { MeshEntity } from "./types/mesh-entity";
 
-type SlicedSphereState = {
+type SlicedModelState = {
   color: string;
   metalness: number;
   roughness: number;
   envMapIntensity: number;
 };
 
-class SlicedSphere extends MeshEntity implements Destroyable {
+class SlicedModel extends MeshEntity implements Destroyable {
   public static readonly CONFIG = {
-    guiKey: "sliced-sphere-gui-state",
+    guiKey: "sliced-model-gui-state",
     geometry: {
       radius: 2.5,
       detail: 5,
     },
-    /** Plain grey plane behind/below the sphere, purely to catch its shadow. */
+    /** Plain grey plane behind/below the model, purely to catch its shadow. */
     backdrop: {
       color: "#aaaaaa",
       width: 10,
@@ -41,10 +41,10 @@ class SlicedSphere extends MeshEntity implements Destroyable {
   private backdropMaterial: THREE.MeshStandardMaterial;
   private backdrop: THREE.Mesh;
 
-  protected override guiRegistry: GUIStateRegistry<SlicedSphereState> | null =
+  protected override guiRegistry: GUIStateRegistry<SlicedModelState> | null =
     null;
 
-  protected readonly DEBUG_DEFAULTS: SlicedSphereState = {
+  protected readonly DEBUG_DEFAULTS: SlicedModelState = {
     color: "#858080",
     metalness: 0.5,
     roughness: 0.25,
@@ -78,11 +78,11 @@ class SlicedSphere extends MeshEntity implements Destroyable {
       this.addDebugFolders();
     }
 
-    console.log("SlicedSphere");
+    console.log("SlicedModel");
   }
 
   protected setGeometry(): void {
-    const { radius, detail } = SlicedSphere.CONFIG.geometry;
+    const { radius, detail } = SlicedModel.CONFIG.geometry;
 
     this.geometry = new THREE.IcosahedronGeometry(radius, detail);
   }
@@ -109,7 +109,7 @@ class SlicedSphere extends MeshEntity implements Destroyable {
 
   private setBackdrop(): void {
     const { color, width, height, widthSegments, position } =
-      SlicedSphere.CONFIG.backdrop;
+      SlicedModel.CONFIG.backdrop;
 
     this.backdropGeometry = new THREE.PlaneGeometry(
       width,
@@ -131,8 +131,8 @@ class SlicedSphere extends MeshEntity implements Destroyable {
   }
 
   protected override addDebugFolders(): void {
-    const { guiKey } = SlicedSphere.CONFIG;
-    const registry = new GUIStateRegistry<SlicedSphereState>(
+    const { guiKey } = SlicedModel.CONFIG;
+    const registry = new GUIStateRegistry<SlicedModelState>(
       guiKey,
       this.DEBUG_DEFAULTS,
     );
@@ -141,14 +141,14 @@ class SlicedSphere extends MeshEntity implements Destroyable {
     const { state } = registry;
     const { gui } = this.debug;
 
-    const slicedSphereFolder = gui.addFolder("Sliced sphere");
+    const slicedModelFolder = gui.addFolder("Sliced model");
 
-    slicedSphereFolder.addColor(state, "color").name("Color");
+    slicedModelFolder.addColor(state, "color").name("Color");
     registry.bind("color", (v) => {
       this.material.color.set(v);
     });
 
-    slicedSphereFolder
+    slicedModelFolder
       .add(state, "metalness")
       .min(0)
       .max(1)
@@ -158,7 +158,7 @@ class SlicedSphere extends MeshEntity implements Destroyable {
       this.material.metalness = v;
     });
 
-    slicedSphereFolder
+    slicedModelFolder
       .add(state, "roughness")
       .min(0)
       .max(1)
@@ -168,7 +168,7 @@ class SlicedSphere extends MeshEntity implements Destroyable {
       this.material.roughness = v;
     });
 
-    slicedSphereFolder
+    slicedModelFolder
       .add(state, "envMapIntensity")
       .min(0)
       .max(3)
@@ -192,4 +192,4 @@ class SlicedSphere extends MeshEntity implements Destroyable {
   }
 }
 
-export default SlicedSphere;
+export default SlicedModel;
