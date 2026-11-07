@@ -2,6 +2,7 @@ import Experience, { Destroyable } from "@modules/webgl/Experience/Experience";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { MeshEntity } from "./types/mesh-entity";
+import { GltfEntity } from "./types/gltf-entity";
 
 type SlicedModelState = {
   color: string;
@@ -10,7 +11,7 @@ type SlicedModelState = {
   envMapIntensity: number;
 };
 
-class SlicedModel extends MeshEntity implements Destroyable {
+class SlicedModel extends GltfEntity implements Destroyable {
   public static readonly CONFIG = {
     guiKey: "sliced-model-gui-state",
     geometry: {
@@ -33,9 +34,8 @@ class SlicedModel extends MeshEntity implements Destroyable {
 
   private readonly experience: Experience | null;
 
-  protected geometry: THREE.IcosahedronGeometry;
   protected material: THREE.MeshStandardMaterial;
-  protected mesh: THREE.Mesh;
+  protected model: THREE.Group;
 
   private backdropGeometry: THREE.PlaneGeometry;
   private backdropMaterial: THREE.MeshStandardMaterial;
@@ -59,17 +59,19 @@ class SlicedModel extends MeshEntity implements Destroyable {
     return this.experience!.debug;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     super();
 
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.setGeometry();
     this.setMaterial();
-    this.setMesh();
-
-    this.scene.add(this.mesh);
+    this.setModel();
+    this.scene.add(this.model);
 
     this.setBackdrop();
     this.scene.add(this.backdrop);
@@ -79,12 +81,6 @@ class SlicedModel extends MeshEntity implements Destroyable {
     }
 
     console.log("SlicedModel");
-  }
-
-  protected setGeometry(): void {
-    const { radius, detail } = SlicedModel.CONFIG.geometry;
-
-    this.geometry = new THREE.IcosahedronGeometry(radius, detail);
   }
 
   protected setMaterial(): void {
@@ -99,12 +95,10 @@ class SlicedModel extends MeshEntity implements Destroyable {
     });
   }
 
-  protected setMesh(): void {
-    const mesh = new THREE.Mesh(this.geometry, this.material);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
+  protected setModel(): void {
+    const model = this.resources.getGltf("gears");
 
-    this.mesh = mesh;
+    this.model = model.scene;
   }
 
   private setBackdrop(): void {
@@ -180,9 +174,9 @@ class SlicedModel extends MeshEntity implements Destroyable {
   }
 
   public destroy(): void {
-    this.geometry.dispose();
     this.material.dispose();
-    this.scene.remove(this.mesh);
+
+    this.destroyModel();
 
     this.backdropGeometry.dispose();
     this.backdropMaterial.dispose();

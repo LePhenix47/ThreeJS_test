@@ -64,10 +64,9 @@ class World implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.slicedModel = new SlicedModel();
-
     this.resources.on("textures-loaded", () => {
       this.environment = new Environment();
+      this.slicedModel = new SlicedModel();
     });
 
     this.setHelpers();
