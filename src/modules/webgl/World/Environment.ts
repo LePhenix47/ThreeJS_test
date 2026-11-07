@@ -4,7 +4,7 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { EnvironmentEntity } from "./types/environment-entity";
 
 type EnvironmentState = {
-  lightHelper: boolean;
+  lightHelperVisible: boolean;
 };
 
 // * Remove lights: git cherry-pick c647e5364f7b5371c91cba8d7474c25e4623e3b5
@@ -49,7 +49,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
     null;
 
   protected readonly DEBUG_DEFAULTS: EnvironmentState = {
-    lightHelper: true,
+    lightHelperVisible: false,
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
@@ -110,7 +110,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.scene.add(this.ambientLight);
   }
 
-  private setDirectionalLight(withHelper = true): void {
+  private setDirectionalLight(): void {
     const { color, intensity } = Environment.CONFIG.directionalLight;
     const directionalLight = new THREE.DirectionalLight(color, intensity);
 
@@ -135,8 +135,13 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.directionalLight = directionalLight;
     this.scene.add(directionalLight);
 
-    if (!withHelper) return;
-    this.lightHelper = new THREE.DirectionalLightHelper(directionalLight);
+    const lightHelper = new THREE.DirectionalLightHelper(directionalLight);
+    const { lightHelperVisible } =
+      this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+    lightHelper.visible = lightHelperVisible;
+
+    this.lightHelper = lightHelper;
+
     this.scene.add(this.lightHelper);
   }
 
@@ -155,8 +160,8 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
     const helpersFolder = environmentFolder.addFolder("Helpers");
 
-    helpersFolder.add(state, "lightHelper").name("Light Helper");
-    registry.bind("lightHelper", (v) => {
+    helpersFolder.add(state, "lightHelperVisible").name("Light Helper");
+    registry.bind("lightHelperVisible", (v) => {
       this.lightHelper.visible = v;
     });
   }
