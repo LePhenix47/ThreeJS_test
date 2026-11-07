@@ -5,7 +5,6 @@ import { EnvironmentEntity } from "./types/environment-entity";
 
 type EnvironmentState = {
   lightHelper: boolean;
-  environmentColor: string;
 };
 
 // * Remove lights: git cherry-pick c647e5364f7b5371c91cba8d7474c25e4623e3b5
@@ -18,21 +17,22 @@ class Environment extends EnvironmentEntity implements Destroyable {
     },
     directionalLight: {
       color: "#ffffff",
-      intensity: 3,
+      intensity: 4,
       position: {
-        x: 0.25,
-        y: 2,
-        z: -2.25,
+        x: 6.25,
+        y: 3,
+        z: 4,
       },
       shadow: {
         mapSize: 2 ** 10,
         normalBias: 0.05,
         camera: {
-          far: 15,
-          top: 7,
-          right: 7,
-          bottom: -7,
-          left: -7,
+          near: 0.1,
+          far: 30,
+          top: 8,
+          right: 8,
+          bottom: -8,
+          left: -8,
         },
       },
     },
@@ -50,7 +50,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   protected readonly DEBUG_DEFAULTS: EnvironmentState = {
     lightHelper: true,
-    environmentColor: "#160920",
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
@@ -81,7 +80,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
     this.setAmbientLight();
     this.setDirectionalLight();
 
-    this.applyEnvironmentColor();
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
@@ -94,7 +92,9 @@ class Environment extends EnvironmentEntity implements Destroyable {
   protected setEnvMap(): void {
     const { backgroundBlurriness } = Environment.CONFIG.envMap;
 
-    const envMapTexture = this.resources.getDataTexture("aerodynamics-workshop");
+    const envMapTexture = this.resources.getDataTexture(
+      "aerodynamics-workshop",
+    );
     envMapTexture.mapping = THREE.EquirectangularReflectionMapping;
 
     this.scene.background = envMapTexture;
@@ -103,14 +103,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
     this.envMapTexture = envMapTexture;
   }
-
-  /** Sets the renderer clear color from the current state. */
-  private applyEnvironmentColor = (): void => {
-    const { environmentColor } = this.guiRegistry?.state || this.DEBUG_DEFAULTS;
-    const threeColor = new THREE.Color(environmentColor);
-
-    this.renderer.instance.setClearColor(threeColor);
-  };
 
   private setAmbientLight(): void {
     const { color, intensity } = Environment.CONFIG.ambientLight;
@@ -127,9 +119,10 @@ class Environment extends EnvironmentEntity implements Destroyable {
     directionalLight.shadow.mapSize.set(mapSize, mapSize);
     directionalLight.shadow.normalBias = normalBias;
 
-    const { far, top, right, bottom, left } =
+    const { near, far, top, right, bottom, left } =
       Environment.CONFIG.directionalLight.shadow.camera;
     const { camera } = directionalLight.shadow;
+    camera.near = near;
     camera.far = far;
     camera.top = top;
     camera.right = right;
@@ -159,10 +152,6 @@ class Environment extends EnvironmentEntity implements Destroyable {
     const { gui } = this.debug;
 
     const environmentFolder = gui.addFolder("Environment");
-    environmentFolder
-      .addColor(state, "environmentColor")
-      .name("Renderer clear color");
-    registry.bind("environmentColor", this.applyEnvironmentColor);
 
     const helpersFolder = environmentFolder.addFolder("Helpers");
 
