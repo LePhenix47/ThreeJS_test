@@ -3,8 +3,7 @@ uniform float uSliceArc;
 
 varying vec3 vPosition;
 
-#define PI 3.141592653589793
-#define TAU (2.0 * PI)
+#define TAU (2.0 * PI) // ? Note: ThreeJS injects PI as a #define, but also PI2, TAU = PI2
 
 bool isWithinSliceArea(float angle, float offset, float stop) {
     float end = offset + stop;
