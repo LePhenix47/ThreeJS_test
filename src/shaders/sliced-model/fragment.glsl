@@ -10,7 +10,7 @@ void main() {
 // * atan() range: [-π, π] → [0, 2π]
     float angle = atan(vPosition.y, vPosition.x) + PI;
 
-// * 
+// * color: [0, 2π] → %
     float normalizedAngle = angle / TAU;
     vec3 color = vec3(normalizedAngle);
     // vec3 color = vPosition;
