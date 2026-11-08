@@ -270,6 +270,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     materialFolder.addColor(state, "color").name("Color");
     registry.bind("color", (v) => {
       this.material.color.set(v);
+      this.slicedMaterial.color.set(v);
     });
 
     materialFolder
@@ -280,6 +281,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       .name("Metalness");
     registry.bind("metalness", (v) => {
       this.material.metalness = v;
+      this.slicedMaterial.metalness = v;
     });
 
     materialFolder
@@ -290,6 +292,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       .name("Roughness");
     registry.bind("roughness", (v) => {
       this.material.roughness = v;
+      this.slicedMaterial.roughness = v;
     });
 
     materialFolder
@@ -300,6 +303,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
       .name("Env map intensity");
     registry.bind("envMapIntensity", (v) => {
       this.material.envMapIntensity = v;
+      this.slicedMaterial.envMapIntensity = v;
     });
 
     const uniformsFolder = slicedModelFolder.addFolder("Uniforms");
