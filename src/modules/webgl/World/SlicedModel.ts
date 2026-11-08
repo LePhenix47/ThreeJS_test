@@ -103,7 +103,7 @@ class SlicedModel extends GltfEntity implements Updatable, Destroyable {
     roughness: 0.25,
     envMapIntensity: 0.5,
     // * uniforms
-    uSliceStart: 1.0,
+    uSliceStart: 2.5,
     uSliceArc: 1.5,
     uGapFillColor: "#be264d",
   };
