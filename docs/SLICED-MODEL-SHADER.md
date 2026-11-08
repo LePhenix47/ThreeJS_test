@@ -25,6 +25,8 @@ bool isWithinSliceArea(float angle, float offset, float stop) {
 
 Once `offset + stop` goes past `2π`, the slice wraps across the same seam `atan` jumps across at `0`/`2π`, so the check flips from "between offset and end" to "past offset, OR before the wrapped end".
 
+The full wrapped check would be `mod(angle, TAU) < mod(end, TAU)`, wrapping both sides. `angle` never needs it though, `atan`'s shifted output already stays inside `[0, 2π]` on its own. Only `end` can overflow past `2π` (it's `offset + stop`, an unbounded sum), so only `end` gets wrapped: `angle >= offset || angle <= mod(end, TAU)`.
+
 ---
 
 ## patchMap and the base material's own shader
