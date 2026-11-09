@@ -3,7 +3,7 @@ import Experience, {
   Updatable,
 } from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
-import Floor from "./Floor";
+import ProceduralTerrain from "./ProceduralTerrain";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -15,7 +15,6 @@ type WorldState = {
   helpersPosZ: number;
 };
 
-// * To install three-custom-shader-material (v6.4): git cherry-pick 02dfdbfafffb567a6504616b70f36483e05d5a14
 class World implements Updatable, Destroyable {
   public static readonly CONFIG = {
     guiKey: "world-gui-state",
@@ -32,7 +31,7 @@ class World implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
   public environment?: Environment;
-  public floor?: Floor;
+  public proceduralTerrain: ProceduralTerrain;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -57,12 +56,19 @@ class World implements Updatable, Destroyable {
     return this.experience!.camera;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.floor = new Floor();
-    this.environment = new Environment();
+    this.resources.on("textures-loaded", () => {
+      this.environment = new Environment();
+    });
+
+    this.proceduralTerrain = new ProceduralTerrain();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -212,7 +218,7 @@ class World implements Updatable, Destroyable {
   public update(): void {}
 
   public destroy(): void {
-    this.floor?.destroy();
+    this.proceduralTerrain.destroy();
     this.environment?.destroy();
     this.removeHelpers();
   }

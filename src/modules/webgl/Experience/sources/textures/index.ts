@@ -1,7 +1,9 @@
 import { TextureSourceType } from "@modules/webgl/Experience/utils/Resources/types";
+import spruitSunrise from "./spruit-sunrise/spruit-sunrise";
 
 // prettier-ignore
 const textures = [
+  spruitSunrise,
 ] as const;
 
 type RawTextures = typeof textures;
