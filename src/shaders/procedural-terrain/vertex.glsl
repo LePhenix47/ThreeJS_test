@@ -12,7 +12,7 @@ float getElevation(vec2 position) {
         float noiseMultiplier = multipliers[i];
         float resultDivider = noiseMultiplier * 2.0;
 
-        vec3 inputNoise = position * uNoisePositionFrequency * noiseMultiplier;
+        vec2 inputNoise = position * uNoisePositionFrequency * noiseMultiplier;
 
         elevation += simplexNoise2d(inputNoise) / resultDivider;
     }
