@@ -30,6 +30,7 @@ type TerrainUniforms = MapAsUniforms<{
   uStrength: TerrainState["uStrength"];
   uWarpedFrequency: TerrainState["uWarpedFrequency"];
   uWarpedStrength: TerrainState["uWarpedStrength"];
+  uTime: number;
 }>;
 
 type TerrainMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
@@ -74,8 +75,8 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   };
   protected guiRegistry?: GUIStateRegistry<TerrainState> | null = null;
 
-  private get debug() {
-    return this.experience!.debug;
+  private get time() {
+    return this.experience!.time;
   }
 
   constructor({ parentFolder, group }: ProceduralTerrainConstructor) {
@@ -130,6 +131,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       uStrength: new THREE.Uniform(uStrength),
       uWarpedFrequency: new THREE.Uniform(uWarpedFrequency),
       uWarpedStrength: new THREE.Uniform(uWarpedStrength),
+      uTime: new THREE.Uniform(0),
     };
 
     this.material = new CustomShaderMaterial({
@@ -159,7 +161,10 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setMesh(): void {
-    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    const mesh = new THREE.Mesh(this.geometry, this.material);
+    mesh.customDepthMaterial = this.depthMaterial;
+
+    this.mesh = mesh;
   }
 
   protected addDebugFolders(): void {
@@ -231,7 +236,9 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     });
   }
 
-  public update(): void {}
+  public update(): void {
+    this.uniforms.uTime.value = this.time.elapsedSeconds;
+  }
 
   public destroy(): void {
     this.geometry.dispose();

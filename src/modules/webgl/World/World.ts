@@ -215,7 +215,9 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   }
 
-  public update(): void {}
+  public update(): void {
+    this.proceduralTerrain.update();
+  }
 
   public destroy(): void {
     this.proceduralTerrain.destroy();
