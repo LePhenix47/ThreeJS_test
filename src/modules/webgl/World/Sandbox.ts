@@ -3,11 +3,7 @@ import * as THREE from "three";
 import type GUI from "lil-gui";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
-
-export type SandboxConstructor = {
-  /** Shared GUI folder from `ProceduralTerrain`, this builds its own child folder under it. Null when debug tools are off. */
-  parentFolder: GUI | null;
-};
+import { ProceduralTerrainConstructor } from "./ProceduralTerrain";
 
 type SandboxState = {
   color: string;
@@ -49,7 +45,7 @@ class Sandbox implements Destroyable {
     return this.experience!.scene;
   }
 
-  constructor({ parentFolder }: SandboxConstructor) {
+  constructor({ parentFolder }: ProceduralTerrainConstructor) {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
