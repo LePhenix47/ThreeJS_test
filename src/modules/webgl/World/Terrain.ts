@@ -7,6 +7,9 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import type GUI from "lil-gui";
 import Sandbox from "./Sandbox";
 
+import vertexShader from "@shaders/procedural-terrain/vertex.glsl";
+import fragmentShader from "@shaders/procedural-terrain/fragment.glsl";
+
 import CustomShaderMaterial, {
   CSMProxy,
 } from "three-custom-shader-material/vanilla";
@@ -98,6 +101,8 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       roughness,
       // * shader
       uniforms,
+      vertexShader,
+      fragmentShader,
     }) as TerrainMaterialType;
   }
 
