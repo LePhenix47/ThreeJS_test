@@ -1,9 +1,13 @@
+uniform float uNoisePositionFrequency;
+
 #include ../utils/noise/simplexNoise2d
 #include ../utils/vectors/direction
 
 float getElevation(vec2 position) {
     float elevation = 0.0;
-    elevation += simplexNoise2d(position);
+
+    elevation += simplexNoise2d(position * uNoisePositionFrequency);
+
     return elevation;
 }
 

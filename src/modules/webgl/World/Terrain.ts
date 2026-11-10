@@ -19,9 +19,12 @@ type TerrainState = {
   color: string;
   metalness: number;
   roughness: number;
+  uNoisePositionFrequency: number;
 };
 
-type TerrainUniforms = MapAsUniforms<{}>;
+type TerrainUniforms = MapAsUniforms<{
+  uNoisePositionFrequency: TerrainState["uNoisePositionFrequency"];
+}>;
 
 type TerrainMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
   uniforms: TerrainUniforms;
@@ -50,6 +53,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     color: "#85d534",
     metalness: 0,
     roughness: 0.5,
+    uNoisePositionFrequency: 1.0,
   };
   protected guiRegistry?: GUIStateRegistry<TerrainState> | null = null;
 
@@ -94,8 +98,11 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setMaterial(): void {
-    const { color, metalness, roughness } = this.DEBUG_DEFAULTS;
-    const uniforms: TerrainUniforms = {};
+    const { color, metalness, roughness, uNoisePositionFrequency } =
+      this.DEBUG_DEFAULTS;
+    const uniforms: TerrainUniforms = {
+      uNoisePositionFrequency: new THREE.Uniform(uNoisePositionFrequency),
+    };
 
     this.material = new CustomShaderMaterial({
       //  * material
@@ -129,12 +136,14 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
 
     const terrainFolder = this.parentFolder.addFolder("Terrain");
 
-    terrainFolder.addColor(state, "color").name("Color");
+    const materialFolder = terrainFolder.addFolder("Material");
+
+    materialFolder.addColor(state, "color").name("Color");
     registry.bind("color", (v) => {
       this.material.color.set(v);
     });
 
-    terrainFolder
+    materialFolder
       .add(state, "metalness")
       .min(0)
       .max(1)
@@ -144,7 +153,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       this.material.metalness = v;
     });
 
-    terrainFolder
+    materialFolder
       .add(state, "roughness")
       .min(0)
       .max(1)
@@ -152,6 +161,17 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       .name("Roughness");
     registry.bind("roughness", (v) => {
       this.material.roughness = v;
+    });
+
+    const uniformsFolder = terrainFolder.addFolder("Uniforms");
+
+    uniformsFolder
+      .add(state, "uNoisePositionFrequency")
+      .min(0)
+      .max(5)
+      .step(0.01);
+    registry.bind("uNoisePositionFrequency", (v) => {
+      this.material.uniforms.uNoisePositionFrequency.value = v;
     });
   }
 
