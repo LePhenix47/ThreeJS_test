@@ -4,9 +4,20 @@ uniform float uWarpedFrequency;
 uniform float uWarpedStrength;
 uniform float uTime;
 
+varying vec3 vElevatedPosition;
+varying float vDotProductNormalUp;
+
 #include ../utils/noise/simplexNoise2d
 #include ../utils/vectors/direction
 #include ../utils/math/signedPow
+
+/*Offsets the position according to the time*/
+vec2 offsetWithTime(vec2 position) {
+    return position + uTime * 0.2;
+}
+vec3 offsetWithTime(vec3 position) {
+    return position + uTime * 0.2;
+}
 
 float getElevation(vec2 position) {
     float elevation = 0.0;
@@ -14,7 +25,7 @@ float getElevation(vec2 position) {
 // * Adding random bullshit to add further noise
     vec2 warpedPosition = position;
 
-    warpedPosition += uTime * 0.2;
+    warpedPosition = offsetWithTime(warpedPosition);
     warpedPosition += simplexNoise2d(warpedPosition * uNoisePositionFrequency * uWarpedFrequency) * uWarpedStrength;
 
     float[3] multipliers = float[3](1.0, 2.0, 4.0);
@@ -61,4 +72,12 @@ void main() {
     // * Computed normal
     vec3 computedNormal = computeElevationNormal(originalPosition, 0.01);
     csm_Normal = computedNormal;
+
+    // * Varyings
+    vElevatedPosition = csm_Position;
+    vElevatedPosition.xz = offsetWithTime(vElevatedPosition.xz);
+
+    vec3 upVector = vec3(0.0, 1.0, 0.0);
+
+    vDotProductNormalUp = dot(csm_Normal, upVector);
 }
