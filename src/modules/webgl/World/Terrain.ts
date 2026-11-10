@@ -23,6 +23,12 @@ type TerrainState = {
   uStrength: number;
   uWarpedFrequency: number;
   uWarpedStrength: number;
+  uColorWaterDeep: string;
+  uColorWaterSurface: string;
+  uColorSand: string;
+  uColorGrass: string;
+  uColorSnow: string;
+  uColorRock: string;
 };
 
 type TerrainUniforms = MapAsUniforms<{
@@ -31,6 +37,12 @@ type TerrainUniforms = MapAsUniforms<{
   uWarpedFrequency: TerrainState["uWarpedFrequency"];
   uWarpedStrength: TerrainState["uWarpedStrength"];
   uTime: number;
+  uColorWaterDeep: THREE.Color;
+  uColorWaterSurface: THREE.Color;
+  uColorSand: THREE.Color;
+  uColorGrass: THREE.Color;
+  uColorSnow: THREE.Color;
+  uColorRock: THREE.Color;
 }>;
 
 type TerrainMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
@@ -72,6 +84,12 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     uStrength: 2.0,
     uWarpedFrequency: 5.0,
     uWarpedStrength: 0.5,
+    uColorWaterDeep: "#002b3d",
+    uColorWaterSurface: "#66a8ff",
+    uColorSand: "#ffe894",
+    uColorGrass: "#85d534",
+    uColorSnow: "#ffffff",
+    uColorRock: "#bfbd8d",
   };
   protected guiRegistry?: GUIStateRegistry<TerrainState> | null = null;
 
@@ -125,6 +143,12 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       uStrength,
       uWarpedFrequency,
       uWarpedStrength,
+      uColorWaterDeep,
+      uColorWaterSurface,
+      uColorSand,
+      uColorGrass,
+      uColorSnow,
+      uColorRock,
     } = this.DEBUG_DEFAULTS;
     this.uniforms = {
       uNoisePositionFrequency: new THREE.Uniform(uNoisePositionFrequency),
@@ -132,6 +156,24 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       uWarpedFrequency: new THREE.Uniform(uWarpedFrequency),
       uWarpedStrength: new THREE.Uniform(uWarpedStrength),
       uTime: new THREE.Uniform(0),
+      uColorWaterDeep: {
+        value: new THREE.Color(uColorWaterDeep),
+      },
+      uColorWaterSurface: {
+        value: new THREE.Color(uColorWaterSurface),
+      },
+      uColorSand: {
+        value: new THREE.Color(uColorSand),
+      },
+      uColorGrass: {
+        value: new THREE.Color(uColorGrass),
+      },
+      uColorSnow: {
+        value: new THREE.Color(uColorSnow),
+      },
+      uColorRock: {
+        value: new THREE.Color(uColorRock),
+      },
     };
 
     this.material = new CustomShaderMaterial({
@@ -233,6 +275,36 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     uniformsFolder.add(state, "uWarpedStrength").min(0).max(10).step(0.001);
     registry.bind("uWarpedStrength", (v) => {
       this.material.uniforms.uWarpedStrength.value = v;
+    });
+
+    uniformsFolder.addColor(state, "uColorWaterDeep");
+    registry.bind("uColorWaterDeep", (v) => {
+      this.material.uniforms.uColorWaterDeep.value.set(v);
+    });
+
+    uniformsFolder.addColor(state, "uColorWaterSurface");
+    registry.bind("uColorWaterSurface", (v) => {
+      this.material.uniforms.uColorWaterSurface.value.set(v);
+    });
+
+    uniformsFolder.addColor(state, "uColorSand");
+    registry.bind("uColorSand", (v) => {
+      this.material.uniforms.uColorSand.value.set(v);
+    });
+
+    uniformsFolder.addColor(state, "uColorGrass");
+    registry.bind("uColorGrass", (v) => {
+      this.material.uniforms.uColorGrass.value.set(v);
+    });
+
+    uniformsFolder.addColor(state, "uColorSnow");
+    registry.bind("uColorSnow", (v) => {
+      this.material.uniforms.uColorSnow.value.set(v);
+    });
+
+    uniformsFolder.addColor(state, "uColorRock");
+    registry.bind("uColorRock", (v) => {
+      this.material.uniforms.uColorRock.value.set(v);
     });
   }
 
