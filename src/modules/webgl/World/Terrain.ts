@@ -3,11 +3,13 @@ import type { ProceduralTerrainConstructor } from "./ProceduralTerrain";
 import { MeshEntity } from "./types/mesh-entity";
 
 import * as THREE from "three";
-import gsap from "gsap";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import type GUI from "lil-gui";
 import Sandbox from "./Sandbox";
 import RaycasterManager from "@modules/webgl/Experience/utils/RaycasterManager";
+import TerrainDragScroll, {
+  TerrainDragScrollUniforms,
+} from "./TerrainDragScroll";
 
 import vertexShader from "@shaders/procedural-terrain/vertex.glsl";
 import fragmentShader from "@shaders/procedural-terrain/fragment.glsl";
@@ -17,7 +19,10 @@ import CustomShaderMaterial, {
 } from "three-custom-shader-material/vanilla";
 import { MapAsUniforms } from "./types/uniforms";
 
-type InteractivePlane = THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+type InteractivePlane = THREE.Mesh<
+  THREE.PlaneGeometry,
+  THREE.MeshBasicMaterial
+>;
 
 type TerrainState = {
   color: string;
@@ -47,15 +52,8 @@ type TerrainUniforms = MapAsUniforms<{
   uColorGrass: THREE.Color;
   uColorSnow: THREE.Color;
   uColorRock: THREE.Color;
-  /** World XZ under the pointer while dragging, blended in via uDragInfluence. */
-  uDragOffset: THREE.Vector2;
-  /** 0 = fully time-based scroll, 1 = fully drag-controlled. Eases back to 0 on release. */
-  uDragInfluence: number;
-  /** Time-scroll offset at the moment uScrollAnchorTime was last set. Re-anchored on drag release so the scroll resumes from the drag's last offset. */
-  uScrollOffset: THREE.Vector2;
-  /** uTime value at the last re-anchor. Time-based offset is computed from the elapsed time since this point. */
-  uScrollAnchorTime: number;
-}>;
+}> &
+  TerrainDragScrollUniforms;
 
 type TerrainMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
   uniforms: TerrainUniforms;
@@ -94,12 +92,11 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   private interactivePlane: InteractivePlane;
   private readonly raycasterManager = new RaycasterManager<InteractivePlane>();
   private isDragging: boolean = false;
-  private dragReturnTween: gsap.core.Tween | null = null;
 
-  /** World XZ under the pointer at the moment the drag started. Lets drag movement be read as a delta instead of an absolute position. */
-  private dragStartWorldXZ: THREE.Vector2 | null = null;
-  /** Snapshot of the time-based offset at the moment the drag started, so dragging picks up continuously from wherever the scroll was. */
-  private readonly dragBaseOffset = new THREE.Vector2();
+  /** Shared with `uniforms.uTime` — created up front so `dragScroll` can read it before `setMaterial()` builds the rest of the uniform set. */
+  private readonly uTime = new THREE.Uniform(0);
+  /** See TerrainDragScroll for the drag-to-scroll technique this drives. */
+  private dragScroll: TerrainDragScroll;
 
   protected readonly DEBUG_DEFAULTS: TerrainState = {
     // * material
@@ -140,6 +137,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     this.parentFolder = parentFolder;
     this.group = group;
 
+    this.setDragScroll();
     this.setGeometry();
     this.setMaterial();
     this.setDepthMaterial();
@@ -155,6 +153,14 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     }
 
     console.log("Terrain");
+  }
+
+  private setDragScroll(): void {
+    const { returnDuration } = Terrain.CONFIG.drag;
+    this.dragScroll = new TerrainDragScroll({
+      uTime: this.uTime,
+      returnDuration,
+    });
   }
 
   protected setGeometry(): void {
@@ -193,7 +199,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       uStrength: new THREE.Uniform(uStrength),
       uWarpedFrequency: new THREE.Uniform(uWarpedFrequency),
       uWarpedStrength: new THREE.Uniform(uWarpedStrength),
-      uTime: new THREE.Uniform(0),
+      uTime: this.uTime,
       uColorWaterDeep: {
         value: new THREE.Color(uColorWaterDeep),
       },
@@ -212,14 +218,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       uColorRock: {
         value: new THREE.Color(uColorRock),
       },
-      uDragOffset: {
-        value: new THREE.Vector2(0, 0),
-      },
-      uDragInfluence: new THREE.Uniform(0),
-      uScrollOffset: {
-        value: new THREE.Vector2(0, 0),
-      },
-      uScrollAnchorTime: new THREE.Uniform(0),
+      ...this.dragScroll.uniforms,
     };
 
     this.material = new CustomShaderMaterial({
@@ -273,14 +272,6 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     this.pointer.on("pointerup", this.onPointerUp);
   }
 
-  /** Current time-based scroll offset, mirroring the GLSL `offsetWithTime`'s time term. */
-  private getTimeOffset(): THREE.Vector2 {
-    const { uTime, uScrollOffset, uScrollAnchorTime } = this.uniforms;
-
-    const elapsed = uTime.value - uScrollAnchorTime.value;
-    return uScrollOffset.value.clone().addScalar(elapsed * 0.2);
-  }
-
   private getPointerWorldXZ(): THREE.Vector2 | null {
     this.raycasterManager.updatePointer(
       this.pointer.clipSpaceX,
@@ -302,16 +293,9 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     const worldXZ = this.getPointerWorldXZ();
     if (!worldXZ) return;
 
-    this.dragReturnTween?.kill();
-
     this.isDragging = true;
     this.camera.controls.enabled = false;
-
-    this.dragStartWorldXZ = worldXZ;
-    this.dragBaseOffset.copy(this.getTimeOffset());
-
-    this.uniforms.uDragOffset.value.copy(this.dragBaseOffset);
-    this.uniforms.uDragInfluence.value = 1;
+    this.dragScroll.start(worldXZ);
   };
 
   private onPointerUp = (): void => {
@@ -319,18 +303,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
 
     this.isDragging = false;
     this.camera.controls.enabled = true;
-
-    // ? Re-anchors the time scroll to the drag's last offset, so it resumes from there instead of snapping back to the untouched uTime path
-    this.uniforms.uScrollOffset.value.copy(this.uniforms.uDragOffset.value);
-    this.uniforms.uScrollAnchorTime.value = this.uniforms.uTime.value;
-
-    const { returnDuration } = Terrain.CONFIG.drag;
-
-    this.dragReturnTween = gsap.to(this.uniforms.uDragInfluence, {
-      value: 0,
-      duration: returnDuration,
-      ease: "power2.out",
-    });
+    this.dragScroll.release();
   };
 
   protected addDebugFolders(): void {
@@ -433,19 +406,18 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   }
 
   public update(): void {
-    this.uniforms.uTime.value = this.time.elapsedSeconds;
+    this.uTime.value = this.time.elapsedSeconds;
 
     if (!this.isDragging) return;
 
     const worldXZ = this.getPointerWorldXZ();
-    if (!worldXZ || !this.dragStartWorldXZ) return;
+    if (!worldXZ) return;
 
-    const delta = worldXZ.sub(this.dragStartWorldXZ);
-    this.uniforms.uDragOffset.value.copy(this.dragBaseOffset).sub(delta);
+    this.dragScroll.drag(worldXZ);
   }
 
   public destroy(): void {
-    this.dragReturnTween?.kill();
+    this.dragScroll.destroy();
     this.pointer.off("pointerdown", this.onPointerDown);
     this.pointer.off("pointerup", this.onPointerUp);
 
