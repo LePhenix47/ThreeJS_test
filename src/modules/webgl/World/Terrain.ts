@@ -36,6 +36,10 @@ type TerrainMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
   uniforms: TerrainUniforms;
 };
 
+type TerrainDepthMaterialType = CSMProxy<typeof THREE.MeshDepthMaterial> & {
+  uniforms: TerrainUniforms;
+};
+
 class Terrain extends MeshEntity implements Updatable, Destroyable {
   public static readonly CONFIG = {
     guiKey: "terrain-gui-state",
@@ -52,7 +56,9 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   private readonly group: THREE.Group;
 
   protected geometry: THREE.PlaneGeometry;
+  protected uniforms: TerrainUniforms;
   protected material: TerrainMaterialType;
+  protected depthMaterial: TerrainDepthMaterialType;
   protected mesh: THREE.Mesh;
 
   protected readonly DEBUG_DEFAULTS: TerrainState = {
@@ -80,6 +86,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
 
     this.setGeometry();
     this.setMaterial();
+    this.setDepthMaterial();
     this.setMesh();
 
     this.group.add(this.mesh);
@@ -116,7 +123,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       uWarpedFrequency,
       uWarpedStrength,
     } = this.DEBUG_DEFAULTS;
-    const uniforms: TerrainUniforms = {
+    this.uniforms = {
       uNoisePositionFrequency: new THREE.Uniform(uNoisePositionFrequency),
       uStrength: new THREE.Uniform(uStrength),
       uWarpedFrequency: new THREE.Uniform(uWarpedFrequency),
@@ -124,16 +131,29 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     };
 
     this.material = new CustomShaderMaterial({
-      //  * material
+      // * material
       baseMaterial: THREE.MeshStandardMaterial,
       color,
       metalness,
       roughness,
+
       // * shader
-      uniforms,
+      uniforms: this.uniforms,
       vertexShader,
       fragmentShader,
     }) as TerrainMaterialType;
+  }
+
+  private setDepthMaterial(): void {
+    this.depthMaterial = new CustomShaderMaterial({
+      // * material
+      baseMaterial: THREE.MeshDepthMaterial,
+
+      // * shader
+      uniforms: this.uniforms,
+      vertexShader,
+      fragmentShader,
+    }) as TerrainDepthMaterialType;
   }
 
   protected setMesh(): void {
