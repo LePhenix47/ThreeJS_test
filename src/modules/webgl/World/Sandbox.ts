@@ -98,9 +98,9 @@ class Sandbox implements Destroyable {
     const boardHoleBrush = new Brush(this.boardHoleGeometry);
 
     // ? Adds floor to the sandbox board, since it's not rendered in the scene we have to updateMatrixWorld
-    const { y } = Sandbox.CONFIG.boardHoleBrush.position;
-    boardHoleBrush.position.y = y;
-    boardHoleBrush.updateMatrixWorld();
+    // const { y } = Sandbox.CONFIG.boardHoleBrush.position;
+    // boardHoleBrush.position.y = y;
+    // boardHoleBrush.updateMatrixWorld();
 
     // * 2. Evaluate the geometries
     const evaluator = new Evaluator();
