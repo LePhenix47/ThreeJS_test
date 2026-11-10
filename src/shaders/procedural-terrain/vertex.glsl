@@ -3,6 +3,10 @@ uniform float uStrength;
 uniform float uWarpedFrequency;
 uniform float uWarpedStrength;
 uniform float uTime;
+uniform vec2 uDragOffset;
+uniform float uDragInfluence;
+uniform vec2 uScrollOffset;
+uniform float uScrollAnchorTime;
 
 varying vec3 vElevatedPosition;
 varying float vDotProductNormalUp;
@@ -11,12 +15,13 @@ varying float vDotProductNormalUp;
 #include ../utils/vectors/direction
 #include ../utils/math/signedPow
 
-/*Offsets the position according to the time*/
+/*Offsets the position according to the time, or to the drag position while dragging*/
 vec2 offsetWithTime(vec2 position) {
-    return position + uTime * 0.2;
-}
-vec3 offsetWithTime(vec3 position) {
-    return position + uTime * 0.2;
+    vec2 timeOffset = uScrollOffset + vec2((uTime - uScrollAnchorTime) * 0.2);
+
+    vec2 offset = mix(timeOffset, uDragOffset, uDragInfluence);
+
+    return position + offset;
 }
 
 float getElevation(vec2 position) {

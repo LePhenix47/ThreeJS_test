@@ -3,9 +3,11 @@ import type { ProceduralTerrainConstructor } from "./ProceduralTerrain";
 import { MeshEntity } from "./types/mesh-entity";
 
 import * as THREE from "three";
+import gsap from "gsap";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import type GUI from "lil-gui";
 import Sandbox from "./Sandbox";
+import RaycasterManager from "@modules/webgl/Experience/utils/RaycasterManager";
 
 import vertexShader from "@shaders/procedural-terrain/vertex.glsl";
 import fragmentShader from "@shaders/procedural-terrain/fragment.glsl";
@@ -14,6 +16,8 @@ import CustomShaderMaterial, {
   CSMProxy,
 } from "three-custom-shader-material/vanilla";
 import { MapAsUniforms } from "./types/uniforms";
+
+type InteractivePlane = THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
 
 type TerrainState = {
   color: string;
@@ -43,6 +47,14 @@ type TerrainUniforms = MapAsUniforms<{
   uColorGrass: THREE.Color;
   uColorSnow: THREE.Color;
   uColorRock: THREE.Color;
+  /** World XZ under the pointer while dragging, blended in via uDragInfluence. */
+  uDragOffset: THREE.Vector2;
+  /** 0 = fully time-based scroll, 1 = fully drag-controlled. Eases back to 0 on release. */
+  uDragInfluence: number;
+  /** Time-scroll offset at the moment uScrollAnchorTime was last set. Re-anchored on drag release so the scroll resumes from the drag's last offset. */
+  uScrollOffset: THREE.Vector2;
+  /** uTime value at the last re-anchor. Time-based offset is computed from the elapsed time since this point. */
+  uScrollAnchorTime: number;
 }>;
 
 type TerrainMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
@@ -62,6 +74,10 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       segments: 500,
       rotationXDeg: -90,
     },
+    drag: {
+      /** Seconds for uDragInfluence to ease back from 1 (full drag) to 0 (full time-based) on release. */
+      returnDuration: 1.2,
+    },
   } as const;
 
   private readonly experience: Experience;
@@ -73,6 +89,17 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   protected material: TerrainMaterialType;
   protected depthMaterial: TerrainDepthMaterialType;
   protected mesh: THREE.Mesh;
+
+  /** Invisible, low-poly stand-in for the terrain mesh. Raycasting the real 500×500-segment mesh every frame while dragging would be far more triangles than needed just to read a world XZ position. */
+  private interactivePlane: InteractivePlane;
+  private readonly raycasterManager = new RaycasterManager<InteractivePlane>();
+  private isDragging: boolean = false;
+  private dragReturnTween: gsap.core.Tween | null = null;
+
+  /** World XZ under the pointer at the moment the drag started. Lets drag movement be read as a delta instead of an absolute position. */
+  private dragStartWorldXZ: THREE.Vector2 | null = null;
+  /** Snapshot of the time-based offset at the moment the drag started, so dragging picks up continuously from wherever the scroll was. */
+  private readonly dragBaseOffset = new THREE.Vector2();
 
   protected readonly DEBUG_DEFAULTS: TerrainState = {
     // * material
@@ -97,6 +124,14 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     return this.experience!.time;
   }
 
+  private get pointer() {
+    return this.experience!.pointer;
+  }
+
+  private get camera() {
+    return this.experience!.camera;
+  }
+
   constructor({ parentFolder, group }: ProceduralTerrainConstructor) {
     super();
 
@@ -109,8 +144,11 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     this.setMaterial();
     this.setDepthMaterial();
     this.setMesh();
+    this.setInteractivePlane();
 
-    this.group.add(this.mesh);
+    this.group.add(this.mesh, this.interactivePlane);
+
+    this.setDragHandlers();
 
     if (this.parentFolder) {
       this.addDebugFolders();
@@ -174,6 +212,14 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       uColorRock: {
         value: new THREE.Color(uColorRock),
       },
+      uDragOffset: {
+        value: new THREE.Vector2(0, 0),
+      },
+      uDragInfluence: new THREE.Uniform(0),
+      uScrollOffset: {
+        value: new THREE.Vector2(0, 0),
+      },
+      uScrollAnchorTime: new THREE.Uniform(0),
     };
 
     this.material = new CustomShaderMaterial({
@@ -208,6 +254,84 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
 
     this.mesh = mesh;
   }
+
+  private setInteractivePlane(): void {
+    const { width, height, rotationXDeg } = Terrain.CONFIG.geometry;
+
+    const geometry = new THREE.PlaneGeometry(width, height);
+
+    const rotationXRad = THREE.MathUtils.degToRad(rotationXDeg);
+    geometry.rotateX(rotationXRad);
+
+    const material = new THREE.MeshBasicMaterial({ visible: false });
+
+    this.interactivePlane = new THREE.Mesh(geometry, material);
+  }
+
+  private setDragHandlers(): void {
+    this.pointer.on("pointerdown", this.onPointerDown);
+    this.pointer.on("pointerup", this.onPointerUp);
+  }
+
+  /** Current time-based scroll offset, mirroring the GLSL `offsetWithTime`'s time term. */
+  private getTimeOffset(): THREE.Vector2 {
+    const { uTime, uScrollOffset, uScrollAnchorTime } = this.uniforms;
+
+    const elapsed = uTime.value - uScrollAnchorTime.value;
+    return uScrollOffset.value.clone().addScalar(elapsed * 0.2);
+  }
+
+  private getPointerWorldXZ(): THREE.Vector2 | null {
+    this.raycasterManager.updatePointer(
+      this.pointer.clipSpaceX,
+      -1 * this.pointer.clipSpaceY,
+    );
+
+    const intersection = this.raycasterManager.checkIntersections(
+      [this.interactivePlane],
+      this.camera.instance,
+    );
+
+    if (!intersection) return null;
+
+    const { x, z } = intersection.point;
+    return new THREE.Vector2(x, z);
+  }
+
+  private onPointerDown = (): void => {
+    const worldXZ = this.getPointerWorldXZ();
+    if (!worldXZ) return;
+
+    this.dragReturnTween?.kill();
+
+    this.isDragging = true;
+    this.camera.controls.enabled = false;
+
+    this.dragStartWorldXZ = worldXZ;
+    this.dragBaseOffset.copy(this.getTimeOffset());
+
+    this.uniforms.uDragOffset.value.copy(this.dragBaseOffset);
+    this.uniforms.uDragInfluence.value = 1;
+  };
+
+  private onPointerUp = (): void => {
+    if (!this.isDragging) return;
+
+    this.isDragging = false;
+    this.camera.controls.enabled = true;
+
+    // ? Re-anchors the time scroll to the drag's last offset, so it resumes from there instead of snapping back to the untouched uTime path
+    this.uniforms.uScrollOffset.value.copy(this.uniforms.uDragOffset.value);
+    this.uniforms.uScrollAnchorTime.value = this.uniforms.uTime.value;
+
+    const { returnDuration } = Terrain.CONFIG.drag;
+
+    this.dragReturnTween = gsap.to(this.uniforms.uDragInfluence, {
+      value: 0,
+      duration: returnDuration,
+      ease: "power2.out",
+    });
+  };
 
   protected addDebugFolders(): void {
     const { guiKey } = Terrain.CONFIG;
@@ -310,13 +434,31 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
 
   public update(): void {
     this.uniforms.uTime.value = this.time.elapsedSeconds;
+
+    if (!this.isDragging) return;
+
+    const worldXZ = this.getPointerWorldXZ();
+    if (!worldXZ || !this.dragStartWorldXZ) return;
+
+    const delta = worldXZ.sub(this.dragStartWorldXZ);
+    this.uniforms.uDragOffset.value.copy(this.dragBaseOffset).sub(delta);
   }
 
   public destroy(): void {
+    this.dragReturnTween?.kill();
+    this.pointer.off("pointerdown", this.onPointerDown);
+    this.pointer.off("pointerup", this.onPointerUp);
+
+    if (this.isDragging) {
+      this.camera.controls.enabled = true;
+    }
+
     this.geometry.dispose();
     this.material.dispose();
+    this.interactivePlane.geometry.dispose();
+    this.interactivePlane.material.dispose();
 
-    this.group.remove(this.mesh);
+    this.group.remove(this.mesh, this.interactivePlane);
 
     this.guiRegistry?.dispose();
   }
