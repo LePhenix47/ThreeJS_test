@@ -20,10 +20,12 @@ type TerrainState = {
   metalness: number;
   roughness: number;
   uNoisePositionFrequency: number;
+  uStrength: number;
 };
 
 type TerrainUniforms = MapAsUniforms<{
   uNoisePositionFrequency: TerrainState["uNoisePositionFrequency"];
+  uStrength: TerrainState["uStrength"];
 }>;
 
 type TerrainMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
@@ -54,6 +56,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     metalness: 0,
     roughness: 0.5,
     uNoisePositionFrequency: 1.0,
+    uStrength: 1.0,
   };
   protected guiRegistry?: GUIStateRegistry<TerrainState> | null = null;
 
@@ -98,10 +101,11 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setMaterial(): void {
-    const { color, metalness, roughness, uNoisePositionFrequency } =
+    const { color, metalness, roughness, uNoisePositionFrequency, uStrength } =
       this.DEBUG_DEFAULTS;
     const uniforms: TerrainUniforms = {
       uNoisePositionFrequency: new THREE.Uniform(uNoisePositionFrequency),
+      uStrength: new THREE.Uniform(uStrength),
     };
 
     this.material = new CustomShaderMaterial({
@@ -172,6 +176,11 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       .step(0.01);
     registry.bind("uNoisePositionFrequency", (v) => {
       this.material.uniforms.uNoisePositionFrequency.value = v;
+    });
+
+    uniformsFolder.add(state, "uStrength").min(0).max(5).step(0.01);
+    registry.bind("uStrength", (v) => {
+      this.material.uniforms.uStrength.value = v;
     });
   }
 
