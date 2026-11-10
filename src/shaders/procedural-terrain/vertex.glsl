@@ -13,7 +13,7 @@ float getElevation(vec2 position) {
 // * Adding random bullshit to add further noise
     vec2 warpedPosition = position;
 
-    warpedPosition += simplexNoise2d(warpedPosition * uWarpedFrequency) * uWarpedStrength;
+    warpedPosition += simplexNoise2d(warpedPosition * uNoisePositionFrequency * uWarpedFrequency) * uWarpedStrength;
 
     float[3] multipliers = float[3](1.0, 2.0, 4.0);
 
