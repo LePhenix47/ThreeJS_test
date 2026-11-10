@@ -93,6 +93,10 @@ class ProceduralTerrain implements Destroyable {
     const boardFillBrush = new Brush(this.boardFillGeometry);
     const boardHoleBrush = new Brush(this.boardHoleGeometry);
 
+    // ? Adds floor to the sandbox board, since it's not rendered in the scene we have to updateMatrixWorld
+    boardHoleBrush.position.y = 0.2;
+    boardHoleBrush.updateMatrixWorld();
+
     // * 2. Evaluate the geometries
     const evaluator = new Evaluator();
     const board = evaluator.evaluate(
@@ -102,6 +106,9 @@ class ProceduralTerrain implements Destroyable {
     );
 
     board.material = this.material;
+
+    board.castShadow = true;
+    board.receiveShadow = true;
 
     this.mesh = board;
   }
