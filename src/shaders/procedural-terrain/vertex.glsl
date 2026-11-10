@@ -6,7 +6,16 @@ uniform float uNoisePositionFrequency;
 float getElevation(vec2 position) {
     float elevation = 0.0;
 
-    elevation += simplexNoise2d(position * uNoisePositionFrequency);
+    float[3] multipliers = float[3](1.0, 2.0, 4.0);
+
+    for(int i = 0; i < multipliers.length(); i++) {
+        float noiseMultiplier = multipliers[i];
+        float resultDivider = noiseMultiplier * 2.0;
+
+        vec3 inputNoise = position * uNoisePositionFrequency * noiseMultiplier;
+
+        elevation += simplexNoise2d(inputNoise) / resultDivider;
+    }
 
     return elevation;
 }
