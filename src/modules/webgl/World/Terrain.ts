@@ -152,6 +152,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     this.depthMaterial = new CustomShaderMaterial({
       // * material
       baseMaterial: THREE.MeshDepthMaterial,
+      depthPacking: THREE.RGBADepthPacking,
 
       // * shader
       uniforms: this.uniforms,
