@@ -2,6 +2,7 @@ uniform float uNoisePositionFrequency;
 
 #include ../utils/noise/simplexNoise2d
 #include ../utils/vectors/direction
+#include ../utils/math/signedPow
 
 float getElevation(vec2 position) {
     float elevation = 0.0;
@@ -16,6 +17,9 @@ float getElevation(vec2 position) {
 
         elevation += simplexNoise2d(inputNoise) / resultDivider;
     }
+
+// ? Applying a signed power to keep the sign of negative values even on even powers
+    elevation = signedPow(elevation, 2.0);
 
     return elevation;
 }
