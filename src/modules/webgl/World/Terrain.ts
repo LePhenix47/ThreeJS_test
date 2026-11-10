@@ -156,7 +156,6 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       // * shader
       uniforms: this.uniforms,
       vertexShader,
-      fragmentShader,
     }) as TerrainDepthMaterialType;
   }
 
