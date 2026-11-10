@@ -37,6 +37,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
 
   private readonly experience: Experience;
   private readonly parentFolder: GUI | null;
+  private readonly group: THREE.Group;
 
   protected geometry: THREE.PlaneGeometry;
   protected material: TerrainMaterialType;
@@ -49,26 +50,23 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   };
   protected guiRegistry?: GUIStateRegistry<TerrainState> | null = null;
 
-  private get scene() {
-    return this.experience!.scene;
-  }
-
   private get debug() {
     return this.experience!.debug;
   }
 
-  constructor({ parentFolder }: ProceduralTerrainConstructor) {
+  constructor({ parentFolder, group }: ProceduralTerrainConstructor) {
     super();
 
     if (!Experience.instance) throw new Error("Experience instance not found");
     this.experience = Experience.instance;
     this.parentFolder = parentFolder;
+    this.group = group;
 
     this.setGeometry();
     this.setMaterial();
     this.setMesh();
 
-    this.scene.add(this.mesh);
+    this.group.add(this.mesh);
 
     if (this.parentFolder) {
       this.addDebugFolders();
@@ -150,7 +148,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     this.geometry.dispose();
     this.material.dispose();
 
-    this.scene.remove(this.mesh);
+    this.group.remove(this.mesh);
 
     this.guiRegistry?.dispose();
   }

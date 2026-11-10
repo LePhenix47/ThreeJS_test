@@ -24,6 +24,7 @@ class Sandbox implements Destroyable {
 
   private readonly experience: Experience | null;
   private readonly parentFolder: GUI | null;
+  private readonly group: THREE.Group;
 
   private boardFillGeometry: THREE.BoxGeometry;
   private boardHoleGeometry: THREE.BoxGeometry;
@@ -41,21 +42,18 @@ class Sandbox implements Destroyable {
     envMapIntensity: 1,
   };
 
-  private get scene() {
-    return this.experience!.scene;
-  }
-
-  constructor({ parentFolder }: ProceduralTerrainConstructor) {
+  constructor({ parentFolder, group }: ProceduralTerrainConstructor) {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
     this.parentFolder = parentFolder;
+    this.group = group;
 
     this.setGeometry();
     this.setMaterial();
     this.setMesh();
 
-    this.scene.add(this.mesh);
+    this.group.add(this.mesh);
 
     if (this.parentFolder) {
       this.addDebugFolders();
@@ -167,7 +165,7 @@ class Sandbox implements Destroyable {
 
     this.material.dispose();
 
-    this.scene.remove(this.mesh);
+    this.group.remove(this.mesh);
 
     this.guiRegistry?.dispose();
   }
