@@ -62,9 +62,11 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   protected mesh: THREE.Mesh;
 
   protected readonly DEBUG_DEFAULTS: TerrainState = {
+    // * material
     color: "#85d534",
     metalness: 0,
     roughness: 0.5,
+    // * uniforms
     uNoisePositionFrequency: 0.2,
     uStrength: 2.0,
     uWarpedFrequency: 5.0,
