@@ -3,6 +3,8 @@ import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { MeshEntity } from "./types/mesh-entity";
 
+import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
+
 type ProceduralTerrainState = {
   color: string;
   metalness: number;
@@ -10,25 +12,28 @@ type ProceduralTerrainState = {
   envMapIntensity: number;
 };
 
-class ProceduralTerrain extends MeshEntity implements Destroyable {
+class ProceduralTerrain implements Destroyable {
   public static readonly CONFIG = {
     guiKey: "procedural-terrain-gui-state",
     geometry: {
-      radius: 2,
-      detail: 5,
+      width: 11,
+      height: 2,
+      depth: 11,
     },
   } as const;
 
   private readonly experience: Experience | null;
 
-  protected geometry: THREE.IcosahedronGeometry;
-  protected material: THREE.MeshPhysicalMaterial;
-  protected mesh: THREE.Mesh;
+  private boardFillGeometry: THREE.BoxGeometry;
+  private boardHoleGeometry: THREE.BoxGeometry;
 
-  protected override guiRegistry: GUIStateRegistry<ProceduralTerrainState> | null =
-    null;
+  private material: THREE.MeshPhysicalMaterial;
 
-  protected readonly DEBUG_DEFAULTS: ProceduralTerrainState = {
+  private mesh: THREE.Mesh;
+
+  private guiRegistry: GUIStateRegistry<ProceduralTerrainState> | null = null;
+
+  private readonly DEBUG_DEFAULTS: ProceduralTerrainState = {
     color: "#ffffff",
     metalness: 0,
     roughness: 1,
@@ -44,8 +49,6 @@ class ProceduralTerrain extends MeshEntity implements Destroyable {
   }
 
   constructor() {
-    super();
-
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
@@ -62,12 +65,18 @@ class ProceduralTerrain extends MeshEntity implements Destroyable {
     console.log("ProceduralTerrain");
   }
 
-  protected setGeometry(): void {
-    const { radius, detail } = ProceduralTerrain.CONFIG.geometry;
-    this.geometry = new THREE.IcosahedronGeometry(radius, detail);
+  private setGeometry(): void {
+    const { width, height, depth } = ProceduralTerrain.CONFIG.geometry;
+    this.boardFillGeometry = new THREE.BoxGeometry(width, height, depth);
+
+    this.boardHoleGeometry = new THREE.BoxGeometry(
+      width - 1,
+      height + 0.1,
+      depth - 1,
+    );
   }
 
-  protected setMaterial(): void {
+  private setMaterial(): void {
     const { color, metalness, roughness, envMapIntensity } =
       this.DEBUG_DEFAULTS;
 
@@ -79,11 +88,25 @@ class ProceduralTerrain extends MeshEntity implements Destroyable {
     });
   }
 
-  protected setMesh(): void {
-    this.mesh = new THREE.Mesh(this.geometry, this.material);
+  private setMesh(): void {
+    // * 1. Create brushes
+    const boardFillBrush = new Brush(this.boardFillGeometry);
+    const boardHoleBrush = new Brush(this.boardHoleGeometry);
+
+    // * 2. Evaluate the geometries
+    const evaluator = new Evaluator();
+    const board = evaluator.evaluate(
+      boardFillBrush,
+      boardHoleBrush,
+      SUBTRACTION, // ? XOR operation
+    );
+
+    board.material = this.material;
+
+    this.mesh = board;
   }
 
-  protected override addDebugFolders(): void {
+  private addDebugFolders(): void {
     const { guiKey } = ProceduralTerrain.CONFIG;
     const registry = new GUIStateRegistry<ProceduralTerrainState>(
       guiKey,
@@ -95,13 +118,14 @@ class ProceduralTerrain extends MeshEntity implements Destroyable {
     const { gui } = this.debug;
 
     const terrainFolder = gui.addFolder("Procedural terrain");
+    const boardFolder = terrainFolder.addFolder("Board");
 
-    terrainFolder.addColor(state, "color").name("Color");
+    boardFolder.addColor(state, "color").name("Color");
     registry.bind("color", (v) => {
       this.material.color.set(v);
     });
 
-    terrainFolder
+    boardFolder
       .add(state, "metalness")
       .min(0)
       .max(1)
@@ -111,7 +135,7 @@ class ProceduralTerrain extends MeshEntity implements Destroyable {
       this.material.metalness = v;
     });
 
-    terrainFolder
+    boardFolder
       .add(state, "roughness")
       .min(0)
       .max(1)
@@ -121,7 +145,7 @@ class ProceduralTerrain extends MeshEntity implements Destroyable {
       this.material.roughness = v;
     });
 
-    terrainFolder
+    boardFolder
       .add(state, "envMapIntensity")
       .min(0)
       .max(3)
@@ -133,9 +157,13 @@ class ProceduralTerrain extends MeshEntity implements Destroyable {
   }
 
   public destroy(): void {
-    this.geometry.dispose();
+    this.boardFillGeometry.dispose();
+    this.boardHoleGeometry.dispose();
+
     this.material.dispose();
+
     this.scene.remove(this.mesh);
+
     this.guiRegistry?.dispose();
   }
 }
