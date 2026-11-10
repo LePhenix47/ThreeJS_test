@@ -3,7 +3,7 @@ import * as THREE from "three";
 import type GUI from "lil-gui";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
-import { ProceduralTerrainConstructor } from "./ProceduralTerrain";
+import type { ProceduralTerrainConstructor } from "./ProceduralTerrain";
 
 type SandboxState = {
   color: string;
@@ -19,6 +19,13 @@ class Sandbox implements Destroyable {
       width: 11,
       height: 2,
       depth: 11,
+    },
+    boardHoleBrush: {
+      position: {
+        x: 0,
+        y: 0.2,
+        z: 0,
+      },
     },
   } as const;
 
@@ -91,7 +98,8 @@ class Sandbox implements Destroyable {
     const boardHoleBrush = new Brush(this.boardHoleGeometry);
 
     // ? Adds floor to the sandbox board, since it's not rendered in the scene we have to updateMatrixWorld
-    boardHoleBrush.position.y = 0.2;
+    const { y } = Sandbox.CONFIG.boardHoleBrush.position;
+    boardHoleBrush.position.y = y;
     boardHoleBrush.updateMatrixWorld();
 
     // * 2. Evaluate the geometries

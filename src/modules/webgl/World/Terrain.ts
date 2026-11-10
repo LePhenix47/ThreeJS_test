@@ -1,10 +1,10 @@
 import Experience, { Destroyable, Updatable } from "../Experience/Experience";
-import { ProceduralTerrainConstructor } from "./ProceduralTerrain";
+import type { ProceduralTerrainConstructor } from "./ProceduralTerrain";
 import { MeshEntity } from "./types/mesh-entity";
 
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
-import GUI from "lil-gui";
+import type GUI from "lil-gui";
 import Sandbox from "./Sandbox";
 
 import CustomShaderMaterial, {
@@ -78,7 +78,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   protected setGeometry(): void {
     const { segments, width, height, rotationXDeg } = Terrain.CONFIG.geometry;
 
-    const geometry = new THREE.PlaneGeometry(width, height, segments);
+    const geometry = new THREE.PlaneGeometry(width, height, segments, segments);
 
     const rotationXRad = THREE.MathUtils.degToRad(rotationXDeg);
     geometry.rotateX(rotationXRad); // ? Plane parallel to floor
@@ -87,11 +87,15 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setMaterial(): void {
+    const { color, metalness, roughness } = this.DEBUG_DEFAULTS;
     const uniforms: TerrainUniforms = {};
 
     this.material = new CustomShaderMaterial({
       //  * material
       baseMaterial: THREE.MeshStandardMaterial,
+      color,
+      metalness,
+      roughness,
       // * shader
       uniforms,
     }) as TerrainMaterialType;
