@@ -107,7 +107,7 @@ class Sandbox implements Destroyable {
     const board = evaluator.evaluate(
       boardFillBrush,
       boardHoleBrush,
-      SUBTRACTION, // ? XOR operation
+      SUBTRACTION, // ? Keeps fill minus the hole's overlap
     );
 
     board.material = this.material;
