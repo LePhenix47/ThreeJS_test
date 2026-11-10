@@ -21,11 +21,15 @@ type TerrainState = {
   roughness: number;
   uNoisePositionFrequency: number;
   uStrength: number;
+  uWarpedFrequency: number;
+  uWarpedStrength: number;
 };
 
 type TerrainUniforms = MapAsUniforms<{
   uNoisePositionFrequency: TerrainState["uNoisePositionFrequency"];
   uStrength: TerrainState["uStrength"];
+  uWarpedFrequency: TerrainState["uWarpedFrequency"];
+  uWarpedStrength: TerrainState["uWarpedStrength"];
 }>;
 
 type TerrainMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
@@ -55,8 +59,10 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     color: "#85d534",
     metalness: 0,
     roughness: 0.5,
-    uNoisePositionFrequency: 1.0,
-    uStrength: 1.0,
+    uNoisePositionFrequency: 0.2,
+    uStrength: 2.0,
+    uWarpedFrequency: 5.0,
+    uWarpedStrength: 0.5,
   };
   protected guiRegistry?: GUIStateRegistry<TerrainState> | null = null;
 
@@ -101,11 +107,20 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setMaterial(): void {
-    const { color, metalness, roughness, uNoisePositionFrequency, uStrength } =
-      this.DEBUG_DEFAULTS;
+    const {
+      color,
+      metalness,
+      roughness,
+      uNoisePositionFrequency,
+      uStrength,
+      uWarpedFrequency,
+      uWarpedStrength,
+    } = this.DEBUG_DEFAULTS;
     const uniforms: TerrainUniforms = {
       uNoisePositionFrequency: new THREE.Uniform(uNoisePositionFrequency),
       uStrength: new THREE.Uniform(uStrength),
+      uWarpedFrequency: new THREE.Uniform(uWarpedFrequency),
+      uWarpedStrength: new THREE.Uniform(uWarpedStrength),
     };
 
     this.material = new CustomShaderMaterial({
@@ -181,6 +196,16 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     uniformsFolder.add(state, "uStrength").min(0).max(5).step(0.01);
     registry.bind("uStrength", (v) => {
       this.material.uniforms.uStrength.value = v;
+    });
+
+    uniformsFolder.add(state, "uWarpedFrequency").min(0).max(5).step(0.01);
+    registry.bind("uWarpedFrequency", (v) => {
+      this.material.uniforms.uWarpedFrequency.value = v;
+    });
+
+    uniformsFolder.add(state, "uWarpedStrength").min(0).max(5).step(0.01);
+    registry.bind("uWarpedStrength", (v) => {
+      this.material.uniforms.uWarpedStrength.value = v;
     });
   }
 

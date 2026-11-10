@@ -1,5 +1,7 @@
 uniform float uNoisePositionFrequency;
 uniform float uStrength;
+uniform float uWarpedFrequency;
+uniform float uWarpedStrength;
 
 #include ../utils/noise/simplexNoise2d
 #include ../utils/vectors/direction
@@ -8,13 +10,18 @@ uniform float uStrength;
 float getElevation(vec2 position) {
     float elevation = 0.0;
 
+// * Adding random bullshit to add further noise
+    vec2 warpedPosition = position;
+
+    warpedPosition += simplexNoise2d(warpedPosition * uWarpedFrequency) * uWarpedStrength;
+
     float[3] multipliers = float[3](1.0, 2.0, 4.0);
 
     for(int i = 0; i < multipliers.length(); i++) {
         float noiseMultiplier = multipliers[i];
         float resultDivider = noiseMultiplier * 2.0;
 
-        vec2 inputNoise = position * uNoisePositionFrequency * noiseMultiplier;
+        vec2 inputNoise = warpedPosition * uNoisePositionFrequency * noiseMultiplier;
 
         elevation += simplexNoise2d(inputNoise) / resultDivider;
     }
