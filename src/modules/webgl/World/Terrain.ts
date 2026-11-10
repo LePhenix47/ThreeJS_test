@@ -86,6 +86,10 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     const rotationXRad = THREE.MathUtils.degToRad(rotationXDeg);
     geometry.rotateX(rotationXRad); // ? Plane parallel to floor
 
+    // ? Remove unused attributes to improve perf.
+    geometry.deleteAttribute("uv");
+    geometry.deleteAttribute("normal");
+
     this.geometry = geometry;
   }
 
