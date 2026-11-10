@@ -210,22 +210,22 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       .add(state, "uNoisePositionFrequency")
       .min(0)
       .max(5)
-      .step(0.01);
+      .step(0.001);
     registry.bind("uNoisePositionFrequency", (v) => {
       this.material.uniforms.uNoisePositionFrequency.value = v;
     });
 
-    uniformsFolder.add(state, "uStrength").min(0).max(5).step(0.01);
+    uniformsFolder.add(state, "uStrength").min(0).max(10).step(0.001);
     registry.bind("uStrength", (v) => {
       this.material.uniforms.uStrength.value = v;
     });
 
-    uniformsFolder.add(state, "uWarpedFrequency").min(0).max(5).step(0.01);
+    uniformsFolder.add(state, "uWarpedFrequency").min(0).max(5).step(0.001);
     registry.bind("uWarpedFrequency", (v) => {
       this.material.uniforms.uWarpedFrequency.value = v;
     });
 
-    uniformsFolder.add(state, "uWarpedStrength").min(0).max(5).step(0.01);
+    uniformsFolder.add(state, "uWarpedStrength").min(0).max(10).step(0.001);
     registry.bind("uWarpedStrength", (v) => {
       this.material.uniforms.uWarpedStrength.value = v;
     });
