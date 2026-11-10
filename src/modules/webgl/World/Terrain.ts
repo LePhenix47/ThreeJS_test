@@ -31,7 +31,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       width: Sandbox.CONFIG.geometry.width - 1,
       height: Sandbox.CONFIG.geometry.depth - 1,
       segments: 500,
-      rotationXDeg: 90,
+      rotationXDeg: -90,
     },
   } as const;
 
@@ -92,12 +92,10 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     const uniforms: TerrainUniforms = {};
 
     this.material = new CustomShaderMaterial({
+      //  * material
       baseMaterial: THREE.MeshStandardMaterial,
-
       // * shader
       uniforms,
-      //  * material
-      side: THREE.DoubleSide,
     }) as TerrainMaterialType;
   }
 
@@ -149,6 +147,11 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   public update(): void {}
 
   public destroy(): void {
+    this.geometry.dispose();
+    this.material.dispose();
+
+    this.scene.remove(this.mesh);
+
     this.guiRegistry?.dispose();
   }
 }
