@@ -5,6 +5,7 @@ import Experience, {
 } from "@modules/webgl/Experience/Experience";
 import Sandbox from "./Sandbox";
 import Terrain from "./Terrain";
+import Water from "./Water";
 
 import * as THREE from "three";
 
@@ -22,6 +23,7 @@ class ProceduralTerrain implements Updatable, Destroyable {
 
   private sandbox: Sandbox;
   private terrain: Terrain;
+  private water: Water;
 
   public group: THREE.Group;
 
@@ -53,6 +55,7 @@ class ProceduralTerrain implements Updatable, Destroyable {
 
     this.sandbox = new Sandbox({ parentFolder, group: this.group });
     this.terrain = new Terrain({ parentFolder, group: this.group });
+    this.water = new Water({ parentFolder, group: this.group });
   }
 
   public update(): void {
@@ -62,6 +65,7 @@ class ProceduralTerrain implements Updatable, Destroyable {
   public destroy(): void {
     this.sandbox.destroy();
     this.terrain.destroy();
+    this.water.destroy();
 
     this.scene.remove(this.group);
   }
