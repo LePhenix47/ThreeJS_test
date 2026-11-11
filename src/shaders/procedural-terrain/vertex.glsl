@@ -2,11 +2,9 @@ uniform float uNoisePositionFrequency;
 uniform float uStrength;
 uniform float uWarpedFrequency;
 uniform float uWarpedStrength;
-uniform float uTime;
 uniform vec2 uDragOffset;
 uniform float uDragInfluence;
 uniform vec2 uScrollOffset;
-uniform float uScrollAnchorTime;
 
 varying vec3 vElevatedPosition;
 varying float vDotProductNormalUp;
@@ -17,9 +15,7 @@ varying float vDotProductNormalUp;
 
 /*Offsets the position according to the time, or to the drag position while dragging*/
 vec2 offsetWithTime(vec2 position) {
-    vec2 timeOffset = uScrollOffset + vec2((uTime - uScrollAnchorTime) * 0.2);
-
-    vec2 offset = mix(timeOffset, uDragOffset, uDragInfluence);
+    vec2 offset = mix(uScrollOffset, uDragOffset, uDragInfluence);
 
     return position + offset;
 }

@@ -32,6 +32,7 @@ type TerrainState = {
   uStrength: number;
   uWarpedFrequency: number;
   uWarpedStrength: number;
+  uScrollSpeed: number;
   uColorWaterDeep: string;
   uColorWaterSurface: string;
   uColorSand: string;
@@ -93,7 +94,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   private readonly raycasterManager = new RaycasterManager<InteractivePlane>();
   private isDragging: boolean = false;
 
-  /** Shared with `uniforms.uTime` — created up front so `dragScroll` can read it before `setMaterial()` builds the rest of the uniform set. */
+  /** Shared with `uniforms.uTime`, used by the fragment shader. */
   private readonly uTime = new THREE.Uniform(0);
   /** See TerrainDragScroll for the drag-to-scroll technique this drives. */
   private dragScroll: TerrainDragScroll;
@@ -108,6 +109,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
     uStrength: 2.0,
     uWarpedFrequency: 5.0,
     uWarpedStrength: 0.5,
+    uScrollSpeed: 0.2,
     uColorWaterDeep: "#002b3d",
     uColorWaterSurface: "#66a8ff",
     uColorSand: "#ffe894",
@@ -157,10 +159,8 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
 
   private setDragScroll(): void {
     const { returnDuration } = Terrain.CONFIG.drag;
-    this.dragScroll = new TerrainDragScroll({
-      uTime: this.uTime,
-      returnDuration,
-    });
+    const { uScrollSpeed: scrollSpeed } = this.DEBUG_DEFAULTS;
+    this.dragScroll = new TerrainDragScroll({ returnDuration, scrollSpeed });
   }
 
   protected setGeometry(): void {
@@ -374,6 +374,11 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       this.material.uniforms.uWarpedStrength.value = v;
     });
 
+    uniformsFolder.add(state, "uScrollSpeed").min(0).max(2).step(0.001);
+    registry.bind("uScrollSpeed", (v) => {
+      this.material.uniforms.uScrollSpeed.value = v;
+    });
+
     uniformsFolder.addColor(state, "uColorWaterDeep");
     registry.bind("uColorWaterDeep", (v) => {
       this.material.uniforms.uColorWaterDeep.value.set(v);
@@ -408,7 +413,10 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   public update(): void {
     this.uTime.value = this.time.elapsedSeconds;
 
-    if (!this.isDragging) return;
+    if (!this.isDragging) {
+      this.dragScroll.advance(this.time.deltaSeconds);
+      return;
+    }
 
     const worldXZ = this.getPointerWorldXZ();
     if (!worldXZ) return;
