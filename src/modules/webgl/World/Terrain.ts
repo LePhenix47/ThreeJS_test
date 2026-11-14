@@ -1,4 +1,8 @@
-import Experience, { Destroyable, Updatable } from "../Experience/Experience";
+import Experience, {
+  Destroyable,
+  Updatable,
+  GlobalUniforms,
+} from "@modules/webgl/Experience/Experience";
 import type { ProceduralTerrainConstructor } from "./ProceduralTerrain";
 import { MeshEntity } from "./types/mesh-entity";
 
@@ -54,7 +58,8 @@ type TerrainUniforms = MapAsUniforms<{
   uColorSnow: THREE.Color;
   uColorRock: THREE.Color;
 }> &
-  TerrainDragScrollUniforms;
+  TerrainDragScrollUniforms &
+  GlobalUniforms;
 
 type TerrainMaterialType = CSMProxy<typeof THREE.MeshStandardMaterial> & {
   uniforms: TerrainUniforms;
@@ -94,8 +99,6 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   private readonly raycasterManager = new RaycasterManager<InteractivePlane>();
   private isDragging: boolean = false;
 
-  /** Shared with `uniforms.uTime`, used by the fragment shader. */
-  private readonly uTime = new THREE.Uniform(0);
   /** See TerrainDragScroll for the drag-to-scroll technique this drives. */
   private dragScroll: TerrainDragScroll;
 
@@ -121,6 +124,10 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
 
   private get time() {
     return this.experience!.time;
+  }
+
+  private get globalUniforms() {
+    return this.experience!.globalUniforms;
   }
 
   private get pointer() {
@@ -199,7 +206,6 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       uStrength: new THREE.Uniform(uStrength),
       uWarpedFrequency: new THREE.Uniform(uWarpedFrequency),
       uWarpedStrength: new THREE.Uniform(uWarpedStrength),
-      uTime: this.uTime,
       uColorWaterDeep: {
         value: new THREE.Color(uColorWaterDeep),
       },
@@ -218,6 +224,7 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
       uColorRock: {
         value: new THREE.Color(uColorRock),
       },
+      ...this.globalUniforms,
       ...this.dragScroll.uniforms,
     };
 
@@ -411,8 +418,6 @@ class Terrain extends MeshEntity implements Updatable, Destroyable {
   }
 
   public update(): void {
-    this.uTime.value = this.time.elapsedSeconds;
-
     if (!this.isDragging) {
       this.dragScroll.advance(this.time.deltaSeconds);
       return;
