@@ -30,7 +30,10 @@ export type { Resizable, Updatable, Destroyable };
 
 /** Uniforms every world entity can share instead of each owning and updating its own copy. */
 export type GlobalUniforms = MapAsUniforms<{
+  /** Elapsed time in seconds since the tab opened */
   uTime: number;
+  /** Time in seconds elapsed since the previous frame update */
+  uDeltaTime: number;
 }>;
 
 class Experience implements Resizable, Updatable, Destroyable {
@@ -51,6 +54,7 @@ class Experience implements Resizable, Updatable, Destroyable {
 
   public readonly globalUniforms: GlobalUniforms = {
     uTime: new THREE.Uniform(0),
+    uDeltaTime: new THREE.Uniform(0),
   };
 
   constructor({
@@ -115,12 +119,16 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.renderer.resize();
   };
 
+  private updateGlobalUniforms(): void {
+    this.globalUniforms.uTime.value = this.time.elapsedSeconds;
+    this.globalUniforms.uDeltaTime.value = this.time.deltaSeconds;
+  }
+
   public update = (): void => {
     try {
       // console.log("TICKING");
-      this.globalUniforms.uTime.value = this.time.elapsedSeconds;
+      this.updateGlobalUniforms();
 
-      this.pointer.update();
       this.camera.update();
       this.renderer.update();
       this.world.update();
