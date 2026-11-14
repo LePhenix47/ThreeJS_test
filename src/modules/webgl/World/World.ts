@@ -65,10 +65,9 @@ class World implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.environment = new Environment();
-
     this.resources.on("textures-loaded", () => {
       this.damagedHelmet = new DamagedHelmet();
+      this.environment = new Environment(); // ? Order matters: env map applies last
     });
 
     this.setHelpers();
