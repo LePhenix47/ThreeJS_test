@@ -16,6 +16,7 @@ import type {
   Updatable,
   Destroyable,
 } from "@utils/types/lifecycle.type";
+import type { MapAsUniforms } from "@modules/webgl/World/types/uniforms";
 
 type ExperienceConstructor = {
   canvas: InputCanvas;
@@ -26,6 +27,11 @@ type ExperienceConstructor = {
 
 // ? Defined in utils so that modules outside of webgl/ can use them, re-exported to keep the existing imports working
 export type { Resizable, Updatable, Destroyable };
+
+/** Uniforms every world entity can share instead of each owning and updating its own copy. */
+export type GlobalUniforms = MapAsUniforms<{
+  uTime: number;
+}>;
 
 class Experience implements Resizable, Updatable, Destroyable {
   public static instance: Experience | null = null;
@@ -42,6 +48,10 @@ class Experience implements Resizable, Updatable, Destroyable {
   public camera: Camera;
   public renderer: Renderer;
   public world: World;
+
+  public readonly globalUniforms: GlobalUniforms = {
+    uTime: new THREE.Uniform(0),
+  };
 
   constructor({
     canvas,
@@ -108,6 +118,8 @@ class Experience implements Resizable, Updatable, Destroyable {
   public update = (): void => {
     try {
       // console.log("TICKING");
+      this.globalUniforms.uTime.value = this.time.elapsedSeconds;
+
       this.pointer.update();
       this.camera.update();
       this.renderer.update();
