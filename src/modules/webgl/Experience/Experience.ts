@@ -1,6 +1,7 @@
 import World from "@modules/webgl/World/World";
 import Camera from "./three/Camera";
 import Renderer from "./three/Renderer";
+import PostProcessing from "./three/PostProcessing";
 import Sizes from "./utils/Sizes";
 import Time from "./utils/Time";
 
@@ -48,6 +49,7 @@ class Experience implements Resizable, Updatable, Destroyable {
   public resources: Resources;
   public camera: Camera;
   public renderer: Renderer;
+  public postProcessing: PostProcessing;
   public world: World;
 
   public readonly globalUniforms: GlobalUniforms = {
@@ -102,6 +104,9 @@ class Experience implements Resizable, Updatable, Destroyable {
     // ? Render
     this.renderer = new Renderer();
 
+    // ? Post-processing
+    this.postProcessing = new PostProcessing();
+
     // ? World
     this.world = new World();
   }
@@ -112,6 +117,7 @@ class Experience implements Resizable, Updatable, Destroyable {
     // * In order to avoid race conditions OR order of operations issues
     this.camera.resize();
     this.renderer.resize();
+    this.postProcessing.resize();
   };
 
   private updateGlobalUniforms(): void {
@@ -125,8 +131,8 @@ class Experience implements Resizable, Updatable, Destroyable {
       this.updateGlobalUniforms();
 
       this.camera.update();
-      this.renderer.update();
       this.world.update();
+      this.postProcessing.update();
     } catch (error) {
       console.error(error);
       console.error("Tick has been stopped due to an error");
@@ -154,6 +160,7 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.sizes.destroy();
     this.time.destroy();
     this.camera.destroy();
+    this.postProcessing.destroy();
     this.renderer.destroy();
     this.world.destroy();
 
