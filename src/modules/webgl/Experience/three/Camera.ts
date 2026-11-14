@@ -26,9 +26,9 @@ class Camera implements Resizable, Updatable, Destroyable {
     near: 0.1,
     far: 100,
     position: {
-      x: 1,
+      x: 4,
       y: 1,
-      z: 1,
+      z: -4,
     },
   } as const;
 
