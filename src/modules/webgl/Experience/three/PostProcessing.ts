@@ -16,6 +16,8 @@ import {
   TAARenderPass, // ? Performant but limited result
 } from "three/examples/jsm/Addons.js";
 
+import TintPass from "@modules/webgl/Experience/sources/post-processing/tint";
+
 import Experience, {
   Destroyable,
   Resizable,
@@ -104,6 +106,10 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     );
     bloomShaderPass.enabled = false;
     this.instance.addPass(bloomShaderPass);
+
+    const tintPass = new ShaderPass(TintPass);
+    tintPass.enabled = true;
+    this.instance.addPass(tintPass);
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);

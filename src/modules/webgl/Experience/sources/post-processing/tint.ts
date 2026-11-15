@@ -2,18 +2,23 @@ import vertexShader from "@shaders/post-processing/tint/vertex.glsl";
 import fragmentShader from "@shaders/post-processing/tint/fragment.glsl";
 import {
   MapAsUniforms,
-  TypedShaderMaterial,
+  TypedCustomShaderPass,
 } from "@modules/webgl/World/types/uniforms";
 
-type TintUniforms = MapAsUniforms<{}>;
+import * as THREE from "three";
 
-const TintPass = {
-  uniforms: {},
+type TintUniforms = MapAsUniforms<{
+  tDiffuse: THREE.Texture;
+}>;
+
+const TintPass: TypedCustomShaderPass<TintUniforms> = {
+  uniforms: {
+    tDiffuse: {
+      value: new THREE.Texture(),
+    },
+  },
   vertexShader,
   fragmentShader,
-} satisfies Pick<
-  TypedShaderMaterial<TintUniforms>,
-  "vertexShader" | "fragmentShader" | "uniforms"
->;
+};
 
 export default TintPass;
