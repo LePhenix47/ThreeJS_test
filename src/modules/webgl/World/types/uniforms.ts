@@ -96,3 +96,11 @@ export type TypedShaderMaterial<TUniforms extends MapAsUniforms<UniformValue>> =
   THREE.ShaderMaterial & {
     uniforms: TUniforms;
   };
+
+/** A custom post-processing pass with `uniforms` autocompletion and types */
+export type TypedCustomShaderPass<
+  TUniforms extends MapAsUniforms<UniformValue>,
+> = Pick<
+  TypedShaderMaterial<TUniforms>,
+  "vertexShader" | "fragmentShader" | "uniforms"
+>;
