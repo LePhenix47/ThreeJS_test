@@ -66,8 +66,11 @@ class FuturisticHudPass extends ShaderPass implements Updatable {
     const { environment } = this;
     if (!environment) return;
 
+    // ? Negated: we want "from the light toward the camera" (+Z-ish when facing the light), not "from the camera toward the light"
+    // Otherwise facing the light directly puts it dead ahead (-Z), opposite the normal map's "+Z = toward camera" convention
     this.uniforms.uViewLightDirection.value
       .copy(environment.directionalLight.position)
+      .negate()
       .transformDirection(this.camera.instance.matrixWorldInverse);
   }
 
