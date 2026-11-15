@@ -19,8 +19,8 @@ class DisplacementPass extends ShaderPass implements Updatable {
   private readonly experience: Experience;
   private guiRegistry: GUIStateRegistry<DisplacementPassState> | null = null;
 
-  private get time() {
-    return this.experience.time;
+  private get globalUniforms() {
+    return this.experience.globalUniforms.uniforms;
   }
 
   private get debug() {
@@ -43,7 +43,7 @@ class DisplacementPass extends ShaderPass implements Updatable {
   }
 
   public update(): void {
-    this.uniforms.uTime.value = this.time.elapsedSeconds;
+    this.uniforms.uTime.value = this.globalUniforms.uTime.value;
   }
 
   private addDebugFolders(): void {
