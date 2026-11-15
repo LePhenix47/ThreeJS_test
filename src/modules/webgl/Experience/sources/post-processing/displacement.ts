@@ -9,6 +9,7 @@ import * as THREE from "three";
 
 type DisplacementUniforms = MapAsUniforms<{
   tDiffuse: THREE.Texture;
+  uTime: number;
 }>;
 
 const DisplacementPass: TypedCustomShaderPass<DisplacementUniforms> = {
@@ -16,6 +17,7 @@ const DisplacementPass: TypedCustomShaderPass<DisplacementUniforms> = {
     tDiffuse: {
       value: new THREE.Texture(),
     },
+    uTime: new THREE.Uniform(0),
   },
   vertexShader,
   fragmentShader,

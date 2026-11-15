@@ -30,6 +30,8 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
   public instance: EffectComposer;
   private readonly experience: Experience;
 
+  private displacementPass: ShaderPass;
+
   public readonly renderTarget: THREE.WebGLRenderTarget;
 
   private get sizes() {
@@ -46,6 +48,10 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
 
   private get camera() {
     return this.experience.camera;
+  }
+
+  private get time() {
+    return this.experience.time;
   }
 
   constructor() {
@@ -119,6 +125,7 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     const displacementPass = new ShaderPass(DisplacementPass);
     displacementPass.enabled = true;
     this.instance.addPass(displacementPass);
+    this.displacementPass = displacementPass;
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
@@ -139,6 +146,8 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
 
   public update(): void {
     this.instance.render();
+
+    this.displacementPass.uniforms.uTime.value = this.time.elapsedSeconds;
   }
 
   public destroy(): void {
