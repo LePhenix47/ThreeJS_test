@@ -8,6 +8,13 @@ import {
   GammaCorrectionShader,
 } from "three/examples/jsm/Addons.js";
 
+import {
+  FXAAPass, // ? Performant, but the result is just "ok" and can be blurry
+  SMAAPass, // ? Usually better than FXAA but less performant, not to be confused with MSAA
+  SSAARenderPass, // ? Best quality but the worst performance
+  TAARenderPass, // ? Performant but limited result
+} from "three/examples/jsm/Addons.js";
+
 import Experience, {
   Destroyable,
   Resizable,
@@ -48,7 +55,7 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     const samplesValue: number = this.renderer.pixelRatio === 1 ? 2 : 0;
 
     this.renderTarget = new THREE.WebGLRenderTarget(800, 600, {
-      samples: samplesValue, // ? We don't need anti-aliasing on high pixel-ratio screens
+      // samples: samplesValue, // ? We don't need anti-aliasing on high pixel-ratio screens
     });
 
     this.setComposer();
@@ -87,10 +94,14 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     shaderPass.enabled = false;
     this.instance.addPass(shaderPass);
 
-    // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST pass
+    // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST shader pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
     gammaFixShaderPass.enabled = true;
     this.instance.addPass(gammaFixShaderPass);
+
+    // * Anti-aliasing fallback in case the WebGLRenderTarget AA fix doesn't work
+    const smaaPass = new SMAAPass();
+    this.instance.addPass(smaaPass);
   }
 
   public resize(): void {
