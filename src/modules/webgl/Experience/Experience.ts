@@ -36,14 +36,16 @@ class Experience implements Resizable, Updatable, Destroyable {
 
   public sizes: Sizes;
   public time: Time;
-  public scene: THREE.Scene<THREE.Object3DEventMap>;
-
   public resources: Resources;
+
+  public globalUniforms: GlobalUniforms;
+  public scene: THREE.Scene<THREE.Object3DEventMap>;
   public camera: Camera;
+
   public renderer: Renderer;
   public postProcessing: PostProcessing;
+
   public world: World;
-  public globalUniforms: GlobalUniforms;
 
   constructor({
     canvas,
