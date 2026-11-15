@@ -6,7 +6,6 @@ import {
   ShaderPass,
   RGBShiftShader,
   GammaCorrectionShader,
-  UnrealBloomPass,
 } from "three/examples/jsm/Addons.js";
 
 import {
@@ -16,9 +15,10 @@ import {
   TAARenderPass, // ? Performant but limited result
 } from "three/examples/jsm/Addons.js";
 
-import TintPass from "@modules/webgl/Experience/sources/post-processing/tint";
-import DisplacementPass from "@modules/webgl/Experience/sources/post-processing/displacement";
-import FuturisticHudPass from "@modules/webgl/Experience/sources/post-processing/futuristic-hud";
+import BloomPass from "./passes/BloomPass";
+import TintPass from "./passes/TintPass";
+import DisplacementPass from "./passes/DisplacementPass";
+import FuturisticHudPass from "./passes/FuturisticHudPass";
 
 import Experience, {
   Destroyable,
@@ -27,12 +27,13 @@ import Experience, {
 } from "@modules/webgl/Experience/Experience";
 import * as THREE from "three";
 
-// TODO: Improve the architecture here if possible
 class PostProcessing implements Resizable, Updatable, Destroyable {
   public instance: EffectComposer;
   private readonly experience: Experience;
 
-  private displacementPass: ShaderPass;
+  private bloomPass: BloomPass;
+  private tintPass: TintPass;
+  private displacementPass: DisplacementPass;
 
   public readonly renderTarget: THREE.WebGLRenderTarget;
 
@@ -44,20 +45,12 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     return this.experience.renderer;
   }
 
-  private get resources() {
-    return this.experience.resources;
-  }
-
   private get scene() {
     return this.experience.scene;
   }
 
   private get camera() {
     return this.experience.camera;
-  }
-
-  private get time() {
-    return this.experience.time;
   }
 
   constructor() {
@@ -111,35 +104,24 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     rgbShiftShaderPass.enabled = false;
     this.instance.addPass(rgbShiftShaderPass);
 
-    // TODO: Add GUI (maybe on the Environment class ?)
-    const bloomShaderPass = new UnrealBloomPass(
-      new THREE.Vector2().copy(this.sizes.resolution),
-      0.8,
-      0.5,
-      0.4,
-    );
-    bloomShaderPass.enabled = false;
-    this.instance.addPass(bloomShaderPass);
+    const bloomPass = new BloomPass();
+    this.instance.addPass(bloomPass);
+    this.bloomPass = bloomPass;
 
     // * CUSTOM SHADER PASSES:
-    // TODO: Add GUI (maybe on the Environment class ?)
-    const tintPass = new ShaderPass(TintPass);
-    tintPass.enabled = false;
+    const tintPass = new TintPass();
     this.instance.addPass(tintPass);
+    this.tintPass = tintPass;
 
-    const displacementPass = new ShaderPass(DisplacementPass);
+    const displacementPass = new DisplacementPass();
     displacementPass.enabled = false;
     this.instance.addPass(displacementPass);
     this.displacementPass = displacementPass;
 
     // TODO: I'd like to pass in the light direction of the Environment class, but how do I also keep it relative to the camera movement
-    const futuristicHudPass = new ShaderPass(FuturisticHudPass);
+    const futuristicHudPass = new FuturisticHudPass();
     futuristicHudPass.enabled = true;
     this.instance.addPass(futuristicHudPass);
-    this.resources.on("textures-loaded", () => {
-      const { normal } = this.resources.getTextures("interfaceNormalMap");
-      futuristicHudPass.material.uniforms.uNormalMap.value = normal;
-    });
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
@@ -159,13 +141,16 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
   }
 
   public update(): void {
-    this.instance.render();
+    this.displacementPass.update();
 
-    this.displacementPass.uniforms.uTime.value = this.time.elapsedSeconds;
+    this.instance.render();
   }
 
   public destroy(): void {
     this.instance.dispose();
+
+    this.bloomPass.dispose();
+    this.tintPass.dispose();
   }
 }
 

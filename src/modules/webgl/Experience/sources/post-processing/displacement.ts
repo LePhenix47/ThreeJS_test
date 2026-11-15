@@ -12,7 +12,7 @@ type DisplacementUniforms = MapAsUniforms<{
   uTime: number;
 }>;
 
-const DisplacementPass: TypedCustomShaderPass<DisplacementUniforms> = {
+const displacementShader: TypedCustomShaderPass<DisplacementUniforms> = {
   uniforms: {
     tDiffuse: {
       value: new THREE.Texture(),
@@ -23,4 +23,4 @@ const DisplacementPass: TypedCustomShaderPass<DisplacementUniforms> = {
   fragmentShader,
 };
 
-export default DisplacementPass;
+export default displacementShader;

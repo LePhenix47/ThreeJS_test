@@ -12,7 +12,7 @@ type FuturisticHudUniforms = MapAsUniforms<{
   uNormalMap: THREE.Texture;
 }>;
 
-const FuturisticHudPass: TypedCustomShaderPass<FuturisticHudUniforms> = {
+const futuristicHudShader: TypedCustomShaderPass<FuturisticHudUniforms> = {
   uniforms: {
     tDiffuse: {
       value: new THREE.Texture(),
@@ -25,4 +25,4 @@ const FuturisticHudPass: TypedCustomShaderPass<FuturisticHudUniforms> = {
   fragmentShader,
 };
 
-export default FuturisticHudPass;
+export default futuristicHudShader;

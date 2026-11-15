@@ -12,7 +12,7 @@ type TintUniforms = MapAsUniforms<{
   uTint: THREE.Vector3;
 }>;
 
-const TintPass: TypedCustomShaderPass<TintUniforms> = {
+const tintShader: TypedCustomShaderPass<TintUniforms> = {
   uniforms: {
     tDiffuse: {
       value: new THREE.Texture(),
@@ -25,4 +25,4 @@ const TintPass: TypedCustomShaderPass<TintUniforms> = {
   fragmentShader,
 };
 
-export default TintPass;
+export default tintShader;
