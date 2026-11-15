@@ -1,5 +1,4 @@
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { EffectComposer, RenderPass } from "three/examples/jsm/Addons.js";
 
 import Experience, {
   Destroyable,
