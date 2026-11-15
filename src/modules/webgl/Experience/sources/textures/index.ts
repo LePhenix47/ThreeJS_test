@@ -1,9 +1,11 @@
 import { TextureSourceType } from "@modules/webgl/Experience/utils/Resources/types";
 import environmentMap from "./environment-map/environment-map";
+import interfacePassTexture from "./post-processing/futuristic-ui/interface";
 
 // prettier-ignore
 const textures = [
   environmentMap,
+  interfacePassTexture
 ] as const;
 
 type RawTextures = typeof textures;

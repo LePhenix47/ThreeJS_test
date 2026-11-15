@@ -18,6 +18,7 @@ import {
 
 import TintPass from "@modules/webgl/Experience/sources/post-processing/tint";
 import DisplacementPass from "@modules/webgl/Experience/sources/post-processing/displacement";
+import FuturisticHudPass from "@modules/webgl/Experience/sources/post-processing/futuristic-hud";
 
 import Experience, {
   Destroyable,
@@ -40,6 +41,10 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
 
   private get renderer() {
     return this.experience.renderer;
+  }
+
+  private get resources() {
+    return this.experience.resources;
   }
 
   private get scene() {
@@ -127,10 +132,13 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     this.instance.addPass(displacementPass);
     this.displacementPass = displacementPass;
 
-    // const displacementPass = new ShaderPass(DisplacementPass);
-    // displacementPass.enabled = false;
-    // this.instance.addPass(displacementPass);
-    // this.displacementPass = displacementPass;
+    const futuristicHudPass = new ShaderPass(FuturisticHudPass);
+    futuristicHudPass.enabled = true;
+    this.instance.addPass(futuristicHudPass);
+    this.resources.on("textures-loaded", () => {
+      const { normal } = this.resources.getTextures("interfaceNormalMap");
+      futuristicHudPass.material.uniforms.uNormalMap.value = normal;
+    });
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
