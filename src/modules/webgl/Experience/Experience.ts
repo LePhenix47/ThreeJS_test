@@ -109,7 +109,6 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     // * In order to avoid race conditions OR order of operations issues
     this.camera.resize();
-    this.renderer.resize();
     this.globalUniforms.resize();
     this.postProcessing.resize();
   };
@@ -150,7 +149,6 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.time.destroy();
     this.camera.destroy();
     this.postProcessing.destroy();
-    this.renderer.destroy();
     this.world.destroy();
 
     /**
