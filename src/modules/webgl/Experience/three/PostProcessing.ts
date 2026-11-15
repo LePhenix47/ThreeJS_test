@@ -27,6 +27,7 @@ import Experience, {
 } from "@modules/webgl/Experience/Experience";
 import * as THREE from "three";
 
+// TODO: Improve the architecture here if possible
 class PostProcessing implements Resizable, Updatable, Destroyable {
   public instance: EffectComposer;
   private readonly experience: Experience;
@@ -126,12 +127,12 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     tintPass.enabled = false;
     this.instance.addPass(tintPass);
 
-    // DisplacementPass.uniforms.
     const displacementPass = new ShaderPass(DisplacementPass);
     displacementPass.enabled = false;
     this.instance.addPass(displacementPass);
     this.displacementPass = displacementPass;
 
+    // TODO: I'd like to pass in the light direction of the Environment class, but how do I also keep it relative to the camera movement
     const futuristicHudPass = new ShaderPass(FuturisticHudPass);
     futuristicHudPass.enabled = true;
     this.instance.addPass(futuristicHudPass);
