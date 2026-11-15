@@ -63,7 +63,7 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
 
     // *  For anti-aliasing on the passes
     // ? We don't need anti-aliasing on high pixel-ratio screens, only low ones have it
-    const samples: number = this.renderer.pixelRatio === 1 ? 2 : 0;
+    const samples: number = this.renderer.pixelRatio <= 1 ? 2 : 0;
 
     this.renderTarget = new THREE.WebGLRenderTarget(800, 600, {
       samples,
