@@ -52,10 +52,11 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     this.experience = Experience.instance;
 
     // *  For anti-aliasing on the passes
-    const samplesValue: number = this.renderer.pixelRatio === 1 ? 2 : 0;
+    // ? We don't need anti-aliasing on high pixel-ratio screens, only low ones have it
+    const samples: number = this.renderer.pixelRatio === 1 ? 2 : 0;
 
     this.renderTarget = new THREE.WebGLRenderTarget(800, 600, {
-      // samples: samplesValue, // ? We don't need anti-aliasing on high pixel-ratio screens
+      samples,
     });
 
     this.setComposer();
@@ -94,12 +95,13 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     shaderPass.enabled = false;
     this.instance.addPass(shaderPass);
 
-    // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST shader pass
+    // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
     gammaFixShaderPass.enabled = true;
     this.instance.addPass(gammaFixShaderPass);
 
-    // * Anti-aliasing fallback in case the WebGLRenderTarget AA fix doesn't work
+    // * Anti-aliasing FALLBACK in case the WebGLRenderTarget AA fix doesn't work
+    if (!this.renderer.supportsRenderTargetAntiAlias) return;
     const smaaPass = new SMAAPass();
     this.instance.addPass(smaaPass);
   }

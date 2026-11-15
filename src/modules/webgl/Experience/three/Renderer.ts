@@ -33,6 +33,10 @@ class Renderer implements Resizable, Updatable, Destroyable {
     return this.instance.getPixelRatio();
   }
 
+  get supportsRenderTargetAntiAlias(): boolean {
+    return this.pixelRatio > 1 || this.instance.capabilities.isWebGL2;
+  }
+
   constructor() {
     if (!Experience.instance) {
       throw new Error("Experience instance not found");
