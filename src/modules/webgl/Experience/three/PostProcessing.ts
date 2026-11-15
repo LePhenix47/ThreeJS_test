@@ -2,6 +2,7 @@ import {
   EffectComposer,
   RenderPass,
   DotScreenPass,
+  GlitchPass,
 } from "three/examples/jsm/Addons.js";
 
 import Experience, {
@@ -60,6 +61,10 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     const dotScreenPass = new DotScreenPass();
     dotScreenPass.enabled = false;
     this.instance.addPass(dotScreenPass);
+
+    const glitchPass = new GlitchPass();
+    glitchPass.enabled = true;
+    this.instance.addPass(glitchPass);
   }
 
   public resize(): void {
