@@ -1,4 +1,8 @@
-import { EffectComposer, RenderPass } from "three/examples/jsm/Addons.js";
+import {
+  EffectComposer,
+  RenderPass,
+  DotScreenPass,
+} from "three/examples/jsm/Addons.js";
 
 import Experience, {
   Destroyable,
@@ -52,6 +56,10 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
   private setPasses(): void {
     const renderPass = new RenderPass(this.scene, this.camera.instance);
     this.instance.addPass(renderPass);
+
+    const dotScreenPass = new DotScreenPass();
+    dotScreenPass.enabled = false;
+    this.instance.addPass(dotScreenPass);
   }
 
   public resize(): void {
