@@ -5,6 +5,7 @@ import {
   GlitchPass,
   ShaderPass,
   RGBShiftShader,
+  GammaCorrectionShader,
 } from "three/examples/jsm/Addons.js";
 
 import Experience, {
@@ -70,9 +71,13 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     this.instance.addPass(glitchPass);
 
     const shaderPass = new ShaderPass(RGBShiftShader);
-    console.log(RGBShiftShader);
     shaderPass.enabled = true;
     this.instance.addPass(shaderPass);
+
+    // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST pass
+    const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
+    gammaFixShaderPass.enabled = true;
+    this.instance.addPass(gammaFixShaderPass);
   }
 
   public resize(): void {
