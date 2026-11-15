@@ -114,21 +114,6 @@ class Experience implements Resizable, Updatable, Destroyable {
     this.postProcessing.resize();
   };
 
-  public update = (): void => {
-    try {
-      // console.log("TICKING");
-      this.globalUniforms.update();
-
-      this.camera.update();
-      this.world.update();
-      this.postProcessing.update();
-    } catch (error) {
-      console.error(error);
-      console.error("Tick has been stopped due to an error");
-      this.time.off("tick", this.update);
-    }
-  };
-
   public setDebugMode(debugMode: boolean): this {
     const keyName = "DEBUG_EXPERIENCE" as const;
 
@@ -144,6 +129,21 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     return this;
   }
+
+  public update = (): void => {
+    try {
+      // console.log("TICKING");
+      this.globalUniforms.update();
+
+      this.camera.update();
+      this.world.update();
+      this.postProcessing.update();
+    } catch (error) {
+      console.error(error);
+      console.error("Tick has been stopped due to an error");
+      this.time.off("tick", this.update);
+    }
+  };
 
   public destroy(): void {
     this.sizes.destroy();
