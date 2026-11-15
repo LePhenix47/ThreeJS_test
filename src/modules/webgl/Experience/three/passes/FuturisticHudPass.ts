@@ -44,10 +44,16 @@ class FuturisticHudPass extends ShaderPass implements Updatable {
     this.experience = Experience.instance;
 
     this.enabled = FuturisticHudPass.DEBUG_DEFAULTS.enabled;
+    // ? Aliased to the same Vector2, not copied — always in sync, no need to hook into resize()
+    this.uniforms.uResolution = this.experience.globalUniforms.uniforms.uResolution;
 
     this.resources.on("textures-loaded", () => {
       const { normal } = this.resources.getTextures("interfaceNormalMap");
       this.uniforms.uNormalMap.value = normal;
+
+      // ? Read from the actual loaded asset instead of hardcoding its pixel dimensions in the shader
+      const { width, height } = normal.image as HTMLImageElement;
+      this.uniforms.uNormalMapAspect.value = width / height;
     });
 
     if (this.debug?.isActive) {
