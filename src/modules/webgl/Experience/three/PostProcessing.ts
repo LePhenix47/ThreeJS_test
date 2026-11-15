@@ -98,6 +98,7 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     rgbShiftShaderPass.enabled = false;
     this.instance.addPass(rgbShiftShaderPass);
 
+    // TODO: Add GUI (maybe on the Environment class ?)
     const bloomShaderPass = new UnrealBloomPass(
       new THREE.Vector2().copy(this.sizes.resolution),
       0.8,
@@ -107,6 +108,8 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     bloomShaderPass.enabled = false;
     this.instance.addPass(bloomShaderPass);
 
+    // * CUSTOM SHADER PASSES:
+    // TODO: Add GUI (maybe on the Environment class ?)
     const tintPass = new ShaderPass(TintPass);
     tintPass.enabled = true;
     this.instance.addPass(tintPass);

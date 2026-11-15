@@ -9,12 +9,16 @@ import * as THREE from "three";
 
 type TintUniforms = MapAsUniforms<{
   tDiffuse: THREE.Texture;
+  uTint: THREE.Vector3;
 }>;
 
 const TintPass: TypedCustomShaderPass<TintUniforms> = {
   uniforms: {
     tDiffuse: {
       value: new THREE.Texture(),
+    },
+    uTint: {
+      value: new THREE.Vector3(-0.1, 0, 0),
     },
   },
   vertexShader,
