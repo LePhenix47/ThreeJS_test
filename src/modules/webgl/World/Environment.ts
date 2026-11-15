@@ -40,7 +40,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   private readonly experience: Experience | null;
   private ambientLight: THREE.AmbientLight;
-  private directionalLight: THREE.DirectionalLight;
+  public directionalLight: THREE.DirectionalLight;
   private lightHelper: THREE.DirectionalLightHelper;
   protected override guiRegistry: GUIStateRegistry<EnvironmentState> | null =
     null;

@@ -34,6 +34,7 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
   private bloomPass: BloomPass;
   private tintPass: TintPass;
   private displacementPass: DisplacementPass;
+  private futuristicHudPass: FuturisticHudPass;
 
   public readonly renderTarget: THREE.WebGLRenderTarget;
 
@@ -114,14 +115,12 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     this.tintPass = tintPass;
 
     const displacementPass = new DisplacementPass();
-    displacementPass.enabled = false;
     this.instance.addPass(displacementPass);
     this.displacementPass = displacementPass;
 
-    // TODO: I'd like to pass in the light direction of the Environment class, but how do I also keep it relative to the camera movement
     const futuristicHudPass = new FuturisticHudPass();
-    futuristicHudPass.enabled = true;
     this.instance.addPass(futuristicHudPass);
+    this.futuristicHudPass = futuristicHudPass;
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
@@ -142,6 +141,7 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
 
   public update(): void {
     this.displacementPass.update();
+    this.futuristicHudPass.update();
 
     this.instance.render();
   }
@@ -151,6 +151,8 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
 
     this.bloomPass.dispose();
     this.tintPass.dispose();
+    this.displacementPass.dispose();
+    this.futuristicHudPass.dispose();
   }
 }
 

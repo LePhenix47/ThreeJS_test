@@ -10,6 +10,7 @@ import * as THREE from "three";
 type FuturisticHudUniforms = MapAsUniforms<{
   tDiffuse: THREE.Texture;
   uNormalMap: THREE.Texture;
+  uViewLightDirection: THREE.Vector3;
 }>;
 
 const futuristicHudShader: TypedCustomShaderPass<FuturisticHudUniforms> = {
@@ -19,6 +20,9 @@ const futuristicHudShader: TypedCustomShaderPass<FuturisticHudUniforms> = {
     },
     uNormalMap: {
       value: new THREE.Texture(),
+    },
+    uViewLightDirection: {
+      value: new THREE.Vector3(-1, 1, 0),
     },
   },
   vertexShader,
