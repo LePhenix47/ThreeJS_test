@@ -17,6 +17,7 @@ import {
 } from "three/examples/jsm/Addons.js";
 
 import TintPass from "@modules/webgl/Experience/sources/post-processing/tint";
+import DisplacementPass from "@modules/webgl/Experience/sources/post-processing/displacement";
 
 import Experience, {
   Destroyable,
@@ -111,8 +112,13 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     // * CUSTOM SHADER PASSES:
     // TODO: Add GUI (maybe on the Environment class ?)
     const tintPass = new ShaderPass(TintPass);
-    tintPass.enabled = true;
+    tintPass.enabled = false;
     this.instance.addPass(tintPass);
+
+    // DisplacementPass.uniforms.
+    const displacementPass = new ShaderPass(DisplacementPass);
+    displacementPass.enabled = true;
+    this.instance.addPass(displacementPass);
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
