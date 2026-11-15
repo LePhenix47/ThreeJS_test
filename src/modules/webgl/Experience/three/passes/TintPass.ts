@@ -5,9 +5,9 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
 type TintPassState = {
   enabled: boolean;
-  tintX: number;
-  tintY: number;
-  tintZ: number;
+  tintR: number;
+  tintG: number;
+  tintB: number;
 };
 
 class TintPass extends ShaderPass {
@@ -17,9 +17,9 @@ class TintPass extends ShaderPass {
 
   private static readonly DEBUG_DEFAULTS: TintPassState = {
     enabled: false,
-    tintX: -0.1,
-    tintY: 0,
-    tintZ: 0,
+    tintR: -0.1,
+    tintG: 0,
+    tintB: 0,
   };
 
   private readonly experience: Experience;
@@ -37,14 +37,21 @@ class TintPass extends ShaderPass {
     }
     this.experience = Experience.instance;
 
-    const { tintX, tintY, tintZ, enabled } = TintPass.DEBUG_DEFAULTS;
-    this.uniforms.uTint.value.set(tintX, tintY, tintZ);
+    const { tintR, tintG, tintB, enabled } = TintPass.DEBUG_DEFAULTS;
+    this.uniforms.uTint.value.set(tintR, tintG, tintB);
     this.enabled = enabled;
 
     if (this.debug?.isActive) {
       this.addDebugFolders();
     }
   }
+
+  private applyTint = (): void => {
+    const { tintR, tintG, tintB } =
+      this.guiRegistry?.state || TintPass.DEBUG_DEFAULTS;
+
+    this.uniforms.uTint.value.set(tintR, tintG, tintB);
+  };
 
   private addDebugFolders(): void {
     const { guiKey } = TintPass.CONFIG;
@@ -64,20 +71,14 @@ class TintPass extends ShaderPass {
       this.enabled = v;
     });
 
-    tintFolder.add(state, "tintX").min(-1).max(1).step(0.001).name("Tint X");
-    registry.bind("tintX", (v) => {
-      this.uniforms.uTint.value.x = v;
-    });
+    tintFolder.add(state, "tintR").min(-1).max(1).step(0.001).name("Tint R");
+    registry.bind("tintR", this.applyTint);
 
-    tintFolder.add(state, "tintY").min(-1).max(1).step(0.001).name("Tint Y");
-    registry.bind("tintY", (v) => {
-      this.uniforms.uTint.value.y = v;
-    });
+    tintFolder.add(state, "tintG").min(-1).max(1).step(0.001).name("Tint G");
+    registry.bind("tintG", this.applyTint);
 
-    tintFolder.add(state, "tintZ").min(-1).max(1).step(0.001).name("Tint Z");
-    registry.bind("tintZ", (v) => {
-      this.uniforms.uTint.value.z = v;
-    });
+    tintFolder.add(state, "tintB").min(-1).max(1).step(0.001).name("Tint B");
+    registry.bind("tintB", this.applyTint);
   }
 
   public dispose(): void {
