@@ -3,6 +3,8 @@ import {
   RenderPass,
   DotScreenPass,
   GlitchPass,
+  ShaderPass,
+  RGBShiftShader,
 } from "three/examples/jsm/Addons.js";
 
 import Experience, {
@@ -63,8 +65,14 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     this.instance.addPass(dotScreenPass);
 
     const glitchPass = new GlitchPass();
-    glitchPass.enabled = true;
+    glitchPass.enabled = false;
+    glitchPass.goWild = false;
     this.instance.addPass(glitchPass);
+
+    const shaderPass = new ShaderPass(RGBShiftShader);
+    console.log(RGBShiftShader);
+    shaderPass.enabled = true;
+    this.instance.addPass(shaderPass);
   }
 
   public resize(): void {
