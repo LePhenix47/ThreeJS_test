@@ -6,6 +6,7 @@ import {
   ShaderPass,
   RGBShiftShader,
   GammaCorrectionShader,
+  UnrealBloomPass,
 } from "three/examples/jsm/Addons.js";
 
 import {
@@ -87,13 +88,22 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     this.instance.addPass(dotScreenPass);
 
     const glitchPass = new GlitchPass();
-    glitchPass.enabled = true;
+    glitchPass.enabled = false;
     glitchPass.goWild = false;
     this.instance.addPass(glitchPass);
 
-    const shaderPass = new ShaderPass(RGBShiftShader);
-    shaderPass.enabled = false;
-    this.instance.addPass(shaderPass);
+    const rgbShiftShaderPass = new ShaderPass(RGBShiftShader);
+    rgbShiftShaderPass.enabled = false;
+    this.instance.addPass(rgbShiftShaderPass);
+
+    const bloomShaderPass = new UnrealBloomPass(
+      new THREE.Vector2().copy(this.sizes.resolution),
+      0.8,
+      0.5,
+      0.4,
+    );
+    bloomShaderPass.enabled = true;
+    this.instance.addPass(bloomShaderPass);
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
