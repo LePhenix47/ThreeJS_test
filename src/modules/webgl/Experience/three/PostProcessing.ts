@@ -13,10 +13,13 @@ import Experience, {
   Resizable,
   Updatable,
 } from "@modules/webgl/Experience/Experience";
+import * as THREE from "three";
 
 class PostProcessing implements Resizable, Updatable, Destroyable {
   public instance: EffectComposer;
   private readonly experience: Experience;
+
+  public readonly renderTarget: THREE.WebGLRenderTarget;
 
   private get sizes() {
     return this.experience.sizes;
@@ -41,6 +44,13 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
 
     this.experience = Experience.instance;
 
+    // *  For anti-aliasing on the passes
+    const samplesValue: number = this.renderer.pixelRatio === 1 ? 2 : 0;
+
+    this.renderTarget = new THREE.WebGLRenderTarget(800, 600, {
+      samples: samplesValue, // ? We don't need anti-aliasing on high pixel-ratio screens
+    });
+
     this.setComposer();
     this.setPasses();
 
@@ -48,7 +58,10 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
   }
 
   private setComposer(): void {
-    const composer = new EffectComposer(this.renderer.instance);
+    const composer = new EffectComposer(
+      this.renderer.instance,
+      this.renderTarget,
+    );
 
     const { width, height } = this.sizes;
     composer.setSize(width, height);
@@ -66,12 +79,12 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
     this.instance.addPass(dotScreenPass);
 
     const glitchPass = new GlitchPass();
-    glitchPass.enabled = false;
+    glitchPass.enabled = true;
     glitchPass.goWild = false;
     this.instance.addPass(glitchPass);
 
     const shaderPass = new ShaderPass(RGBShiftShader);
-    shaderPass.enabled = true;
+    shaderPass.enabled = false;
     this.instance.addPass(shaderPass);
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST pass
