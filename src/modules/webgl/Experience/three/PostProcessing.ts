@@ -102,7 +102,7 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
       0.5,
       0.4,
     );
-    bloomShaderPass.enabled = true;
+    bloomShaderPass.enabled = false;
     this.instance.addPass(bloomShaderPass);
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
