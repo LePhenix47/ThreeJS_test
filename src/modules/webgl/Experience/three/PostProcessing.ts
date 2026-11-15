@@ -123,9 +123,14 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
 
     // DisplacementPass.uniforms.
     const displacementPass = new ShaderPass(DisplacementPass);
-    displacementPass.enabled = true;
+    displacementPass.enabled = false;
     this.instance.addPass(displacementPass);
     this.displacementPass = displacementPass;
+
+    // const displacementPass = new ShaderPass(DisplacementPass);
+    // displacementPass.enabled = false;
+    // this.instance.addPass(displacementPass);
+    // this.displacementPass = displacementPass;
 
     // * This one is important to use the SRGBColorSpace as the output color space, MUST be added as the LAST SHADER pass
     const gammaFixShaderPass = new ShaderPass(GammaCorrectionShader);
