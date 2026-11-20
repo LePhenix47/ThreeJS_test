@@ -9,8 +9,14 @@ varying vec2 vUv;
 
 // * Cover-fits uv onto a texture of a different aspect ratio: crops instead of stretching
 vec2 getCoverUv(vec2 uv, float screenAspect, float textureAspect) {
+    /*
+    * Link: https://aspectfit.com/css-object-fit#:~:text=Browsers'%20default%20stylesheet%20gives%20object%2Dfit%3A%20contain%20%2C,width%3A%20100%25%3B%20height%3A%20100%25%3B%20object%2Dfit%3A%20cover%3B%20%7D
+    */
     vec2 ratio = vec2(min(screenAspect / textureAspect, 1.0), min(textureAspect / screenAspect, 1.0));
 
+/*
+ * Link: https://github.com/artcodev/three-fluid-fx/blob/main/examples/glsl/minimal/reveal-mask/main.ts#L106
+*/
     return vec2(uv.x * ratio.x + (1.0 - ratio.x) * 0.5, uv.y * ratio.y + (1.0 - ratio.y) * 0.5);
 }
 
