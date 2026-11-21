@@ -16,7 +16,7 @@ vec2 getCoverUv(vec2 uv, float screenAspect, float textureAspect) {
     /*
  * Link: https://github.com/artcodev/three-fluid-fx/blob/main/examples/glsl/minimal/reveal-mask/main.ts#L106
 */
-    return uv * ratio + (1.0 - ratio) * 0.5;
+    return (uv - 0.5) * ratio + 0.5;
 }
 
 void main() {
