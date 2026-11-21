@@ -1,7 +1,18 @@
 import { ShaderPass } from "three/examples/jsm/Addons.js";
-import tintShader from "@modules/webgl/Experience/sources/post-processing/tint";
+import vertexShader from "@shaders/post-processing/tint/vertex.glsl";
+import fragmentShader from "@shaders/post-processing/tint/fragment.glsl";
+import {
+  MapAsUniforms,
+  TypedCustomShaderPass,
+} from "@modules/webgl/World/types/uniforms";
 import Experience from "@modules/webgl/Experience/Experience";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import * as THREE from "three";
+
+type TintUniforms = MapAsUniforms<{
+  tDiffuse: THREE.Texture;
+  uTint: THREE.Vector3;
+}>;
 
 type TintPassState = {
   enabled: boolean;
@@ -29,8 +40,26 @@ class TintPass extends ShaderPass {
     return this.experience.debug;
   }
 
+  // ? Static: needs to exist before `super()` runs, so it can't read `this`
+  // ? A method, not a static property: this object becomes the live `this.uniforms`, so a
+  // ? shared static object would leak the same uTint reference across every instance of this pass
+  private static createShader(): TypedCustomShaderPass<TintUniforms> {
+    return {
+      uniforms: {
+        tDiffuse: {
+          value: new THREE.Texture(),
+        },
+        uTint: {
+          value: new THREE.Vector3(),
+        },
+      },
+      vertexShader,
+      fragmentShader,
+    };
+  }
+
   constructor() {
-    super(tintShader);
+    super(TintPass.createShader());
 
     if (!Experience.instance) {
       throw new Error("Experience instance not found");

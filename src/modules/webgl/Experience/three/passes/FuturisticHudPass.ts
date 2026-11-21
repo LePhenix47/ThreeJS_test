@@ -1,7 +1,21 @@
 import { ShaderPass } from "three/examples/jsm/Addons.js";
-import futuristicHudShader from "@modules/webgl/Experience/sources/post-processing/futuristic-hud";
+import vertexShader from "@shaders/post-processing/futuristic-hud/vertex.glsl";
+import fragmentShader from "@shaders/post-processing/futuristic-hud/fragment.glsl";
+import {
+  MapAsUniforms,
+  TypedCustomShaderPass,
+} from "@modules/webgl/World/types/uniforms";
 import Experience, { Updatable } from "@modules/webgl/Experience/Experience";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
+import * as THREE from "three";
+
+type FuturisticHudUniforms = MapAsUniforms<{
+  tDiffuse: THREE.Texture;
+  uNormalMap: THREE.Texture;
+  uNormalMapAspect: number;
+  uResolution: THREE.Vector2;
+  uViewLightDirection: THREE.Vector3;
+}>;
 
 type FuturisticHudPassState = {
   enabled: boolean;
@@ -35,8 +49,33 @@ class FuturisticHudPass extends ShaderPass implements Updatable {
     return this.experience.debug;
   }
 
+  // ? Static: needs to exist before `super()` runs, so it can't read `this`
+  // ? A method, not a static property: this object becomes the live `this.uniforms`, so a shared
+  // ? static object would leak the same uViewLightDirection/uNormalMap refs across every instance
+  private static createShader(): TypedCustomShaderPass<FuturisticHudUniforms> {
+    return {
+      uniforms: {
+        tDiffuse: {
+          value: new THREE.Texture(),
+        },
+        uNormalMap: {
+          value: new THREE.Texture(),
+        },
+        uNormalMapAspect: new THREE.Uniform(1),
+        uResolution: {
+          value: new THREE.Vector2(),
+        },
+        uViewLightDirection: {
+          value: new THREE.Vector3(),
+        },
+      },
+      vertexShader,
+      fragmentShader,
+    };
+  }
+
   constructor() {
-    super(futuristicHudShader);
+    super(FuturisticHudPass.createShader());
 
     if (!Experience.instance) {
       throw new Error("Experience instance not found");
