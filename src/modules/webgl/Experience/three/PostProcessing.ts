@@ -61,7 +61,7 @@ class PostProcessing implements Resizable, Updatable, Destroyable {
 
     this.experience = Experience.instance;
 
-    // *  For anti-aliasing on the passes
+    // *  For anti-aliasing on the passes (MSAA)
     // ? We don't need anti-aliasing on high pixel-ratio screens, only low ones have it
     const samples: number = this.renderer.pixelRatio <= 1 ? 2 : 0;
 
