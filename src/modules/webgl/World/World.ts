@@ -3,7 +3,10 @@ import Experience, {
   Updatable,
 } from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
-import Floor from "./Floor";
+import Cube from "./Cube";
+import TorusKnot from "./TorusKnot";
+import Sphere from "./Sphere";
+import PerformanceFloor from "./PerformanceFloor";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -31,8 +34,11 @@ class World implements Updatable, Destroyable {
   } as const;
 
   private readonly experience: Experience | null;
-  public environment?: Environment;
-  public floor?: Floor;
+  public environment: Environment;
+  public cube: Cube;
+  public torusKnot: TorusKnot;
+  public sphere: Sphere;
+  public performanceFloor: PerformanceFloor;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -61,8 +67,11 @@ class World implements Updatable, Destroyable {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.floor = new Floor();
     this.environment = new Environment();
+    this.cube = new Cube();
+    this.torusKnot = new TorusKnot();
+    this.sphere = new Sphere();
+    this.performanceFloor = new PerformanceFloor();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -209,11 +218,16 @@ class World implements Updatable, Destroyable {
     this.guiRegistry?.dispose();
   }
 
-  public update(): void {}
+  public update(): void {
+    this.torusKnot.update();
+  }
 
   public destroy(): void {
-    this.floor?.destroy();
-    this.environment?.destroy();
+    this.environment.destroy();
+    this.cube.destroy();
+    this.torusKnot.destroy();
+    this.sphere.destroy();
+    this.performanceFloor.destroy();
     this.removeHelpers();
   }
 }

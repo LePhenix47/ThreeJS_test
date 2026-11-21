@@ -48,6 +48,7 @@ class Renderer implements Resizable, Updatable, Destroyable {
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       canvas: this.experience.canvas,
+      powerPreference: "high-performance",
     });
 
     const { toneMapping, toneMappingExposure, outputColorSpace } =
