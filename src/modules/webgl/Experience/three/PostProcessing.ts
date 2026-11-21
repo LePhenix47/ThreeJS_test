@@ -15,10 +15,12 @@ import {
   TAARenderPass, // ? Performant but limited result
 } from "three/examples/jsm/Addons.js";
 
-import BloomPass from "./passes/BloomPass";
-import TintPass from "./passes/TintPass";
-import DisplacementPass from "./passes/DisplacementPass";
-import FuturisticHudPass from "./passes/FuturisticHudPass";
+import {
+  BloomPass,
+  TintPass,
+  DisplacementPass,
+  FuturisticHudPass,
+} from "./passes";
 
 import Experience, {
   Destroyable,
