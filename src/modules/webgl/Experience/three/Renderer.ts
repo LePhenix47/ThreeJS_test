@@ -12,6 +12,8 @@ class Renderer implements Resizable, Updatable, Destroyable {
     outputColorSpace: THREE.SRGBColorSpace,
     shadowMap: {
       type: THREE.PCFShadowMap,
+      autoUpdate: false,
+      needsUpdate: true,
     },
   } as const;
   public instance: THREE.WebGLRenderer;
@@ -56,9 +58,11 @@ class Renderer implements Resizable, Updatable, Destroyable {
     renderer.toneMapping = toneMapping;
     renderer.toneMappingExposure = toneMappingExposure;
 
-    const { type } = Renderer.CONFIG.shadowMap;
+    const { type, autoUpdate, needsUpdate } = Renderer.CONFIG.shadowMap;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = type;
+    renderer.shadowMap.autoUpdate = autoUpdate; // ? Good for perf at the cost that shadows are now static
+    renderer.shadowMap.needsUpdate = needsUpdate;
 
     const { width, height } = this.sizes;
     renderer.setSize(width, height);
