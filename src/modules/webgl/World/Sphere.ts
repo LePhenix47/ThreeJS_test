@@ -55,7 +55,7 @@ class Sphere extends MeshEntity implements Destroyable {
 
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.castShadow = true;
-    this.mesh.receiveShadow = true;
+    this.mesh.receiveShadow = false;
     this.mesh.position.set(position.x, position.y, position.z);
   }
 

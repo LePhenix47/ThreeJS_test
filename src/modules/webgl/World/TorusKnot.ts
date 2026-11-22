@@ -46,8 +46,7 @@ class TorusKnot extends MeshEntity implements Updatable, Destroyable {
   }
 
   protected setGeometry(): void {
-    const { radius, tube, tubularSegments, radialSegments } =
-      TorusKnot.CONFIG;
+    const { radius, tube, tubularSegments, radialSegments } = TorusKnot.CONFIG;
 
     this.geometry = new THREE.TorusKnotGeometry(
       radius,
@@ -64,7 +63,7 @@ class TorusKnot extends MeshEntity implements Updatable, Destroyable {
   protected setMesh(): void {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.castShadow = true;
-    this.mesh.receiveShadow = true;
+    this.mesh.receiveShadow = false;
   }
 
   public update(): void {
