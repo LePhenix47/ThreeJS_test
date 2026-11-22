@@ -27,6 +27,10 @@ type ExperienceConstructor = {
 // ? Defined in utils so that modules outside of webgl/ can use them, re-exported to keep the existing imports working
 export type { Resizable, Updatable, Destroyable };
 
+/*
+ * To further improve: https://discoverthreejs.com/tips-and-tricks/
+ */
+
 class Experience implements Resizable, Updatable, Destroyable {
   public static instance: Experience | null = null;
 
