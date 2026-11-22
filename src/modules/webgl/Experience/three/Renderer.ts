@@ -48,9 +48,9 @@ class Renderer implements Resizable, Updatable, Destroyable {
 
   private setRenderer(): void {
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: true, // ? Can be turned off if useless
       canvas: this.experience.canvas,
-      powerPreference: "high-performance",
+      powerPreference: "high-performance", // ? Some devices can improve GPU usage & use other more perf. GPUs (if > 1)
     });
 
     const { toneMapping, toneMappingExposure, outputColorSpace } =
