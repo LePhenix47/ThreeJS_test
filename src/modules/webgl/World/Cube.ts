@@ -21,7 +21,7 @@ class Cube extends MeshEntity implements Destroyable {
   protected material: THREE.MeshStandardMaterial;
   protected mesh: THREE.Mesh;
 
-  private cubes: THREE.Mesh[];
+  private cubes: THREE.Mesh;
 
   private get scene() {
     return this.experience.scene;
@@ -41,7 +41,7 @@ class Cube extends MeshEntity implements Destroyable {
 
     this.setCubes();
 
-    this.scene.add(this.mesh, ...this.cubes);
+    this.scene.add(this.mesh, this.cubes);
 
     console.log("Cube");
   }
@@ -69,7 +69,6 @@ class Cube extends MeshEntity implements Destroyable {
 
     const geometries: THREE.BoxGeometry[] = [];
 
-    const cubesArray: THREE.Mesh[] = [];
     for (let i = 0; i < count; i++) {
       const geometry = new THREE.BoxGeometry(size, size, size);
 
@@ -91,9 +90,7 @@ class Cube extends MeshEntity implements Destroyable {
     const material = new THREE.MeshNormalMaterial();
     const mesh = new THREE.Mesh(mergedGeometry, material);
 
-    cubesArray.push(mesh);
-
-    this.cubes = cubesArray;
+    this.cubes = mesh;
   }
 
   public destroy(): void {
