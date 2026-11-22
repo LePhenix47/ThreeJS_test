@@ -2,6 +2,7 @@ import GUI from "lil-gui";
 import * as THREE from "three";
 import { Destroyable, Updatable } from "@modules/webgl/Experience/Experience";
 import PerformanceStats from "./PerformanceStats";
+import FrameInspector from "./FrameInspector";
 
 import LEVA_CSS from "./lil-gui-debug.css?inline";
 
@@ -15,6 +16,7 @@ class Debug implements Updatable, Destroyable {
   public readonly gui: GUI;
   public isActive: boolean;
   public stats: PerformanceStats;
+  public frameInspector: FrameInspector;
   private readonly sheet: CSSStyleSheet;
 
   constructor({ isActive, title = "Debug", renderer }: DebuggingConstructor) {
@@ -27,6 +29,7 @@ class Debug implements Updatable, Destroyable {
     this.initLilGuiStyleSheets();
 
     this.stats = new PerformanceStats({ renderer });
+    this.frameInspector = new FrameInspector();
 
     console.log("Debug instantiated");
   }
@@ -51,6 +54,7 @@ class Debug implements Updatable, Destroyable {
 
     this.destroyLilGuiStyleSheets();
     this.stats.destroy();
+    this.frameInspector.destroy();
   }
 }
 
