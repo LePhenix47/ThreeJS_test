@@ -97,6 +97,10 @@ class Experience implements Resizable, Updatable, Destroyable {
     // ? Debug (stats-gl needs the real renderer instance, hence this spot and not earlier)
     this.setDebugMode(debugMode);
 
+    // * Avoid passes as much as possible, merge custom passes into one
+    // ? ex: a 1920×1080 res with pixel ratio of 2 and 4 passes will force three to render:
+    // ? 1_920 * 2 * 1_080 * 2 * 4 = 33_177_600 pixels
+
     // ? World
     this.world = new World();
   }
