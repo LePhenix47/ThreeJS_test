@@ -17,7 +17,7 @@ class PerformanceLight implements Destroyable {
       mapSize: 2 ** 10,
       normalBias: 0.05,
       camera: {
-        far: 15,
+        far: 10, // ? keep as low as possible
       },
     },
   } as const;
