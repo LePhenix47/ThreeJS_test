@@ -48,6 +48,7 @@
     "lil-gui": "^0.21.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "stats-gl": "^4.2.3",
     "three": "0.186.1",
     "vite-plugin-glsl": "^1.6.1",
     "zod": "^4.6.5",
