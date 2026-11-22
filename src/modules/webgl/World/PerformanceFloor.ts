@@ -52,7 +52,7 @@ class PerformanceFloor extends MeshEntity implements Destroyable {
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.mesh.position.set(position.x, position.y, position.z);
     this.mesh.rotation.x = -Math.PI * 0.5;
-    this.mesh.castShadow = true;
+    this.mesh.castShadow = false;
     this.mesh.receiveShadow = true;
   }
 
