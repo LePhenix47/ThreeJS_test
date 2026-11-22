@@ -7,6 +7,7 @@ import Cube from "./Cube";
 import TorusKnot from "./TorusKnot";
 import Sphere from "./Sphere";
 import PerformanceFloor from "./PerformanceFloor";
+import PerformanceLight from "./PerformanceLight";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 
@@ -39,6 +40,7 @@ class World implements Updatable, Destroyable {
   public torusKnot: TorusKnot;
   public sphere: Sphere;
   public performanceFloor: PerformanceFloor;
+  public performanceLight: PerformanceLight;
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
   private guiRegistry: GUIStateRegistry<WorldState> | null = null;
@@ -72,6 +74,7 @@ class World implements Updatable, Destroyable {
     this.torusKnot = new TorusKnot();
     this.sphere = new Sphere();
     this.performanceFloor = new PerformanceFloor();
+    this.performanceLight = new PerformanceLight();
     this.setHelpers();
 
     if (this.debug?.isActive) {
@@ -228,6 +231,7 @@ class World implements Updatable, Destroyable {
     this.torusKnot.destroy();
     this.sphere.destroy();
     this.performanceFloor.destroy();
+    this.performanceLight.destroy();
     this.removeHelpers();
   }
 }
