@@ -11,7 +11,10 @@ class Cube extends MeshEntity implements Destroyable {
     position: { x: -5, y: 0, z: 0 },
     cubes: {
       count: 50,
-      size: 0.5,
+      geometry: {
+        size: 0.5,
+        instancedSegments: 50,
+      },
     },
   } as const;
 
@@ -21,7 +24,8 @@ class Cube extends MeshEntity implements Destroyable {
   protected material: THREE.MeshStandardMaterial;
   protected mesh: THREE.Mesh;
 
-  private cubes: THREE.Mesh;
+  // private cubes: THREE.Mesh;
+  private instancedCubes: THREE.InstancedMesh;
 
   private get scene() {
     return this.experience.scene;
@@ -39,9 +43,9 @@ class Cube extends MeshEntity implements Destroyable {
     this.setMaterial();
     this.setMesh();
 
-    this.setCubes();
+    this.setInstancedCubes();
 
-    this.scene.add(this.mesh, this.cubes);
+    this.scene.add(this.mesh, this.instancedCubes);
 
     console.log("Cube");
   }
@@ -64,34 +68,67 @@ class Cube extends MeshEntity implements Destroyable {
     this.mesh.position.set(position.x, position.y, position.z);
   }
 
-  private setCubes(): void {
-    const { size, count } = Cube.CONFIG.cubes;
+  private setInstancedCubes(): void {
+    const { count } = Cube.CONFIG.cubes;
+    const { size, instancedSegments } = Cube.CONFIG.cubes.geometry;
+    const geometry = new THREE.BoxGeometry(size, size, size);
 
-    const geometries: THREE.BoxGeometry[] = [];
+    const material = new THREE.MeshNormalMaterial();
+    const mesh = new THREE.InstancedMesh(geometry, material, instancedSegments);
 
     for (let i = 0; i < count; i++) {
-      const geometry = new THREE.BoxGeometry(size, size, size);
+      const matrix = new THREE.Matrix4();
 
-      geometry.translate(
+      // * WARNING: Order matters here, rotating then translating
+      // * wont give the same output as translating then rotating
+      const rotation = new THREE.Euler(
+        randomInRange({ min: -Math.PI, max: Math.PI }),
+        randomInRange({ min: -Math.PI, max: Math.PI }),
+        0,
+      );
+      matrix.makeRotationFromEuler(rotation);
+
+      const position = new THREE.Vector3(
         randomInRange({ min: -5, max: 5 }),
         randomInRange({ min: -5, max: 5 }),
         randomInRange({ min: -5, max: 5 }),
       );
+      matrix.setPosition(position);
 
-      geometry.rotateX(randomInRange({ min: -Math.PI, max: Math.PI }));
-      geometry.rotateY(randomInRange({ min: -Math.PI, max: Math.PI }));
-
-      geometries.push(geometry);
+      mesh.setMatrixAt(i, matrix);
     }
 
-    const mergedGeometry: THREE.BufferGeometry =
-      BufferGeometryUtils.mergeGeometries(geometries);
-
-    const material = new THREE.MeshNormalMaterial();
-    const mesh = new THREE.Mesh(mergedGeometry, material);
-
-    this.cubes = mesh;
+    this.instancedCubes = mesh;
   }
+
+  // private setCubes(): void {
+  // const { count } = Cube.CONFIG.cubes;
+  // const { size, instancedSegments } = Cube.CONFIG.cubes.geometry;
+  //   const geometries: THREE.BoxGeometry[] = [];
+
+  //   for (let i = 0; i < count; i++) {
+  //     const geometry = new THREE.BoxGeometry(size, size, size);
+
+  //     geometry.translate(
+  //       randomInRange({ min: -5, max: 5 }),
+  //       randomInRange({ min: -5, max: 5 }),
+  //       randomInRange({ min: -5, max: 5 }),
+  //     );
+
+  //     geometry.rotateX(randomInRange({ min: -Math.PI, max: Math.PI }));
+  //     geometry.rotateY(randomInRange({ min: -Math.PI, max: Math.PI }));
+
+  //     geometries.push(geometry);
+  //   }
+
+  //   const mergedGeometry: THREE.BufferGeometry =
+  //     BufferGeometryUtils.mergeGeometries(geometries);
+
+  //   const material = new THREE.MeshNormalMaterial();
+  //   const mesh = new THREE.Mesh(mergedGeometry, material);
+
+  //   this.cubes = mesh;
+  // }
 
   public destroy(): void {
     this.geometry.dispose();
