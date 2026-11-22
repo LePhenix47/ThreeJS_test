@@ -66,31 +66,32 @@ class Cube extends MeshEntity implements Destroyable {
 
   private setCubes(): void {
     const { size, count } = Cube.CONFIG.cubes;
-    const geometry = new THREE.BoxGeometry(size, size, size);
+
+    const geometries: THREE.BoxGeometry[] = [];
 
     const cubesArray: THREE.Mesh[] = [];
     for (let i = 0; i < count; i++) {
-      const material = new THREE.MeshNormalMaterial();
-      const mesh = new THREE.Mesh(geometry, material);
+      const geometry = new THREE.BoxGeometry(size, size, size);
 
-      const randomXYZ = new THREE.Vector3(
+      geometry.translate(
         randomInRange({ min: -5, max: 5 }),
         randomInRange({ min: -5, max: 5 }),
         randomInRange({ min: -5, max: 5 }),
       );
 
-      mesh.position.copy(randomXYZ);
+      geometry.rotateX(randomInRange({ min: -Math.PI, max: Math.PI }));
+      geometry.rotateY(randomInRange({ min: -Math.PI, max: Math.PI }));
 
-      const randomRotations = new THREE.Euler(
-        randomInRange({ min: -Math.PI, max: Math.PI }),
-        randomInRange({ min: -Math.PI, max: Math.PI }),
-        0,
-      );
-
-      mesh.setRotationFromEuler(randomRotations);
-
-      cubesArray.push(mesh);
+      geometries.push(geometry);
     }
+
+    const mergedGeometry: THREE.BufferGeometry =
+      BufferGeometryUtils.mergeGeometries(geometries);
+
+    const material = new THREE.MeshNormalMaterial();
+    const mesh = new THREE.Mesh(mergedGeometry, material);
+
+    cubesArray.push(mesh);
 
     this.cubes = cubesArray;
   }
