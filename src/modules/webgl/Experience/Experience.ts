@@ -61,7 +61,6 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     console.log("Let us commence fourth");
     this.canvas = resolveCanvas(canvas);
-    this.setDebugMode(debugMode);
 
     // *  ⚠ ORDER MATTERS, CALLS MUST BE MADE IN THE CORRECT ORDER
 
@@ -95,6 +94,9 @@ class Experience implements Resizable, Updatable, Destroyable {
     // ? Render
     this.renderer = new Renderer();
 
+    // ? Debug (stats-gl needs the real renderer instance, hence this spot and not earlier)
+    this.setDebugMode(debugMode);
+
     // ? World
     this.world = new World();
   }
@@ -115,6 +117,7 @@ class Experience implements Resizable, Updatable, Destroyable {
 
       this.camera.update();
       this.renderer.update();
+      this.debug?.update();
       this.world.update();
     } catch (error) {
       console.error(error);
@@ -134,7 +137,11 @@ class Experience implements Resizable, Updatable, Destroyable {
 
     console.log("Debug mode enabled");
     Reflect.set(window, keyName, this);
-    this.debug = new Debug({ title: "Experience debug", isActive: true });
+    this.debug = new Debug({
+      title: "Experience debug",
+      isActive: true,
+      renderer: this.renderer.instance,
+    });
 
     return this;
   }

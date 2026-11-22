@@ -1,16 +1,23 @@
 import GUI from "lil-gui";
-import { Destroyable } from "@modules/webgl/Experience/Experience";
+import * as THREE from "three";
+import { Destroyable, Updatable } from "@modules/webgl/Experience/Experience";
+import PerformanceStats from "./PerformanceStats";
 
 import LEVA_CSS from "./lil-gui-debug.css?inline";
 
-type DebuggingConstructor = { isActive: boolean; title?: string };
+type DebuggingConstructor = {
+  isActive: boolean;
+  title?: string;
+  renderer: THREE.WebGLRenderer;
+};
 
-class Debug implements Destroyable {
+class Debug implements Updatable, Destroyable {
   public readonly gui: GUI;
   public isActive: boolean;
+  public stats: PerformanceStats;
   private readonly sheet: CSSStyleSheet;
 
-  constructor({ isActive, title = "Debug" }: DebuggingConstructor) {
+  constructor({ isActive, title = "Debug", renderer }: DebuggingConstructor) {
     this.isActive = isActive;
     if (!isActive) return;
 
@@ -18,6 +25,8 @@ class Debug implements Destroyable {
     this.sheet = new CSSStyleSheet();
 
     this.initLilGuiStyleSheets();
+
+    this.stats = new PerformanceStats({ renderer });
 
     console.log("Debug instantiated");
   }
@@ -33,10 +42,15 @@ class Debug implements Destroyable {
     );
   }
 
-  destroy(): void {
+  public update(): void {
+    this.stats.update();
+  }
+
+  public destroy(): void {
     this.gui.destroy();
 
     this.destroyLilGuiStyleSheets();
+    this.stats.destroy();
   }
 }
 
