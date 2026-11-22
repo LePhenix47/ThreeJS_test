@@ -75,6 +75,7 @@ class Cube extends MeshEntity implements Destroyable {
 
     const material = new THREE.MeshNormalMaterial();
     const mesh = new THREE.InstancedMesh(geometry, material, instancedSegments);
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); // ? in case it's animated on each tick
 
     for (let i = 0; i < count; i++) {
       const matrix = new THREE.Matrix4();
