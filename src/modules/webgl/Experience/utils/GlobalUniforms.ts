@@ -35,7 +35,7 @@ class GlobalUniforms implements Resizable, Updatable {
       uTime: new THREE.Uniform(0),
       uDeltaTime: new THREE.Uniform(0),
       uResolution: {
-        value: new THREE.Vector2(0, 0).copy(this.sizes.resolution),
+        value: new THREE.Vector2().copy(this.sizes.resolution),
       },
     };
 
