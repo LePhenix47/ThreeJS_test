@@ -28,6 +28,9 @@ type ExperienceConstructor = {
 export type { Resizable, Updatable, Destroyable };
 
 class Experience implements Resizable, Updatable, Destroyable {
+  public static CONFIG = {
+    debugKeyName: "DEBUG_EXPERIENCE",
+  } as const;
   public static instance: Experience | null = null;
 
   public canvas: HTMLCanvasElement;
@@ -124,16 +127,16 @@ class Experience implements Resizable, Updatable, Destroyable {
   };
 
   public setDebugMode(debugMode: boolean): this {
-    const keyName = "DEBUG_EXPERIENCE" as const;
+    const { debugKeyName } = Experience.CONFIG;
 
     if (!debugMode) {
       console.log("Debug mode disabled");
-      Reflect.deleteProperty(window, keyName);
+      Reflect.deleteProperty(window, debugKeyName);
       return this;
     }
 
     console.log("Debug mode enabled");
-    Reflect.set(window, keyName, this);
+    Reflect.set(window, debugKeyName, this);
     this.debug = new Debug({ title: "Experience debug", isActive: true });
 
     return this;
