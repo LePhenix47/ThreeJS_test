@@ -3,7 +3,6 @@ import Experience, {
   Updatable,
 } from "@modules/webgl/Experience/Experience";
 import Environment from "./Environment";
-import Floor from "./Floor";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import FlightHelmet from "./FlightHelmet";
@@ -33,7 +32,6 @@ class World implements Updatable, Destroyable {
 
   private readonly experience: Experience | null;
   public environment?: Environment;
-  public floor: Floor;
   public flightHelmet?: FlightHelmet;
 
   private axisHelper: THREE.AxesHelper;
@@ -67,8 +65,6 @@ class World implements Updatable, Destroyable {
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
-
-    this.floor = new Floor();
 
     this.resources.on("textures-loaded", () => {
       this.environment = new Environment();
@@ -224,7 +220,6 @@ class World implements Updatable, Destroyable {
   public update(): void {}
 
   public destroy(): void {
-    this.floor.destroy();
     this.environment?.destroy();
     this.flightHelmet?.destroy();
     this.removeHelpers();
