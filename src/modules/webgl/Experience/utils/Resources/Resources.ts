@@ -19,6 +19,7 @@ import {
   CubeTextureNames,
   HdrTextureNames,
   TextureArrayNames,
+  CubeTextureArrayNames,
   ShaderTextureNames,
   GetPathsFromName,
 } from "@modules/webgl/Experience/sources/textures";
@@ -156,7 +157,7 @@ class Resources extends EventEmitter<ResourcesEvents> {
       ) {
         return total + Object.keys(source.paths).length;
       }
-      if (source.type === "textureArray") {
+      if (source.type === "textureArray" || source.type === "cubeTextureArray") {
         return total + source.paths.length;
       }
       return total + 1;
@@ -211,6 +212,19 @@ class Resources extends EventEmitter<ResourcesEvents> {
             this.loaders.texture.load(path, (textureLoaded) => {
               this.sourceLoaded(source, textureLoaded, String(index));
             });
+          });
+          break;
+        }
+
+        case "cubeTextureArray": {
+          source.paths.forEach((faces, index) => {
+            const { px, nx, py, ny, pz, nz } = faces;
+            this.loaders.cubeTexture.load(
+              [px, nx, py, ny, pz, nz],
+              (textureLoaded) => {
+                this.sourceLoaded(source, textureLoaded, String(index));
+              },
+            );
           });
           break;
         }
@@ -305,16 +319,32 @@ class Resources extends EventEmitter<ResourcesEvents> {
     return result;
   }
 
-  /** Returns a loaded `THREE.CubeTexture` by name. Throws if not found or wrong type. */
-  public getCubeTexture(name: CubeTextureNames): THREE.CubeTexture {
-    const item = this.items[name];
-
+  private getCubeTextureByItemKey(itemKey: string): THREE.CubeTexture {
+    const item = this.items[itemKey];
     const isCubeTexture = this.typeFilters.cubeTexture(item);
     if (!isCubeTexture) {
-      this.logAvailableItems(name, "cubeTexture");
-      throw new Error(`[Resources] "${name}" is not a CubeTexture`);
+      this.logAvailableItems(itemKey, "cubeTexture");
+      throw new Error(`[Resources] "${itemKey}" is not a CubeTexture`);
     }
     return item;
+  }
+
+  /** Returns a loaded `THREE.CubeTexture` by name. Throws if not found or wrong type. */
+  public getCubeTexture(name: CubeTextureNames): THREE.CubeTexture {
+    return this.getCubeTextureByItemKey(name);
+  }
+
+  /** Returns all cube textures for a `"cubeTextureArray"` source as an ordered `THREE.CubeTexture[]`. Throws if not found or wrong type. */
+  public getCubeTextureArray(name: CubeTextureArrayNames): THREE.CubeTexture[] {
+    const source = this.sources.find((s) => s.name === name);
+    if (!source || source.type !== "cubeTextureArray") {
+      this.logAvailableItems(name, "cubeTexture");
+      throw new Error(`[Resources] "${name}" is not a cubeTextureArray source`);
+    }
+
+    return source.paths.map((_, i) =>
+      this.getCubeTextureByItemKey(`${name}_${i}`),
+    );
   }
 
   /** Returns a loaded `GLTF` model by name. Throws if not found or wrong type. */
