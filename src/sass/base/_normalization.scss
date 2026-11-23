@@ -653,4 +653,47 @@
             }
         }
     }
+
+    progress {
+        /* ── Component Variables ───────────────────────────────────── */
+        --_progress-border-radius: 100vmax;
+        --_progress-border-radius-fill: 100vmax 0 0 100vmax;
+
+        --_progress-value-bg: #0042b2;
+        --_progress-bar-bg: rgb(128 128 128 / 50%);
+        --_progress-bar-bg--invisible: transparent;
+
+        --_progress-bar-bg-transition: none;
+        --_progress-bar-fill-transition: none;
+
+        /* ── Base Element & Track ──────────────────────────────────── */
+        appearance: none;
+        background: var(--_progress-bar-bg);
+        border: none;
+        border-radius: var(--_progress-border-radius);
+        transition: var(--_progress-bar-bg-transition);
+
+        /* ── WebKit / Blink Track Internals ────────────────────────── */
+        &::-webkit-progress-inner-element {
+            border-radius: var(--_progress-border-radius);
+        }
+
+        &::-webkit-progress-bar {
+            border-radius: inherit;
+            background: var(--_progress-bar-bg--invisible);
+        }
+
+        /* ── Fill (WebKit / Blink & Firefox) ───────────────────────── */
+        &::-webkit-progress-value {
+            border-radius: var(--_progress-border-radius-fill);
+            background: var(--_progress-value-bg);
+            transition: var(--_progress-bar-fill-transition);
+        }
+
+        &::-moz-progress-bar {
+            border-radius: var(--_progress-border-radius-fill);
+            background: var(--_progress-value-bg);
+            transition: var(--_progress-bar-fill-transition);
+        }
+    }
 }
