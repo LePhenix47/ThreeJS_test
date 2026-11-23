@@ -1,4 +1,4 @@
-import React from "react";
+import React, { CSSProperties } from "react";
 
 import "./ProgressBar.scss";
 
@@ -11,16 +11,23 @@ function ProgressBar({
   progressValue,
   showPercentage = false,
 }: ProgressBarProps) {
+  const style = {
+    "--_progress-percent": `${progressValue}%`,
+  } as CSSProperties;
+
   return (
-    <label className={"progress-bar__container"}>
+    <label className={"progress-bar__container"} style={style}>
       {showPercentage && (
         <span className={"progress-bar__percentage"}>{progressValue}%</span>
       )}
-      <progress
-        className={"progress-bar__element"}
-        value={progressValue}
-        max="100"
-      ></progress>
+
+      <span className="progress-bar__wrapper">
+        <progress
+          className={"progress-bar"}
+          value={progressValue}
+          max="100"
+        ></progress>
+      </span>
     </label>
   );
 }

@@ -1,1 +1,39 @@
 @use "../../sass/utils/" as *;
+
+
+.progress-bar {
+    &__container {
+
+        order: 1;
+
+        --_progress-percent: 60%;
+        --_progress-pseudo-track-bg: white;
+        --_progress-bar-bg: red;
+    }
+
+    /* Track */
+    &__wrapper {
+        position: relative;
+        height: 5px;
+        display: flex;
+
+        &::after {
+            content: "";
+            position: absolute;
+            width: var(--_progress-percent);
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: var(--_progress-pseudo-track-bg);
+            border-radius: 100vmax;
+        }
+    }
+
+    --_progress-value-bg: transparent;
+    --_progress-bar-bg: transparent;
+
+    background-color: rgb(0 0 0 / 50%);
+
+    height: inherit;
+
+}
