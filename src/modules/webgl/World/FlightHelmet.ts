@@ -54,6 +54,11 @@ class FlightHelmet extends GltfEntity implements Destroyable {
     const gltf = this.resources.getGltf("flight-helmet");
 
     const model = gltf.scene;
+
+    model.scale.set(10, 10, 10);
+    model.position.set(0, -4, 0);
+    model.rotation.y = THREE.MathUtils.degToRad(90);
+
     this.model = model;
   }
 
