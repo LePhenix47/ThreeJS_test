@@ -13,9 +13,9 @@ type LoadingSpinnerProps = {
 };
 
 function LoadingSpinner({ showProgress }: LoadingSpinnerProps) {
-  const isLoading = useIsLoading();
   const circleRef = useRef<SVGCircleElement>(null);
 
+  const isLoading = useIsLoading();
   const { loadingProgress } = useLoadingStore();
 
   useEffect(() => {
@@ -53,14 +53,16 @@ function LoadingSpinner({ showProgress }: LoadingSpinnerProps) {
 
   return (
     <div className="loading-spinner">
+      <div className="loading-spinner__backdrop" />
+
       {showProgress && isLoading && (
         <ProgressBar progressValue={loadingProgress} />
       )}
       <svg
         className="loading-spinner__icon"
-        width="80"
-        height="80"
-        viewBox="0 0 80 80"
+        width="100"
+        height="100"
+        viewBox="0 0 100 100"
       >
         <circle
           ref={circleRef}
