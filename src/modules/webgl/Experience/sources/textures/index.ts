@@ -1,7 +1,15 @@
 import { TextureSourceType } from "@modules/webgl/Experience/utils/Resources/types";
+import envMap0 from "./env-maps/envMap0";
+import envMap1 from "./env-maps/envMap1";
+import envMap2 from "./env-maps/envMap2";
+import envMap3 from "./env-maps/envMap3";
 
 // prettier-ignore
 const textures = [
+  envMap0,
+  envMap1,
+  envMap2,
+  envMap3,
 ] as const;
 
 type RawTextures = typeof textures;
@@ -14,7 +22,7 @@ type TextureNamesByType<T extends TextureSourceType> = Extract<
 
 export type RegularTextureNames = TextureNamesByType<"texture">;
 export type LdrTextureNames = TextureNamesByType<"ldrEnvTexture">; // never (no such texture)
-export type CubeTextureNames = TextureNamesByType<"cubeEnvTexture">; // never
+export type CubeTextureNames = TextureNamesByType<"cubeEnvTexture">;
 export type HdrTextureNames = TextureNamesByType<"hdrEnvTexture">;
 export type TextureArrayNames = TextureNamesByType<"textureArray">; // never (until registered)
 export type ShaderTextureNames = TextureNamesByType<"shaderTexture">;
