@@ -6,6 +6,7 @@ import Environment from "./Environment";
 import * as THREE from "three";
 import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import FlightHelmet from "./FlightHelmet";
+import LoadingPlaneBackdrop from "./LoadingPlaneBackdrop";
 
 type WorldState = {
   axisHelperVisible: boolean;
@@ -33,6 +34,7 @@ class World implements Updatable, Destroyable {
   private readonly experience: Experience | null;
   public environment?: Environment;
   public flightHelmet?: FlightHelmet;
+  public loadingPlaneBackdrop: LoadingPlaneBackdrop;
 
   private axisHelper: THREE.AxesHelper;
   private gridHelper: THREE.GridHelper;
@@ -65,6 +67,8 @@ class World implements Updatable, Destroyable {
   constructor() {
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
+
+    this.loadingPlaneBackdrop = new LoadingPlaneBackdrop();
 
     this.resources.on("textures-loaded", () => {
       this.environment = new Environment();
@@ -222,6 +226,7 @@ class World implements Updatable, Destroyable {
   public destroy(): void {
     this.environment?.destroy();
     this.flightHelmet?.destroy();
+    this.loadingPlaneBackdrop.destroy();
     this.removeHelpers();
   }
 }
