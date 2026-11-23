@@ -6,6 +6,7 @@ import { EnvironmentEntity } from "./types/environment-entity";
 type EnvironmentState = {
   lightHelperVisible: boolean;
   environmentColor: string;
+  chosenPictureIndex: number;
 };
 
 // * Remove lights: git cherry-pick c647e5364f7b5371c91cba8d7474c25e4623e3b5
@@ -38,6 +39,8 @@ class Environment extends EnvironmentEntity implements Destroyable {
     },
   } as const;
 
+  private texturesArray: THREE.CubeTexture[];
+
   private readonly experience: Experience | null;
   private ambientLight: THREE.AmbientLight;
   private directionalLight: THREE.DirectionalLight;
@@ -48,6 +51,7 @@ class Environment extends EnvironmentEntity implements Destroyable {
   protected readonly DEBUG_DEFAULTS: EnvironmentState = {
     lightHelperVisible: false,
     environmentColor: "#160920",
+    chosenPictureIndex: 0,
   };
 
   protected envMapTexture: THREE.Texture | THREE.CubeTexture | null = null;
@@ -64,13 +68,17 @@ class Environment extends EnvironmentEntity implements Destroyable {
     return this.experience!.renderer;
   }
 
+  private get resources() {
+    return this.experience!.resources;
+  }
+
   constructor() {
     super();
     this.experience = Experience.instance;
     if (!this.experience) throw new Error("Experience instance not found");
 
-    this.scene.background = this.envMapTexture;
-    this.scene.environment = this.envMapTexture;
+    this.setTexturesArray();
+    this.setEnvMap();
 
     this.setAmbientLight();
     this.setDirectionalLight();
@@ -85,7 +93,24 @@ class Environment extends EnvironmentEntity implements Destroyable {
 
   protected updateMaterial(): void {}
 
-  protected setEnvMap(): void {}
+  private setTexturesArray(): void {
+    this.texturesArray = this.resources.getCubeTextureArray("envMaps");
+  }
+
+  protected setEnvMap = (): void => {
+    const { chosenPictureIndex } =
+      this.guiRegistry?.state || this.DEBUG_DEFAULTS;
+
+    const texture = this.texturesArray[chosenPictureIndex];
+    if (!texture) {
+      console.error("Cannot choose out of bounds picture");
+      return;
+    }
+
+    this.envMapTexture = texture;
+    this.scene.background = texture;
+    this.scene.environment = texture;
+  };
 
   /** Sets the renderer clear color from the current state. */
   private applyEnvironmentColor = (): void => {
@@ -151,6 +176,12 @@ class Environment extends EnvironmentEntity implements Destroyable {
       .addColor(state, "environmentColor")
       .name("Renderer clear color");
     registry.bind("environmentColor", this.applyEnvironmentColor);
+
+    const textureArrayIndex = this.texturesArray.map((v, i) => i);
+    environmentFolder
+      .add(state, "chosenPictureIndex", textureArrayIndex)
+      .name("Env map");
+    registry.bind("chosenPictureIndex", this.setEnvMap);
 
     const helpersFolder = environmentFolder.addFolder("Helpers");
 
