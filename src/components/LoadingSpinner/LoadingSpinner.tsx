@@ -1,15 +1,22 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
-import { useIsLoading } from "@/stores/useLoadingStore";
+import { useIsLoading, useLoadingStore } from "@stores/useLoadingStore";
 
 import "./LoadingSpinner.scss";
+import ProgressBar from "@components/ProgressBar/ProgressBar";
 
 gsap.registerPlugin(DrawSVGPlugin);
 
-function LoadingSpinner() {
+type LoadingSpinnerProps = {
+  showProgress: boolean;
+};
+
+function LoadingSpinner({ showProgress }: LoadingSpinnerProps) {
   const isLoading = useIsLoading();
   const circleRef = useRef<SVGCircleElement>(null);
+
+  const { loadingProgress } = useLoadingStore();
 
   useEffect(() => {
     if (!circleRef.current || !isLoading) return;
@@ -34,7 +41,7 @@ function LoadingSpinner() {
           duration: tl.duration(),
           ease: "linear",
         },
-        0
+        0,
       );
 
     return () => {
@@ -46,7 +53,9 @@ function LoadingSpinner() {
 
   return (
     <div className="loading-spinner">
-      <div className="loading-spinner__backdrop" />
+      {showProgress && isLoading && (
+        <ProgressBar progressValue={loadingProgress} />
+      )}
       <svg
         className="loading-spinner__icon"
         width="80"

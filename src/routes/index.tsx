@@ -36,7 +36,7 @@ function IndexComponent() {
     <div className="index-page">
       <div className="index-page__scene-container">
         <ThreeScene />
-        <LoadingSpinner />
+        <LoadingSpinner showProgress />
       </div>
     </div>
   );
