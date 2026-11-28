@@ -24,7 +24,19 @@ vec4 halftoneMask(vec4 initialColor, float repetitions) {
     // ? 0.75 instead of 0.5: a cell's corner sits at distance ~0.707 from its center, so at
     // ? intensity 1 the radius must clear that to fully reveal the cell, not just its center
     float distance = length(newUv);
-    float dots = 1.0 - step(0.75 * intensity, distance);
+    float holeRadius = 0.75 * intensity;
+
+    /*
+    // ? No anti-aliasing dots
+     float dots = 1.0 - step(0.75 * intensity, distance);
+    */
+
+    // ? fwidth(distance) is the screen-space derivative of distance between neighboring pixels,
+    // ? i.e. how much distance changes per pixel here. Using it as the smoothstep's transition
+    // ? width anti-aliases the circle edge by exactly one pixel, regardless of dot size or zoom,
+    // ? instead of step()'s hard, pixelated binary cutoff
+    float aa = fwidth(distance);
+    float dots = 1.0 - smoothstep(holeRadius - aa, holeRadius + aa, distance);
 
     vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
 
