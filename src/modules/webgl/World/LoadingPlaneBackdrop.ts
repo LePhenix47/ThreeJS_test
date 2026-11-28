@@ -106,7 +106,16 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
     this.fadeTween = gsap.fromTo(
       this.material.uniforms.uProgressPercent,
       { value: 0 },
-      { value: 1, duration: fadeOutDuration },
+      {
+        value: 1,
+        duration: fadeOutDuration,
+        onUpdate: () => {
+          if (!this.guiRegistry) return;
+
+          this.guiRegistry.state.progressPercent =
+            this.material.uniforms.uProgressPercent.value;
+        },
+      },
     );
   };
 
@@ -128,7 +137,8 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
       .min(0)
       .max(1)
       .step(0.01)
-      .name("Progress (debug scrub)");
+      .name("Progress (debug scrub)")
+      .listen();
     registry.bind("progressPercent", (v) => {
       this.material.uniforms.uProgressPercent.value = v;
     });
