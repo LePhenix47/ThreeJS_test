@@ -7,14 +7,14 @@ import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import vertexShader from "@shaders/loading-plane-backdrop/vertex.glsl";
 import fragmentShader from "@shaders/loading-plane-backdrop/fragment.glsl";
 
-type LoadingPlaneBackdropUniforms = MapAsUniforms<{
+type LoadingPlaneBackdropState = {
   uProgressPercent: number;
+};
+
+type LoadingPlaneBackdropUniforms = MapAsUniforms<{
+  uProgressPercent: LoadingPlaneBackdropState["uProgressPercent"];
   uResolution: THREE.Vector2;
 }>;
-
-type LoadingPlaneBackdropState = {
-  progressPercent: number;
-};
 
 /** Full-screen quad covering the scene while resources load, faded out via GSAP once loading finishes. */
 class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
@@ -32,7 +32,7 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
     null;
 
   protected readonly DEBUG_DEFAULTS: LoadingPlaneBackdropState = {
-    progressPercent: 0,
+    uProgressPercent: 0,
   };
 
   private get scene() {
@@ -75,10 +75,10 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
   }
 
   protected setMaterial(): void {
-    const { progressPercent } = this.DEBUG_DEFAULTS;
+    const { uProgressPercent } = this.DEBUG_DEFAULTS;
 
     const uniforms: LoadingPlaneBackdropUniforms = {
-      uProgressPercent: { value: progressPercent },
+      uProgressPercent: new THREE.Uniform(uProgressPercent),
       ...this.globalUniforms.uniforms,
     };
 
@@ -112,7 +112,7 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
         onUpdate: () => {
           if (!this.guiRegistry) return;
 
-          this.guiRegistry.state.progressPercent =
+          this.guiRegistry.state.uProgressPercent =
             this.material.uniforms.uProgressPercent.value;
         },
       },
@@ -133,13 +133,13 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
     const folder = gui.addFolder("Loading Plane Backdrop");
 
     folder
-      .add(state, "progressPercent")
+      .add(state, "uProgressPercent")
       .min(0)
       .max(1)
       .step(0.01)
       .name("Progress (debug scrub)")
       .listen();
-    registry.bind("progressPercent", (v) => {
+    registry.bind("uProgressPercent", (v) => {
       this.material.uniforms.uProgressPercent.value = v;
     });
   }
