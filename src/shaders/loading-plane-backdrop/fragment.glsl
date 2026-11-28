@@ -37,6 +37,7 @@ vec4 halftoneMask(vec4 initialColor, float repetitions) {
     // ? instead of step()'s hard, pixelated binary cutoff
     float aa = fwidth(distance);
     float dots = 1.0 - smoothstep(holeRadius - aa, holeRadius + aa, distance);
+    dots *= smoothstep(0.0, aa, holeRadius);
 
     vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
 
