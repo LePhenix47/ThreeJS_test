@@ -6,7 +6,9 @@ import {
   GLTFLoader,
   HDRLoader,
 } from "three/examples/jsm/Addons.js";
+import TextureDecodeManager from "@utils/classes/texture-decode-manager";
 import {
+  CubeFaces,
   MaterialMapName,
   Source,
   TextureName,
@@ -48,12 +50,12 @@ class Resources extends EventEmitter<ResourcesEvents> {
   } = {};
 
   public loaders: {
-    cubeTexture: THREE.CubeTextureLoader;
-    texture: THREE.TextureLoader;
     gltf: GLTFLoader;
     draco: DRACOLoader;
     hdr: HDRLoader;
   };
+
+  private readonly textureDecodeManager = new TextureDecodeManager();
 
   public allLoaded = false;
   private loadingManager: THREE.LoadingManager;
@@ -127,8 +129,6 @@ class Resources extends EventEmitter<ResourcesEvents> {
   private setLoaders(): void {
     const loadingManager = this.loadingManager;
 
-    const cubeTextureLoader = new THREE.CubeTextureLoader(loadingManager);
-    const textureLoader = new THREE.TextureLoader(loadingManager);
     const gltfLoader = new GLTFLoader(loadingManager);
     const dracoLoader = new DRACOLoader(loadingManager);
 
@@ -138,14 +138,64 @@ class Resources extends EventEmitter<ResourcesEvents> {
     gltfLoader.setDRACOLoader(dracoLoader);
 
     const loaders = {
-      cubeTexture: cubeTextureLoader,
-      texture: textureLoader,
       gltf: gltfLoader,
       draco: dracoLoader,
       hdr: hdrLoader,
     } as const;
 
     this.loaders = loaders;
+  }
+
+  /** Decodes a single image off the main thread via `textureDecodeManager`, manually driving the loadingManager's progress callbacks since bypassing `THREE.TextureLoader` means losing its automatic itemStart/itemEnd/itemError reporting. */
+  private decodeTexture(url: string): Promise<THREE.Texture> {
+    this.loadingManager.itemStart(url);
+
+    return this.textureDecodeManager.decode(url).then(
+      (bitmap) => {
+        this.loadingManager.itemEnd(url);
+
+        const texture = new THREE.Texture(bitmap);
+        texture.needsUpdate = true;
+        return texture;
+      },
+      (error: Error) => {
+        this.loadingManager.itemError(url);
+        this.loadingManager.itemEnd(url);
+        throw error;
+      },
+    );
+  }
+
+  /** Decodes a cube map's 6 faces off the main thread in parallel. Sets colorSpace to sRGB to match `THREE.CubeTextureLoader`'s own default. */
+  private decodeCubeTexture(faces: CubeFaces): Promise<THREE.CubeTexture> {
+    const { px, nx, py, ny, pz, nz } = faces;
+    const urls = [px, nx, py, ny, pz, nz];
+
+    for (const url of urls) {
+      this.loadingManager.itemStart(url);
+    }
+
+    return Promise.all(
+      urls.map((url) => this.textureDecodeManager.decode(url)),
+    ).then(
+      (bitmaps) => {
+        for (const url of urls) {
+          this.loadingManager.itemEnd(url);
+        }
+
+        const texture = new THREE.CubeTexture(bitmaps);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.needsUpdate = true;
+        return texture;
+      },
+      (error: Error) => {
+        for (const url of urls) {
+          this.loadingManager.itemError(url);
+          this.loadingManager.itemEnd(url);
+        }
+        throw error;
+      },
+    );
   }
 
   private get totalToLoad(): number {
@@ -175,9 +225,11 @@ class Resources extends EventEmitter<ResourcesEvents> {
         case "ldrEnvTexture":
         case "shaderTexture": {
           for (const [key, path] of Object.entries(source.paths)) {
-            this.loaders.texture.load(path, (textureLoaded) => {
-              this.sourceLoaded(source, textureLoaded, key);
-            });
+            this.decodeTexture(path)
+              .then((textureLoaded) => {
+                this.sourceLoaded(source, textureLoaded, key);
+              })
+              .catch(() => {});
           }
           break;
         }
@@ -190,13 +242,11 @@ class Resources extends EventEmitter<ResourcesEvents> {
         }
 
         case "cubeEnvTexture": {
-          const { px, nx, py, ny, pz, nz } = source.paths;
-          this.loaders.cubeTexture.load(
-            [px, nx, py, ny, pz, nz],
-            (textureLoaded) => {
+          this.decodeCubeTexture(source.paths)
+            .then((textureLoaded) => {
               this.sourceLoaded(source, textureLoaded);
-            },
-          );
+            })
+            .catch(() => {});
           break;
         }
 
@@ -209,22 +259,22 @@ class Resources extends EventEmitter<ResourcesEvents> {
 
         case "textureArray": {
           source.paths.forEach((path, index) => {
-            this.loaders.texture.load(path, (textureLoaded) => {
-              this.sourceLoaded(source, textureLoaded, String(index));
-            });
+            this.decodeTexture(path)
+              .then((textureLoaded) => {
+                this.sourceLoaded(source, textureLoaded, String(index));
+              })
+              .catch(() => {});
           });
           break;
         }
 
         case "cubeTextureArray": {
           source.paths.forEach((faces, index) => {
-            const { px, nx, py, ny, pz, nz } = faces;
-            this.loaders.cubeTexture.load(
-              [px, nx, py, ny, pz, nz],
-              (textureLoaded) => {
+            this.decodeCubeTexture(faces)
+              .then((textureLoaded) => {
                 this.sourceLoaded(source, textureLoaded, String(index));
-              },
-            );
+              })
+              .catch(() => {});
           });
           break;
         }
