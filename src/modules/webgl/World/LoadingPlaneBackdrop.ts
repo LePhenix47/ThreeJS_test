@@ -7,7 +7,8 @@ import vertexShader from "@shaders/loading-plane-backdrop/vertex.glsl";
 import fragmentShader from "@shaders/loading-plane-backdrop/fragment.glsl";
 
 type LoadingPlaneBackdropUniforms = MapAsUniforms<{
-  uAlpha: number;
+  uProgressPercent: number;
+  uResolution: THREE.Vector2;
 }>;
 
 /** Full-screen quad covering the scene while resources load, faded out via GSAP once loading finishes. */
@@ -28,6 +29,10 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
 
   private get resources() {
     return this.experience.resources;
+  }
+
+  private get globalUniforms() {
+    return this.experience.globalUniforms;
   }
 
   constructor() {
@@ -51,7 +56,8 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
 
   protected setMaterial(): void {
     const uniforms: LoadingPlaneBackdropUniforms = {
-      uAlpha: { value: 1 },
+      uProgressPercent: { value: 1 },
+      ...this.globalUniforms.uniforms,
     };
 
     this.material = new THREE.ShaderMaterial({
@@ -75,7 +81,7 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
   private fadeOut = (): void => {
     const { fadeOutDuration } = LoadingPlaneBackdrop.CONFIG;
 
-    this.fadeTween = gsap.to(this.material.uniforms.uAlpha, {
+    this.fadeTween = gsap.to(this.material.uniforms.uProgressPercent, {
       value: 0,
       duration: fadeOutDuration,
     });
