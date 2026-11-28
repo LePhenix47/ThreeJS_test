@@ -11,22 +11,26 @@ import {
  */
 class TextureDecodeWorker {
   constructor() {
-    self.onmessage = ({ data }: MessageEvent<WorkerInboundMessage>) => {
-      switch (data.type) {
-        case TextureDecodeWorkerMessageType.Decode: {
-          this.decode(data.id, data.url);
-          break;
-        }
-        default: {
-          const _exhaustive: never = data.type;
-          console.warn(
-            "[texture-decode.worker] Unknown message type:",
-            _exhaustive,
-          );
-        }
-      }
-    };
+    self.onmessage = this.handleMessage;
   }
+
+  private handleMessage = ({
+    data,
+  }: MessageEvent<WorkerInboundMessage>): void => {
+    switch (data.type) {
+      case TextureDecodeWorkerMessageType.Decode: {
+        this.decode(data.id, data.url);
+        break;
+      }
+      default: {
+        const _exhaustive: never = data.type;
+        console.warn(
+          "[texture-decode.worker] Unknown message type:",
+          _exhaustive,
+        );
+      }
+    }
+  };
 
   private decode = async (id: string, url: string): Promise<void> => {
     try {
@@ -40,6 +44,8 @@ class TextureDecodeWorker {
         bitmap,
       } satisfies WorkerOutboundMessage;
 
+      // ? transfer moves the bitmap's ownership to the main thread instead of copying it.
+      // ? Without this, postMessage would clone the whole decoded image across the thread boundary
       self.postMessage(message, { transfer: [bitmap] });
     } catch (error) {
       const message = {

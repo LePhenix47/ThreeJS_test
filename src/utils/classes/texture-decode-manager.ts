@@ -26,25 +26,32 @@ class TextureDecodeManager {
       { type: "module" },
     );
 
-    this.worker.onmessage = ({ data }: MessageEvent<WorkerOutboundMessage>) => {
-      const pending = this.pending.get(data.id);
-      if (!pending) return;
-      this.pending.delete(data.id);
-
-      if (data.type === TextureDecodeWorkerMessageType.Error) {
-        pending.reject(new Error(data.message));
-        return;
-      }
-
-      pending.resolve(data.bitmap);
-    };
-
-    this.worker.onerror = (event) => {
-      console.error("[TextureDecodeManager] Worker error:", event);
-    };
+    this.worker.onmessage = this.handleMessage;
+    this.worker.onerror = this.handleError;
   }
 
-  decode = (url: string): Promise<ImageBitmap> => {
+  private handleMessage = ({
+    data,
+  }: MessageEvent<WorkerOutboundMessage>): void => {
+    const { id } = data;
+
+    const pending = this.pending.get(id);
+    if (!pending) return;
+    this.pending.delete(id);
+
+    if (data.type === TextureDecodeWorkerMessageType.Error) {
+      pending.reject(new Error(data.message));
+      return;
+    }
+
+    pending.resolve(data.bitmap);
+  };
+
+  private handleError = (event: ErrorEvent): void => {
+    console.error("[TextureDecodeManager] Worker error:", event);
+  };
+
+  public decode = (url: string): Promise<ImageBitmap> => {
     const id = crypto.randomUUID();
 
     return new Promise((resolve, reject) => {
