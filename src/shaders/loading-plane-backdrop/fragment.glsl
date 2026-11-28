@@ -12,12 +12,12 @@ vec4 halftoneMask(vec4 initialColor, float repetitions) {
     float min = 0.0;
     float max = 1.0;
 
-// * Sweep front moves left → right as uProgressPercent goes 1 → 0. Padding min/max by
-// * feather keeps the dot pattern fully off-screen at progress 1 and 0, otherwise the
+// * Sweep front moves left → right as uProgressPercent goes 0 → 1. Padding min/max by
+// * feather keeps the dot pattern fully off-screen at progress 0 and 1, otherwise the
 // * first/last screen column shows a partial dot pattern it shouldn't have yet.
     float feather = 0.08;
     float sweepX = gl_FragCoord.x / uResolution.x;
-    float revealEdge = mix(min - feather, max + feather, 1.0 - uProgressPercent);
+    float revealEdge = mix(min - feather, max + feather, uProgressPercent);
     float intensity = 1.0 - smoothstep(revealEdge - feather, revealEdge + feather, sweepX);
 
 // * Dots creation

@@ -3,6 +3,7 @@ import gsap from "gsap";
 import { MeshEntity } from "./types/mesh-entity";
 import Experience, { Destroyable } from "@modules/webgl/Experience/Experience";
 import { MapAsUniforms, TypedShaderMaterial } from "./types/uniforms";
+import GUIStateRegistry from "@/utils/classes/gui-state-registry";
 import vertexShader from "@shaders/loading-plane-backdrop/vertex.glsl";
 import fragmentShader from "@shaders/loading-plane-backdrop/fragment.glsl";
 
@@ -11,9 +12,14 @@ type LoadingPlaneBackdropUniforms = MapAsUniforms<{
   uResolution: THREE.Vector2;
 }>;
 
+type LoadingPlaneBackdropState = {
+  progressPercent: number;
+};
+
 /** Full-screen quad covering the scene while resources load, faded out via GSAP once loading finishes. */
 class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
   public static readonly CONFIG = {
+    guiKey: "loading-plane-backdrop-gui-state",
     fadeOutDuration: 1,
   } as const;
 
@@ -22,6 +28,12 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
   protected material: TypedShaderMaterial<LoadingPlaneBackdropUniforms>;
   protected mesh: THREE.Mesh;
   private fadeTween: gsap.core.Tween | null = null;
+  protected override guiRegistry: GUIStateRegistry<LoadingPlaneBackdropState> | null =
+    null;
+
+  protected readonly DEBUG_DEFAULTS: LoadingPlaneBackdropState = {
+    progressPercent: 0,
+  };
 
   private get scene() {
     return this.experience.scene;
@@ -29,6 +41,10 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
 
   private get resources() {
     return this.experience.resources;
+  }
+
+  private get debug() {
+    return this.experience.debug;
   }
 
   private get globalUniforms() {
@@ -47,6 +63,10 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
 
     this.resources.on("textures-loaded", this.fadeOut);
 
+    if (this.debug?.isActive) {
+      this.addDebugFolders();
+    }
+
     console.log("LoadingPlaneBackdrop");
   }
 
@@ -55,8 +75,10 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
   }
 
   protected setMaterial(): void {
+    const { progressPercent } = this.DEBUG_DEFAULTS;
+
     const uniforms: LoadingPlaneBackdropUniforms = {
-      uProgressPercent: { value: 1 },
+      uProgressPercent: { value: progressPercent },
       ...this.globalUniforms.uniforms,
     };
 
@@ -81,11 +103,36 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
   private fadeOut = (): void => {
     const { fadeOutDuration } = LoadingPlaneBackdrop.CONFIG;
 
-    this.fadeTween = gsap.to(this.material.uniforms.uProgressPercent, {
-      value: 0,
-      duration: fadeOutDuration,
-    });
+    this.fadeTween = gsap.fromTo(
+      this.material.uniforms.uProgressPercent,
+      { value: 0 },
+      { value: 1, duration: fadeOutDuration },
+    );
   };
+
+  protected override addDebugFolders(): void {
+    const { guiKey } = LoadingPlaneBackdrop.CONFIG;
+    const registry = new GUIStateRegistry<LoadingPlaneBackdropState>(
+      guiKey,
+      this.DEBUG_DEFAULTS,
+    );
+    this.guiRegistry = registry;
+
+    const { state } = registry;
+    const { gui } = this.debug;
+
+    const folder = gui.addFolder("Loading Plane Backdrop");
+
+    folder
+      .add(state, "progressPercent")
+      .min(0)
+      .max(1)
+      .step(0.01)
+      .name("Progress (debug scrub)");
+    registry.bind("progressPercent", (v) => {
+      this.material.uniforms.uProgressPercent.value = v;
+    });
+  }
 
   public destroy(): void {
     this.fadeTween?.kill();
@@ -94,6 +141,7 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
     this.geometry.dispose();
     this.material.dispose();
     this.scene.remove(this.mesh);
+    this.guiRegistry?.dispose();
   }
 }
 
