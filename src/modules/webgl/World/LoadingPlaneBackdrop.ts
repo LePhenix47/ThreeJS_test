@@ -97,6 +97,11 @@ class LoadingPlaneBackdrop extends MeshEntity implements Destroyable {
     // ? Bounding-sphere frustum culling assumes world-space geometry, this quad bypasses the
     // ? camera entirely in its vertex shader, so culling would be checked against the wrong space
     mesh.frustumCulled = false;
+    // ? The transparent-object sort still uses this mesh's real local-space position/distance to
+    // ? camera, which the vertex shader's full-screen override has no effect on. Without forcing
+    // ? renderOrder, another transparent object (e.g. the flight helmet's glass) can sort as
+    // ? "drawn after" this quad and paint on top of it.
+    mesh.renderOrder = Infinity;
     this.mesh = mesh;
   }
 

@@ -32,7 +32,10 @@ vec4 halftoneMask(vec4 initialColor, float repetitions) {
 }
 
 void main() {
-    gl_FragColor = halftoneMask(vec4(0.0, 0.0, 0.0, 1.0), 40.0);
+    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+    // color.a = 1.0 - uProgressPercent;
+    color = halftoneMask(color, 40.0);
+    gl_FragColor = color;
 
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
